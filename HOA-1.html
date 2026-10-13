@@ -690,7 +690,11 @@ const store = {
   passes:[
     { id:'p1', unit:'B-12', visitor:'Ana Marquez', purpose:'Family visit', date:'2026-08-27', plate:'NBC 4412', code:'VS-4K92', status:'Active' },
     { id:'p2', unit:'A-04', visitor:'Lazada courier', purpose:'Delivery', date:'2026-08-26', plate:'—', code:'VS-7T31', status:'Used' },
-    { id:'p3', unit:'C-21', visitor:'Ramos Aircon Service', purpose:'Contractor', date:'2026-08-29', plate:'TXG 209', code:'VS-2M08', status:'Pending' }
+    { id:'p3', unit:'C-21', visitor:'Ramos Aircon Service', purpose:'Contractor', date:'2026-08-29', plate:'TXG 209', code:'VS-2M08', status:'Pending' },
+    { id:'p4', unit:'B-12', visitor:'Ana Marquez', purpose:'Family visit', date:'2026-08-20', plate:'NBC 4412', code:'VS-8Q15', status:'Used' },
+    { id:'p5', unit:'A-04', visitor:'Jun Santos', purpose:'Water filter demo', date:'2026-08-25', plate:'—', code:'VS-3H66', status:'Used' },
+    { id:'p6', unit:'C-21', visitor:'Jun Santos', purpose:'Water filter demo', date:'2026-08-25', plate:'—', code:'VS-5R40', status:'Used' },
+    { id:'p7', unit:'D-07', visitor:'Jun Santos', purpose:'Product follow-up', date:'2026-08-26', plate:'—', code:'VS-9L27', status:'Used' }
   ],
   stickers:[
     { id:'s1', unit:'B-12', plate:'ABC 1234', vehicle:'Toyota Vios, silver', tag:'RFID-0092', expires:'2026-12-31', status:'Active' },
@@ -1163,6 +1167,7 @@ const NAV = {
   security:[
     { g:'Gate', items:[
       { id:'gate',      label:'Pass validation', icon:'shield', badge:()=>store.passes.filter(p=>p.status==='Active').length },
+      { id:'visitorlookup', label:'Visitor lookup', icon:'users', badge:()=>visitorProfiles().filter(v=>v.reasons.length).length },
       { id:'vehicles',  label:'Vehicle lookup',  icon:'grid' },
       { id:'incidents', label:'Incident log',    icon:'flag' },
       { id:'roster',    label:'Duty roster',     icon:'users' }
@@ -1384,6 +1389,70 @@ function onProfileSearch(v){
   render();
   const el = $('#profileSearchInput');
   if(el){ el.focus(); if(pos!=null) el.setSelectionRange(pos,pos); }
+}
+
+let visitorLookupFilter = '';
+function onVisitorLookup(v){
+  visitorLookupFilter = v;
+  const active = document.activeElement;
+  const pos = active && active.id==='visitorLookupInput' ? active.selectionStart : null;
+  render();
+  const el = $('#visitorLookupInput');
+  if(el){ el.focus(); if(pos!=null) el.setSelectionRange(pos,pos); }
+}
+/* ---- visitor lookup: group passes by visitor name, count the houses each one went to ---- */
+const VISITOR_HOUSE_LIMIT = 3; /* this many different houses, or 2+ on one day, gets flagged */
+function visitorProfiles(){
+  const by = {};
+  store.passes.forEach(p => {
+    const name = String(p.visitor||'').trim().replace(/\s+/g,' ');
+    if(!name) return;
+    const v = by[name.toLowerCase()] || (by[name.toLowerCase()] = { name, passes:[], units:{}, days:{}, plates:{} });
+    v.passes.push(p);
+    v.units[p.unit] = (v.units[p.unit]||0) + 1;
+    (v.days[p.date] || (v.days[p.date] = {}))[p.unit] = true;
+    if(p.plate && p.plate!=='—') v.plates[p.plate] = true;
+  });
+  return Object.values(by).map(v => {
+    const houses = Object.keys(v.units).length;
+    const busyDay = Object.keys(v.days).filter(d => Object.keys(v.days[d]).length > 1).sort().pop();
+    const reasons = [];
+    if(houses >= VISITOR_HOUSE_LIMIT) reasons.push(houses+' different houses');
+    if(busyDay) reasons.push(Object.keys(v.days[busyDay]).length+' houses on '+fmtDate(busyDay));
+    return { name:v.name, passes:v.passes, units:v.units, houses, plates:Object.keys(v.plates), reasons,
+      last:v.passes.map(p=>p.date).sort().pop() };
+  }).sort((a,b) => (b.reasons.length>0) - (a.reasons.length>0) || b.houses - a.houses || (a.last<b.last?1:-1));
+}
+function visitorLookupBody(){
+  const all = visitorProfiles();
+  const term = visitorLookupFilter.trim().toLowerCase();
+  const list = all.filter(v => !term || v.name.toLowerCase().includes(term));
+  const flagged = all.filter(v => v.reasons.length).length;
+  return '<div class="grid g-3" style="margin-bottom:14px">' +
+      stat('Visitors', all.length, 'Different people logged') +
+      stat('Flagged', flagged, VISITOR_HOUSE_LIMIT+'+ houses, or 2+ in one day') +
+      stat('Passes', store.passes.length, 'All visitor passes') +
+    '</div>' +
+    '<div class="fld" style="max-width:360px">' +
+      '<input class="input" id="visitorLookupInput" type="text" placeholder="Search by visitor name…" value="'+esc(visitorLookupFilter)+'" oninput="onVisitorLookup(this.value)">' +
+    '</div>' +
+    sectionCard('Visitors and the houses they went to', list.length ?
+      '<div class="tablewrap"><table><thead><tr><th>Visitor</th><th>Houses</th><th class="hide-sm">Houses visited</th><th class="hide-sm">Last visit</th><th>Check</th></tr></thead><tbody>' +
+      list.map(v => '<tr><td data-label="Visitor"><strong>'+esc(v.name)+'</strong>' +
+          '<div class="meta">'+v.passes.length+' pass'+(v.passes.length===1?'':'es')+' · '+(v.plates.length?'<span class="mono">'+esc(v.plates.join(', '))+'</span>':'On foot / commute')+'</div></td>' +
+        '<td class="mono" data-label="Houses"><strong>'+v.houses+'</strong></td>' +
+        '<td class="hide-sm" data-label="Houses visited">'+Object.keys(v.units).sort().map(u => {
+            const rec = store.units.find(x=>x.unit===u);
+            return '<div><span class="mono">'+esc(u)+'</span>'+(rec?' · '+esc(rec.owner):'')+(v.units[u]>1?' <span class="meta">×'+v.units[u]+'</span>':'')+'</div>';
+          }).join('')+'</td>' +
+        '<td class="hide-sm" data-label="Last visit">'+fmtDate(v.last)+'</td>' +
+        '<td data-label="Check">'+(v.reasons.length
+          ? '<span class="tag t-rose">Review</span><div class="meta">'+esc(v.reasons.join(' · '))+'</div>'
+          : '<span class="tag t-emerald">Normal</span>')+'</td></tr>').join('') +
+      '</tbody></table></div>'
+      : empty('No matches', all.length ? 'No visitor name matches “'+visitorLookupFilter+'”.' : 'Visitors show up here once passes are logged.')) +
+    '<div class="card card-pad" style="margin-top:14px"><div class="ttl">When a visitor is flagged</div>' +
+    '<div class="meta" style="display:block;margin-top:6px">Someone going house to house may be a sales agent, a solicitor, or casing the village. Call the households on the pass before letting them in again, and log an incident if anything is off.</div></div>';
 }
 
 let gateFilter = '';
@@ -1759,6 +1828,7 @@ const ADMIN = {
           '</div><span class="tag '+statusTag(i.status)+'">'+esc(i.status)+'</span></div></li>').join('') + '</ul>',
           '<button class="btn btn-ghost btn-sm" onclick="incidentForm()">Log incident</button>');
       },
+      lookup(){ return visitorLookupBody(); },
       guards(){
         return sectionCard('Guard roster',
           '<div class="tablewrap"><table><thead><tr><th>Post</th><th>Guard on duty</th><th>Shift</th><th class="hide-sm">Contact</th></tr></thead><tbody>' +
@@ -1769,6 +1839,7 @@ const ADMIN = {
     return head('Security & Access Control','Gate passes, vehicle tags, the incident log and who is on post.') +
       tabs('sec',[
         {id:'passes',label:'Visitor passes',n:store.passes.filter(p=>p.status==='Pending').length},
+        {id:'lookup',label:'Visitor lookup',n:visitorProfiles().filter(v=>v.reasons.length).length},
         {id:'stickers',label:'Vehicle stickers'},
         {id:'incidents',label:'Incidents'},
         {id:'guards',label:'Guard roster'}],'passes') + inner;
@@ -2860,6 +2931,9 @@ const SECURITY = {
           : '<span class="meta">'+(p.status==='Pending'?'Awaiting admin':'Closed')+'</span>')+'</td></tr>').join('') +
       '</tbody></table></div>'
       : empty('No matches', 'No pass code or visitor name matches “'+gateFilter+'”.'));
+  },
+  visitorlookup(){
+    return head('Visitor lookup','Look up a visitor by name and see how many houses they went to. Plates are checked in Vehicle lookup.') + visitorLookupBody();
   },
   vehicles(){
     return head('Vehicle lookup','Check a plate against the registered RFID tags.') +
