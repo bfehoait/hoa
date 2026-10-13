@@ -1146,7 +1146,7 @@ const NAV = {
       { id:'profiles',   label:'Homeowner Profiles',      icon:'users' },
       { id:'property',   label:'Property',                icon:'building' },
       { id:'operations', label:'Operations & Maintenance',icon:'wrench', badge:()=>store.requests.filter(r=>r.status!=='Resolved').length },
-      { id:'marketplace',label:'Marketplace',             icon:'tag', badge:()=>store.marketplace.filter(m=>m.status==='Pending').length },
+      { id:'marketplace',label:'Livelihood',             icon:'tag', badge:()=>store.marketplace.filter(m=>m.status==='Pending').length },
       { id:'calendar',   label:'Calendar',                icon:'calendar' },
       { id:'security',   label:'Security & Access',       icon:'shield', badge:()=>store.passes.filter(p=>p.status==='Pending').length },
       { id:'governance', label:'Governance & Community',  icon:'megaphone', badge:()=>store.complaints.filter(c=>c.status!=='Resolved').length },
@@ -1223,7 +1223,7 @@ const NAV = {
       { id:'events',     label:'Events',         icon:'calendar' },
       { id:'book',       label:'Book a facility',icon:'grid' },
       { id:'visitors',   label:'Visitor pass',   icon:'shield', badge:()=>store.passes.filter(p=>p.unit===myUnit()&&p.status==='Pending').length },
-      { id:'marketplace',label:'Marketplace',    icon:'tag' },
+      { id:'marketplace',label:'Livelihood',    icon:'tag' },
       { id:'rides',      label:'Book a ride',    icon:'car', badge:()=>myRides().filter(r=>r.status==='On the way'||r.status==='Arrived').length }
     ]},
     { g:'Raise it with the board', items:[
@@ -1801,7 +1801,7 @@ const ADMIN = {
           : empty('No listings yet','Submissions from homeowners will show up here.'));
       }
     }[t]();
-    return head('Marketplace','Review homeowner listings before they go public, and keep a record of past decisions.') +
+    return head('Livelihood','Review homeowner listings before they go public, and keep a record of past decisions.') +
       tabs('mktadm',[
         {id:'pending',label:'Pending',n:pending.length},
         {id:'listings',label:'All listings',n:store.marketplace.length}],'pending') + inner;
@@ -2645,7 +2645,7 @@ const HOME = {
           : '<div class="card">'+empty('Nothing in this category','Choose another category or All categories to see every listing.')+'</div>');
       }
     }[t]();
-    return head('Marketplace','Buy and sell with your neighbors. New listings are reviewed by the admin office before they go public.',
+    return head('Livelihood','Buy and sell with your neighbors. New listings are reviewed by the admin office before they go public.',
       '<button class="btn btn-primary" style="width:auto" onclick="marketplaceForm()">Sell an item</button>') +
       tabs('mkt',[
         {id:'browse',label:'Browse',n:approved.length},
@@ -3383,7 +3383,7 @@ function gotoMarketplace(){ isAdmin() ? (go('marketplace'), goTab('mktadm','pend
 function approveMkt(id){
   const m = store.marketplace.find(x=>x.id===id);
   m.status='Approved'; m.decidedAt=new Date(); m.decidedBy=store.session.name; m.rejectReason='';
-  commit('Listing “'+m.title+'” approved and now visible in the marketplace.',
+  commit('Listing “'+m.title+'” approved and now visible in Livelihood.',
     {title:'Listing approved', forUnit:m.unit, go:gotoMarketplace}); }
 function rejectMktForm(id){
   const m = store.marketplace.find(x=>x.id===id);
@@ -3398,12 +3398,12 @@ function rejectMktForm(id){
 }
 function deleteMktForm(id){
   const m = store.marketplace.find(x=>x.id===id);
-  modal('Remove this listing?','It comes down from the marketplace right away and this cannot be undone.',
+  modal('Remove this listing?','It comes down from Livelihood right away and this cannot be undone.',
     '<div class="card card-pad" style="background:var(--paper)"><div class="ttl">'+esc(m.title)+'</div>' +
     '<div class="meta mono">'+esc(m.unit)+' · '+esc(m.by)+'</div></div>',
     'Remove listing', () => {
       store.marketplace = store.marketplace.filter(x=>x.id!==id);
-      commit('Listing “'+m.title+'” removed from the marketplace.',
+      commit('Listing “'+m.title+'” removed from Livelihood.',
         {title:'Listing removed', forUnit:m.unit, go:gotoMarketplace}); return true; }, true);
 }
 
