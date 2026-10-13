@@ -126,6 +126,8 @@ textarea.input{min-height:96px;resize:vertical}
 @media(max-width:480px){#viewAsSel{max-width:118px !important;font-size:12px !important;padding:7px 6px !important}.topbar .rolebadge{display:none}}
 .chip{border:1px solid var(--line);background:#fff;padding:8px 13px;border-radius:20px;font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer;transition:.14s}
 .chip:hover{border-color:var(--slate);color:var(--slate-dk);background:var(--slate-tint)}
+.chip.on,.chip.on:hover{border-color:var(--slate);background:var(--slate);color:#fff}
+html[data-theme="dark"] .chip.on,html[data-theme="dark"] .chip.on:hover{border-color:var(--slate);background:var(--slate);color:#0E121C}
 html[data-theme="dark"]{
   --paper:#0E121C; --surface:#161B27; --ink:#EEF1F7; --ink-2:#AEB6C7; --ink-3:#7C859B; --line:#28303F;
   --slate:#7C8BEA; --slate-dk:#A3AEF5; --slate-tint:#232A45;
@@ -639,15 +641,15 @@ const store = {
   marketplace:[
     { id:'m1', unit:'B-12', by:'Rina Dela Cruz', title:'Homemade ube halaya (250g jars)',
       description:'Small-batch ube halaya, made with fresh ube and coconut milk. Good for pasalubong or dessert trays.',
-      price:180, category:'Food & Beverage', photo:'', status:'Approved', rejectReason:'',
+      price:180, category:'Supplies & Essentials', photo:'', status:'Approved', rejectReason:'',
       submittedAt:new Date(Date.now()-864e5*6), decidedAt:new Date(Date.now()-864e5*5), decidedBy:'Arnel Bautista' },
     { id:'m2', unit:'A-04', by:'Marco Villanueva', title:'Preloved kids bicycle (16-inch)',
       description:'Outgrown by our youngest — light scratches only, tires and brakes still good. Pickup at A-04.',
-      price:1200, category:'Home & Living', photo:'', status:'Pending', rejectReason:'',
+      price:1200, category:'Hobbies, Outdoors & Family', photo:'', status:'Pending', rejectReason:'',
       submittedAt:new Date(Date.now()-36e5*9), decidedAt:null, decidedBy:'' },
     { id:'m3', unit:'D-07', by:'Ferdie Lim', title:'Car detailing service, weekends only',
       description:'Full interior and exterior detailing at your carport. Booked by appointment on Saturdays and Sundays.',
-      price:1500, category:'Services', photo:'', status:'Rejected',
+      price:1500, category:'Vehicles & Property', photo:'', status:'Rejected',
       rejectReason:'Please limit the listing to residents of this subdivision — the write-up reads as open to outside customers too.',
       submittedAt:new Date(Date.now()-864e5*3), decidedAt:new Date(Date.now()-864e5*2), decidedBy:'Arnel Bautista' }
   ],
@@ -800,7 +802,23 @@ const ROLE_LABEL = r => (ROLE_MATRIX.find(m=>m.role===r)||{label:r}).label;
 const REQ_TYPES = ['Streetlight','Drainage','Landscaping','Security','Garbage collection','Common area repair'];
 const CMP_TYPES = ['Noise','Parking','Pets','Garbage','Construction','Boundary','Other'];
 const CON_TOPICS = ['Suggestion','Question','Feedback','Facility','Billing'];
-const MKT_CATEGORIES = ['Food & Beverage','Home & Living','Fashion & Accessories','Electronics','Services','Other'];
+const MKT_CATEGORIES = ['Apparel','Electronics & Home','Vehicles & Property','Hobbies, Outdoors & Family','Supplies & Essentials'];
+/* listings saved before the category update keep their old label; map it onto the new set */
+const MKT_LEGACY = {'Food & Beverage':'Supplies & Essentials','Home & Living':'Electronics & Home','Fashion & Accessories':'Apparel',
+  'Electronics':'Electronics & Home','Services':'Supplies & Essentials','Other':'Supplies & Essentials'};
+function mktCat(m){ return MKT_CATEGORIES.includes(m.category) ? m.category : (MKT_LEGACY[m.category] || 'Supplies & Essentials'); }
+function mktCatFilter(list){
+  const cur = tabOf('mktcat','All');
+  return cur==='All' ? list : list.filter(m=>mktCat(m)===cur);
+}
+function mktCatChips(list){
+  const cur = tabOf('mktcat','All');
+  return '<div class="chiprow" role="group" aria-label="Filter by category" style="margin-bottom:14px">' +
+    ['All'].concat(MKT_CATEGORIES).map(c => {
+      const n = c==='All' ? list.length : list.filter(m=>mktCat(m)===c).length;
+      return '<button class="chip'+(cur===c?' on':'')+'" aria-pressed="'+(cur===c)+'" onclick="goTab(\'mktcat\',\''+c+'\')">'+esc(c)+' · '+n+'</button>';
+    }).join('') + '</div>';
+}
 
 /* ============================================================
    HELPERS
@@ -1667,7 +1685,7 @@ const ADMIN = {
         return sectionCard('Pending listings', pending.length ? '<ul class="list">' + pending.map(m =>
           '<li><div class="row"><div class="cph">'+(m.photo?'<img src="'+m.photo+'" alt="">':svg('tag'))+'</div><div class="grow">' +
           '<div class="ttl">'+esc(m.title)+'</div>' +
-          '<div class="meta"><span class="tag t-grey">'+esc(m.category)+'</span><span class="mono">'+peso(m.price)+'</span>' +
+          '<div class="meta"><span class="tag t-grey">'+esc(mktCat(m))+'</span><span class="mono">'+peso(m.price)+'</span>' +
           '<span class="mono">'+esc(m.unit)+'</span>·<span>'+esc(m.by)+'</span>·<span>'+ago(m.submittedAt)+'</span></div>' +
           '<div class="body">'+esc(m.description)+'</div>' +
           '<div class="btn-row" style="margin-top:11px">' +
@@ -1677,9 +1695,10 @@ const ADMIN = {
           : empty('Nothing waiting','New listings from homeowners will appear here first.'));
       },
       listings(){
-        return sectionCard('All listings', store.marketplace.length
+        const shown = mktCatFilter(store.marketplace);
+        return mktCatChips(store.marketplace) + sectionCard('All listings', shown.length
           ? '<div class="tablewrap"><table class="mkt-listings"><thead><tr><th>Listing</th><th class="hide-sm">Seller</th><th>Price</th><th>Status</th><th class="hide-sm">Decided</th><th></th></tr></thead><tbody>' +
-          store.marketplace.map(m => '<tr><td data-label="Listing"><strong>'+esc(m.title)+'</strong><div class="meta">'+esc(m.category)+'</div></td>' +
+          shown.map(m => '<tr><td data-label="Listing"><strong>'+esc(m.title)+'</strong><div class="meta">'+esc(mktCat(m))+'</div></td>' +
             '<td class="hide-sm" data-label="Seller">'+esc(m.by)+'<div class="meta mono">'+esc(m.unit)+'</div></td>' +
             '<td class="mono" data-label="Price">'+peso(m.price)+'</td>' +
             '<td data-label="Status"><span class="tag '+statusTag(m.status)+'">'+esc(m.status)+'</span>' +
@@ -1687,6 +1706,7 @@ const ADMIN = {
             '<td class="hide-sm meta" data-label="Decided">'+(m.decidedAt?fmtDate(m.decidedAt)+' · '+esc(m.decidedBy):'—')+'</td>' +
             '<td style="text-align:right"><button class="btn btn-danger btn-sm" onclick="deleteMktForm(\''+m.id+'\')">Remove</button></td></tr>').join('') +
           '</tbody></table></div>'
+          : store.marketplace.length ? empty('Nothing in this category','Pick another category or All to see every listing.')
           : empty('No listings yet','Submissions from homeowners will show up here.'));
       }
     }[t]();
@@ -2031,7 +2051,7 @@ function mktCard(m){
     '<div class="mkt-photo">'+(m.photo?'<img src="'+m.photo+'" alt="">':'<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'+ICONS.tag+'</svg>')+'</div>' +
     '<div class="card-pad">' +
       '<div class="row" style="align-items:flex-start"><div class="grow"><div class="ttl">'+esc(m.title)+'</div>' +
-      '<div class="meta"><span class="tag t-grey">'+esc(m.category)+'</span></div></div>' +
+      '<div class="meta"><span class="tag t-grey">'+esc(mktCat(m))+'</span></div></div>' +
       '<div style="font-family:var(--display);font-weight:800;font-size:16.5px;white-space:nowrap">'+peso(m.price)+'</div></div>' +
       '<div class="body">'+esc(m.description)+'</div>' +
       '<div class="meta" style="margin-top:10px"><span class="mono">'+esc(m.unit)+'</span>·<span>'+esc(m.by)+'</span>·<span>'+ago(m.submittedAt)+'</span></div>' +
@@ -2039,7 +2059,7 @@ function mktCard(m){
 }
 function mktMineRow(m){
   return '<li><div class="row"><div class="grow"><div class="ttl">'+esc(m.title)+'</div>' +
-    '<div class="meta"><span class="tag t-grey">'+esc(m.category)+'</span><span class="mono">'+peso(m.price)+'</span><span>Submitted '+ago(m.submittedAt)+'</span></div>' +
+    '<div class="meta"><span class="tag t-grey">'+esc(mktCat(m))+'</span><span class="mono">'+peso(m.price)+'</span><span>Submitted '+ago(m.submittedAt)+'</span></div>' +
     '<div class="body">'+esc(m.description)+'</div>' +
     (m.status==='Rejected' && m.rejectReason ? '<div class="card card-pad" style="background:var(--rose-tint);margin-top:10px;border:0">' +
       '<strong style="font-size:13px;color:var(--rose)">Not approved</strong><div class="body" style="margin-top:4px">'+esc(m.rejectReason)+'</div></div>' : '') +
@@ -2510,12 +2530,23 @@ const HOME = {
     const mine = store.marketplace.filter(m=>m.unit===myUnit());
     const inner = {
       browse(){
-        return approved.length ? '<div class="grid g-3">' + approved.map(mktCard).join('') + '</div>'
-          : '<div class="card">'+empty('Nothing listed yet','Approved listings from your neighbors will show up here.')+'</div>';
+        if(!approved.length) return '<div class="card">'+empty('Nothing listed yet','Approved listings from your neighbors will show up here.')+'</div>';
+        const shown = mktCatFilter(approved);
+        return mktCatChips(approved) + (shown.length ? '<div class="grid g-3">' + shown.map(mktCard).join('') + '</div>'
+          : '<div class="card">'+empty('Nothing in this category','Pick another category or All to see every listing.')+'</div>');
       },
       mine(){
-        return mine.length ? '<div class="card"><ul class="list">' + mine.map(mktMineRow).join('') + '</ul></div>'
-          : '<div class="card">'+empty('Nothing submitted yet','List a product below and the admin office will review it.')+'</div>';
+        if(!mine.length) return '<div class="card">'+empty('Nothing submitted yet','List a product below and the admin office will review it.')+'</div>';
+        const cur = tabOf('mktminecat','All');
+        const shown = cur==='All' ? mine : mine.filter(m=>mktCat(m)===cur);
+        return '<label class="fld" style="max-width:320px;margin-bottom:14px"><span>Category</span>' +
+          '<select class="input" aria-label="Filter my listings by category" onchange="goTab(\'mktminecat\',this.value)">' +
+          ['All'].concat(MKT_CATEGORIES).map(c => {
+            const n = c==='All' ? mine.length : mine.filter(m=>mktCat(m)===c).length;
+            return '<option value="'+esc(c)+'"'+(cur===c?' selected':'')+'>'+esc(c==='All'?'All categories':c)+' ('+n+')</option>';
+          }).join('') + '</select></label>' +
+          (shown.length ? '<div class="card"><ul class="list">' + shown.map(mktMineRow).join('') + '</ul></div>'
+          : '<div class="card">'+empty('Nothing in this category','Choose another category or All categories to see every listing.')+'</div>');
       }
     }[t]();
     return head('Marketplace','Buy and sell with your neighbors. New listings are reviewed by the admin office before they go public.',
