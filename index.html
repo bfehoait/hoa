@@ -2588,7 +2588,8 @@ const HOME = {
     return head('Visitor pass','Log a visitor before they arrive so the guardhouse knows to expect them. New passes need a quick approval before the code goes active.',
       '<button class="btn btn-primary" style="width:auto" onclick="visitorForm()">Log a visitor</button>') +
     (mine.length ? '<div class="card tablewrap"><table><thead><tr><th>Visitor</th><th class="hide-sm">Purpose</th><th>Date</th><th>Code</th><th>Status</th></tr></thead><tbody>' +
-      mine.map(p => '<tr><td data-label="Visitor"><strong>'+esc(p.visitor)+'</strong>'+(p.plate!=='—'?'<div class="meta mono">'+esc(p.plate)+'</div>':'')+'</td>' +
+      mine.map(p => '<tr><td data-label="Visitor"><strong>'+esc(p.visitor)+'</strong><div class="meta">'+(passMode(p)==='Vehicle'
+          ? 'Vehicle'+(p.plate&&p.plate!=='—'?' · <span class="mono">'+esc(p.plate)+'</span>':'') : 'Commute / on foot')+'</div></td>' +
         '<td class="hide-sm" data-label="Purpose">'+esc(p.purpose)+'</td><td data-label="Date">'+fmtDate(p.date)+'</td><td class="mono" data-label="Code">'+esc(p.code)+'</td>' +
         '<td data-label="Status"><span class="tag '+statusTag(p.status)+'">'+esc(p.status)+'</span></td></tr>').join('') + '</tbody></table></div>'
       : '<div class="card">'+empty('No visitor passes yet','Log a visitor, delivery or contractor and the admin office will clear them for the gate.')+'</div>');
@@ -3293,6 +3294,8 @@ function cancelRide(id){
 }
 
 /* visitor passes */
+/* passes saved before the commute/vehicle choice existed: a plate means they drove */
+function passMode(p){ return p.transport || (p.plate && p.plate!=='—' ? 'Vehicle' : 'Commute'); }
 function genPassCode(){ return 'VS-'+Math.random().toString(36).slice(2,6).toUpperCase(); }
 function visitorForm(){
   modal('Log a visitor','The admin office reviews it before the code goes active at the gate.',
@@ -3300,13 +3303,17 @@ function visitorForm(){
     '<label class="fld"><span>Purpose</span><input class="input" id="f_vpurpose" placeholder="Family visit, delivery, contractor…"></label>' +
     '<div class="grid g-2" style="gap:0 12px">' +
       '<label class="fld"><span>Expected date</span><input class="input" id="f_vdate" type="date"></label>' +
-      '<label class="fld"><span>Plate number (optional)</span><input class="input" id="f_vplate" placeholder="ABC 1234"></label></div>',
+      '<label class="fld"><span>How are they coming?</span><select class="input" id="f_vmode" onchange="$(\'#f_vplatewrap\').classList.toggle(\'hide\', this.value!==\'Vehicle\')">' +
+        '<option value="Commute">Commute / on foot</option><option value="Vehicle">Vehicle</option></select></label></div>' +
+    '<label class="fld hide" id="f_vplatewrap"><span>Plate number</span><input class="input" id="f_vplate" placeholder="ABC 1234"></label>',
     'Submit pass', () => {
       const visitor=$('#f_vname').value.trim();
       if(!visitor){ toast('info','Add a name','Tell the gate who to expect.'); return false; }
+      const transport=$('#f_vmode').value, plate=$('#f_vplate').value.trim().toUpperCase();
+      if(transport==='Vehicle' && !plate){ toast('info','Add the plate number','The gate checks the plate when a visitor drives in.'); return false; }
       const item = { id:uid(), unit:myUnit(), visitor, purpose:$('#f_vpurpose').value.trim()||'Visit',
-        date:$('#f_vdate').value || new Date().toISOString().slice(0,10),
-        plate:$('#f_vplate').value.trim()||'—', code:genPassCode(), status:'Pending' };
+        date:$('#f_vdate').value || new Date().toISOString().slice(0,10), transport,
+        plate:transport==='Vehicle' ? plate : '—', code:genPassCode(), status:'Pending' };
       store.passes.unshift(item);
       commit('Visitor pass requested by unit '+myUnit()+' for '+visitor+'.',
         {title:'Pass submitted', audience:'admin'}); return true; });
