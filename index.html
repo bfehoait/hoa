@@ -550,7 +550,7 @@ const store = {
 
   accounts:[
     { id:'u0', name:'Arnel Bautista', email:'abautista.k7q2@hoa-community.ph', password:'', role:'admin',
-      unit:'Admin office', title:'President / Portal administrator', phone:'0917 555 0100', status:'Active', added:'2024-01-15', lastSeen:new Date(Date.now()-36e5*3) },
+      unit:'Admin office', title:'HOA President', phone:'0917 555 0100', status:'Active', added:'2024-01-15', lastSeen:new Date(Date.now()-36e5*3) },
     { id:'u1', name:'Rina Dela Cruz', email:'rdelacruz.m4x9@hoa-community.ph', password:'', role:'homeowner',
       unit:'B-12', title:'Owner of record', phone:'0917 555 0142', status:'Active', added:'2021-06-02', lastSeen:new Date(Date.now()-36e5*8) },
     { id:'u2', name:'Marco Villanueva', email:'mvillanueva.p3t8@hoa-community.ph', password:'', role:'homeowner',
@@ -802,6 +802,13 @@ const ROLE_MATRIX = [
     deny:'Dues, billing, Board records and resident data beyond the trip itself.' }
 ];
 const ROLE_LABEL = r => (ROLE_MATRIX.find(m=>m.role===r)||{label:r}).label;
+/* an admin's position (their account title, e.g. "HOA President"); empty for everyone else */
+function adminPosition(accountId){
+  const a = store.accounts.find(x=>x.id===accountId);
+  return a && a.role==='admin' ? String(a.title||'').trim() : '';
+}
+/* label shown beside a staff name: the admin's position when set, otherwise the role */
+function staffRole(role, accountId){ return adminPosition(accountId) || ROLE_LABEL(role); }
 
 const REQ_TYPES = ['Streetlight','Drainage','Landscaping','Security','Garbage collection','Common area repair'];
 const CMP_TYPES = ['Noise','Parking','Pets','Garbage','Construction','Boundary','Other'];
@@ -1327,6 +1334,7 @@ function render(){
   const badge = $('#roleBadge');
   badge.className = 'rolebadge ' + s.role;
   badge.innerHTML = '<i></i>' + esc(ROLE_LABEL(s.role)) +
+    (s.role==='admin' && adminPosition(s.accountId) ? '<span class="unit"> · '+esc(adminPosition(s.accountId))+'</span>' : '') +
     (s.role==='homeowner'||s.role==='renter' ? '<span class="unit"> · '+esc(s.unit)+'</span>' : '');
   paintBell(); applyTheme(); paintMsgBtn(); paintAvail();
   const availWrap = $('#availWrap'); if(availWrap) availWrap.classList.toggle('hide', s.role !== 'admin');
@@ -1342,7 +1350,7 @@ function render(){
 
   $('#sideFoot').innerHTML =
     '<div style="font-weight:650;color:var(--ink);font-size:13.5px">'+esc(s.name)+'</div>' +
-    '<div>'+esc(isAdmin() ? 'HOA Admin' : (s.role==='homeowner'||s.role==='renter') ? 'Unit '+s.unit : s.unit)+'</div>' +
+    '<div>'+esc(isAdmin() ? (adminPosition(s.accountId) || 'HOA Admin') : (s.role==='homeowner'||s.role==='renter') ? 'Unit '+s.unit : s.unit)+'</div>' +
     '<div style="margin-top:5px;font-size:11.5px">Signed in with '+esc(s.method==='password'?'email':s.method)+'</div>';
 
   const V = VIEWS[s.role] || HOME;
@@ -2250,7 +2258,7 @@ function sendChatMessage(){
   const item = findMsgItem(chatCtx.kind, chatCtx.id);
   const subj = MSG_KINDS[chatCtx.kind].subj(item);
   const staffSide = isStaffSide();
-  const roleLabel = staffSide ? ROLE_LABEL(store.session.role) : 'Unit '+myUnit();
+  const roleLabel = staffSide ? staffRole(store.session.role, store.session.accountId) : 'Unit '+myUnit();
   (item.replies = item.replies || []).push({ by:store.session.name, role:roleLabel, at:new Date(), text:val });
   if(staffSide && !item.handledBy) item.handledBy = { name:store.session.name, role:roleLabel };
   else if(!staffSide) autoAssign(item);
@@ -2281,11 +2289,11 @@ function pickAvailableAdmin(){
 function autoAssign(item){
   if(item.handledBy) return;
   const a = pickAvailableAdmin();
-  if(a) item.handledBy = { name:a.name, role:ROLE_LABEL(a.role) };
+  if(a) item.handledBy = { name:a.name, role:staffRole(a.role, a.id) };
 }
 function claimChat(){
   const item = findMsgItem(chatCtx.kind, chatCtx.id);
-  item.handledBy = { name:store.session.name, role:ROLE_LABEL(store.session.role) };
+  item.handledBy = { name:store.session.name, role:staffRole(store.session.role, store.session.accountId) };
   commit(store.session.name+' is now handling "'+MSG_KINDS[chatCtx.kind].subj(item)+'".',
     {title:'Conversation claimed',audience:['admin','board'],chat:{kind:chatCtx.kind,id:chatCtx.id}});
   refreshChat();
@@ -2443,6 +2451,8 @@ function accountSettings(){
       '<label class="fld"><span>Email</span><input class="input" id="pf_email" value="'+esc(s.email)+'" disabled></label>' +
       '<p class="meta" style="margin:-6px 0 12px">Your sign-in email is changed by the admin office.</p>' +
       '<label class="fld"><span>Mobile number</span><input class="input" id="pf_phone" value="'+esc(s.phone||'')+'"></label>' +
+      (s.role==='admin' ? '<label class="fld"><span>Position</span><input class="input" id="pf_position" value="'+esc(adminPosition(s.accountId))+'" placeholder="HOA President, Treasurer, Secretary…"></label>' +
+        '<p class="meta" style="margin:-6px 0 12px">Shown beside your name in the portal and on messages you send.</p>' : '') +
       '<label class="fld"><span>Unit</span><input class="input" value="'+esc(s.unit)+'" disabled></label>' +
       '<p class="meta" style="margin:-6px 0 12px">Unit assignment is changed by the admin office.</p>' +
       '<button class="btn btn-primary" style="width:auto" onclick="saveProfile()">Save profile</button></div>') +
@@ -3545,7 +3555,7 @@ function userForm(id, presetRole){
     '<div class="grid g-2" style="gap:0 12px">' +
       '<label class="fld"><span>Unit or post</span><input class="input" id="f_u" value="'+esc(a?a.unit:'')+'" placeholder="D-15 or Main gate"></label>' +
       '<label class="fld"><span>Mobile number</span><input class="input" id="f_p" value="'+esc(a?a.phone:'')+'" placeholder="0917 555 0000"></label></div>' +
-    '<label class="fld"><span>Title</span><input class="input" id="f_t" value="'+esc(a?a.title:'Owner of record')+'"></label>' +
+    '<label class="fld"><span>Title / position</span><input class="input" id="f_t" value="'+esc(a?a.title:'Owner of record')+'"></label>' +
     (a ? '' :
       '<label class="fld"><span>How they get access</span><select class="input" id="f_s" onchange="pwFieldToggle(this.value)">' +
         '<option value="Active">Set their password now — no email needed</option>' +
@@ -4024,6 +4034,7 @@ function saveProfile(){
   store.session.phone = $('#pf_phone').value.trim();
   const acct = store.accounts.find(a=>a.id===store.session.accountId);
   if(acct) Object.assign(acct, { name:store.session.name, email:store.session.email, phone:store.session.phone });
+  if(acct && acct.role==='admin' && $('#pf_position')) acct.title = $('#pf_position').value.trim();
   commit('Profile updated for '+store.session.name+'.',{title:'Profile saved'});
 }
 /* ---- profile photo: stored as a data URL, kept in this browser via localStorage ---- */
