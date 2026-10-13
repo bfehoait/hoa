@@ -807,7 +807,7 @@ function adminPosition(accountId){
   const a = store.accounts.find(x=>x.id===accountId);
   return a && a.role==='admin' ? String(a.title||'').trim() : '';
 }
-const ADMIN_POSITIONS = ['HOA President','Vice President','Secretary','Treasurer','Auditor','Board Member','Portal Administrator'];
+const ADMIN_POSITIONS = ['HOA President','Vice President','Secretary','Treasurer','Auditor','Board Member','BOD','BOD/Officer','Portal Administrator'];
 function adminPositionField(current){
   const cur = String(current||'').trim(), known = ADMIN_POSITIONS.includes(cur), other = !!cur && !known;
   return '<label class="fld"><span>Position</span><select class="input" id="f_pos" onchange="$(\'#f_pos_otherwrap\').classList.toggle(\'hide\', this.value!==\'Other\')">' +
