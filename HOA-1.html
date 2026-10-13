@@ -807,6 +807,20 @@ function adminPosition(accountId){
   const a = store.accounts.find(x=>x.id===accountId);
   return a && a.role==='admin' ? String(a.title||'').trim() : '';
 }
+const ADMIN_POSITIONS = ['HOA President','Vice President','Secretary','Treasurer','Auditor','Board Member','Portal Administrator'];
+function adminPositionField(current){
+  const cur = String(current||'').trim(), known = ADMIN_POSITIONS.includes(cur), other = !!cur && !known;
+  return '<label class="fld"><span>Position</span><select class="input" id="f_pos" onchange="$(\'#f_pos_otherwrap\').classList.toggle(\'hide\', this.value!==\'Other\')">' +
+      '<option value="">Choose a position</option>' +
+      ADMIN_POSITIONS.map(x=>'<option'+(x===cur?' selected':'')+'>'+esc(x)+'</option>').join('') +
+      '<option value="Other"'+(other?' selected':'')+'>Other…</option></select></label>' +
+    '<label class="fld'+(other?'':' hide')+'" id="f_pos_otherwrap"><span>Other position</span>' +
+      '<input class="input" id="f_pos_other" value="'+(other?esc(cur):'')+'" placeholder="Committee Chair"></label>';
+}
+function adminPositionValue(){
+  const v = $('#f_pos') ? $('#f_pos').value : '';
+  return v==='Other' ? $('#f_pos_other').value.trim() : v;
+}
 /* label shown beside a staff name: the admin's position when set, otherwise the role */
 function staffRole(role, accountId){ return adminPosition(accountId) || ROLE_LABEL(role); }
 
@@ -1572,7 +1586,7 @@ const ADMIN = {
     const admins = store.accounts.filter(a=>a.role==='admin'||a.role==='security'||a.role==='board'||a.role==='driver');
     const card = a =>
       '<tr><td data-label="Name"><button class="btn-ghost" style="border:0;background:none;padding:0;cursor:pointer;text-align:left;font:inherit;color:var(--slate)" onclick="homeownerProfile(\''+a.unit+'\')"><strong>'+esc(a.name)+'</strong></button><div class="meta">'+esc(a.email)+'</div></td>' +
-      '<td data-label="Role"><span class="tag t-grey">'+esc(ROLE_LABEL(a.role))+'</span><div class="meta mono">'+esc(a.unit)+'</div></td>' +
+      '<td data-label="Role"><span class="tag t-grey">'+esc(ROLE_LABEL(a.role))+'</span>'+(a.role==='admin'&&a.title?'<div class="meta">'+esc(a.title)+'</div>':'')+'<div class="meta mono">'+esc(a.unit)+'</div></td>' +
       '<td class="hide-sm" data-label="Mobile">'+esc(a.phone||'—')+'</td>' +
       '<td class="hide-sm meta" data-label="Last seen">'+(a.lastSeen?ago(a.lastSeen):'Never signed in')+'</td>' +
       '<td data-label="Status"><span class="tag '+(a.status==='Active'?'t-emerald':a.status==='Invited'?'t-amber':'t-rose')+'">'+esc(a.status)+'</span></td>' +
@@ -3555,7 +3569,8 @@ function userForm(id, presetRole){
     '<div class="grid g-2" style="gap:0 12px">' +
       '<label class="fld"><span>Unit or post</span><input class="input" id="f_u" value="'+esc(a?a.unit:'')+'" placeholder="D-15 or Main gate"></label>' +
       '<label class="fld"><span>Mobile number</span><input class="input" id="f_p" value="'+esc(a?a.phone:'')+'" placeholder="0917 555 0000"></label></div>' +
-    '<label class="fld"><span>Title / position</span><input class="input" id="f_t" value="'+esc(a?a.title:'Owner of record')+'"></label>' +
+    '<div id="f_t_wrap"'+(role==='admin'?' class="hide"':'')+'><label class="fld"><span>Title</span><input class="input" id="f_t" value="'+esc(a?a.title:'Owner of record')+'"></label></div>' +
+    '<div id="f_pos_wrap"'+(role==='admin'?'':' class="hide"')+'>'+adminPositionField(a&&a.role==='admin'?a.title:'')+'</div>' +
     (a ? '' :
       '<label class="fld"><span>How they get access</span><select class="input" id="f_s" onchange="pwFieldToggle(this.value)">' +
         '<option value="Active">Set their password now — no email needed</option>' +
@@ -3578,9 +3593,11 @@ function userForm(id, presetRole){
       const clash = store.accounts.find(x => x.email.toLowerCase()===email && x.id!==(a&&a.id));
       if(clash){ toast('info','Email already in use',ROLE_LABEL(clash.role)+' account '+clash.unit+' already signs in with that address.'); return false; }
       if(res && !unit){ toast('info','Add a unit','Resident accounts are tied to a unit number.'); return false; }
+      const title = chosen==='admin' ? adminPositionValue() : $('#f_t').value.trim();
+      if(chosen==='admin' && !title){ toast('info','Add a position','Pick the administrator\u2019s position, such as HOA President or Treasurer.'); return false; }
 
       if(a){
-        Object.assign(a, { name, email, unit:unit||a.unit, phone:$('#f_p').value.trim(), title:$('#f_t').value.trim() });
+        Object.assign(a, { name, email, unit:unit||a.unit, phone:$('#f_p').value.trim(), title });
         if(store.session.accountId===a.id){ store.session.name=a.name; store.session.email=a.email; }
         commit('Account updated for '+name+' ('+ROLE_LABEL(a.role)+').',{title:'Account updated'});
         return true;
@@ -3590,7 +3607,7 @@ function userForm(id, presetRole){
       if(status==='Active' && pw.length < 8){ toast('info','Password too short','Use at least eight characters.'); return false; }
       const temp = '';
       store.accounts.push({ id:uid(), name, email, password:temp, role:chosen, unit:unit||'Admin office',
-        title:$('#f_t').value.trim()||ROLE_LABEL(chosen), phone:$('#f_p').value.trim(),
+        title:title||ROLE_LABEL(chosen), phone:$('#f_p').value.trim(),
         status, added:new Date().toISOString().slice(0,10), lastSeen:null });
 
       const reg = $('#f_reg');
@@ -3603,7 +3620,7 @@ function userForm(id, presetRole){
             amount:unitDues(unit), status:'Unpaid', method:'', paidAt:null });
       }
       commit(status==='Active'
-        ? ROLE_LABEL(chosen)+' account added for '+name+'.'
+        ? ROLE_LABEL(chosen)+' account added for '+name+(chosen==='admin'?' ('+title+')':'')+'.'
         : 'Invitation sent to '+email+' as '+ROLE_LABEL(chosen)+'.',
         {title:'Account added'});
       if(status==='Active') setLogin(email, pw, name); else sendInvite(email, name);
@@ -3616,6 +3633,9 @@ function rolePreview(r){
   const e = $('#rp_exp'), d = $('#rp_deny');
   if(e) e.textContent = m.exp;
   if(d) d.textContent = m.deny;
+  const tw = $('#f_t_wrap'), pw = $('#f_pos_wrap');
+  if(tw) tw.classList.toggle('hide', r==='admin');
+  if(pw) pw.classList.toggle('hide', r!=='admin');
 }
 function setUserStatus(id, status){
   const a = store.accounts.find(x=>x.id===id);
