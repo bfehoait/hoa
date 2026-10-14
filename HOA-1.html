@@ -418,6 +418,11 @@ html[data-theme="dark"] .lh-verified{color:#4C9BFF}
 .lh-row-click:hover,.lh-row-click:focus-visible{background:var(--paper)}
 .lh-all-right{font-family:var(--display);font-weight:700;font-size:14.5px;white-space:nowrap;text-align:right;color:var(--ink)}
 @media(max-width:520px){.lh-all-right{display:none}}
+.lh-owner{margin-top:12px;padding-top:10px;border-top:1px solid var(--line);display:grid;gap:4px;font-size:13px}
+.lh-owner div{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;min-width:0}
+.lh-owner span{color:var(--ink-3);min-width:62px}
+.lh-owner span.mono{min-width:0;font-size:12px}
+.lh-owner b{color:var(--ink);font-weight:600}
 .lh-search{position:relative;display:flex;gap:8px;align-items:center;margin-bottom:14px}
 .lh-search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-3);pointer-events:none}
 .lh-search .input{padding-left:38px;flex:1;min-width:0}
@@ -1181,13 +1186,13 @@ function lhAllRow(r){
   const m = r.m, sec = mktSection(m), ph = lhPhotos(m), links = lhBizLinks(m);
   const thumb = sec==='business' ? lhLogoBox(m, 44)
     : '<span class="lh-logo" style="width:44px;height:44px">'+(ph[0] ? '<img src="'+ph[0]+'" alt="" style="object-fit:cover">' : svg(LH_WORDS[sec].icon))+'</span>';
-  const sub = sec==='business' ? '<span>'+esc(lhItemCat(m))+'</span>'+(m.hours?'<span>'+esc(m.hours)+'</span>':'')
+  const sub = sec==='business' ? '<span>'+esc(lhItemCat(m))+'</span><span>Owner: '+esc(m.by)+' · '+esc(m.unit)+'</span>'
     : sec==='garage' ? '<span>'+esc(fmtDate(m.date)+' · '+fmtTime(m.start)+' – '+fmtTime(m.end))+'</span><span>'+esc(garageVenue(m))+'</span>'
     : (mktKind(m)==='Wanted'?'<span class="tag t-amber">Wanted</span>':'')+'<span>'+esc(lhItemCat(m))+'</span>'+(m.condition?'<span>'+esc(m.condition)+'</span>':'');
   const right = sec==='business' ? links.map(w=>esc(w.label)).join(' · ') : sec==='garage' ? 'Garage sale' : lhPriceLabel(m);
   return '<li class="lh-row-click"'+open("openLh('"+m.id+"')")+'><div class="row" style="align-items:center">' + thumb +
     '<div class="grow" style="min-width:0"><div class="ttl">'+esc(m.title)+lhVerified(m)+'</div>' +
-    '<div class="meta"><span class="tag t-slate">'+esc(r.sec.label)+'</span>'+sub+'<span>'+esc(m.by)+'</span></div></div>' +
+    '<div class="meta"><span class="tag t-slate">'+esc(r.sec.label)+'</span>'+sub+(sec==='business'?'':'<span>'+esc(m.by)+'</span>')+'</div></div>' +
     '<div class="lh-all-right">'+right+'</div></div></li>';
 }
 function lhAllAdminView(){
@@ -2182,7 +2187,7 @@ const ADMIN = {
         const colName = sec==='business' ? 'Business' : sec==='garage' ? 'Garage sale' : 'Listing';
         const colVal = sec==='garage' ? 'When' : sec==='business' ? 'Website' : 'Price';
         inner = (sec==='garage' ? '' : mktCatChips(all, key, lhCats(sec))) + sectionCard('All '+W.nouns, shown.length
-          ? '<div class="tablewrap"><table class="mkt-listings"><thead><tr><th>'+colName+'</th><th class="hide-sm">Resident</th><th>'+colVal+'</th><th>Status</th><th class="hide-sm">Decided</th><th></th></tr></thead><tbody>' +
+          ? '<div class="tablewrap"><table class="mkt-listings"><thead><tr><th>'+colName+'</th><th class="hide-sm">'+(sec==='business'?'Owner':'Resident')+'</th><th>'+colVal+'</th><th>Status</th><th class="hide-sm">Decided</th><th></th></tr></thead><tbody>' +
           shown.map(m => '<tr><td data-label="'+colName+'"><button class="linkbtn" onclick="openLh(\''+m.id+'\')">'+esc(m.title)+'</button>'+lhVerified(m) +
               '<div class="meta">'+(sec==='buysell'?(mktKind(m)==='Wanted'?'Wanted · ':'For sale · '):'')+esc(lhItemCat(m))+'</div></td>' +
             '<td class="hide-sm" data-label="Resident">'+esc(m.by)+'<div class="meta mono">'+esc(m.unit)+'</div></td>' +
@@ -2577,8 +2582,11 @@ function bizCard(m){
         '<div class="grow" style="min-width:0"><div class="ttl">'+esc(m.title)+lhVerified(m)+'</div>' +
         '<div class="meta"><span class="tag t-grey">'+esc(lhItemCat(m))+'</span></div></div></div>' +
       '<div class="body">'+esc(m.description)+'</div>' +
-      (m.hours?'<div class="meta" style="margin-top:10px"><span>'+esc(m.hours)+'</span></div>':'') +
-      '<div class="meta" style="margin-top:6px"><span class="mono">'+esc(m.unit)+'</span>·<span>'+esc(m.by)+'</span>'+(m.contact?'·<span class="mono">'+esc(m.contact)+'</span>':'')+'</div>' +
+      '<div class="lh-owner">' +
+        '<div><span>Owner</span><b>'+esc(m.by)+'</b><span class="mono">Unit '+esc(m.unit)+'</span></div>' +
+        (m.contact?'<div><span>Contact</span><b class="mono">'+esc(m.contact)+'</b></div>':'') +
+        (m.hours?'<div><span>Hours</span><b>'+esc(m.hours)+'</b></div>':'') +
+      '</div>' +
       (lhBizLinks(m).length ? '<div class="btn-row" style="margin-top:12px">'+lhWebButton(m)+'</div>' : '') +
     '</div></div>';
 }
@@ -4101,6 +4109,14 @@ function handleBizLogoFile(e){
     const p = document.getElementById('bizLogoPreview'); if(p) p.innerHTML = '<img src="'+url+'" alt="Logo preview">';
   }, msg => toast('info','Could not use that logo', msg));
 }
+/* residents an admin can hand a business to; the current owner stays first even if their account is gone */
+function lhOwnerOptions(b){
+  const people = store.accounts.filter(a => (a.role==='homeowner' || a.role==='renter') && a.status!=='Suspended')
+    .sort((x,y) => String(x.unit).localeCompare(String(y.unit)) || x.name.localeCompare(y.name));
+  const current = people.find(a => a.name===b.by && a.unit===b.unit);
+  return (current ? '' : '<option value="keep" selected>'+esc(b.by)+' · '+esc(b.unit)+' (current)</option>') +
+    people.map(a => '<option value="'+a.id+'"'+(a===current?' selected':'')+'>'+esc(a.name)+' · '+esc(a.unit)+(a===current?' (current)':'')+(a.role==='renter'?' · renter':'')+'</option>').join('');
+}
 function businessForm(id){
   const b = id ? store.marketplace.find(x=>x.id===id) : null;
   const admin = isAdmin();                       /* the admin office edits in place; owners' edits go back for review */
@@ -4109,7 +4125,8 @@ function businessForm(id){
     b ? (admin ? 'Saved straight to the directory. The owner gets a notice that the office updated their profile.'
                : 'Changes go back to the admin office for a quick review before they show in the directory.')
       : 'Your business stays in the Business directory once the admin office approves it. The office can also mark it verified after checking your permits.',
-    (admin && b ? '<div class="card card-pad" style="background:var(--paper);margin-bottom:14px"><div class="meta" style="margin:0"><span>Owner</span><b style="color:var(--ink)">'+esc(b.by)+'</b><span class="mono">'+esc(b.unit)+'</span><span class="tag '+statusTag(lhStatus(b))+'">'+esc(lhStatus(b))+'</span></div></div>' : '') +
+    (admin && b ? '<label class="fld"><span>Owner · currently '+esc(lhStatus(b).toLowerCase())+'</span><select class="input" id="f_owner">' + lhOwnerOptions(b) + '</select></label>' +
+      '<p class="meta" style="display:block;margin:-6px 0 14px">Pick another resident to hand the business over. It moves to their “My businesses”.</p>' : '') +
     lhLogoPicker(b ? lhLogo(b) : '') +
     '<label class="fld"><span>Business name</span><input class="input" id="f_title" value="'+esc(b?b.title:'')+'" placeholder="Rina’s Kakanin Kitchen"></label>' +
     '<div class="grid g-2" style="gap:0 12px">' +
@@ -4138,9 +4155,13 @@ function businessForm(id){
         fbPage: fb ? fb.url : '', website: web ? web.url : '', contact, logo:pendingLogo||'' };
       if(b && admin){
         const verify = $('#f_verified') && $('#f_verified').getAttribute('aria-checked')==='true';
+        const pick = $('#f_owner') ? $('#f_owner').value : '', newOwner = pick && pick!=='keep' ? store.accounts.find(a=>a.id===pick) : null;
+        const oldUnit = b.unit, moved = newOwner && (newOwner.name!==b.by || newOwner.unit!==b.unit);
         Object.assign(b, fields);
+        if(moved){ b.by = newOwner.name; b.unit = newOwner.unit; b.ownerId = newOwner.id; }
         if(verify !== !!b.verified){ b.verified = verify; b.verifiedBy = verify ? store.session.name : ''; b.verifiedAt = verify ? new Date() : null; }
-        commit('Business “'+title+'” updated by the admin office.', {title:'Business profile updated', forUnit:b.unit, go:'marketplace'});
+        if(moved) commit('“'+title+'” moved from unit '+oldUnit+' to '+b.by+' ('+b.unit+').', {title:'Business owner changed', forUnit:oldUnit, go:'marketplace'});
+        commit('Business “'+title+'” updated by the admin office'+(moved?' — '+b.by+' is now the owner':'')+'.', {title:'Business profile updated', forUnit:b.unit, go:'marketplace'});
         return true;
       }
       if(b){
