@@ -407,6 +407,9 @@ tr:last-child td{border-bottom:0}
 .lh-thumb button{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;border:0;background:rgba(16,23,37,.72);color:#fff;font-size:13px;line-height:20px;cursor:pointer;padding:0}
 .lh-thumb.add{display:grid;place-items:center;font:inherit;font-size:12.5px;font-weight:600;color:var(--slate-dk);cursor:pointer;border-style:dashed}
 .lh-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:14px}
+a.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
+.lh-msgr{background:#0866FF;color:#fff}
+.lh-msgr:hover{background:#0757D9}
 .lh-search{position:relative;display:flex;gap:8px;align-items:center;margin-bottom:14px}
 .lh-search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-3);pointer-events:none}
 .lh-search .input{padding-left:38px;flex:1;min-width:0}
@@ -1045,6 +1048,40 @@ function lhMeta(m){
     (m.condition?'<span>'+esc(m.condition)+'</span>':'') + '<span class="mono">'+lhPriceLabel(m)+'</span>';
 }
 function lhDetail(m){ return mktSection(m)==='garage' ? esc(garageWhen(m)) : (lhPriceLabel(m) || '—'); }
+/* Facebook / Messenger: accept a profile or Messenger link (or a bare username) and turn it into safe links;
+   only Facebook-owned hosts are allowed, so nothing else can be smuggled into the button */
+function lhFbLinks(raw){
+  let v = String(raw||'').trim();
+  if(!v) return null;
+  if(/^@?[A-Za-z0-9.]{3,50}$/.test(v)) v = 'facebook.com/'+v.replace(/^@/,'');
+  if(!/^https?:\/\//i.test(v)) v = 'https://'+v;
+  let u; try{ u = new URL(v); }catch(e){ return null; }
+  const host = u.hostname.toLowerCase().replace(/^(www|m|web)\./,'');
+  const parts = u.pathname.split('/').filter(Boolean);
+  if(host==='m.me' || host==='me'){ return parts[0] ? { fb:'', msgr:'https://m.me/'+encodeURIComponent(parts[0]) } : null; }
+  if(host==='messenger.com'){ const id = parts[0]==='t' ? parts[1] : null; return id ? { fb:'', msgr:'https://m.me/'+encodeURIComponent(id) } : null; }
+  if(host==='facebook.com' || host==='fb.com'){
+    if(parts[0]==='profile.php'){ const id = u.searchParams.get('id'); return id && /^\d+$/.test(id) ? { fb:'https://www.facebook.com/profile.php?id='+id, msgr:'https://m.me/'+id } : null; }
+    const name = parts[0];
+    if(!name || !/^[A-Za-z0-9.]{3,50}$/.test(name) || ['groups','pages','events','marketplace','watch','share','photo','story.php','permalink.php'].includes(name.toLowerCase())) return null;
+    return { fb:'https://www.facebook.com/'+name, msgr:'https://m.me/'+name };
+  }
+  return null;
+}
+function lhLastFbLink(){
+  const mine = store.marketplace.filter(m=>m.unit===myUnit() && m.fbLink).sort((a,b)=>+new Date(b.submittedAt)-+new Date(a.submittedAt));
+  return mine.length ? mine[0].fbLink : '';
+}
+function lhSocialButtons(m, compact){
+  const l = lhFbLinks(m.fbLink); if(!l) return '';
+  const stop = 'event.stopPropagation()';
+  return '<div class="btn-row" style="margin-top:'+(compact?'10px':'12px')+'">' +
+    '<a class="btn btn-primary btn-sm lh-msgr" style="width:auto" href="'+esc(l.msgr)+'" target="_blank" rel="noopener noreferrer" onclick="'+stop+'">' +
+      '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.4 2 2 6.1 2 11.5c0 2.9 1.3 5.4 3.4 7.2V22l3.1-1.7c1.1.3 2.3.5 3.5.5 5.6 0 10-4.1 10-9.3S17.6 2 12 2zm1 12.4-2.5-2.7-5 2.7 5.5-5.8 2.6 2.7 4.9-2.7-5.5 5.8z"/></svg>' +
+      (mktKind(m)==='Wanted' ? 'Message the buyer' : 'Message on Messenger')+'</a>' +
+    (l.fb && !compact ? '<a class="btn btn-ghost btn-sm" style="width:auto" href="'+esc(l.fb)+'" target="_blank" rel="noopener noreferrer" onclick="'+stop+'">Facebook profile</a>' : '') +
+  '</div>';
+}
 /* ---- search: one box filters whichever section is open; the section cards show matches in every section ---- */
 let lhSearch = '';
 function onLhSearch(v){
@@ -2474,6 +2511,7 @@ function mktCard(m){
         (wanted?'<div class="meta" style="justify-content:flex-end;margin-top:0">budget</div>':'')+'</div></div>' +
       '<div class="body">'+esc(m.description)+'</div>' +
       (biz?'<div class="meta" style="margin-top:10px"><span>Sold by</span><button class="linkbtn" onclick="event.stopPropagation();openLh(\''+biz.id+'\')">'+esc(biz.title)+'</button></div>':'') +
+      lhSocialButtons(m, true) +
       '<div class="meta" style="margin-top:10px"><span class="mono">'+esc(m.unit)+'</span>·<span>'+esc(m.by)+'</span>·<span>'+ago(m.decidedAt||m.submittedAt)+'</span></div>' +
     '</div></div>';
 }
@@ -2536,6 +2574,7 @@ function lhAdminPendingRow(m){
     (biz?'<div class="meta"><span>Posted for '+esc(biz.title)+'</span></div>':'') +
     '<div class="body">'+esc(m.description)+'</div>' +
     (m.contact?'<div class="meta" style="margin-top:6px"><span>Contact</span><span class="mono">'+esc(m.contact)+'</span>'+(ph.length?'·<span>'+ph.length+' photo'+(ph.length===1?'':'s')+'</span>':'')+'</div>':'') +
+    (lhFbLinks(m.fbLink) ? '<div class="meta"><span>Facebook</span><a href="'+esc(lhFbLinks(m.fbLink).fb||lhFbLinks(m.fbLink).msgr)+'" target="_blank" rel="noopener noreferrer">'+esc((lhFbLinks(m.fbLink).fb||lhFbLinks(m.fbLink).msgr).replace(/^https:\/\/(www\.)?/,''))+'</a><span>— check it belongs to '+esc(m.by)+'</span></div>' : '') +
     '<div class="btn-row" style="margin-top:11px">' +
       '<button class="btn btn-ghost btn-sm" onclick="openLh(\''+m.id+'\')">View details</button>' +
       '<button class="btn btn-emerald btn-sm" onclick="approveMkt(\''+m.id+'\')">Approve</button>' +
@@ -2581,6 +2620,7 @@ function openLh(id){
     rows.map(([k,v])=>'<div class="kv"><span>'+esc(k)+'</span><b>'+esc(v)+'</b></div>').join('') +
     (biz ? '<div class="kv"><span>Business</span><b><button class="linkbtn" onclick="openLh(\''+biz.id+'\')">'+esc(biz.title)+'</button></b></div>' : '') +
     vendorAt.map(e=>'<div class="kv"><span>Find them at</span><b>'+esc(e.title)+' · '+fmtDate(e.date)+'</b></div>').join('') +
+    (m.unit!==myUnit() ? lhSocialButtons(m, false) : '') +
     '<p class="meta" style="display:block;margin-top:12px">Payment is arranged directly with the resident — GCash, bank transfer or cash. The HOA does not handle payments.</p>',
     'Close', () => true);
   const c = document.getElementById('mCancel'); if(c) c.classList.add('hide'); /* an info view needs one button */
@@ -3959,15 +3999,20 @@ function marketplaceForm(){
       '<label class="fld"><span>Contact number</span><input class="input" id="f_contact" value="'+esc(store.session.phone||'')+'" placeholder="0917 555 0000"></label>' +
       '<label class="fld"><span>Post as</span><select class="input" id="f_biz"><option value="">Myself (personal sale)</option>' +
         mine.map(b=>'<option value="'+b.id+'">'+esc(b.title)+'</option>').join('')+'</select></label></div>' +
-    (mine.length ? '' : '<p class="meta" style="display:block;margin:-6px 0 4px">Selling for your business? List it in the Business directory first, then pick it under Post as.</p>'),
+    (mine.length ? '' : '<p class="meta" style="display:block;margin:-6px 0 12px">Selling for your business? List it in the Business directory first, then pick it under Post as.</p>') +
+    '<label class="fld"><span>Facebook or Messenger link (optional)</span><input class="input" id="f_fb" autocomplete="off" value="'+esc(lhLastFbLink())+'" placeholder="facebook.com/yourname or m.me/yourname"></label>' +
+    '<p class="meta" style="display:block;margin:-6px 0 4px">Buyers get a “Message on Messenger” button so you can chat and arrange the deal.</p>',
     'Submit for approval', () => {
       const kind=$('#f_kind').value, title=$('#f_title').value.trim(), price=Number($('#f_price').value), cond=$('#f_cond').value;
       if(!title){ toast('info','Add a title','Give your listing a short title.'); return false; }
       if(!price || price<=0){ toast('info', kind==='Wanted'?'Add a budget':'Add a price', kind==='Wanted'?'Enter the most you would pay.':'Enter a price greater than zero.'); return false; }
       if(kind==='Sell' && !cond){ toast('info','Choose the condition','Let buyers know what shape it is in.'); return false; }
+      const fbRaw = $('#f_fb').value.trim(), fb = lhFbLinks(fbRaw);
+      if(fbRaw && !fb){ toast('info','Check the Facebook link','Use your Facebook profile link (facebook.com/yourname) or Messenger link (m.me/yourname), or leave it blank.'); return false; }
       lhSubmitted({ id:uid(), section:'buysell', kind, unit:myUnit(), by:store.session.name, title,
         description:$('#f_desc').value.trim()||'No further details given.', price, category:$('#f_cat').value,
         condition: cond || 'Any condition', contact:$('#f_contact').value.trim(), businessId:$('#f_biz').value||'',
+        fbLink: fb ? fb.fb || fb.msgr : '',
         status:'Pending', rejectReason:'', submittedAt:new Date(), decidedAt:null, decidedBy:'' }, kind==='Wanted' ? 'Wanted listing' : 'Listing');
       return true; });
 }
