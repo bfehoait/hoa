@@ -410,6 +410,14 @@ tr:last-child td{border-bottom:0}
 a.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
 .lh-msgr{background:#0866FF;color:#fff}
 .lh-msgr:hover{background:#0757D9}
+.lh-logo{display:grid;place-items:center;flex:none;border-radius:12px;background:var(--surface);border:1px solid var(--line);overflow:hidden;color:var(--slate-dk);font-family:var(--display);font-weight:800}
+.lh-logo img{width:100%;height:100%;object-fit:contain;display:block}
+.lh-verified{display:inline-flex;vertical-align:-3px;margin-left:5px;color:#1877F2}
+html[data-theme="dark"] .lh-verified{color:#4C9BFF}
+.lh-row-click{cursor:pointer;transition:background .12s}
+.lh-row-click:hover,.lh-row-click:focus-visible{background:var(--paper)}
+.lh-all-right{font-family:var(--display);font-weight:700;font-size:14.5px;white-space:nowrap;text-align:right;color:var(--ink)}
+@media(max-width:520px){.lh-all-right{display:none}}
 .lh-search{position:relative;display:flex;gap:8px;align-items:center;margin-bottom:14px}
 .lh-search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-3);pointer-events:none}
 .lh-search .input{padding-left:38px;flex:1;min-width:0}
@@ -695,12 +703,12 @@ const store = {
     { id:'m4', section:'business', unit:'B-12', by:'Rina Dela Cruz', title:'Rina’s Kakanin Kitchen',
       description:'Kakanin and Filipino desserts made to order. Pickup at B-12, or delivery inside the subdivision for orders over ₱500.',
       price:180, category:'Food & Catering', hours:'Tue–Sun, 7:00 AM – 5:00 PM', contact:'0917 555 0142', photo:'', photos:[],
-      offers:[{ name:'Bibingka (6 pieces)', price:180 }, { name:'Sapin-sapin tray', price:350 }, { name:'Party tray for 20 guests', price:1200 }],
+      website:'', logo:'', verified:true, verifiedBy:'Arnel Bautista', verifiedAt:new Date(Date.now()-864e5*11),
       status:'Approved', rejectReason:'', submittedAt:new Date(Date.now()-864e5*12), decidedAt:new Date(Date.now()-864e5*11), decidedBy:'Arnel Bautista' },
     { id:'m5', section:'business', unit:'D-07', by:'Ferdie Lim', title:'Lim Aircon Cleaning',
       description:'Aircon cleaning for residents, with a quick check of the gas and drainage.',
       price:600, category:'Home Services & Repairs', hours:'Sat–Sun, 8:00 AM – 4:00 PM', contact:'0917 555 0188', photo:'', photos:[],
-      offers:[{ name:'Split-type cleaning', price:800 }, { name:'Window-type cleaning', price:600 }],
+      website:'', logo:'', verified:false,
       status:'Pending', rejectReason:'', submittedAt:new Date(Date.now()-36e5*5), decidedAt:null, decidedBy:'' },
     { id:'m6', section:'garage', unit:'A-04', by:'Marco Villanueva', title:'Moving-out garage sale',
       description:'Everything must go before we move. Cash or GCash.',
@@ -1028,8 +1036,7 @@ function lhStatus(m){
 }
 function lhPriceLabel(m){
   const sec = mktSection(m);
-  if(sec==='business'){ const p = lhFromPrice(m); return p ? 'From '+peso(p) : ''; }
-  if(sec==='garage') return '';
+  if(sec==='business' || sec==='garage') return '';
   return (mktKind(m)==='Wanted' ? 'Budget ' : '')+peso(m.price);
 }
 /* the detail line under a title: what kind of item it is, plus price, offers or date depending on the section */
@@ -1041,8 +1048,8 @@ function lhMeta(m){
     return tag+'<span>'+esc(garageWhen(m))+'</span>'+(n?'<span>'+n+' item'+(n===1?'':'s')+'</span>':'');
   }
   if(sec==='business'){
-    const n = lhOffers(m).length;
-    return tag+(n?'<span>'+n+' offer'+(n===1?'':'s')+'</span>':'')+(lhPriceLabel(m)?'<span>'+lhPriceLabel(m)+'</span>':'');
+    const web = lhWebLink(m.website);
+    return tag+(m.verified?'<span class="tag t-slate">Verified</span>':'')+(web?'<span>'+esc(web.host)+'</span>':'')+(m.hours?'<span>'+esc(m.hours)+'</span>':'');
   }
   return (mktKind(m)==='Wanted' ? '<span class="tag t-amber">Wanted</span>' : '<span class="tag t-slate">For sale</span>') + tag +
     (m.condition?'<span>'+esc(m.condition)+'</span>':'') + '<span class="mono">'+lhPriceLabel(m)+'</span>';
@@ -1097,7 +1104,7 @@ function lhHit(text){ const t = lhTerms(), h = text.toLowerCase(); return t.ever
 function lhMatch(m){
   if(!lhTerms().length) return true;
   return lhHit([m.title, m.description, m.by, m.unit, lhItemCat(m), m.condition, m.hours, m.kind==='Wanted'?'wanted':'',
-    lhOffers(m).map(o=>o.name).join(' '), lhItems(m).filter(i=>i.status==='Approved'||isAdmin()).map(i=>i.name).join(' '),
+    m.verified?'verified':'', (lhWebLink(m.website)||{}).host, lhItems(m).filter(i=>i.status==='Approved'||isAdmin()).map(i=>i.name).join(' '),
     (lhBusiness(m.businessId)||{}).title].filter(Boolean).join(' '));
 }
 function boothMatch(e){
@@ -1113,30 +1120,65 @@ function lhSearchBar(admin){
       'placeholder="'+(admin?'Search by name, resident, unit or item…':'Search businesses, items, garage sales and events…')+'" oninput="onLhSearch(this.value)">' +
     (q ? '<button type="button" class="btn btn-ghost btn-sm" onclick="onLhSearch(\'\')">Clear</button>' : '') + '</div>';
 }
-/* everything in one view: residents see each section's newest few, the admin office gets one review queue */
+/* ---- business profile pieces: website link, logo, verified check ---- */
+/* a business's own website or Facebook page: any http(s) address with a real domain, cleaned up */
+function lhWebLink(raw){
+  let v = String(raw||'').trim(); if(!v) return null;
+  if(!/^https?:\/\//i.test(v)) v = 'https://'+v;
+  let u; try{ u = new URL(v); }catch(e){ return null; }
+  if(!/^https?:$/.test(u.protocol) || u.username || u.password || !/\.[a-z]{2,}$/i.test(u.hostname)) return null;
+  const host = u.hostname.toLowerCase().replace(/^(www|m|web)\./,'');
+  const fb = host==='facebook.com' || host==='fb.com';
+  return { url:u.href, fb, label: fb ? 'Facebook page' : 'Website', host: host + (fb && u.pathname.length>1 ? u.pathname.replace(/\/$/,'') : '') };
+}
+function lhWebButton(m, cls){
+  const w = lhWebLink(m.website); if(!w) return '';
+  return '<a class="btn '+(cls||'btn-ghost')+' btn-sm" style="width:auto" href="'+esc(w.url)+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">'+(w.fb?'Facebook page':'Visit website')+' ↗</a>';
+}
+function lhLogo(m){ return m.logo || lhPhotos(m)[0] || ''; }
+function lhLogoBox(m, size){
+  const l = lhLogo(m);
+  return '<span class="lh-logo" style="width:'+size+'px;height:'+size+'px;font-size:'+Math.round(size/3)+'px">'+(l ? '<img src="'+l+'" alt="'+esc(m.title)+' logo">' : esc(initials(m.title)))+'</span>';
+}
+function lhVerified(m){
+  return m && m.verified ? '<span class="lh-verified" title="Verified by the HOA admin office" role="img" aria-label="Verified business">' +
+    '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.6l2.5 1.8 3.1-.1 1 2.9 2.5 1.8-1 3 1 3-2.5 1.8-1 2.9-3.1-.1L12 22.4l-2.5-1.8-3.1.1-1-2.9-2.5-1.8 1-3-1-3 2.5-1.8 1-2.9 3.1.1z"/>' +
+    '<path d="m8.2 12.2 2.5 2.5 5.1-5.2" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' : '';
+}
+/* everything in one plain list, newest first; residents tap a row for details */
 function lhAllMemberView(){
-  const searching = lhTerms().length > 0;
-  const groups = LH_SECTIONS.map(x => {
-    let list, cards;
-    if(x.id==='booths'){ list = boothUpcoming(); cards = '<div class="grid g-2">'+list.slice(0,2).map(boothEventCard).join('')+'</div>'; }
-    else {
-      list = lhLiveItems(x.id).filter(lhMatch);
-      if(x.id==='garage') list = list.slice().sort((a,b)=>garageStart(a)-garageStart(b));
-      else list = list.slice().sort((a,b)=>+new Date(b.decidedAt||b.submittedAt) - +new Date(a.decidedAt||a.submittedAt));
-      const fn = x.id==='business' ? bizCard : x.id==='garage' ? garageCard : mktCard;
-      cards = '<div class="grid g-3">'+list.slice(0,3).map(fn).join('')+'</div>';
-    }
-    return { x, n:list.length, cards };
+  const rows = [];
+  LH_SECTIONS.forEach(x => {
+    if(x.id==='booths') boothUpcoming().forEach(e => rows.push({ sec:x, at:+new Date(e.createdAt||0), e }));
+    else lhLiveItems(x.id).filter(lhMatch).forEach(m => rows.push({ sec:x, at:+new Date(m.decidedAt||m.submittedAt), m }));
   });
-  if(searching && !groups.some(g=>g.n)) return '<div class="card">'+empty('No matches for “'+lhSearch.trim()+'”','Try a shorter word, or clear the search.')+'</div>';
-  return groups.filter(g => g.n || !searching).map(g => {
-    const W = LH_WORDS[g.x.id];
-    return '<section class="lh-group"><div class="lh-group-head"><h3>'+esc(g.x.label)+' <span>· '+g.n+'</span></h3>' +
-      (g.n ? '<button class="linkbtn" onclick="goTab(\'lhsec\',\''+g.x.id+'\')">See all '+g.n+' →</button>' : '') + '</div>' +
-      (g.n ? g.cards : '<div class="card card-pad meta" style="margin:0">'+esc(W.emptyT || 'No booth events scheduled')+'. '+
-        (W.cta ? '<button class="linkbtn" onclick="goTab(\'lhsec\',\''+g.x.id+'\');'+W.form+'()">'+esc(W.cta)+'</button>' : '')+'</div>') +
-      '</section>';
-  }).join('');
+  rows.sort((a,b)=>b.at-a.at);
+  if(!rows.length) return '<div class="card">'+(lhTerms().length
+    ? empty('No matches for “'+lhSearch.trim()+'”','Try a shorter word, or clear the search.')
+    : empty('Nothing listed yet','Businesses, listings, garage sales and booth events from your neighbors show up here once approved.'))+'</div>';
+  return sectionCard('All listings · '+rows.length, '<ul class="list lh-all">'+rows.map(lhAllRow).join('')+'</ul>');
+}
+function lhAllRow(r){
+  const open = fn => ' role="button" tabindex="0" onclick="'+fn+'" onkeydown="if(event.key===\'Enter\'){'+fn+'}"';
+  if(r.e){
+    const e = r.e, left = Math.max(0, e.capacity - boothTaken(e)), go = "goTab('lhsec','booths')";
+    return '<li class="lh-row-click"'+open(go)+'><div class="row" style="align-items:center">' +
+      '<span class="lh-logo" style="width:44px;height:44px">'+svg('flag')+'</span>' +
+      '<div class="grow" style="min-width:0"><div class="ttl">'+esc(e.title)+'</div>' +
+      '<div class="meta"><span class="tag t-slate">Seasonal booth event</span><span>'+fmtDate(e.date)+'</span><span>'+esc(e.venue)+'</span></div></div>' +
+      '<div class="lh-all-right">'+(boothOpen(e) ? (left ? left+' booths left' : 'Waitlist') : 'Applications closed')+'</div></div></li>';
+  }
+  const m = r.m, sec = mktSection(m), ph = lhPhotos(m), web = lhWebLink(m.website);
+  const thumb = sec==='business' ? lhLogoBox(m, 44)
+    : '<span class="lh-logo" style="width:44px;height:44px">'+(ph[0] ? '<img src="'+ph[0]+'" alt="" style="object-fit:cover">' : svg(LH_WORDS[sec].icon))+'</span>';
+  const sub = sec==='business' ? '<span>'+esc(lhItemCat(m))+'</span>'+(m.hours?'<span>'+esc(m.hours)+'</span>':'')
+    : sec==='garage' ? '<span>'+esc(fmtDate(m.date)+' · '+fmtTime(m.start)+' – '+fmtTime(m.end))+'</span><span>'+esc(garageVenue(m))+'</span>'
+    : (mktKind(m)==='Wanted'?'<span class="tag t-amber">Wanted</span>':'')+'<span>'+esc(lhItemCat(m))+'</span>'+(m.condition?'<span>'+esc(m.condition)+'</span>':'');
+  const right = sec==='business' ? (web ? esc(web.label) : '') : sec==='garage' ? 'Garage sale' : lhPriceLabel(m);
+  return '<li class="lh-row-click"'+open("openLh('"+m.id+"')")+'><div class="row" style="align-items:center">' + thumb +
+    '<div class="grow" style="min-width:0"><div class="ttl">'+esc(m.title)+lhVerified(m)+'</div>' +
+    '<div class="meta"><span class="tag t-slate">'+esc(r.sec.label)+'</span>'+sub+'<span>'+esc(m.by)+'</span></div></div>' +
+    '<div class="lh-all-right">'+right+'</div></div></li>';
 }
 function lhAllAdminView(){
   const items = store.marketplace.filter(m=>m.status==='Pending' && lhMatch(m))
@@ -2128,17 +2170,19 @@ const ADMIN = {
       } else {
         const shown = sec==='garage' ? all : mktCatFilter(all, key);
         const colName = sec==='business' ? 'Business' : sec==='garage' ? 'Garage sale' : 'Listing';
-        const colVal = sec==='garage' ? 'When' : sec==='business' ? 'Offers' : 'Price';
+        const colVal = sec==='garage' ? 'When' : sec==='business' ? 'Website' : 'Price';
         inner = (sec==='garage' ? '' : mktCatChips(all, key, lhCats(sec))) + sectionCard('All '+W.nouns, shown.length
           ? '<div class="tablewrap"><table class="mkt-listings"><thead><tr><th>'+colName+'</th><th class="hide-sm">Resident</th><th>'+colVal+'</th><th>Status</th><th class="hide-sm">Decided</th><th></th></tr></thead><tbody>' +
-          shown.map(m => '<tr><td data-label="'+colName+'"><button class="linkbtn" onclick="openLh(\''+m.id+'\')">'+esc(m.title)+'</button>' +
+          shown.map(m => '<tr><td data-label="'+colName+'"><button class="linkbtn" onclick="openLh(\''+m.id+'\')">'+esc(m.title)+'</button>'+lhVerified(m) +
               '<div class="meta">'+(sec==='buysell'?(mktKind(m)==='Wanted'?'Wanted · ':'For sale · '):'')+esc(lhItemCat(m))+'</div></td>' +
             '<td class="hide-sm" data-label="Resident">'+esc(m.by)+'<div class="meta mono">'+esc(m.unit)+'</div></td>' +
-            '<td class="mono" data-label="'+colVal+'">'+(sec==='business' ? lhOffers(m).length+' · '+(lhPriceLabel(m)||'—') : lhDetail(m))+'</td>' +
+            '<td class="'+(sec==='business'?'':'mono')+'" data-label="'+colVal+'">'+(sec==='business' ? (lhWebLink(m.website) ? '<a href="'+esc(lhWebLink(m.website).url)+'" target="_blank" rel="noopener noreferrer">'+esc(lhWebLink(m.website).host)+'</a>' : '<span class="meta">None yet</span>') : lhDetail(m))+'</td>' +
             '<td data-label="Status"><span class="tag '+statusTag(lhStatus(m))+'">'+esc(lhStatus(m))+'</span>' +
               (m.status==='Rejected'&&m.rejectReason?'<div class="meta">'+esc(m.rejectReason)+'</div>':'')+'</td>' +
             '<td class="hide-sm meta" data-label="Decided">'+(m.decidedAt?fmtDate(m.decidedAt)+' · '+esc(m.decidedBy):'—')+'</td>' +
-            '<td style="text-align:right"><button class="btn btn-danger btn-sm" onclick="deleteMktForm(\''+m.id+'\')">Remove</button></td></tr>').join('') +
+            '<td style="text-align:right"><div class="btn-row" style="justify-content:flex-end">' +
+              (sec==='business' && m.status==='Approved' ? '<button class="btn btn-ghost btn-sm" onclick="toggleVerifyBiz(\''+m.id+'\')">'+(m.verified?'Remove check':'Verify')+'</button>' : '') +
+              '<button class="btn btn-danger btn-sm" onclick="deleteMktForm(\''+m.id+'\')">Remove</button></div></td></tr>').join('') +
           '</tbody></table></div>'
           : all.length ? empty('Nothing in this category','Pick another category or All to see every '+W.noun+'.')
           : lhTerms().length ? empty('No matches for “'+lhSearch.trim()+'”','Try a shorter word, or clear the search.')
@@ -2516,15 +2560,15 @@ function mktCard(m){
     '</div></div>';
 }
 function bizCard(m){
-  const from = lhFromPrice(m);
-  return lhCardOpen(m) + lhPhotoBox(m,'building') +
+  return lhCardOpen(m) +
     '<div class="card-pad">' +
-      '<div class="ttl">'+esc(m.title)+'</div>' +
-      '<div class="meta"><span class="tag t-grey">'+esc(lhItemCat(m))+'</span>'+(from?'<span>From '+peso(from)+'</span>':'')+'</div>' +
+      '<div class="row" style="align-items:center;gap:12px">' + lhLogoBox(m, 56) +
+        '<div class="grow" style="min-width:0"><div class="ttl">'+esc(m.title)+lhVerified(m)+'</div>' +
+        '<div class="meta"><span class="tag t-grey">'+esc(lhItemCat(m))+'</span></div></div></div>' +
       '<div class="body">'+esc(m.description)+'</div>' +
-      lhOfferList(lhOffers(m).map(o=>[o.name, o.price?peso(o.price):'Ask']), 3) +
       (m.hours?'<div class="meta" style="margin-top:10px"><span>'+esc(m.hours)+'</span></div>':'') +
       '<div class="meta" style="margin-top:6px"><span class="mono">'+esc(m.unit)+'</span>·<span>'+esc(m.by)+'</span>'+(m.contact?'·<span class="mono">'+esc(m.contact)+'</span>':'')+'</div>' +
+      (lhWebLink(m.website) ? '<div class="btn-row" style="margin-top:12px">'+lhWebButton(m)+'</div>' : '') +
     '</div></div>';
 }
 function garageCard(m){
@@ -2542,7 +2586,11 @@ function garageCard(m){
 function mktMineRow(m){
   const sec = mktSection(m), st = lhStatus(m);
   let extra = '', actions = '';
-  if(sec==='business') extra = lhOfferList(lhOffers(m).map(o=>[o.name, o.price?peso(o.price):'Ask']));
+  if(sec==='business'){
+    extra = (lhWebLink(m.website) ? '<div class="btn-row" style="margin-top:10px">'+lhWebButton(m)+'</div>' : '') +
+      '<div class="meta"><span>'+(m.verified ? 'Verified by the HOA admin office' : 'Not yet verified — the admin office verifies businesses after checking permits')+'</span></div>';
+    actions = '<button class="btn btn-ghost btn-sm" onclick="businessForm(\''+m.id+'\')">Edit profile</button>';
+  }
   if(sec==='buysell'){
     const biz = lhBusiness(m.businessId);
     if(biz) extra += '<div class="meta"><span>Posted for '+esc(biz.title)+'</span></div>';
@@ -2567,9 +2615,10 @@ function mktMineRow(m){
     '</div><span class="tag '+statusTag(st)+'">'+esc(st)+'</span></div></li>';
 }
 function lhAdminPendingRow(m){
-  const W = LH_WORDS[mktSection(m)], ph = lhPhotos(m), biz = lhBusiness(m.businessId);
-  return '<li><div class="row"><div class="cph">'+(ph[0]?'<img src="'+ph[0]+'" alt="">':svg(W.icon))+'</div><div class="grow">' +
-    '<div class="ttl">'+esc(m.title)+'</div>' +
+  const W = LH_WORDS[mktSection(m)], ph = lhPhotos(m), biz = lhBusiness(m.businessId), isBiz = mktSection(m)==='business', web = lhWebLink(m.website);
+  return '<li><div class="row">'+(isBiz ? lhLogoBox(m, 40) : '<div class="cph">'+(ph[0]?'<img src="'+ph[0]+'" alt="">':svg(W.icon))+'</div>')+'<div class="grow">' +
+    '<div class="ttl">'+esc(m.title)+lhVerified(m)+'</div>' +
+    (isBiz && web ? '<div class="meta"><span>'+esc(web.label)+'</span><a href="'+esc(web.url)+'" target="_blank" rel="noopener noreferrer">'+esc(web.host)+'</a><span>— check it belongs to '+esc(m.by)+'</span></div>' : '') +
     '<div class="meta">'+lhMeta(m)+'<span class="mono">'+esc(m.unit)+'</span>·<span>'+esc(m.by)+'</span>·<span>'+ago(m.submittedAt)+'</span></div>' +
     (biz?'<div class="meta"><span>Posted for '+esc(biz.title)+'</span></div>':'') +
     '<div class="body">'+esc(m.description)+'</div>' +
@@ -2578,6 +2627,7 @@ function lhAdminPendingRow(m){
     '<div class="btn-row" style="margin-top:11px">' +
       '<button class="btn btn-ghost btn-sm" onclick="openLh(\''+m.id+'\')">View details</button>' +
       '<button class="btn btn-emerald btn-sm" onclick="approveMkt(\''+m.id+'\')">Approve</button>' +
+      (isBiz ? '<button class="btn btn-emerald btn-sm" onclick="approveMkt(\''+m.id+'\', true)">Approve and verify</button>' : '') +
       '<button class="btn btn-danger btn-sm" onclick="rejectMktForm(\''+m.id+'\')">Reject</button>' +
     '</div></div></div></li>';
 }
@@ -2609,14 +2659,18 @@ function openLh(id){
   rows.push(['Category', lhItemCat(m)]);
   rows.push([sec==='business'?'Owner':sec==='garage'?'Host':'Posted by', m.by + (sec==='garage' ? '' : ' · '+m.unit)]);
   if(m.contact) rows.push(['Contact', m.contact]);
-  const list = sec==='business' ? lhOffers(m).map(o=>[o.name, o.price?peso(o.price):'Ask'])
-    : sec==='garage' ? lhItems(m).filter(i=>i.status==='Approved' || host).map(i=>[i.name+(i.status!=='Approved'?' ('+i.status.toLowerCase()+')':''), i.price?peso(i.price):'Free'])
+  if(sec==='business' && m.verified) rows.push(['Verified', 'Yes · by the HOA admin office']);
+  const list = sec==='garage' ? lhItems(m).filter(i=>i.status==='Approved' || host).map(i=>[i.name+(i.status!=='Approved'?' ('+i.status.toLowerCase()+')':''), i.price?peso(i.price):'Free'])
     : [];
   const vendorAt = sec==='business' ? store.boothApps.filter(a=>a.businessId===m.id && a.status==='Approved').map(a=>store.boothEvents.find(e=>e.id===a.eventId)).filter(e=>e && !boothEnded(e)) : [];
   modal(m.title, LH_SECTIONS.find(x=>x.id===sec).label + (m.status!=='Approved' || lhStatus(m)!=='Approved' ? ' · '+lhStatus(m) : ''),
-    (ph.length ? '<div class="lh-gallery">'+ph.map(p=>'<img src="'+p+'" alt="">').join('')+'</div>' : '') +
+    (sec==='business'
+      ? '<div class="row" style="align-items:center;gap:14px;margin-bottom:14px">'+lhLogoBox(m, 72)+'<div class="grow" style="min-width:0">' +
+          '<div class="ttl" style="font-size:16px">'+esc(m.title)+lhVerified(m)+'</div><div class="meta"><span class="tag t-grey">'+esc(lhItemCat(m))+'</span></div>' +
+          (lhWebLink(m.website) ? '<div class="btn-row" style="margin-top:8px">'+lhWebButton(m,'btn-primary')+'</div>' : '') + '</div></div>'
+      : ph.length ? '<div class="lh-gallery">'+ph.map(p=>'<img src="'+p+'" alt="">').join('')+'</div>' : '') +
     '<div class="body" style="margin:0 0 14px">'+esc(m.description)+'</div>' +
-    (list.length ? '<div class="eyebrow" style="margin-bottom:4px">'+(sec==='business'?'Offers':'Items for sale')+'</div>'+lhOfferList(list)+'<div style="height:12px"></div>' : '') +
+    (list.length ? '<div class="eyebrow" style="margin-bottom:4px">Items for sale</div>'+lhOfferList(list)+'<div style="height:12px"></div>' : '') +
     rows.map(([k,v])=>'<div class="kv"><span>'+esc(k)+'</span><b>'+esc(v)+'</b></div>').join('') +
     (biz ? '<div class="kv"><span>Business</span><b><button class="linkbtn" onclick="openLh(\''+biz.id+'\')">'+esc(biz.title)+'</button></b></div>' : '') +
     vendorAt.map(e=>'<div class="kv"><span>Find them at</span><b>'+esc(e.title)+' · '+fmtDate(e.date)+'</b></div>').join('') +
@@ -2632,7 +2686,7 @@ function boothVendorDirectory(e){
   return '<div class="eyebrow" style="margin:14px 0 2px">Vendor directory · '+vendors.length+'</div>' +
     '<ul class="lh-offers">' + vendors.map(a => {
       const b = lhBusiness(a.businessId);
-      return '<li><span><b class="mono" style="color:var(--slate-dk)">'+(a.booth?'Booth '+a.booth:'Booth TBA')+'</b> · '+esc(a.vendor) +
+      return '<li><span><b class="mono" style="color:var(--slate-dk)">'+(a.booth?'Booth '+a.booth:'Booth TBA')+'</b> · '+esc(a.vendor)+lhVerified(b) +
         '<span class="meta" style="display:block;margin-top:1px">'+esc(a.products)+'</span></span>' +
         (b && b.status==='Approved' ? '<button class="linkbtn" onclick="openLh(\''+b.id+'\')">View business</button>' : '') + '</li>';
     }).join('') + '</ul>';
@@ -4016,29 +4070,63 @@ function marketplaceForm(){
         status:'Pending', rejectReason:'', submittedAt:new Date(), decidedAt:null, decidedBy:'' }, kind==='Wanted' ? 'Wanted listing' : 'Listing');
       return true; });
 }
-function businessForm(){
-  modal('List my business','Your business profile stays in the Business directory once the admin office approves it. Add each product or service you offer.',
-    '<label class="fld"><span>Business name</span><input class="input" id="f_title" placeholder="Rina’s Kakanin Kitchen"></label>' +
+let pendingLogo = '';
+function lhLogoPicker(current){
+  pendingLogo = current || '';
+  return '<div style="margin-bottom:13px"><span class="lh-lbl">Business logo</span>' +
+    '<div class="row" style="align-items:center;gap:12px">' +
+      '<span class="lh-logo" id="bizLogoPreview" style="width:64px;height:64px">'+(pendingLogo?'<img src="'+pendingLogo+'" alt="Logo preview">':svg('building'))+'</span>' +
+      '<button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById(\'bizLogoFile\').click()">'+(pendingLogo?'Change logo':'Upload logo')+'</button>' +
+      '<input type="file" id="bizLogoFile" accept="image/jpeg,image/png,image/webp" class="hide" onchange="handleBizLogoFile(event)">' +
+    '</div><p class="meta" style="display:block;margin-top:6px">A square JPG or PNG works best. Without a logo, your business initials are shown.</p></div>';
+}
+function handleBizLogoFile(e){
+  const f = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if(!f) return;
+  fileToFitDataUrl(f, 400, url => {
+    pendingLogo = url;
+    const p = document.getElementById('bizLogoPreview'); if(p) p.innerHTML = '<img src="'+url+'" alt="Logo preview">';
+  }, msg => toast('info','Could not use that logo', msg));
+}
+function businessForm(id){
+  const b = id ? store.marketplace.find(x=>x.id===id) : null;
+  modal(b ? 'Edit '+b.title : 'List my business',
+    b ? 'Changes go back to the admin office for a quick review before they show in the directory.'
+      : 'Your business stays in the Business directory once the admin office approves it. The office can also mark it verified after checking your permits.',
+    lhLogoPicker(b ? lhLogo(b) : '') +
+    '<label class="fld"><span>Business name</span><input class="input" id="f_title" value="'+esc(b?b.title:'')+'" placeholder="Rina’s Kakanin Kitchen"></label>' +
     '<div class="grid g-2" style="gap:0 12px">' +
-      '<label class="fld"><span>Category</span><select class="input" id="f_cat">'+BIZ_CATEGORIES.map(c=>'<option>'+esc(c)+'</option>').join('')+'</select></label>' +
-      '<label class="fld"><span>Hours</span><input class="input" id="f_hours" placeholder="Mon–Sat, 8:00 AM – 6:00 PM"></label></div>' +
-    '<label class="fld"><span>About the business</span><textarea class="input" id="f_desc" placeholder="What you do, how to order, delivery or pickup…"></textarea></label>' +
-    '<span class="lh-lbl">Products and services</span>' + lhRowsEditor('f_offers', 'Sapin-sapin tray', 2, '+ Add another offer') +
-    lhPhotoPicker() +
-    '<label class="fld"><span>Contact number</span><input class="input" id="f_contact" value="'+esc(store.session.phone||'')+'" placeholder="0917 555 0000"></label>',
-    'Submit for approval', () => {
-      const title=$('#f_title').value.trim(), desc=$('#f_desc').value.trim(), offers=readLhRows('f_offers');
+      '<label class="fld"><span>Category</span><select class="input" id="f_cat">'+BIZ_CATEGORIES.map(c=>'<option'+(b&&lhItemCat(b)===c?' selected':'')+'>'+esc(c)+'</option>').join('')+'</select></label>' +
+      '<label class="fld"><span>Hours</span><input class="input" id="f_hours" value="'+esc(b?b.hours||'':'')+'" placeholder="Mon–Sat, 8:00 AM – 6:00 PM"></label></div>' +
+    '<label class="fld"><span>About the business</span><textarea class="input" id="f_desc" placeholder="What you do, how to order, delivery or pickup…">'+esc(b?b.description:'')+'</textarea></label>' +
+    '<label class="fld"><span>Website or Facebook page</span><input class="input" id="f_web" autocomplete="off" value="'+esc(b?b.website||'':'')+'" placeholder="facebook.com/yourbusiness or yourbusiness.com"></label>' +
+    '<p class="meta" style="display:block;margin:-6px 0 12px">Neighbors open this link to see your products, services and prices.</p>' +
+    '<label class="fld"><span>Contact number</span><input class="input" id="f_contact" value="'+esc(b?b.contact||'':(store.session.phone||''))+'" placeholder="0917 555 0000"></label>',
+    b ? 'Save and send for review' : 'Submit for approval', () => {
+      const title=$('#f_title').value.trim(), desc=$('#f_desc').value.trim(), webRaw=$('#f_web').value.trim(), web=lhWebLink(webRaw);
       if(!title){ toast('info','Add the business name','Tell neighbors what your business is called.'); return false; }
       if(!desc){ toast('info','Describe your business','Say what you do so neighbors know what to expect.'); return false; }
-      if(!offers.length){ toast('info','Add at least one offer','List a product or service with its price, or leave the price blank for "ask".'); return false; }
+      if(!webRaw){ toast('info','Add your website or Facebook page','Paste the link where neighbors can see your products, e.g. facebook.com/yourbusiness.'); return false; }
+      if(!web){ toast('info','Check the link','That does not look like a web address. Try something like facebook.com/yourbusiness.'); return false; }
       const contact=$('#f_contact').value.trim();
       if(!contact){ toast('info','Add a contact number','Neighbors need a way to reach you.'); return false; }
-      const item = { id:uid(), section:'business', unit:myUnit(), by:store.session.name, title, description:desc, offers,
-        category:$('#f_cat').value, hours:$('#f_hours').value.trim(), contact,
-        status:'Pending', rejectReason:'', submittedAt:new Date(), decidedAt:null, decidedBy:'' };
-      item.price = lhFromPrice(item);
-      lhSubmitted(item, 'Business');
+      const fields = { title, description:desc, category:$('#f_cat').value, hours:$('#f_hours').value.trim(), website:web.url, contact, logo:pendingLogo||'' };
+      if(b){
+        Object.assign(b, fields, { status:'Pending', rejectReason:'', submittedAt:new Date(), decidedAt:null, decidedBy:'' });
+        commit('Business “'+title+'” updated and sent to the admin office for review.', {title:'Business updated', audience:'admin', go:'marketplace'});
+        return true;
+      }
+      store.marketplace.unshift(Object.assign({ id:uid(), section:'business', unit:myUnit(), by:store.session.name, price:0, photo:'', photos:[],
+        verified:false, status:'Pending', rejectReason:'', submittedAt:new Date(), decidedAt:null, decidedBy:'' }, fields));
+      commit('Business “'+title+'” sent to the admin office for approval.', {title:'Business submitted', audience:'admin', go:'marketplace'});
       return true; });
+}
+function toggleVerifyBiz(id){
+  const m = store.marketplace.find(x=>x.id===id); if(!m) return;
+  m.verified = !m.verified; m.verifiedBy = m.verified ? store.session.name : ''; m.verifiedAt = m.verified ? new Date() : null;
+  commit(m.title+(m.verified ? ' is now marked verified.' : ' is no longer marked verified.'),
+    {title: m.verified ? 'Business verified' : 'Verification removed', forUnit:m.unit, go:'marketplace'});
 }
 function garageForm(){
   modal('Host a garage sale','The sale and each item are checked by the admin office before neighbors see them. The sale disappears as soon as it ends.',
@@ -4207,9 +4295,10 @@ function deleteBoothEvent(id){
 }
 function gotoMarketplace(){ go('marketplace'); }
 function lhNoun(m){ const n = LH_WORDS[mktSection(m)].noun; return n.charAt(0).toUpperCase()+n.slice(1); }
-function approveMkt(id){
+function approveMkt(id, verify){
   const m = store.marketplace.find(x=>x.id===id);
   m.status='Approved'; m.decidedAt=new Date(); m.decidedBy=store.session.name; m.rejectReason='';
+  if(verify){ m.verified = true; m.verifiedBy = store.session.name; m.verifiedAt = new Date(); }
   if(mktSection(m)==='buysell') m.expiresAt = new Date(Date.now() + LH_LISTING_DAYS*864e5);
   commit(lhNoun(m)+' “'+m.title+'” approved and now visible in Livelihood and Marketplace.',
     {title:lhNoun(m)+' approved', forUnit:m.unit, go:gotoMarketplace}); }
