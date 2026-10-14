@@ -423,6 +423,9 @@ html[data-theme="dark"] .lh-verified{color:#4C9BFF}
 .lh-owner span{color:var(--ink-3);min-width:62px}
 .lh-owner span.mono{min-width:0;font-size:12px}
 .lh-owner b{color:var(--ink);font-weight:600}
+.lh-sold{position:absolute;left:10px;top:10px;z-index:1;background:var(--rose);color:#fff;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:6px}
+.lh-is-sold .mkt-photo img,.lh-is-sold .mkt-photo svg{opacity:.45}
+.lh-is-sold .card-pad > .row div[style*="font-weight:800"]{text-decoration:line-through;color:var(--ink-3)}
 .lh-search{position:relative;display:flex;gap:8px;align-items:center;margin-bottom:14px}
 .lh-search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-3);pointer-events:none}
 .lh-search .input{padding-left:38px;flex:1;min-width:0}
@@ -1037,6 +1040,7 @@ function lhPendingCount(){ return LH_SECTIONS.reduce((n,x)=>n+lhPendingIn(x.id),
 function lhStatus(m){
   if(mktSection(m)==='garage' && m.status==='Approved' && !garageLive(m)) return 'Ended';
   if(lhExpired(m)) return 'Expired';
+  if(mktSection(m)==='buysell' && m.status==='Approved' && m.sold) return mktKind(m)==='Wanted' ? 'Found' : 'Sold';
   return m.status;
 }
 function lhPriceLabel(m){
@@ -1108,7 +1112,7 @@ function lhHit(text){ const t = lhTerms(), h = text.toLowerCase(); return t.ever
 function lhMatch(m){
   if(!lhTerms().length) return true;
   return lhHit([m.title, m.description, m.by, m.unit, lhItemCat(m), m.condition, m.hours, m.kind==='Wanted'?'wanted':'',
-    m.verified?'verified':'', lhBizLinks(m).map(w=>w.host).join(' '), lhItems(m).filter(i=>i.status==='Approved'||isAdmin()).map(i=>i.name).join(' '),
+    m.verified?'verified':'', m.ownerName, lhBizLinks(m).map(w=>w.host).join(' '), lhItems(m).filter(i=>i.status==='Approved'||isAdmin()).map(i=>i.name).join(' '),
     (lhBusiness(m.businessId)||{}).title].filter(Boolean).join(' '));
 }
 function boothMatch(e){
@@ -1150,6 +1154,7 @@ function lhWebButton(m, cls){
   const links = lhBizLinks(m); if(!links.length) return '';
   return links.map((w,i) => '<a class="btn '+(i===0?(cls||'btn-ghost'):'btn-ghost')+' btn-sm" style="width:auto" href="'+esc(w.url)+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">'+(w.fb?'Facebook page':'Visit website')+' ↗</a>').join('');
 }
+function lhOwnerName(m){ return String(m.ownerName||'').trim() || m.by; }
 function lhLogo(m){ return m.logo || lhPhotos(m)[0] || ''; }
 function lhLogoBox(m, size){
   const l = lhLogo(m);
@@ -1186,10 +1191,10 @@ function lhAllRow(r){
   const m = r.m, sec = mktSection(m), ph = lhPhotos(m), links = lhBizLinks(m);
   const thumb = sec==='business' ? lhLogoBox(m, 44)
     : '<span class="lh-logo" style="width:44px;height:44px">'+(ph[0] ? '<img src="'+ph[0]+'" alt="" style="object-fit:cover">' : svg(LH_WORDS[sec].icon))+'</span>';
-  const sub = sec==='business' ? '<span>'+esc(lhItemCat(m))+'</span><span>Owner: '+esc(m.by)+' · '+esc(m.unit)+'</span>'
+  const sub = sec==='business' ? '<span>'+esc(lhItemCat(m))+'</span><span>Owner / CEO: '+esc(lhOwnerName(m))+'</span><span class="mono">'+esc(m.unit)+'</span>'
     : sec==='garage' ? '<span>'+esc(fmtDate(m.date)+' · '+fmtTime(m.start)+' – '+fmtTime(m.end))+'</span><span>'+esc(garageVenue(m))+'</span>'
     : (mktKind(m)==='Wanted'?'<span class="tag t-amber">Wanted</span>':'')+'<span>'+esc(lhItemCat(m))+'</span>'+(m.condition?'<span>'+esc(m.condition)+'</span>':'');
-  const right = sec==='business' ? links.map(w=>esc(w.label)).join(' · ') : sec==='garage' ? 'Garage sale' : lhPriceLabel(m);
+  const right = sec==='business' ? links.map(w=>esc(w.label)).join(' · ') : sec==='garage' ? 'Garage sale' : m.sold ? '<span class="tag t-rose">'+(mktKind(m)==='Wanted'?'Found':'Sold')+'</span>' : lhPriceLabel(m);
   return '<li class="lh-row-click"'+open("openLh('"+m.id+"')")+'><div class="row" style="align-items:center">' + thumb +
     '<div class="grow" style="min-width:0"><div class="ttl">'+esc(m.title)+lhVerified(m)+'</div>' +
     '<div class="meta"><span class="tag t-slate">'+esc(r.sec.label)+'</span>'+sub+(sec==='business'?'':'<span>'+esc(m.by)+'</span>')+'</div></div>' +
@@ -1286,7 +1291,7 @@ function setDuesMode(mode){
 const statusTag = s => ({
   'Paid':'t-emerald','Approved':'t-emerald','Resolved':'t-emerald','Closed':'t-emerald','Active':'t-emerald','Open ballot':'t-emerald',
   'Unpaid':'t-amber','Pending':'t-amber','In progress':'t-amber','Under review':'t-amber','For approval':'t-amber','Expiring':'t-amber','Used':'t-grey',
-  'Open':'t-slate','Waitlisted':'t-amber','Sold':'t-grey','Found':'t-grey','Expired':'t-grey','Ended':'t-grey','Cancelled':'t-rose','Escalated':'t-rose','Overdue':'t-rose','Declined':'t-rose','Revoked':'t-rose','Rejected':'t-rose'
+  'Open':'t-slate','Waitlisted':'t-amber','Sold':'t-rose','Found':'t-rose','Expired':'t-grey','Ended':'t-grey','Cancelled':'t-rose','Escalated':'t-rose','Overdue':'t-rose','Declined':'t-rose','Revoked':'t-rose','Rejected':'t-rose'
 }[s] || 't-grey');
 
 function commit(msg, opts={}){
@@ -2190,7 +2195,7 @@ const ADMIN = {
           ? '<div class="tablewrap"><table class="mkt-listings"><thead><tr><th>'+colName+'</th><th class="hide-sm">'+(sec==='business'?'Owner':'Resident')+'</th><th>'+colVal+'</th><th>Status</th><th class="hide-sm">Decided</th><th></th></tr></thead><tbody>' +
           shown.map(m => '<tr><td data-label="'+colName+'"><button class="linkbtn" onclick="openLh(\''+m.id+'\')">'+esc(m.title)+'</button>'+lhVerified(m) +
               '<div class="meta">'+(sec==='buysell'?(mktKind(m)==='Wanted'?'Wanted · ':'For sale · '):'')+esc(lhItemCat(m))+'</div></td>' +
-            '<td class="hide-sm" data-label="Resident">'+esc(m.by)+'<div class="meta mono">'+esc(m.unit)+'</div></td>' +
+            '<td class="hide-sm" data-label="Resident">'+esc(sec==='business'?lhOwnerName(m):m.by)+'<div class="meta mono">'+esc(m.unit)+(sec==='business'&&lhOwnerName(m)!==m.by?' · listed by '+esc(m.by):'')+'</div></td>' +
             '<td class="'+(sec==='business'?'':'mono')+'" data-label="'+colVal+'">'+(sec==='business' ? (lhBizLinks(m).length ? lhBizLinks(m).map(w=>'<div><a href="'+esc(w.url)+'" target="_blank" rel="noopener noreferrer">'+esc(w.host)+'</a></div>').join('') : '<span class="meta">None yet</span>') : lhDetail(m))+'</td>' +
             '<td data-label="Status"><span class="tag '+statusTag(lhStatus(m))+'">'+esc(lhStatus(m))+'</span>' +
               (m.status==='Rejected'&&m.rejectReason?'<div class="meta">'+esc(m.rejectReason)+'</div>':'')+'</td>' +
@@ -2563,7 +2568,8 @@ function lhOfferList(rows, max){
 }
 function mktCard(m){
   const biz = lhBusiness(m.businessId), wanted = mktKind(m)==='Wanted';
-  return lhCardOpen(m) + lhPhotoBox(m,'tag') +
+  return lhCardOpen(m).replace('class="card lh-click"', 'class="card lh-click'+(m.sold?' lh-is-sold':'')+'"') +
+    lhPhotoBox(m,'tag').replace('<div class="mkt-photo">', '<div class="mkt-photo">'+(m.sold?'<span class="lh-sold">'+(wanted?'Found':'Sold')+'</span>':'')) +
     '<div class="card-pad">' +
       '<div class="row" style="align-items:flex-start"><div class="grow"><div class="ttl">'+esc(m.title)+'</div>' +
       '<div class="meta">'+(wanted?'<span class="tag t-amber">Wanted</span>':'')+'<span class="tag t-grey">'+esc(lhItemCat(m))+'</span>'+(m.condition?'<span>'+esc(m.condition)+'</span>':'')+'</div></div>' +
@@ -2571,7 +2577,8 @@ function mktCard(m){
         (wanted?'<div class="meta" style="justify-content:flex-end;margin-top:0">budget</div>':'')+'</div></div>' +
       '<div class="body">'+esc(m.description)+'</div>' +
       (biz?'<div class="meta" style="margin-top:10px"><span>Sold by</span><button class="linkbtn" onclick="event.stopPropagation();openLh(\''+biz.id+'\')">'+esc(biz.title)+'</button></div>':'') +
-      lhSocialButtons(m, true) +
+      (m.sold ? '' : lhSocialButtons(m, true)) +
+      (m.unit===myUnit() && !isAdmin() ? '<div class="btn-row" style="margin-top:10px">'+lhSoldButton(m)+'</div>' : '') +
       '<div class="meta" style="margin-top:10px"><span class="mono">'+esc(m.unit)+'</span>·<span>'+esc(m.by)+'</span>·<span>'+ago(m.decidedAt||m.submittedAt)+'</span></div>' +
     '</div></div>';
 }
@@ -2583,7 +2590,8 @@ function bizCard(m){
         '<div class="meta"><span class="tag t-grey">'+esc(lhItemCat(m))+'</span></div></div></div>' +
       '<div class="body">'+esc(m.description)+'</div>' +
       '<div class="lh-owner">' +
-        '<div><span>Owner</span><b>'+esc(m.by)+'</b><span class="mono">Unit '+esc(m.unit)+'</span></div>' +
+        '<div><span>Owner / CEO</span><b>'+esc(lhOwnerName(m))+'</b></div>' +
+        '<div><span>Unit</span><b class="mono">'+esc(m.unit)+'</b>'+(lhOwnerName(m)!==m.by?'<span style="min-width:0">· listed by '+esc(m.by)+'</span>':'')+'</div>' +
         (m.contact?'<div><span>Contact</span><b class="mono">'+esc(m.contact)+'</b></div>':'') +
         (m.hours?'<div><span>Hours</span><b>'+esc(m.hours)+'</b></div>':'') +
       '</div>' +
@@ -2613,11 +2621,11 @@ function mktMineRow(m){
   if(sec==='buysell'){
     const biz = lhBusiness(m.businessId);
     if(biz) extra += '<div class="meta"><span>Posted for '+esc(biz.title)+'</span></div>';
-    if(st==='Approved'){
-      extra += '<div class="meta"><span>Listed until '+fmtDate(lhExpiry(m))+'</span></div>';
-      actions = '<button class="btn btn-ghost btn-sm" onclick="markSoldMkt(\''+m.id+'\')">'+(mktKind(m)==='Wanted'?'Mark found':'Mark sold')+'</button>';
+    if(st==='Approved' || st==='Sold' || st==='Found'){
+      extra += '<div class="meta"><span>'+(m.sold ? st+' · stays listed until ' : 'Listed until ')+fmtDate(lhExpiry(m))+'</span></div>';
+      actions = lhSoldButton(m);
     }
-    if(st==='Expired') actions = '<button class="btn btn-primary btn-sm" style="width:auto" onclick="renewMkt(\''+m.id+'\')">Renew for '+LH_LISTING_DAYS+' days</button>';
+    if(st==='Expired' && !m.sold) actions = '<button class="btn btn-primary btn-sm" style="width:auto" onclick="renewMkt(\''+m.id+'\')">Renew for '+LH_LISTING_DAYS+' days</button>';
   }
   if(sec==='garage'){
     extra = lhOfferList(lhItems(m).map(i => [i.name, i.price?peso(i.price):'Free',
@@ -2672,12 +2680,14 @@ function openLh(id){
   if(sec==='buysell'){
     rows.push(['Type', mktKind(m)==='Wanted' ? 'Wanted' : 'For sale'], [mktKind(m)==='Wanted'?'Budget':'Price', peso(m.price)]);
     if(m.condition) rows.push(['Condition', m.condition]);
-    if(m.status==='Approved') rows.push([lhExpired(m)?'Expired on':'Listed until', fmtDate(lhExpiry(m))]);
+    if(m.sold) rows.push(['Status', (mktKind(m)==='Wanted'?'Found':'Sold')+' · '+fmtDate(m.soldAt||new Date())]);
+    if(m.status==='Approved') rows.push([lhExpired(m)?'Expired on':(m.sold?'Stays listed until':'Listed until'), fmtDate(lhExpiry(m))]);
   }
   if(sec==='business' && m.hours) rows.push(['Hours', m.hours]);
   if(sec==='garage') rows.push(['When', garageWhen(m)], ['Where', garageVenue(m)]);
   rows.push(['Category', lhItemCat(m)]);
-  rows.push([sec==='business'?'Owner':sec==='garage'?'Host':'Posted by', m.by + (sec==='garage' ? '' : ' · '+m.unit)]);
+  if(sec==='business'){ rows.push(['Owner / CEO', lhOwnerName(m)]); rows.push(['Listed by', m.by+' · '+m.unit]); }
+  else rows.push([sec==='garage'?'Host':'Posted by', m.by + (sec==='garage' ? '' : ' · '+m.unit)]);
   if(m.contact) rows.push(['Contact', m.contact]);
   if(sec==='business' && m.verified) rows.push(['Verified', 'Yes · by the HOA admin office']);
   const list = sec==='garage' ? lhItems(m).filter(i=>i.status==='Approved' || host).map(i=>[i.name+(i.status!=='Approved'?' ('+i.status.toLowerCase()+')':''), i.price?peso(i.price):'Free'])
@@ -2694,7 +2704,7 @@ function openLh(id){
     rows.map(([k,v])=>'<div class="kv"><span>'+esc(k)+'</span><b>'+esc(v)+'</b></div>').join('') +
     (biz ? '<div class="kv"><span>Business</span><b><button class="linkbtn" onclick="openLh(\''+biz.id+'\')">'+esc(biz.title)+'</button></b></div>' : '') +
     vendorAt.map(e=>'<div class="kv"><span>Find them at</span><b>'+esc(e.title)+' · '+fmtDate(e.date)+'</b></div>').join('') +
-    (m.unit!==myUnit() ? lhSocialButtons(m, false) : '') +
+    (m.unit!==myUnit() ? (m.sold ? '' : lhSocialButtons(m, false)) : sec==='buysell' && m.status==='Approved' && !lhExpired(m) ? '<div class="btn-row" style="margin-top:12px">'+lhSoldButton(m)+'</div>' : '') +
     '<p class="meta" style="display:block;margin-top:12px">Payment is arranged directly with the resident — GCash, bank transfer or cash. The HOA does not handle payments.</p>',
     'Close', () => true);
   const c = document.getElementById('mCancel'); if(c) c.classList.add('hide'); /* an info view needs one button */
@@ -4109,14 +4119,6 @@ function handleBizLogoFile(e){
     const p = document.getElementById('bizLogoPreview'); if(p) p.innerHTML = '<img src="'+url+'" alt="Logo preview">';
   }, msg => toast('info','Could not use that logo', msg));
 }
-/* residents an admin can hand a business to; the current owner stays first even if their account is gone */
-function lhOwnerOptions(b){
-  const people = store.accounts.filter(a => (a.role==='homeowner' || a.role==='renter') && a.status!=='Suspended')
-    .sort((x,y) => String(x.unit).localeCompare(String(y.unit)) || x.name.localeCompare(y.name));
-  const current = people.find(a => a.name===b.by && a.unit===b.unit);
-  return (current ? '' : '<option value="keep" selected>'+esc(b.by)+' · '+esc(b.unit)+' (current)</option>') +
-    people.map(a => '<option value="'+a.id+'"'+(a===current?' selected':'')+'>'+esc(a.name)+' · '+esc(a.unit)+(a===current?' (current)':'')+(a.role==='renter'?' · renter':'')+'</option>').join('');
-}
 function businessForm(id){
   const b = id ? store.marketplace.find(x=>x.id===id) : null;
   const admin = isAdmin();                       /* the admin office edits in place; owners' edits go back for review */
@@ -4125,10 +4127,10 @@ function businessForm(id){
     b ? (admin ? 'Saved straight to the directory. The owner gets a notice that the office updated their profile.'
                : 'Changes go back to the admin office for a quick review before they show in the directory.')
       : 'Your business stays in the Business directory once the admin office approves it. The office can also mark it verified after checking your permits.',
-    (admin && b ? '<label class="fld"><span>Owner · currently '+esc(lhStatus(b).toLowerCase())+'</span><select class="input" id="f_owner">' + lhOwnerOptions(b) + '</select></label>' +
-      '<p class="meta" style="display:block;margin:-6px 0 14px">Pick another resident to hand the business over. It moves to their “My businesses”.</p>' : '') +
+    (admin && b ? '<div class="card card-pad" style="background:var(--paper);margin-bottom:14px"><div class="meta" style="margin:0"><span>Listed by</span><b style="color:var(--ink)">'+esc(b.by)+'</b><span class="mono">'+esc(b.unit)+'</span><span class="tag '+statusTag(lhStatus(b))+'">'+esc(lhStatus(b))+'</span></div></div>' : '') +
     lhLogoPicker(b ? lhLogo(b) : '') +
     '<label class="fld"><span>Business name</span><input class="input" id="f_title" value="'+esc(b?b.title:'')+'" placeholder="Rina’s Kakanin Kitchen"></label>' +
+    '<label class="fld"><span>Owner / CEO</span><input class="input" id="f_ownername" value="'+esc(b ? lhOwnerName(b) : store.session.name)+'" placeholder="Full name of the owner or CEO"></label>' +
     '<div class="grid g-2" style="gap:0 12px">' +
       '<label class="fld"><span>Category</span><select class="input" id="f_cat">'+BIZ_CATEGORIES.map(c=>'<option'+(b&&lhItemCat(b)===c?' selected':'')+'>'+esc(c)+'</option>').join('')+'</select></label>' +
       '<label class="fld"><span>Hours</span><input class="input" id="f_hours" value="'+esc(b?b.hours||'':'')+'" placeholder="Mon–Sat, 8:00 AM – 6:00 PM"></label></div>' +
@@ -4142,26 +4144,23 @@ function businessForm(id){
       '<div class="sd">Shows the blue check beside the business name.</div></div>' +
       '<button type="button" class="tgl" id="f_verified" role="switch" aria-checked="'+(b.verified?'true':'false')+'" onclick="this.setAttribute(\'aria-checked\', this.getAttribute(\'aria-checked\')===\'true\'?\'false\':\'true\')"><i></i></button></div>' : ''),
     b ? (admin ? 'Save changes' : 'Save and send for review') : 'Submit for approval', () => {
-      const title=$('#f_title').value.trim(), desc=$('#f_desc').value.trim();
+      const title=$('#f_title').value.trim(), desc=$('#f_desc').value.trim(), ownerName=$('#f_ownername').value.trim();
       const fbRaw=$('#f_fbpage').value.trim(), webRaw=$('#f_web').value.trim(), fb=lhWebLink(fbRaw), web=lhWebLink(webRaw);
       if(!title){ toast('info','Add the business name','Tell neighbors what your business is called.'); return false; }
       if(!desc){ toast('info','Describe your business','Say what you do so neighbors know what to expect.'); return false; }
+      if(!ownerName){ toast('info','Add the owner or CEO','Type the full name of the person who owns or runs the business.'); return false; }
       if(!fbRaw && !webRaw){ toast('info','Add a Facebook page or website','Paste at least one link where neighbors can see your products, e.g. facebook.com/yourbusiness.'); return false; }
       if(fbRaw && (!fb || !fb.fb)){ toast('info','Check the Facebook page','Use the page address, like facebook.com/yourbusiness.'); return false; }
       if(webRaw && !web){ toast('info','Check the website','That does not look like a web address. Try something like yourbusiness.com.'); return false; }
       const contact=$('#f_contact').value.trim();
       if(!contact){ toast('info','Add a contact number','Neighbors need a way to reach you.'); return false; }
-      const fields = { title, description:desc, category:$('#f_cat').value, hours:$('#f_hours').value.trim(),
+      const fields = { title, ownerName, description:desc, category:$('#f_cat').value, hours:$('#f_hours').value.trim(),
         fbPage: fb ? fb.url : '', website: web ? web.url : '', contact, logo:pendingLogo||'' };
       if(b && admin){
         const verify = $('#f_verified') && $('#f_verified').getAttribute('aria-checked')==='true';
-        const pick = $('#f_owner') ? $('#f_owner').value : '', newOwner = pick && pick!=='keep' ? store.accounts.find(a=>a.id===pick) : null;
-        const oldUnit = b.unit, moved = newOwner && (newOwner.name!==b.by || newOwner.unit!==b.unit);
         Object.assign(b, fields);
-        if(moved){ b.by = newOwner.name; b.unit = newOwner.unit; b.ownerId = newOwner.id; }
         if(verify !== !!b.verified){ b.verified = verify; b.verifiedBy = verify ? store.session.name : ''; b.verifiedAt = verify ? new Date() : null; }
-        if(moved) commit('“'+title+'” moved from unit '+oldUnit+' to '+b.by+' ('+b.unit+').', {title:'Business owner changed', forUnit:oldUnit, go:'marketplace'});
-        commit('Business “'+title+'” updated by the admin office'+(moved?' — '+b.by+' is now the owner':'')+'.', {title:'Business profile updated', forUnit:b.unit, go:'marketplace'});
+        commit('Business “'+title+'” updated by the admin office.', {title:'Business profile updated', forUnit:b.unit, go:'marketplace'});
         return true;
       }
       if(b){
@@ -4241,17 +4240,24 @@ function rejectGarageItemForm(saleId, itemId){
 }
 function renewMkt(id){
   const m = store.marketplace.find(x=>x.id===id); if(!m) return;
+  if(m.sold){ toast('info','Already sold','Sold listings are not renewed. Post a new listing if you have another item.'); return; }
   m.expiresAt = new Date(Date.now() + LH_LISTING_DAYS*864e5);
   commit('“'+m.title+'” renewed. It stays in Buy and sell until '+fmtDate(m.expiresAt)+'.', {title:'Listing renewed', go:'marketplace'});
 }
+/* sold (or found) items stay in Buy and sell with a label until their 30-day listing ends; the seller can switch it back */
 function markSoldMkt(id){
   const m = store.marketplace.find(x=>x.id===id); if(!m) return;
   const wanted = mktKind(m)==='Wanted';
-  modal(wanted ? 'Mark as found?' : 'Mark as sold?', 'The listing comes down from Buy and sell right away.',
-    '<div class="card card-pad" style="background:var(--paper)"><div class="ttl">'+esc(m.title)+'</div><div class="meta">'+lhPriceLabel(m)+'</div></div>',
-    wanted ? 'Mark found' : 'Mark sold', () => {
-      m.status = wanted ? 'Found' : 'Sold';
-      commit('“'+m.title+'” marked '+m.status.toLowerCase()+'.', {title:'Listing closed', go:'marketplace'}); return true; });
+  m.sold = !m.sold; m.soldAt = m.sold ? new Date() : null;
+  const word = m.sold ? (wanted ? 'found' : 'sold') : (wanted ? 'still looking' : 'available again');
+  commit('“'+m.title+'” marked '+word+(m.sold ? '. It stays listed with a '+(wanted?'Found':'Sold')+' label until '+fmtDate(lhExpiry(m))+'.' : '.'),
+    {title: m.sold ? (wanted ? 'Marked found' : 'Marked sold') : 'Marked available', go:'marketplace'});
+  if(document.getElementById('mOk') && document.querySelector('.modal .lh-soldbtn')) openLh(id);   /* refresh an open details window */
+}
+function lhSoldButton(m){
+  const wanted = mktKind(m)==='Wanted';
+  return '<button class="btn '+(m.sold?'btn-ghost':'btn-emerald')+' btn-sm lh-soldbtn" style="width:auto" onclick="event.stopPropagation();markSoldMkt(\''+m.id+'\')">' +
+    (m.sold ? (wanted ? 'Still looking' : 'Mark as available') : (wanted ? 'Mark as found' : 'Mark as sold')) + '</button>';
 }
 function boothApplyForm(eventId){
   const e = store.boothEvents.find(x=>x.id===eventId); if(!e) return;
