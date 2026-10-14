@@ -999,6 +999,10 @@ function lhExpiry(m){
   const from = Math.max(+new Date(m.decidedAt||m.submittedAt||Date.now()), +LH_EXPIRY_START);
   return new Date(from + LH_LISTING_DAYS*864e5);
 }
+function lhPosted(m){ return new Date(m.postedAt || m.decidedAt || m.submittedAt || Date.now()); }
+function lhListDays(m){ return Math.max(1, Math.ceil((+lhExpiry(m) - +lhPosted(m)) / 864e5 - 0.01)); }
+function lhDaysLeft(m){ return Math.max(0, Math.ceil((+lhExpiry(m) - Date.now()) / 864e5)); }
+function lhLeftLabel(m){ const d = lhDaysLeft(m); return d ? d+' day'+(d===1?'':'s')+' left' : 'Ends today'; }
 function lhExpired(m){ return mktSection(m)==='buysell' && m.status==='Approved' && lhExpiry(m) <= new Date(); }
 function garageStart(m){ return new Date(m.date+'T'+(m.start||'00:00')); }
 function garageEnd(m){ return new Date(m.date+'T'+(m.end||'23:59')); }
@@ -1193,7 +1197,7 @@ function lhAllRow(r){
     : '<span class="lh-logo" style="width:44px;height:44px">'+(ph[0] ? '<img src="'+ph[0]+'" alt="" style="object-fit:cover">' : svg(LH_WORDS[sec].icon))+'</span>';
   const sub = sec==='business' ? '<span>'+esc(lhItemCat(m))+'</span><span>Owner / CEO: '+esc(lhOwnerName(m))+'</span><span class="mono">'+esc(m.unit)+'</span>'
     : sec==='garage' ? '<span>'+esc(fmtDate(m.date)+' · '+fmtTime(m.start)+' – '+fmtTime(m.end))+'</span><span>'+esc(garageVenue(m))+'</span>'
-    : (mktKind(m)==='Wanted'?'<span class="tag t-amber">Wanted</span>':'')+'<span>'+esc(lhItemCat(m))+'</span>'+(m.condition?'<span>'+esc(m.condition)+'</span>':'');
+    : (mktKind(m)==='Wanted'?'<span class="tag t-amber">Wanted</span>':'')+'<span>'+esc(lhItemCat(m))+'</span>'+(m.condition?'<span>'+esc(m.condition)+'</span>':'')+'<span>Posted '+fmtDate(lhPosted(m))+'</span>';
   const right = sec==='business' ? links.map(w=>esc(w.label)).join(' · ') : sec==='garage' ? 'Garage sale' : m.sold ? '<span class="tag t-rose">'+(mktKind(m)==='Wanted'?'Found':'Sold')+'</span>' : lhPriceLabel(m);
   return '<li class="lh-row-click"'+open("openLh('"+m.id+"')")+'><div class="row" style="align-items:center">' + thumb +
     '<div class="grow" style="min-width:0"><div class="ttl">'+esc(m.title)+lhVerified(m)+'</div>' +
@@ -2192,16 +2196,19 @@ const ADMIN = {
         const colName = sec==='business' ? 'Business' : sec==='garage' ? 'Garage sale' : 'Listing';
         const colVal = sec==='garage' ? 'When' : sec==='business' ? 'Website' : 'Price';
         inner = (sec==='garage' ? '' : mktCatChips(all, key, lhCats(sec))) + sectionCard('All '+W.nouns, shown.length
-          ? '<div class="tablewrap"><table class="mkt-listings"><thead><tr><th>'+colName+'</th><th class="hide-sm">'+(sec==='business'?'Owner':'Resident')+'</th><th>'+colVal+'</th><th>Status</th><th class="hide-sm">Decided</th><th></th></tr></thead><tbody>' +
+          ? '<div class="tablewrap"><table class="mkt-listings"><thead><tr><th>'+colName+'</th><th class="hide-sm">'+(sec==='business'?'Owner':'Resident')+'</th><th>'+colVal+'</th><th>Status</th><th class="hide-sm">'+(sec==='buysell'?'Posted':'Decided')+'</th><th></th></tr></thead><tbody>' +
           shown.map(m => '<tr><td data-label="'+colName+'"><button class="linkbtn" onclick="openLh(\''+m.id+'\')">'+esc(m.title)+'</button>'+lhVerified(m) +
               '<div class="meta">'+(sec==='buysell'?(mktKind(m)==='Wanted'?'Wanted · ':'For sale · '):'')+esc(lhItemCat(m))+'</div></td>' +
             '<td class="hide-sm" data-label="Resident">'+esc(sec==='business'?lhOwnerName(m):m.by)+'<div class="meta mono">'+esc(m.unit)+(sec==='business'&&lhOwnerName(m)!==m.by?' · listed by '+esc(m.by):'')+'</div></td>' +
             '<td class="'+(sec==='business'?'':'mono')+'" data-label="'+colVal+'">'+(sec==='business' ? (lhBizLinks(m).length ? lhBizLinks(m).map(w=>'<div><a href="'+esc(w.url)+'" target="_blank" rel="noopener noreferrer">'+esc(w.host)+'</a></div>').join('') : '<span class="meta">None yet</span>') : lhDetail(m))+'</td>' +
             '<td data-label="Status"><span class="tag '+statusTag(lhStatus(m))+'">'+esc(lhStatus(m))+'</span>' +
               (m.status==='Rejected'&&m.rejectReason?'<div class="meta">'+esc(m.rejectReason)+'</div>':'')+'</td>' +
-            '<td class="hide-sm meta" data-label="Decided">'+(m.decidedAt?fmtDate(m.decidedAt)+' · '+esc(m.decidedBy):'—')+'</td>' +
+            (sec==='buysell'
+              ? '<td class="hide-sm meta" data-label="Posted">'+(m.status==='Approved' ? fmtDate(lhPosted(m))+'<div>'+lhListDays(m)+' days · '+(lhExpired(m)?'ended '+fmtDate(lhExpiry(m)):esc(lhLeftLabel(m).toLowerCase()))+'</div>' : (m.listDays ? 'Will run '+m.listDays+' days' : '—'))+'</td>'
+              : '<td class="hide-sm meta" data-label="Decided">'+(m.decidedAt?fmtDate(m.decidedAt)+' · '+esc(m.decidedBy):'—')+'</td>') +
             '<td style="text-align:right"><div class="btn-row" style="justify-content:flex-end">' +
               (sec==='business' ? '<button class="btn btn-ghost btn-sm" onclick="businessForm(\''+m.id+'\')">Edit</button>' : '') +
+              (sec==='buysell' ? '<button class="btn btn-ghost btn-sm" onclick="adminListingForm(\''+m.id+'\')">Edit</button>' : '') +
               (sec==='business' && m.status==='Approved' ? '<button class="btn btn-ghost btn-sm" onclick="toggleVerifyBiz(\''+m.id+'\')">'+(m.verified?'Remove check':'Verify')+'</button>' : '') +
               '<button class="btn btn-danger btn-sm" onclick="deleteMktForm(\''+m.id+'\')">Remove</button></div></td></tr>').join('') +
           '</tbody></table></div>'
@@ -2579,7 +2586,8 @@ function mktCard(m){
       (biz?'<div class="meta" style="margin-top:10px"><span>Sold by</span><button class="linkbtn" onclick="event.stopPropagation();openLh(\''+biz.id+'\')">'+esc(biz.title)+'</button></div>':'') +
       (m.sold ? '' : lhSocialButtons(m, true)) +
       (m.unit===myUnit() && !isAdmin() ? '<div class="btn-row" style="margin-top:10px">'+lhSoldButton(m)+'</div>' : '') +
-      '<div class="meta" style="margin-top:10px"><span class="mono">'+esc(m.unit)+'</span>·<span>'+esc(m.by)+'</span>·<span>'+ago(m.decidedAt||m.submittedAt)+'</span></div>' +
+      '<div class="meta" style="margin-top:10px"><span class="mono">'+esc(m.unit)+'</span>·<span>'+esc(m.by)+'</span></div>' +
+      '<div class="meta"><span>Posted '+fmtDate(lhPosted(m))+'</span>·<span>'+esc(lhLeftLabel(m))+'</span></div>' +
     '</div></div>';
 }
 function bizCard(m){
@@ -2622,7 +2630,7 @@ function mktMineRow(m){
     const biz = lhBusiness(m.businessId);
     if(biz) extra += '<div class="meta"><span>Posted for '+esc(biz.title)+'</span></div>';
     if(st==='Approved' || st==='Sold' || st==='Found'){
-      extra += '<div class="meta"><span>'+(m.sold ? st+' · stays listed until ' : 'Listed until ')+fmtDate(lhExpiry(m))+'</span></div>';
+      extra += '<div class="meta"><span>Posted '+fmtDate(lhPosted(m))+'</span>·<span>'+(m.sold ? st+' · stays listed until ' : 'Listed until ')+fmtDate(lhExpiry(m))+'</span>·<span>'+esc(lhLeftLabel(m))+'</span></div>';
       actions = lhSoldButton(m);
     }
     if(st==='Expired' && !m.sold) actions = '<button class="btn btn-primary btn-sm" style="width:auto" onclick="renewMkt(\''+m.id+'\')">Renew for '+LH_LISTING_DAYS+' days</button>';
@@ -2656,6 +2664,7 @@ function lhAdminPendingRow(m){
       '<button class="btn btn-emerald btn-sm" onclick="approveMkt(\''+m.id+'\')">Approve</button>' +
       (isBiz ? '<button class="btn btn-emerald btn-sm" onclick="approveMkt(\''+m.id+'\', true)">Approve and verify</button>' : '') +
       (isBiz ? '<button class="btn btn-ghost btn-sm" onclick="businessForm(\''+m.id+'\')">Edit</button>' : '') +
+      (mktSection(m)==='buysell' ? '<button class="btn btn-ghost btn-sm" onclick="adminListingForm(\''+m.id+'\')">Edit</button>' : '') +
       '<button class="btn btn-danger btn-sm" onclick="rejectMktForm(\''+m.id+'\')">Reject</button>' +
     '</div></div></div></li>';
 }
@@ -2681,7 +2690,10 @@ function openLh(id){
     rows.push(['Type', mktKind(m)==='Wanted' ? 'Wanted' : 'For sale'], [mktKind(m)==='Wanted'?'Budget':'Price', peso(m.price)]);
     if(m.condition) rows.push(['Condition', m.condition]);
     if(m.sold) rows.push(['Status', (mktKind(m)==='Wanted'?'Found':'Sold')+' · '+fmtDate(m.soldAt||new Date())]);
-    if(m.status==='Approved') rows.push([lhExpired(m)?'Expired on':(m.sold?'Stays listed until':'Listed until'), fmtDate(lhExpiry(m))]);
+    if(m.status==='Approved'){
+      rows.push(['Posted on', fmtDate(lhPosted(m))]);
+      rows.push([lhExpired(m)?'Expired on':(m.sold?'Stays listed until':'Listed until'), fmtDate(lhExpiry(m))+(lhExpired(m)?'':' · '+lhLeftLabel(m).toLowerCase())]);
+    }
   }
   if(sec==='business' && m.hours) rows.push(['Hours', m.hours]);
   if(sec==='garage') rows.push(['When', garageWhen(m)], ['Where', garageVenue(m)]);
@@ -4238,9 +4250,71 @@ function rejectGarageItemForm(saleId, itemId){
     '<label class="fld"><span>Reason (optional)</span><textarea class="input" id="f_reason" placeholder="e.g. Appliances need a working-condition note."></textarea></label>',
     'Reject item', () => { setGarageItem(saleId, itemId, 'Rejected', $('#f_reason').value.trim()); return true; }, true);
 }
+/* admin edit for a Buy and sell listing: details, plus when it was posted and how many days it stays up */
+function adminListingForm(id){
+  const m = store.marketplace.find(x=>x.id===id); if(!m) return;
+  const live = m.status==='Approved', wanted = mktKind(m)==='Wanted';
+  const posted = lhPosted(m), days = live ? lhListDays(m) : (m.listDays || LH_LISTING_DAYS);
+  const ymd = d => { const x = new Date(d); x.setMinutes(x.getMinutes()-x.getTimezoneOffset()); return x.toISOString().slice(0,10); };
+  modal('Edit listing', 'Saved straight away. The resident gets a notice that the office updated their listing.',
+    '<div class="card card-pad" style="background:var(--paper);margin-bottom:14px"><div class="meta" style="margin:0"><span>Posted by</span><b style="color:var(--ink)">'+esc(m.by)+'</b>' +
+      '<span class="mono">'+esc(m.unit)+'</span><span class="tag '+statusTag(lhStatus(m))+'">'+esc(lhStatus(m))+'</span></div></div>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Type</span><select class="input" id="f_kind" onchange="mktKindChanged(this.value)">' +
+        '<option value="Sell"'+(wanted?'':' selected')+'>For sale</option><option value="Wanted"'+(wanted?' selected':'')+'>Wanted</option></select></label>' +
+      '<label class="fld"><span>Category</span><select class="input" id="f_cat">'+MKT_CATEGORIES.map(c=>'<option'+(lhItemCat(m)===c?' selected':'')+'>'+esc(c)+'</option>').join('')+'</select></label></div>' +
+    '<label class="fld"><span>Title</span><input class="input" id="f_title" value="'+esc(m.title)+'"></label>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span id="f_price_lbl">'+(wanted?'Budget (₱)':'Price (₱)')+'</span><input class="input" id="f_price" type="number" min="0" step="1" value="'+(Number(m.price)||'')+'"></label>' +
+      '<label class="fld"><span>Condition</span><select class="input" id="f_cond"><option value="" id="f_cond_any">'+(wanted?'Any condition':'Choose…')+'</option>' +
+        MKT_CONDITIONS.map(c=>'<option'+(m.condition===c?' selected':'')+'>'+esc(c)+'</option>').join('')+'</select></label></div>' +
+    '<label class="fld"><span>Description</span><textarea class="input" id="f_desc">'+esc(m.description)+'</textarea></label>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Contact number</span><input class="input" id="f_contact" value="'+esc(m.contact||'')+'"></label>' +
+      '<label class="fld"><span>Facebook or Messenger link</span><input class="input" id="f_fb" value="'+esc(m.fbLink||'')+'" placeholder="facebook.com/name"></label></div>' +
+    '<div class="card card-pad" style="background:var(--paper);margin:4px 0 0">' +
+      '<div class="eyebrow" style="margin-bottom:8px">How long it stays posted</div>' +
+      '<div class="grid g-2" style="gap:0 12px">' +
+        (live ? '<label class="fld"><span>Posted on</span><input class="input" id="f_posted" type="date" data-time="'+String(posted.getHours()).padStart(2,'0')+':'+String(posted.getMinutes()).padStart(2,'0')+'" value="'+ymd(posted)+'" oninput="lhPostPreview()"></label>'
+              : '<div class="fld"><span class="lh-lbl">Posted on</span><div class="meta" style="margin-top:12px">Starts the day it is approved</div></div>') +
+        '<label class="fld"><span>Days to stay posted</span><input class="input" id="f_days" type="number" min="1" max="90" step="1" value="'+days+'" oninput="lhPostPreview()"></label></div>' +
+      '<div class="meta" id="f_postpreview" style="margin:0"></div></div>',
+    'Save changes', () => {
+      const title=$('#f_title').value.trim(), price=Number($('#f_price').value), kind=$('#f_kind').value, cond=$('#f_cond').value;
+      const n = Math.floor(Number($('#f_days').value));
+      if(!title){ toast('info','Add a title','The listing needs a short title.'); return false; }
+      if(!price || price<=0){ toast('info', kind==='Wanted'?'Add a budget':'Add a price','Enter an amount greater than zero.'); return false; }
+      if(!n || n<1 || n>90){ toast('info','Check the number of days','Use between 1 and 90 days.'); return false; }
+      const fbRaw=$('#f_fb').value.trim(), fb=lhFbLinks(fbRaw);
+      if(fbRaw && !fb){ toast('info','Check the Facebook link','Use a facebook.com profile or m.me link, or leave it blank.'); return false; }
+      let start = posted;
+      if(live){
+        const d = $('#f_posted').value;
+        if(!d){ toast('info','Pick the posted date','Choose the day the listing went up.'); return false; }
+        start = new Date(d+'T'+String(posted.getHours()).padStart(2,'0')+':'+String(posted.getMinutes()).padStart(2,'0')+':00');
+        if(start > new Date()){ toast('info','Posted date is in the future','Pick today or an earlier day.'); return false; }
+      }
+      Object.assign(m, { kind, title, price, category:$('#f_cat').value, condition: cond || (kind==='Wanted'?'Any condition':''),
+        description:$('#f_desc').value.trim()||'No further details given.', contact:$('#f_contact').value.trim(),
+        fbLink: fb ? fb.fb || fb.msgr : '', listDays:n });
+      if(live){ m.postedAt = start; m.expiresAt = new Date(+start + n*864e5); }
+      commit('Listing “'+title+'” updated by the admin office'+(live ? ' — posted '+fmtDate(start)+', runs '+n+' days until '+fmtDate(m.expiresAt) : ' — will run '+n+' days once approved')+'.',
+        {title:'Listing updated', forUnit:m.unit, go:'marketplace'});
+      return true; });
+  lhPostPreview();
+}
+function lhPostPreview(){
+  const out = document.getElementById('f_postpreview'); if(!out) return;
+  const n = Math.floor(Number(($('#f_days')||{}).value)), d = ($('#f_posted')||{}).value;
+  if(!n || n<1){ out.textContent = 'Enter how many days it should stay up.'; return; }
+  if(!d){ out.textContent = 'Runs '+n+' day'+(n===1?'':'s')+' from the day it is approved.'; return; }
+  const end = new Date(+new Date(d+'T'+($('#f_posted').dataset.time||'00:00')+':00') + n*864e5), left = Math.ceil((+end - Date.now())/864e5);
+  out.textContent = 'Ends '+fmtDate(end)+' · '+(left>0 ? left+' day'+(left===1?'':'s')+' left' : 'already ended — it will drop off the board');
+}
 function renewMkt(id){
   const m = store.marketplace.find(x=>x.id===id); if(!m) return;
   if(m.sold){ toast('info','Already sold','Sold listings are not renewed. Post a new listing if you have another item.'); return; }
+  m.postedAt = new Date(); m.listDays = LH_LISTING_DAYS;
   m.expiresAt = new Date(Date.now() + LH_LISTING_DAYS*864e5);
   commit('“'+m.title+'” renewed. It stays in Buy and sell until '+fmtDate(m.expiresAt)+'.', {title:'Listing renewed', go:'marketplace'});
 }
@@ -4357,7 +4431,7 @@ function approveMkt(id, verify){
   const m = store.marketplace.find(x=>x.id===id);
   m.status='Approved'; m.decidedAt=new Date(); m.decidedBy=store.session.name; m.rejectReason='';
   if(verify){ m.verified = true; m.verifiedBy = store.session.name; m.verifiedAt = new Date(); }
-  if(mktSection(m)==='buysell') m.expiresAt = new Date(Date.now() + LH_LISTING_DAYS*864e5);
+  if(mktSection(m)==='buysell'){ m.postedAt = new Date(); m.expiresAt = new Date(Date.now() + (m.listDays || LH_LISTING_DAYS)*864e5); }
   commit(lhNoun(m)+' “'+m.title+'” approved and now visible in Livelihood and Marketplace.',
     {title:lhNoun(m)+' approved', forUnit:m.unit, go:gotoMarketplace}); }
 function rejectMktForm(id){
