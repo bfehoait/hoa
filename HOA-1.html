@@ -375,6 +375,15 @@ tr:last-child td{border-bottom:0}
 .cph{width:36px;height:36px;border-radius:10px;background:var(--slate-tint);color:var(--slate-dk);display:grid;place-items:center;font-weight:700;flex:none;font-size:13px;overflow:hidden}
 .mkt-photo{width:100%;aspect-ratio:4/3;border-radius:var(--radius) var(--radius) 0 0;background:var(--paper);color:var(--ink-3);display:grid;place-items:center;overflow:hidden}
 .mkt-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.lh-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:16px}
+@media(min-width:860px){.lh-sections{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.lh-sections button{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:10px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:12px 13px;cursor:pointer;color:var(--ink);font:inherit;transition:.14s}
+.lh-sections button:hover{border-color:var(--slate)}
+.lh-sections .ico{grid-row:1 / span 2;width:34px;height:34px;border-radius:10px;background:var(--slate-tint);color:var(--slate-dk);display:grid;place-items:center}
+.lh-sections .lh-l{font-weight:700;font-size:14px;line-height:1.25}
+.lh-sections .lh-n{font-size:12px;color:var(--ink-3)}
+.lh-sections button[aria-selected="true"]{border-color:var(--slate);background:var(--slate-tint);box-shadow:inset 0 0 0 1px var(--slate)}
+.lh-sections button[aria-selected="true"] .ico{background:var(--slate);color:#fff}
 .modal-scrim{position:fixed;inset:0;background:rgba(16,23,37,.5);z-index:80;display:grid;place-items:end center}
 @media(min-width:640px){.modal-scrim{place-items:center;padding:22px}}
 .modal{background:#fff;width:100%;max-width:540px;border-radius:18px 18px 0 0;padding:20px;max-height:92dvh;overflow-y:auto;animation:sheetUp .26s cubic-bezier(.2,.7,.3,1)}
@@ -651,7 +660,29 @@ const store = {
       description:'Full interior and exterior detailing at your carport. Booked by appointment on Saturdays and Sundays.',
       price:1500, category:'Vehicles & Property', photo:'', status:'Rejected',
       rejectReason:'Please limit the listing to residents of this subdivision — the write-up reads as open to outside customers too.',
-      submittedAt:new Date(Date.now()-864e5*3), decidedAt:new Date(Date.now()-864e5*2), decidedBy:'Arnel Bautista' }
+      submittedAt:new Date(Date.now()-864e5*3), decidedAt:new Date(Date.now()-864e5*2), decidedBy:'Arnel Bautista' },
+    { id:'m4', section:'business', unit:'B-12', by:'Rina Dela Cruz', title:'Rina\u2019s Kakanin Kitchen',
+      description:'Bibingka, puto and sapin-sapin made to order. Party trays for 10 to 30 guests, pickup at B-12.',
+      price:350, category:'Food & Catering', hours:'Tue–Sun, 7:00 AM – 5:00 PM', contact:'0917 555 0142', photo:'', status:'Approved', rejectReason:'',
+      submittedAt:new Date(Date.now()-864e5*12), decidedAt:new Date(Date.now()-864e5*11), decidedBy:'Arnel Bautista' },
+    { id:'m5', section:'business', unit:'D-07', by:'Ferdie Lim', title:'Lim Aircon Cleaning',
+      description:'Split-type and window aircon cleaning for residents. Includes a quick check of the gas and drainage.',
+      price:800, category:'Home Services & Repairs', hours:'Sat–Sun, 8:00 AM – 4:00 PM', contact:'0917 555 0188', photo:'', status:'Pending', rejectReason:'',
+      submittedAt:new Date(Date.now()-36e5*5), decidedAt:null, decidedBy:'' },
+    { id:'m6', section:'garage', unit:'A-04', by:'Marco Villanueva', title:'Moving-out garage sale',
+      description:'Furniture, kitchenware, kids\u2019 books and toys. Everything must go before we move.',
+      date:new Date(Date.now()+864e5*4).toISOString().slice(0,10), start:'08:00', end:'15:00', price:0, category:'Garage sale',
+      photo:'', status:'Approved', rejectReason:'', submittedAt:new Date(Date.now()-864e5*2), decidedAt:new Date(Date.now()-864e5), decidedBy:'Arnel Bautista' }
+  ],
+  boothEvents:[
+    { id:'be1', title:'Christmas Bazaar 2026', theme:'Food, gifts and holiday décor from resident vendors. One table and two chairs per booth.',
+      date:'2026-12-12', setup:'07:00', start:'09:00', end:'21:00', venue:'Covered court', capacity:20, createdBy:'Arnel Bautista', createdAt:new Date(Date.now()-864e5*3) }
+  ],
+  boothApps:[
+    { id:'ba1', eventId:'be1', unit:'B-12', by:'Rina Dela Cruz', vendor:'Rina\u2019s Kakanin Kitchen', products:'Bibingka, puto bumbong and kakanin trays',
+      contact:'0917 555 0142', status:'Approved', reason:'', submittedAt:new Date(Date.now()-864e5*2), decidedAt:new Date(Date.now()-864e5), decidedBy:'Arnel Bautista' },
+    { id:'ba2', eventId:'be1', unit:'C-21', by:'Jonna Reyes', vendor:'Jonna\u2019s Crafts', products:'Handmade parol and Christmas cards',
+      contact:'0917 555 0166', status:'Pending', reason:'', submittedAt:new Date(Date.now()-36e5*20), decidedAt:null, decidedBy:'' }
   ],
   events:[
     { id:'e1', title:'General assembly', date:'2026-09-13', time:'9:00 AM', where:'Covered court', note:'Budget report and officer elections.' },
@@ -832,17 +863,105 @@ const MKT_CATEGORIES = ['Apparel','Electronics & Home','Vehicles & Property','Ho
 const MKT_LEGACY = {'Food & Beverage':'Supplies & Essentials','Home & Living':'Electronics & Home','Fashion & Accessories':'Apparel',
   'Electronics':'Electronics & Home','Services':'Supplies & Essentials','Other':'Supplies & Essentials'};
 function mktCat(m){ return MKT_CATEGORIES.includes(m.category) ? m.category : (MKT_LEGACY[m.category] || 'Supplies & Essentials'); }
-function mktCatFilter(list){
-  const cur = tabOf('mktcat','All');
-  return cur==='All' ? list : list.filter(m=>mktCat(m)===cur);
+/* Livelihood and Marketplace is split into four sections; items saved before the split are Buy and sell */
+const LH_SECTIONS = [
+  { id:'business', label:'Business directory' },
+  { id:'buysell',  label:'Buy and sell' },
+  { id:'garage',   label:'Garage sales' },
+  { id:'booths',   label:'Seasonal booth events' }];
+const LH_WORDS = {
+  business:{ icon:'building', noun:'business', nouns:'businesses', live1:'business', liveN:'businesses', cta:'List my business', form:'businessForm',
+    browse:'Directory', mine:'My businesses', emptyT:'No businesses listed yet', emptyD:'Resident-run businesses show up here once the admin office approves them.' },
+  buysell:{ icon:'tag', noun:'listing', nouns:'listings', live1:'item for sale', liveN:'items for sale', cta:'Sell an item', form:'marketplaceForm',
+    browse:'Browse', mine:'My listings', emptyT:'Nothing listed yet', emptyD:'Approved listings from your neighbors will show up here.' },
+  garage:{ icon:'calendar', noun:'garage sale', nouns:'garage sales', live1:'upcoming sale', liveN:'upcoming sales', cta:'Host a garage sale', form:'garageForm',
+    browse:'Upcoming', mine:'My garage sales', emptyT:'No garage sales coming up', emptyD:'Approved garage sales show here until they end.' },
+  booths:{ icon:'flag', noun:'booth application', nouns:'booth applications', live1:'upcoming event', liveN:'upcoming events' }
+};
+const LH_INTRO = 'Support resident businesses, buy and sell with neighbors, find garage sales and join seasonal bazaars. The admin office reviews everything before it goes public. Payment is arranged directly between residents.';
+const BIZ_CATEGORIES = ['Food & Catering','Home Services & Repairs','Beauty & Wellness','Tutoring & Lessons','Retail & Goods','Other services'];
+const BOOTH_CLOSE_DAYS = 7; /* booth applications close this many days before setup */
+function mktSection(m){ return m.section || 'buysell'; }
+function lhItemCat(m){
+  const sec = mktSection(m);
+  if(sec==='business') return BIZ_CATEGORIES.includes(m.category) ? m.category : 'Other services';
+  if(sec==='garage') return 'Garage sale';
+  return mktCat(m);
 }
-function mktCatChips(list){
-  const cur = tabOf('mktcat','All');
+function lhCats(sec){ return sec==='business' ? BIZ_CATEGORIES : MKT_CATEGORIES; }
+function mktCatFilter(list, key){
+  const cur = tabOf(key||'mktcat','All');
+  return cur==='All' ? list : list.filter(m=>lhItemCat(m)===cur);
+}
+function mktCatChips(list, key, cats){
+  key = key || 'mktcat'; cats = cats || MKT_CATEGORIES;
+  const cur = tabOf(key,'All');
   return '<div class="chiprow" role="group" aria-label="Filter by category" style="margin-bottom:14px">' +
-    ['All'].concat(MKT_CATEGORIES).map(c => {
-      const n = c==='All' ? list.length : list.filter(m=>mktCat(m)===c).length;
-      return '<button class="chip'+(cur===c?' on':'')+'" aria-pressed="'+(cur===c)+'" onclick="goTab(\'mktcat\',\''+c+'\')">'+esc(c)+' · '+n+'</button>';
+    ['All'].concat(cats).map(c => {
+      const n = c==='All' ? list.length : list.filter(m=>lhItemCat(m)===c).length;
+      return '<button class="chip'+(cur===c?' on':'')+'" aria-pressed="'+(cur===c)+'" onclick="goTab(\''+key+'\',\''+c+'\')">'+esc(c)+' · '+n+'</button>';
     }).join('') + '</div>';
+}
+function mktCatSelect(list, key, cats, what){
+  const cur = tabOf(key,'All');
+  return '<label class="fld" style="max-width:320px;margin-bottom:14px"><span>Category</span>' +
+    '<select class="input" aria-label="Filter '+esc(what)+' by category" onchange="goTab(\''+key+'\',this.value)">' +
+    ['All'].concat(cats).map(c => {
+      const n = c==='All' ? list.length : list.filter(m=>lhItemCat(m)===c).length;
+      return '<option value="'+esc(c)+'"'+(cur===c?' selected':'')+'>'+esc(c==='All'?'All categories':c)+' ('+n+')</option>';
+    }).join('') + '</select></label>';
+}
+function lhToday(){ const d = new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); }
+function fmtTime(t){
+  if(!t) return '';
+  const [h,mi] = String(t).split(':').map(Number);
+  return ((h%12)||12)+':'+String(mi||0).padStart(2,'0')+' '+(h<12?'AM':'PM');
+}
+function garageStart(m){ return new Date(m.date+'T'+(m.start||'00:00')); }
+function garageEnd(m){ return new Date(m.date+'T'+(m.end||'23:59')); }
+function garageLive(m){ return garageEnd(m) > new Date(); }   /* hidden the moment it ends */
+function garageWhen(m){ return fmtDate(m.date)+' · '+fmtTime(m.start)+' – '+fmtTime(m.end); }
+function boothSetup(e){ return new Date(e.date+'T'+(e.setup||'00:00')); }
+function boothCloseAt(e){ return new Date(boothSetup(e).getTime() - BOOTH_CLOSE_DAYS*864e5); }
+function boothOpen(e){ return new Date() < boothCloseAt(e); }
+function boothEnded(e){ return new Date(e.date+'T'+(e.end||'23:59')) <= new Date(); }
+function boothTaken(e){ return store.boothApps.filter(a=>a.eventId===e.id && a.status==='Approved').length; }
+function lhLiveItems(sec){
+  return store.marketplace.filter(m => mktSection(m)===sec && m.status==='Approved' && (sec!=='garage' || garageLive(m)));
+}
+function lhPendingIn(sec){
+  return sec==='booths' ? store.boothApps.filter(a=>a.status==='Pending').length
+    : store.marketplace.filter(m=>mktSection(m)===sec && m.status==='Pending').length;
+}
+function lhPendingCount(){ return LH_SECTIONS.reduce((n,x)=>n+lhPendingIn(x.id),0); }
+function lhStatus(m){ return mktSection(m)==='garage' && m.status==='Approved' && !garageLive(m) ? 'Ended' : m.status; }
+/* the detail line under a title: category plus price, hours or date depending on the section */
+function lhMeta(m){
+  const sec = mktSection(m);
+  const tag = '<span class="tag t-grey">'+esc(lhItemCat(m))+'</span>';
+  if(sec==='garage') return tag+'<span>'+esc(garageWhen(m))+'</span>';
+  if(sec==='business') return tag+(m.price?'<span>From '+peso(m.price)+'</span>':'')+(m.hours?'<span>'+esc(m.hours)+'</span>':'');
+  return tag+'<span class="mono">'+peso(m.price)+'</span>';
+}
+function lhDetail(m){
+  const sec = mktSection(m);
+  if(sec==='garage') return esc(garageWhen(m));
+  if(sec==='business') return m.price ? 'From '+peso(m.price) : '—';
+  return peso(m.price);
+}
+function lhSectionSwitch(admin){
+  const cur = tabOf('lhsec','business');
+  return '<div class="lh-sections" role="tablist" aria-label="Livelihood and Marketplace sections">' + LH_SECTIONS.map(x => {
+    const W = LH_WORDS[x.id];
+    let sub;
+    if(admin){ const n = lhPendingIn(x.id); sub = n ? n+' waiting for review' : 'Nothing waiting'; }
+    else {
+      const n = x.id==='booths' ? store.boothEvents.filter(e=>!boothEnded(e)).length : lhLiveItems(x.id).length;
+      sub = n+' '+(n===1?W.live1:W.liveN);
+    }
+    return '<button role="tab" aria-selected="'+(cur===x.id)+'" onclick="goTab(\'lhsec\',\''+x.id+'\')">' +
+      '<span class="ico">'+svg(W.icon)+'</span><span class="lh-l">'+esc(x.label)+'</span><span class="lh-n">'+esc(sub)+'</span></button>';
+  }).join('') + '</div>';
 }
 
 /* ============================================================
@@ -889,7 +1008,7 @@ function setDuesMode(mode){
 const statusTag = s => ({
   'Paid':'t-emerald','Approved':'t-emerald','Resolved':'t-emerald','Closed':'t-emerald','Active':'t-emerald','Open ballot':'t-emerald',
   'Unpaid':'t-amber','Pending':'t-amber','In progress':'t-amber','Under review':'t-amber','For approval':'t-amber','Expiring':'t-amber','Used':'t-grey',
-  'Open':'t-slate','Escalated':'t-rose','Overdue':'t-rose','Declined':'t-rose','Revoked':'t-rose','Rejected':'t-rose'
+  'Open':'t-slate','Waitlisted':'t-amber','Cancelled':'t-rose','Escalated':'t-rose','Overdue':'t-rose','Declined':'t-rose','Revoked':'t-rose','Rejected':'t-rose'
 }[s] || 't-grey');
 
 function commit(msg, opts={}){
@@ -1146,7 +1265,7 @@ const NAV = {
       { id:'profiles',   label:'Homeowner Profiles',      icon:'users' },
       { id:'property',   label:'Property',                icon:'building' },
       { id:'operations', label:'Operations & Maintenance',icon:'wrench', badge:()=>store.requests.filter(r=>r.status!=='Resolved').length },
-      { id:'marketplace',label:'Livelihood',             icon:'tag', badge:()=>store.marketplace.filter(m=>m.status==='Pending').length },
+      { id:'marketplace',label:'Livelihood and Marketplace', icon:'tag', badge:()=>lhPendingCount() },
       { id:'calendar',   label:'Calendar',                icon:'calendar' },
       { id:'security',   label:'Security & Access',       icon:'shield', badge:()=>store.passes.filter(p=>p.status==='Pending').length },
       { id:'governance', label:'Governance & Community',  icon:'megaphone', badge:()=>store.complaints.filter(c=>c.status!=='Resolved').length },
@@ -1223,7 +1342,7 @@ const NAV = {
       { id:'events',     label:'Events',         icon:'calendar' },
       { id:'book',       label:'Book a facility',icon:'grid' },
       { id:'visitors',   label:'Visitor pass',   icon:'shield', badge:()=>store.passes.filter(p=>p.unit===myUnit()&&p.status==='Pending').length },
-      { id:'marketplace',label:'Livelihood',    icon:'tag' },
+      { id:'marketplace',label:'Livelihood and Marketplace', icon:'tag' },
       { id:'rides',      label:'Book a ride',    icon:'car', badge:()=>myRides().filter(r=>r.status==='On the way'||r.status==='Arrived').length }
     ]},
     { g:'Raise it with the board', items:[
@@ -1767,44 +1886,51 @@ const ADMIN = {
         {id:'schedule',label:'Preventive schedule'}],'requests') + inner;
   },
 
-  /* ---------- MARKETPLACE ---------- */
+  /* ---------- LIVELIHOOD AND MARKETPLACE ---------- */
   marketplace(){
-    const t = tabOf('mktadm','pending');
-    const pending = store.marketplace.filter(m=>m.status==='Pending');
-    const inner = {
-      pending(){
-        return sectionCard('Pending listings', pending.length ? '<ul class="list">' + pending.map(m =>
-          '<li><div class="row"><div class="cph">'+(m.photo?'<img src="'+m.photo+'" alt="">':svg('tag'))+'</div><div class="grow">' +
+    const sec = tabOf('lhsec','business');
+    const W = LH_WORDS[sec];
+    let body;
+    if(sec==='booths') body = boothAdminView();
+    else {
+      const all = store.marketplace.filter(m=>mktSection(m)===sec);
+      const pending = all.filter(m=>m.status==='Pending');
+      const key = sec==='business' ? 'bizcat' : 'mktcat';
+      const t = tabOf('mktadm_'+sec,'pending');
+      let inner;
+      if(t==='pending'){
+        inner = sectionCard('Pending '+W.nouns, pending.length ? '<ul class="list">' + pending.map(m =>
+          '<li><div class="row"><div class="cph">'+(m.photo?'<img src="'+m.photo+'" alt="">':svg(W.icon))+'</div><div class="grow">' +
           '<div class="ttl">'+esc(m.title)+'</div>' +
-          '<div class="meta"><span class="tag t-grey">'+esc(mktCat(m))+'</span><span class="mono">'+peso(m.price)+'</span>' +
-          '<span class="mono">'+esc(m.unit)+'</span>·<span>'+esc(m.by)+'</span>·<span>'+ago(m.submittedAt)+'</span></div>' +
+          '<div class="meta">'+lhMeta(m)+'<span class="mono">'+esc(m.unit)+'</span>·<span>'+esc(m.by)+'</span>·<span>'+ago(m.submittedAt)+'</span></div>' +
           '<div class="body">'+esc(m.description)+'</div>' +
+          (m.contact?'<div class="meta" style="margin-top:6px"><span>Contact</span><span class="mono">'+esc(m.contact)+'</span></div>':'') +
           '<div class="btn-row" style="margin-top:11px">' +
             '<button class="btn btn-emerald btn-sm" onclick="approveMkt(\''+m.id+'\')">Approve</button>' +
             '<button class="btn btn-danger btn-sm" onclick="rejectMktForm(\''+m.id+'\')">Reject</button>' +
           '</div></div></div></li>').join('') + '</ul>'
-          : empty('Nothing waiting','New listings from homeowners will appear here first.'));
-      },
-      listings(){
-        const shown = mktCatFilter(store.marketplace);
-        return mktCatChips(store.marketplace) + sectionCard('All listings', shown.length
-          ? '<div class="tablewrap"><table class="mkt-listings"><thead><tr><th>Listing</th><th class="hide-sm">Seller</th><th>Price</th><th>Status</th><th class="hide-sm">Decided</th><th></th></tr></thead><tbody>' +
-          shown.map(m => '<tr><td data-label="Listing"><strong>'+esc(m.title)+'</strong><div class="meta">'+esc(mktCat(m))+'</div></td>' +
-            '<td class="hide-sm" data-label="Seller">'+esc(m.by)+'<div class="meta mono">'+esc(m.unit)+'</div></td>' +
-            '<td class="mono" data-label="Price">'+peso(m.price)+'</td>' +
-            '<td data-label="Status"><span class="tag '+statusTag(m.status)+'">'+esc(m.status)+'</span>' +
+          : empty('Nothing waiting','New '+W.nouns+' from residents will appear here first.'));
+      } else {
+        const shown = sec==='garage' ? all : mktCatFilter(all, key);
+        inner = (sec==='garage' ? '' : mktCatChips(all, key, lhCats(sec))) + sectionCard('All '+W.nouns, shown.length
+          ? '<div class="tablewrap"><table class="mkt-listings"><thead><tr><th>'+esc(sec==='business'?'Business':sec==='garage'?'Garage sale':'Listing')+'</th><th class="hide-sm">Resident</th><th>'+(sec==='garage'?'When':'Price')+'</th><th>Status</th><th class="hide-sm">Decided</th><th></th></tr></thead><tbody>' +
+          shown.map(m => '<tr><td data-label="Item"><strong>'+esc(m.title)+'</strong><div class="meta">'+esc(lhItemCat(m))+'</div></td>' +
+            '<td class="hide-sm" data-label="Resident">'+esc(m.by)+'<div class="meta mono">'+esc(m.unit)+'</div></td>' +
+            '<td class="mono" data-label="'+(sec==='garage'?'When':'Price')+'">'+lhDetail(m)+'</td>' +
+            '<td data-label="Status"><span class="tag '+statusTag(lhStatus(m))+'">'+esc(lhStatus(m))+'</span>' +
               (m.status==='Rejected'&&m.rejectReason?'<div class="meta">'+esc(m.rejectReason)+'</div>':'')+'</td>' +
             '<td class="hide-sm meta" data-label="Decided">'+(m.decidedAt?fmtDate(m.decidedAt)+' · '+esc(m.decidedBy):'—')+'</td>' +
             '<td style="text-align:right"><button class="btn btn-danger btn-sm" onclick="deleteMktForm(\''+m.id+'\')">Remove</button></td></tr>').join('') +
           '</tbody></table></div>'
-          : store.marketplace.length ? empty('Nothing in this category','Pick another category or All to see every listing.')
-          : empty('No listings yet','Submissions from homeowners will show up here.'));
+          : all.length ? empty('Nothing in this category','Pick another category or All to see every '+W.noun+'.')
+          : empty('No '+W.nouns+' yet','Submissions from residents will show up here.'));
       }
-    }[t]();
-    return head('Livelihood','Review homeowner listings before they go public, and keep a record of past decisions.') +
-      tabs('mktadm',[
+      body = tabs('mktadm_'+sec,[
         {id:'pending',label:'Pending',n:pending.length},
-        {id:'listings',label:'All listings',n:store.marketplace.length}],'pending') + inner;
+        {id:'listings',label:'All '+W.nouns,n:all.length}],'pending') + inner;
+    }
+    return head('Livelihood and Marketplace','Review what residents submit before it goes public, and run the seasonal booth events.') +
+      lhSectionSwitch(true) + body;
   },
 
   /* ---------- MESSAGES ---------- */
@@ -2150,13 +2276,92 @@ function mktCard(m){
       '<div class="meta" style="margin-top:10px"><span class="mono">'+esc(m.unit)+'</span>·<span>'+esc(m.by)+'</span>·<span>'+ago(m.submittedAt)+'</span></div>' +
     '</div></div>';
 }
+function lhPhotoBox(m, icon){
+  return '<div class="mkt-photo">'+(m.photo?'<img src="'+m.photo+'" alt="">':'<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'+ICONS[icon]+'</svg>')+'</div>';
+}
+function bizCard(m){
+  return '<div class="card">' + lhPhotoBox(m,'building') +
+    '<div class="card-pad">' +
+      '<div class="ttl">'+esc(m.title)+'</div>' +
+      '<div class="meta"><span class="tag t-grey">'+esc(lhItemCat(m))+'</span>'+(m.price?'<span>From '+peso(m.price)+'</span>':'')+'</div>' +
+      '<div class="body">'+esc(m.description)+'</div>' +
+      (m.hours?'<div class="meta" style="margin-top:10px"><span>'+esc(m.hours)+'</span></div>':'') +
+      '<div class="meta" style="margin-top:6px"><span class="mono">'+esc(m.unit)+'</span>·<span>'+esc(m.by)+'</span>'+(m.contact?'·<span class="mono">'+esc(m.contact)+'</span>':'')+'</div>' +
+    '</div></div>';
+}
+function garageCard(m){
+  const today = m.date===lhToday();
+  return '<div class="card">' + lhPhotoBox(m,'calendar') +
+    '<div class="card-pad">' +
+      '<div class="row" style="align-items:flex-start"><div class="grow"><div class="ttl">'+esc(m.title)+'</div></div>' +
+      (today?'<span class="tag t-emerald">Today</span>':'')+'</div>' +
+      '<div class="meta"><span>'+esc(garageWhen(m))+'</span></div>' +
+      '<div class="body">'+esc(m.description)+'</div>' +
+      '<div class="meta" style="margin-top:10px"><span>At unit</span><span class="mono">'+esc(m.unit)+'</span>·<span>'+esc(m.by)+'</span></div>' +
+    '</div></div>';
+}
 function mktMineRow(m){
   return '<li><div class="row"><div class="grow"><div class="ttl">'+esc(m.title)+'</div>' +
-    '<div class="meta"><span class="tag t-grey">'+esc(mktCat(m))+'</span><span class="mono">'+peso(m.price)+'</span><span>Submitted '+ago(m.submittedAt)+'</span></div>' +
+    '<div class="meta">'+lhMeta(m)+'<span>Submitted '+ago(m.submittedAt)+'</span></div>' +
     '<div class="body">'+esc(m.description)+'</div>' +
     (m.status==='Rejected' && m.rejectReason ? '<div class="card card-pad" style="background:var(--rose-tint);margin-top:10px;border:0">' +
       '<strong style="font-size:13px;color:var(--rose)">Not approved</strong><div class="body" style="margin-top:4px">'+esc(m.rejectReason)+'</div></div>' : '') +
-    '</div><span class="tag '+statusTag(m.status)+'">'+esc(m.status)+'</span></div></li>';
+    '</div><span class="tag '+statusTag(lhStatus(m))+'">'+esc(lhStatus(m))+'</span></div></li>';
+}
+/* ---- seasonal booth events ---- */
+function boothMemberView(){
+  const events = store.boothEvents.filter(e=>!boothEnded(e)).sort((a,b)=>a.date<b.date?-1:1);
+  const mine = store.boothApps.filter(a=>a.unit===myUnit());
+  const list = events.length ? '<div class="grid g-2">' + events.map(e => {
+    const left = Math.max(0, e.capacity - boothTaken(e)), open = boothOpen(e);
+    const app = mine.find(a=>a.eventId===e.id && a.status!=='Cancelled');
+    return '<div class="card card-pad"><div class="row" style="align-items:flex-start"><div class="grow">' +
+        '<div class="ttl">'+esc(e.title)+'</div>' +
+        '<div class="meta"><span>'+fmtDate(e.date)+'</span>·<span>'+fmtTime(e.start)+' – '+fmtTime(e.end)+'</span>·<span>'+esc(e.venue)+'</span></div></div>' +
+        '<span class="tag '+(left?'t-emerald':'t-amber')+'">'+(left ? left+' of '+e.capacity+' booths left' : 'Full · waitlist')+'</span></div>' +
+      '<div class="body">'+esc(e.theme)+'</div>' +
+      '<div class="meta" style="margin-top:10px"><span>Setup '+fmtTime(e.setup)+'</span>·<span>'+(open ? 'Applications close '+fmtDate(boothCloseAt(e)) : 'Applications closed')+'</span></div>' +
+      '<div style="margin-top:12px">' + (app ? '<span class="tag '+statusTag(app.status)+'">Your application: '+esc(app.status)+'</span>'
+        : open ? '<button class="btn btn-primary btn-sm" style="width:auto" onclick="boothApplyForm(\''+e.id+'\')">Apply for a booth</button>'
+        : '<span class="meta">Applications for this event have closed.</span>') + '</div></div>';
+  }).join('') + '</div>'
+  : '<div class="card">'+empty('No booth events scheduled','The admin office posts seasonal bazaars here. Applications close '+BOOTH_CLOSE_DAYS+' days before setup.')+'</div>';
+  const myApps = mine.length ? '<div style="margin-top:14px">' + sectionCard('My booth applications', '<ul class="list">' + mine.map(a => {
+    const e = store.boothEvents.find(x=>x.id===a.eventId);
+    return '<li><div class="row"><div class="grow"><div class="ttl">'+esc(a.vendor)+'</div>' +
+      '<div class="meta"><span>'+esc(e?e.title:'Event removed')+'</span>'+(e?'·<span>'+fmtDate(e.date)+'</span>':'')+'·<span>Applied '+ago(a.submittedAt)+'</span></div>' +
+      '<div class="body">'+esc(a.products)+'</div>' +
+      (a.status==='Waitlisted' ? '<div class="meta" style="margin-top:6px">All booths are taken. You move up if a vendor drops out.</div>' : '') +
+      ((a.status==='Rejected'||a.status==='Cancelled') && a.reason ? '<div class="card card-pad" style="background:var(--rose-tint);margin-top:10px;border:0">' +
+        '<strong style="font-size:13px;color:var(--rose)">'+(a.status==='Rejected'?'Not approved':'Booth cancelled')+'</strong><div class="body" style="margin-top:4px">'+esc(a.reason)+'</div></div>' : '') +
+      '</div><span class="tag '+statusTag(a.status)+'">'+esc(a.status)+'</span></div></li>';
+  }).join('') + '</ul>') + '</div>' : '';
+  return list + myApps;
+}
+function boothAdminView(){
+  const events = store.boothEvents.slice().sort((a,b)=>a.date<b.date?-1:1);
+  const add = '<button class="btn btn-primary btn-sm" style="width:auto" onclick="boothEventForm()">New booth event</button>';
+  if(!events.length) return sectionCard('Seasonal booth events', empty('No events yet','Create a bazaar, set how many booths it has, and residents can apply.'), add);
+  return '<div class="btn-row" style="margin-bottom:14px">'+add+'</div>' + events.map(e => {
+    const apps = store.boothApps.filter(a=>a.eventId===e.id);
+    const state = boothEnded(e) ? 'Ended' : boothOpen(e) ? 'Applications open' : 'Applications closed';
+    return '<div style="margin-bottom:14px">' + sectionCard(e.title+' · '+fmtDate(e.date),
+      '<div class="card-pad" style="padding-bottom:4px"><div class="meta"><span class="tag '+(state==='Applications open'?'t-emerald':'t-grey')+'">'+state+'</span>' +
+        '<span>'+esc(e.venue)+'</span>·<span>Setup '+fmtTime(e.setup)+', open '+fmtTime(e.start)+' – '+fmtTime(e.end)+'</span>·' +
+        '<span class="mono">'+boothTaken(e)+'/'+e.capacity+' booths</span>·<span>Applications close '+fmtDate(boothCloseAt(e))+'</span></div>' +
+        '<div class="body">'+esc(e.theme)+'</div></div>' +
+      (apps.length ? '<div class="tablewrap"><table><thead><tr><th>Vendor</th><th class="hide-sm">Products</th><th>Status</th><th></th></tr></thead><tbody>' +
+        apps.map(a => '<tr><td data-label="Vendor"><strong>'+esc(a.vendor)+'</strong><div class="meta mono">'+esc(a.unit)+' · '+esc(a.by)+(a.contact?' · '+esc(a.contact):'')+'</div></td>' +
+          '<td class="hide-sm" data-label="Products">'+esc(a.products)+'</td>' +
+          '<td data-label="Status"><span class="tag '+statusTag(a.status)+'">'+esc(a.status)+'</span></td>' +
+          '<td style="text-align:right">'+(a.status==='Pending'||a.status==='Waitlisted'
+            ? '<div class="btn-row" style="justify-content:flex-end"><button class="btn btn-emerald btn-sm" onclick="approveBoothApp(\''+a.id+'\')">Approve</button>' +
+              '<button class="btn btn-danger btn-sm" onclick="rejectBoothForm(\''+a.id+'\',\'Rejected\')">Reject</button></div>'
+            : a.status==='Approved' ? '<button class="btn btn-ghost btn-sm" onclick="rejectBoothForm(\''+a.id+'\',\'Cancelled\')">Cancel booth</button>'
+            : '<span class="meta">Closed</span>')+'</td></tr>').join('') + '</tbody></table></div>'
+        : '<div class="card-pad">'+empty('No applications yet', boothOpen(e) ? 'Residents can apply until '+fmtDate(boothCloseAt(e))+'.' : 'Applications are closed.')+'</div>'),
+      '<button class="btn btn-danger btn-sm" onclick="deleteBoothEvent(\''+e.id+'\')">Delete</button>') + '</div>';
+  }).join('');
 }
 function tallyBlock(compact){
   const e = store.election;
@@ -2619,37 +2824,42 @@ const HOME = {
       : '<div class="card">'+empty('No visitor passes yet','Log a visitor, delivery or contractor and the admin office will clear them for the gate.')+'</div>');
   },
 
-  /* ---------- MARKETPLACE ---------- */
+  /* ---------- LIVELIHOOD AND MARKETPLACE ---------- */
   marketplace(){
-    const t = tabOf('mkt','browse');
-    const approved = store.marketplace.filter(m=>m.status==='Approved');
-    const mine = store.marketplace.filter(m=>m.unit===myUnit());
-    const inner = {
-      browse(){
-        if(!approved.length) return '<div class="card">'+empty('Nothing listed yet','Approved listings from your neighbors will show up here.')+'</div>';
-        const shown = mktCatFilter(approved);
-        return mktCatChips(approved) + (shown.length ? '<div class="grid g-3">' + shown.map(mktCard).join('') + '</div>'
-          : '<div class="card">'+empty('Nothing in this category','Pick another category or All to see every listing.')+'</div>');
-      },
-      mine(){
-        if(!mine.length) return '<div class="card">'+empty('Nothing submitted yet','List a product below and the admin office will review it.')+'</div>';
-        const cur = tabOf('mktminecat','All');
-        const shown = cur==='All' ? mine : mine.filter(m=>mktCat(m)===cur);
-        return '<label class="fld" style="max-width:320px;margin-bottom:14px"><span>Category</span>' +
-          '<select class="input" aria-label="Filter my listings by category" onchange="goTab(\'mktminecat\',this.value)">' +
-          ['All'].concat(MKT_CATEGORIES).map(c => {
-            const n = c==='All' ? mine.length : mine.filter(m=>mktCat(m)===c).length;
-            return '<option value="'+esc(c)+'"'+(cur===c?' selected':'')+'>'+esc(c==='All'?'All categories':c)+' ('+n+')</option>';
-          }).join('') + '</select></label>' +
-          (shown.length ? '<div class="card"><ul class="list">' + shown.map(mktMineRow).join('') + '</ul></div>'
-          : '<div class="card">'+empty('Nothing in this category','Choose another category or All categories to see every listing.')+'</div>');
+    const sec = tabOf('lhsec','business');
+    const W = LH_WORDS[sec];
+    if(sec==='booths') return head('Livelihood and Marketplace', LH_INTRO) + lhSectionSwitch(false) + boothMemberView();
+    const all = store.marketplace.filter(m=>mktSection(m)===sec);
+    const live = lhLiveItems(sec);
+    const mine = all.filter(m=>m.unit===myUnit());
+    const key = sec==='business' ? 'bizcat' : 'mktcat', mineKey = sec==='business' ? 'bizminecat' : 'mktminecat';
+    const t = tabOf('mkt_'+sec,'browse');
+    let inner;
+    if(t==='browse'){
+      if(!live.length) inner = '<div class="card">'+empty(W.emptyT, W.emptyD)+'</div>';
+      else if(sec==='garage') inner = '<div class="grid g-3">' + live.slice().sort((a,b)=>garageStart(a)-garageStart(b)).map(garageCard).join('') + '</div>';
+      else {
+        const shown = mktCatFilter(live, key);
+        inner = mktCatChips(live, key, lhCats(sec)) + (shown.length ? '<div class="grid g-3">' + shown.map(sec==='business'?bizCard:mktCard).join('') + '</div>'
+          : '<div class="card">'+empty('Nothing in this category','Pick another category or All to see every '+W.noun+'.')+'</div>');
       }
-    }[t]();
-    return head('Livelihood','Buy and sell with your neighbors. New listings are reviewed by the admin office before they go public.',
-      '<button class="btn btn-primary" style="width:auto" onclick="marketplaceForm()">Sell an item</button>') +
-      tabs('mkt',[
-        {id:'browse',label:'Browse',n:approved.length},
-        {id:'mine',label:'My listings',n:mine.length}],'browse') + inner;
+    } else {
+      if(!mine.length) inner = '<div class="card">'+empty('Nothing submitted yet','Use “'+W.cta+'” and the admin office will review it.')+'</div>';
+      else if(sec==='garage') inner = '<div class="card"><ul class="list">' + mine.map(mktMineRow).join('') + '</ul></div>';
+      else {
+        const cur = tabOf(mineKey,'All');
+        const shown = cur==='All' ? mine : mine.filter(m=>lhItemCat(m)===cur);
+        inner = mktCatSelect(mine, mineKey, lhCats(sec), W.mine.toLowerCase()) +
+          (shown.length ? '<div class="card"><ul class="list">' + shown.map(mktMineRow).join('') + '</ul></div>'
+          : '<div class="card">'+empty('Nothing in this category','Choose another category or All categories to see every '+W.noun+'.')+'</div>');
+      }
+    }
+    return head('Livelihood and Marketplace', LH_INTRO,
+      '<button class="btn btn-primary" style="width:auto" onclick="'+W.form+'()">'+esc(W.cta)+'</button>') +
+      lhSectionSwitch(false) +
+      tabs('mkt_'+sec,[
+        {id:'browse',label:W.browse,n:live.length},
+        {id:'mine',label:W.mine,n:mine.length}],'browse') + inner;
   },
 
   /* ---------- COMPLAINTS ---------- */
@@ -3355,56 +3565,184 @@ function handleMktPhotoFile(e){
     if(prev) prev.innerHTML = '<img src="'+dataUrl+'" alt="">';
   }, msg => toast('info','Could not use that photo',msg));
 }
-function marketplaceForm(){
-  pendingMktPhoto = null;
-  modal('Sell an item','Listed to the whole community once the admin office approves it — usually within a day.',
-    '<div class="row" style="align-items:center;gap:12px;margin-bottom:14px">' +
-      '<div class="cph" id="mktPhotoPreview" style="width:56px;height:56px;font-size:20px">'+svg('tag')+'</div>' +
+function lhPhotoPicker(icon){
+  return '<div class="row" style="align-items:center;gap:12px;margin-bottom:14px">' +
+      '<div class="cph" id="mktPhotoPreview" style="width:56px;height:56px;font-size:20px">'+svg(icon)+'</div>' +
       '<button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById(\'mktPhotoFile\').click()">Add photo</button>' +
       '<input type="file" id="mktPhotoFile" accept="image/*" class="hide" onchange="handleMktPhotoFile(event)">' +
-    '</div>' +
+    '</div>';
+}
+function lhSubmitted(item, what){
+  store.marketplace.unshift(item);
+  commit(what+' “'+item.title+'” sent to the admin office for approval.',
+    {title:what+' submitted', audience:'admin', go:'marketplace'});
+}
+function marketplaceForm(){
+  pendingMktPhoto = null;
+  modal('Sell an item','Listed in Buy and sell once the admin office approves it — usually within a day.',
+    lhPhotoPicker('tag') +
     '<div class="grid g-2" style="gap:0 12px">' +
-      '<label class="fld"><span>Category</span><select class="input" id="f_cat">'+MKT_CATEGORIES.map(c=>'<option>'+c+'</option>').join('')+'</select></label>' +
+      '<label class="fld"><span>Category</span><select class="input" id="f_cat">'+MKT_CATEGORIES.map(c=>'<option>'+esc(c)+'</option>').join('')+'</select></label>' +
       '<label class="fld"><span>Price (₱)</span><input class="input" id="f_price" type="number" min="0" step="1" placeholder="250"></label></div>' +
-    '<label class="fld"><span>Title</span><input class="input" id="f_title" placeholder="Homemade ube halaya (250g jar)"></label>' +
+    '<label class="fld"><span>Title</span><input class="input" id="f_title" placeholder="Preloved kids bicycle (16-inch)"></label>' +
     '<label class="fld"><span>Description</span><textarea class="input" id="f_desc" placeholder="What it is, condition, pickup or delivery…"></textarea></label>',
     'Submit for approval', () => {
       const title=$('#f_title').value.trim(), price=Number($('#f_price').value);
       if(!title){ toast('info','Add a title','Give your listing a short title.'); return false; }
       if(!price || price<=0){ toast('info','Add a price','Enter a price greater than zero.'); return false; }
-      const item = { id:uid(), unit:myUnit(), by:store.session.name, title,
+      lhSubmitted({ id:uid(), section:'buysell', unit:myUnit(), by:store.session.name, title,
         description:$('#f_desc').value.trim()||'No further details given.', price, category:$('#f_cat').value,
-        photo:pendingMktPhoto||'', status:'Pending', rejectReason:'', submittedAt:new Date(), decidedAt:null, decidedBy:'' };
-      store.marketplace.unshift(item);
-      commit('Listing “'+title+'” sent to the admin office for approval.',
-        {title:'Listing submitted', audience:'admin', go:'marketplace'}); return true; });
+        photo:pendingMktPhoto||'', status:'Pending', rejectReason:'', submittedAt:new Date(), decidedAt:null, decidedBy:'' }, 'Listing');
+      return true; });
 }
-function gotoMarketplace(){ isAdmin() ? (go('marketplace'), goTab('mktadm','pending')) : go('marketplace'); }
+function businessForm(){
+  pendingMktPhoto = null;
+  modal('List my business','Shown in the Business directory once the admin office approves it.',
+    lhPhotoPicker('building') +
+    '<label class="fld"><span>Business name</span><input class="input" id="f_title" placeholder="Rina\u2019s Kakanin Kitchen"></label>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Category</span><select class="input" id="f_cat">'+BIZ_CATEGORIES.map(c=>'<option>'+esc(c)+'</option>').join('')+'</select></label>' +
+      '<label class="fld"><span>Starting price (₱, optional)</span><input class="input" id="f_price" type="number" min="0" step="1" placeholder="350"></label></div>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Hours</span><input class="input" id="f_hours" placeholder="Mon–Sat, 8:00 AM – 6:00 PM"></label>' +
+      '<label class="fld"><span>Contact number</span><input class="input" id="f_contact" value="'+esc(store.session.phone||'')+'" placeholder="0917 555 0000"></label></div>' +
+    '<label class="fld"><span>What you offer</span><textarea class="input" id="f_desc" placeholder="Products or services, how to order, delivery or pickup…"></textarea></label>',
+    'Submit for approval', () => {
+      const title=$('#f_title').value.trim(), desc=$('#f_desc').value.trim();
+      if(!title){ toast('info','Add the business name','Tell neighbors what your business is called.'); return false; }
+      if(!desc){ toast('info','Describe your business','Say what you offer so neighbors know what to expect.'); return false; }
+      lhSubmitted({ id:uid(), section:'business', unit:myUnit(), by:store.session.name, title, description:desc,
+        price:Math.max(0, Number($('#f_price').value)||0), category:$('#f_cat').value,
+        hours:$('#f_hours').value.trim(), contact:$('#f_contact').value.trim(),
+        photo:pendingMktPhoto||'', status:'Pending', rejectReason:'', submittedAt:new Date(), decidedAt:null, decidedBy:'' }, 'Business');
+      return true; });
+}
+function garageForm(){
+  pendingMktPhoto = null;
+  modal('Host a garage sale','Neighbors see it under Garage sales once the admin office approves it. It disappears as soon as the sale ends.',
+    lhPhotoPicker('calendar') +
+    '<label class="fld"><span>Title</span><input class="input" id="f_title" placeholder="Moving-out garage sale"></label>' +
+    '<label class="fld"><span>Date</span><input class="input" id="f_gdate" type="date" min="'+lhToday()+'"></label>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Starts</span><input class="input" id="f_gstart" type="time" value="08:00"></label>' +
+      '<label class="fld"><span>Ends</span><input class="input" id="f_gend" type="time" value="15:00"></label></div>' +
+    '<label class="fld"><span>What you are selling</span><textarea class="input" id="f_desc" placeholder="Furniture, clothes, toys, kitchenware…"></textarea></label>' +
+    '<p class="meta" style="display:block;margin:-6px 0 4px">The sale is listed at your unit, '+esc(myUnit())+'.</p>',
+    'Submit for approval', () => {
+      const title=$('#f_title').value.trim(), date=$('#f_gdate').value, start=$('#f_gstart').value, end=$('#f_gend').value;
+      if(!title){ toast('info','Add a title','Give your garage sale a short title.'); return false; }
+      if(!date){ toast('info','Pick a date','Choose the day of your garage sale.'); return false; }
+      if(!start || !end || end<=start){ toast('info','Check the times','The end time has to be after the start time.'); return false; }
+      const item = { id:uid(), section:'garage', unit:myUnit(), by:store.session.name, title, date, start, end, price:0, category:'Garage sale',
+        description:$('#f_desc').value.trim()||'Assorted items.', photo:pendingMktPhoto||'', status:'Pending', rejectReason:'',
+        submittedAt:new Date(), decidedAt:null, decidedBy:'' };
+      if(!garageLive(item)){ toast('info','That time has passed','Pick a date and end time that are still ahead.'); return false; }
+      lhSubmitted(item, 'Garage sale');
+      return true; });
+}
+function boothApplyForm(eventId){
+  const e = store.boothEvents.find(x=>x.id===eventId); if(!e) return;
+  modal('Apply for a booth', e.title+' · '+fmtDate(e.date)+' at '+e.venue+'. The admin office confirms booths in the order applications arrive.',
+    '<label class="fld"><span>Business or stall name</span><input class="input" id="f_bvendor" placeholder="Jonna\u2019s Crafts"></label>' +
+    '<label class="fld"><span>What you will sell</span><textarea class="input" id="f_bprod" placeholder="Handmade parol, Christmas cards…"></textarea></label>' +
+    '<label class="fld"><span>Contact number</span><input class="input" id="f_bphone" value="'+esc(store.session.phone||'')+'" placeholder="0917 555 0000"></label>',
+    'Submit application', () => {
+      const vendor=$('#f_bvendor').value.trim(), products=$('#f_bprod').value.trim();
+      if(!vendor){ toast('info','Add a stall name','Tell shoppers what your booth is called.'); return false; }
+      if(!products){ toast('info','Say what you will sell','The admin office uses this to keep a good mix of booths.'); return false; }
+      if(!boothOpen(e)){ toast('info','Applications have closed','They closed on '+fmtDate(boothCloseAt(e))+', '+BOOTH_CLOSE_DAYS+' days before setup.'); return false; }
+      store.boothApps.unshift({ id:uid(), eventId, unit:myUnit(), by:store.session.name, vendor, products,
+        contact:$('#f_bphone').value.trim(), status:'Pending', reason:'', submittedAt:new Date(), decidedAt:null, decidedBy:'' });
+      commit('Booth application for '+e.title+' sent by '+vendor+' ('+myUnit()+').',
+        {title:'Booth application submitted', audience:'admin', go:'marketplace'}); return true; });
+}
+function boothEventForm(){
+  modal('New booth event','Residents can apply until '+BOOTH_CLOSE_DAYS+' days before setup. Approvals stop when every booth is taken; later applicants go on a waitlist.',
+    '<label class="fld"><span>Event name</span><input class="input" id="f_etitle" placeholder="Christmas Bazaar 2026"></label>' +
+    '<label class="fld"><span>Theme and vendor rules</span><textarea class="input" id="f_etheme" placeholder="Food, gifts and holiday décor. One table and two chairs per booth."></textarea></label>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Date</span><input class="input" id="f_edate" type="date" min="'+lhToday()+'"></label>' +
+      '<label class="fld"><span>Venue</span><input class="input" id="f_evenue" value="Covered court"></label></div>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Setup starts</span><input class="input" id="f_esetup" type="time" value="07:00"></label>' +
+      '<label class="fld"><span>Booths available</span><input class="input" id="f_ecap" type="number" min="1" step="1" placeholder="20"></label></div>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Opens to shoppers</span><input class="input" id="f_estart" type="time" value="09:00"></label>' +
+      '<label class="fld"><span>Ends</span><input class="input" id="f_eend" type="time" value="21:00"></label></div>',
+    'Create event', () => {
+      const title=$('#f_etitle').value.trim(), date=$('#f_edate').value, capacity=Math.floor(Number($('#f_ecap').value));
+      const setup=$('#f_esetup').value, start=$('#f_estart').value, end=$('#f_eend').value;
+      if(!title){ toast('info','Add a name','Give the event a name residents will recognise.'); return false; }
+      if(!date){ toast('info','Pick a date','Choose the day of the event.'); return false; }
+      if(!capacity || capacity<1){ toast('info','Set the number of booths','Enter how many booths the venue can hold.'); return false; }
+      if(!setup || !start || !end || end<=start){ toast('info','Check the times','The end time has to be after the opening time.'); return false; }
+      const e = { id:uid(), title, theme:$('#f_etheme').value.trim()||'Seasonal bazaar for resident vendors.', date, setup, start, end,
+        venue:$('#f_evenue').value.trim()||'Covered court', capacity, createdBy:store.session.name, createdAt:new Date() };
+      if(!boothOpen(e)){ toast('info','Too soon to take applications','Set the date at least '+BOOTH_CLOSE_DAYS+' days after today so residents have time to apply.'); return false; }
+      store.boothEvents.push(e);
+      commit(title+' on '+fmtDate(date)+' is open for booth applications ('+capacity+' booths).',
+        {title:'Booth event posted', go:'marketplace'}); return true; });
+}
+function approveBoothApp(id){
+  const a = store.boothApps.find(x=>x.id===id), e = store.boothEvents.find(x=>x.id===a.eventId);
+  a.decidedAt = new Date(); a.decidedBy = store.session.name;
+  if(e && boothTaken(e) >= e.capacity){
+    a.status = 'Waitlisted';
+    commit('All '+e.capacity+' booths for '+e.title+' are taken, so '+a.vendor+' is on the waitlist.',
+      {title:'Booth waitlisted', forUnit:a.unit, go:'marketplace'}); return;
+  }
+  a.status = 'Approved'; a.reason = '';
+  commit(a.vendor+' has a booth at '+(e?e.title:'the event')+'.', {title:'Booth approved', forUnit:a.unit, go:'marketplace'});
+}
+function rejectBoothForm(id, outcome){
+  const a = store.boothApps.find(x=>x.id===id), e = store.boothEvents.find(x=>x.id===a.eventId);
+  const cancel = outcome==='Cancelled';
+  modal(cancel ? 'Cancel this booth?' : 'Reject this application', cancel ? 'The slot opens up for a waitlisted vendor.' : 'Optional — tell the resident why.',
+    '<div class="card card-pad" style="background:var(--paper);margin-bottom:14px"><div class="ttl">'+esc(a.vendor)+'</div>' +
+    '<div class="meta mono">'+esc(a.unit)+' · '+esc(a.by)+'</div></div>' +
+    '<label class="fld"><span>Reason (optional)</span><textarea class="input" id="f_reason" placeholder="e.g. We already have enough food stalls."></textarea></label>',
+    cancel ? 'Cancel booth' : 'Reject application', () => {
+      a.status = outcome; a.reason = $('#f_reason').value.trim(); a.decidedAt = new Date(); a.decidedBy = store.session.name;
+      commit((cancel ? 'Booth cancelled for ' : 'Booth application rejected for ')+a.vendor+(e?' at '+e.title:'')+(a.reason?' — '+a.reason:'.'),
+        {title: cancel ? 'Booth cancelled' : 'Booth application rejected', forUnit:a.unit, go:'marketplace'}); return true; }, true);
+}
+function deleteBoothEvent(id){
+  const e = store.boothEvents.find(x=>x.id===id);
+  const n = store.boothApps.filter(a=>a.eventId===id).length;
+  modal('Delete this event?', 'It comes down right away'+(n?', along with its '+n+' application'+(n===1?'':'s'):'')+'. This cannot be undone.',
+    '<div class="card card-pad" style="background:var(--paper)"><div class="ttl">'+esc(e.title)+'</div><div class="meta">'+fmtDate(e.date)+' · '+esc(e.venue)+'</div></div>',
+    'Delete event', () => {
+      store.boothEvents = store.boothEvents.filter(x=>x.id!==id);
+      store.boothApps = store.boothApps.filter(a=>a.eventId!==id);
+      commit(e.title+' was deleted.', {title:'Booth event deleted', go:'marketplace'}); return true; }, true);
+}
+function gotoMarketplace(){ go('marketplace'); }
+function lhNoun(m){ const n = LH_WORDS[mktSection(m)].noun; return n.charAt(0).toUpperCase()+n.slice(1); }
 function approveMkt(id){
   const m = store.marketplace.find(x=>x.id===id);
   m.status='Approved'; m.decidedAt=new Date(); m.decidedBy=store.session.name; m.rejectReason='';
-  commit('Listing “'+m.title+'” approved and now visible in Livelihood.',
-    {title:'Listing approved', forUnit:m.unit, go:gotoMarketplace}); }
+  commit(lhNoun(m)+' “'+m.title+'” approved and now visible in Livelihood and Marketplace.',
+    {title:lhNoun(m)+' approved', forUnit:m.unit, go:gotoMarketplace}); }
 function rejectMktForm(id){
   const m = store.marketplace.find(x=>x.id===id);
-  modal('Reject this listing','Optional — tell the seller why, so they can fix it and resubmit.',
+  modal('Reject this '+LH_WORDS[mktSection(m)].noun,'Optional — tell the resident why, so they can fix it and resubmit.',
     '<div class="card card-pad" style="background:var(--paper);margin-bottom:14px"><div class="ttl">'+esc(m.title)+'</div>' +
     '<div class="meta mono">'+esc(m.unit)+' · '+esc(m.by)+'</div></div>' +
     '<label class="fld"><span>Reason (optional)</span><textarea class="input" id="f_reason" placeholder="e.g. Needs a clearer photo, or the price seems off."></textarea></label>',
-    'Reject listing', () => {
+    'Reject', () => {
       m.status='Rejected'; m.decidedAt=new Date(); m.decidedBy=store.session.name; m.rejectReason=$('#f_reason').value.trim();
-      commit('Listing “'+m.title+'” rejected'+(m.rejectReason?' — '+m.rejectReason:'.'),
-        {title:'Listing rejected', forUnit:m.unit, go:gotoMarketplace}); return true; }, true);
+      commit(lhNoun(m)+' “'+m.title+'” rejected'+(m.rejectReason?' — '+m.rejectReason:'.'),
+        {title:lhNoun(m)+' rejected', forUnit:m.unit, go:gotoMarketplace}); return true; }, true);
 }
 function deleteMktForm(id){
   const m = store.marketplace.find(x=>x.id===id);
-  modal('Remove this listing?','It comes down from Livelihood right away and this cannot be undone.',
+  modal('Remove this '+LH_WORDS[mktSection(m)].noun+'?','It comes down from Livelihood and Marketplace right away and this cannot be undone.',
     '<div class="card card-pad" style="background:var(--paper)"><div class="ttl">'+esc(m.title)+'</div>' +
     '<div class="meta mono">'+esc(m.unit)+' · '+esc(m.by)+'</div></div>',
-    'Remove listing', () => {
+    'Remove', () => {
       store.marketplace = store.marketplace.filter(x=>x.id!==id);
-      commit('Listing “'+m.title+'” removed from Livelihood.',
-        {title:'Listing removed', forUnit:m.unit, go:gotoMarketplace}); return true; }, true);
+      commit(lhNoun(m)+' “'+m.title+'” removed from Livelihood and Marketplace.',
+        {title:lhNoun(m)+' removed', forUnit:m.unit, go:gotoMarketplace}); return true; }, true);
 }
 
 /* dues */
