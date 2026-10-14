@@ -402,6 +402,9 @@ tr:last-child td{border-bottom:0}
 .lh-thumb button{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;border:0;background:rgba(16,23,37,.72);color:#fff;font-size:13px;line-height:20px;cursor:pointer;padding:0}
 .lh-thumb.add{display:grid;place-items:center;font:inherit;font-size:12.5px;font-weight:600;color:var(--slate-dk);cursor:pointer;border-style:dashed}
 .lh-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:14px}
+.lh-search{position:relative;display:flex;gap:8px;align-items:center;margin-bottom:14px}
+.lh-search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-3);pointer-events:none}
+.lh-search .input{padding-left:38px;flex:1;min-width:0}
 .lh-gallery img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;display:block}
 .modal-scrim{position:fixed;inset:0;background:rgba(16,23,37,.5);z-index:80;display:grid;place-items:end center}
 @media(min-width:640px){.modal-scrim{place-items:center;padding:22px}}
@@ -1036,12 +1039,53 @@ function lhMeta(m){
     (m.condition?'<span>'+esc(m.condition)+'</span>':'') + '<span class="mono">'+lhPriceLabel(m)+'</span>';
 }
 function lhDetail(m){ return mktSection(m)==='garage' ? esc(garageWhen(m)) : (lhPriceLabel(m) || '—'); }
+/* ---- search: one box filters whichever section is open; the section cards show matches in every section ---- */
+let lhSearch = '';
+function onLhSearch(v){
+  lhSearch = v;
+  const active = document.activeElement;
+  const pos = active && active.id==='lhSearchInput' ? active.selectionStart : null;
+  render();
+  const el = document.getElementById('lhSearchInput');
+  if(el){ el.focus(); if(pos!=null) el.setSelectionRange(pos,pos); }
+}
+function lhTerms(){ return lhSearch.trim().toLowerCase().split(/\s+/).filter(Boolean); }
+function lhHit(text){ const t = lhTerms(), h = text.toLowerCase(); return t.every(w => h.includes(w)); }
+function lhMatch(m){
+  if(!lhTerms().length) return true;
+  return lhHit([m.title, m.description, m.by, m.unit, lhItemCat(m), m.condition, m.hours, m.kind==='Wanted'?'wanted':'',
+    lhOffers(m).map(o=>o.name).join(' '), lhItems(m).filter(i=>i.status==='Approved'||isAdmin()).map(i=>i.name).join(' '),
+    (lhBusiness(m.businessId)||{}).title].filter(Boolean).join(' '));
+}
+function boothMatch(e){
+  if(!lhTerms().length) return true;
+  return lhHit([e.title, e.theme, e.venue].concat(store.boothApps.filter(a=>a.eventId===e.id && (a.status==='Approved'||isAdmin()))
+    .map(a=>a.vendor+' '+a.products+' '+a.by)).join(' '));
+}
+function lhSearchBar(admin){
+  const q = lhSearch;
+  return '<div class="lh-search" role="search">' +
+    '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>' +
+    '<input class="input" id="lhSearchInput" type="search" autocomplete="off" aria-label="Search Livelihood and Marketplace" value="'+esc(q)+'" ' +
+      'placeholder="'+(admin?'Search by name, resident, unit or item…':'Search businesses, items, garage sales and events…')+'" oninput="onLhSearch(this.value)">' +
+    (q ? '<button type="button" class="btn btn-ghost btn-sm" onclick="onLhSearch(\'\')">Clear</button>' : '') + '</div>';
+}
+function lhNoMatch(sec, admin){
+  const others = LH_SECTIONS.filter(x=>x.id!==sec).map(x=>({ x, n:lhSearchCount(x.id, admin) })).filter(o=>o.n);
+  return '<div class="card">'+empty('No matches for “'+lhSearch.trim()+'”',
+    others.length ? 'Found in '+others.map(o=>o.x.label+' ('+o.n+')').join(', ')+'. Tap a section above to see them.' : 'Try a shorter word, or clear the search.')+'</div>';
+}
+function lhSearchCount(sec, admin){
+  if(sec==='booths') return store.boothEvents.filter(e=>(admin || !boothEnded(e)) && boothMatch(e)).length;
+  return (admin ? store.marketplace.filter(m=>mktSection(m)===sec) : lhLiveItems(sec)).filter(lhMatch).length;
+}
 function lhSectionSwitch(admin){
   const cur = tabOf('lhsec','business');
   return '<div class="lh-sections" role="tablist" aria-label="Livelihood and Marketplace sections">' + LH_SECTIONS.map(x => {
     const W = LH_WORDS[x.id];
     let sub;
-    if(admin){ const n = lhPendingIn(x.id); sub = n ? n+' waiting for review' : 'Nothing waiting'; }
+    if(lhTerms().length){ const n = lhSearchCount(x.id, admin); sub = n ? n+' match'+(n===1?'':'es') : 'No matches'; }
+    else if(admin){ const n = lhPendingIn(x.id); sub = n ? n+' waiting for review' : 'Nothing waiting'; }
     else {
       const n = x.id==='booths' ? store.boothEvents.filter(e=>!boothEnded(e)).length : lhLiveItems(x.id).length;
       sub = n+' '+(n===1?W.live1:W.liveN);
@@ -1979,13 +2023,14 @@ const ADMIN = {
     let body;
     if(sec==='booths') body = boothAdminView();
     else {
-      const all = store.marketplace.filter(m=>mktSection(m)===sec);
+      const all = store.marketplace.filter(m=>mktSection(m)===sec && lhMatch(m));
       const pending = all.filter(m=>m.status==='Pending');
       const key = sec==='business' ? 'bizcat' : 'mktcat';
       const t = tabOf('mktadm_'+sec,'pending');
       let inner;
       if(t==='pending'){
         inner = sectionCard('Pending '+W.nouns, pending.length ? '<ul class="list">' + pending.map(lhAdminPendingRow).join('') + '</ul>'
+          : lhTerms().length ? empty('No pending matches','Nothing waiting for review matches “'+lhSearch.trim()+'”.')
           : empty('Nothing waiting','New '+W.nouns+' from residents will appear here first.'));
         if(sec==='garage') inner += '<div style="margin-top:14px">'+garageItemQueue()+'</div>';
       } else {
@@ -2004,6 +2049,7 @@ const ADMIN = {
             '<td style="text-align:right"><button class="btn btn-danger btn-sm" onclick="deleteMktForm(\''+m.id+'\')">Remove</button></td></tr>').join('') +
           '</tbody></table></div>'
           : all.length ? empty('Nothing in this category','Pick another category or All to see every '+W.noun+'.')
+          : lhTerms().length ? empty('No matches for “'+lhSearch.trim()+'”','Try a shorter word, or clear the search.')
           : empty('No '+W.nouns+' yet','Submissions from residents will show up here.'));
       }
       body = tabs('mktadm_'+sec,[
@@ -2011,7 +2057,7 @@ const ADMIN = {
         {id:'listings',label:'All '+W.nouns,n:all.length}],'pending') + inner;
     }
     return head('Livelihood and Marketplace','Review what residents submit before it goes public, and run the seasonal booth events.') +
-      lhSectionSwitch(true) + body;
+      lhSectionSwitch(true) + lhSearchBar(true) + body;
   },
   /* ---------- MESSAGES ---------- */
   messages(){ return messagesInboxView(); },
@@ -2497,8 +2543,9 @@ function boothVendorDirectory(e){
     }).join('') + '</ul>';
 }
 function boothMemberView(){
-  const events = store.boothEvents.filter(e=>!boothEnded(e)).sort((a,b)=>a.date<b.date?-1:1);
+  const events = store.boothEvents.filter(e=>!boothEnded(e) && boothMatch(e)).sort((a,b)=>a.date<b.date?-1:1);
   const mine = store.boothApps.filter(a=>a.unit===myUnit());
+  if(!events.length && lhTerms().length) return lhNoMatch('booths', false);
   const list = events.length ? '<div class="grid g-2">' + events.map(e => {
     const left = Math.max(0, e.capacity - boothTaken(e)), open = boothOpen(e);
     const app = mine.find(a=>a.eventId===e.id && a.status!=='Cancelled');
@@ -2528,8 +2575,9 @@ function boothMemberView(){
   return list + myApps;
 }
 function boothAdminView(){
-  const events = store.boothEvents.slice().sort((a,b)=>a.date<b.date?-1:1);
+  const events = store.boothEvents.filter(boothMatch).sort((a,b)=>a.date<b.date?-1:1);
   const add = '<button class="btn btn-primary btn-sm" style="width:auto" onclick="boothEventForm()">New booth event</button>';
+  if(!events.length && lhTerms().length) return '<div class="btn-row" style="margin-bottom:14px">'+add+'</div>' + lhNoMatch('booths', true);
   if(!events.length) return sectionCard('Seasonal booth events', empty('No events yet','Create a bazaar at an approved venue, set how many booths it has, and residents can apply.'), add);
   return '<div class="btn-row" style="margin-bottom:14px">'+add+'</div>' + events.map(e => {
     const apps = store.boothApps.filter(a=>a.eventId===e.id);
@@ -3027,15 +3075,16 @@ const HOME = {
   marketplace(){
     const sec = tabOf('lhsec','business');
     const W = LH_WORDS[sec];
-    if(sec==='booths') return head('Livelihood and Marketplace', LH_INTRO) + lhSectionSwitch(false) + boothMemberView();
+    if(sec==='booths') return head('Livelihood and Marketplace', LH_INTRO) + lhSectionSwitch(false) + lhSearchBar(false) + boothMemberView();
+    const searching = lhTerms().length > 0;
     const all = store.marketplace.filter(m=>mktSection(m)===sec);
-    const live = lhLiveItems(sec);
-    const mine = all.filter(m=>m.unit===myUnit());
+    const live = lhLiveItems(sec).filter(lhMatch);
+    const mine = all.filter(m=>m.unit===myUnit() && lhMatch(m));
     const key = sec==='business' ? 'bizcat' : 'mktcat', mineKey = sec==='business' ? 'bizminecat' : 'mktminecat';
     const t = tabOf('mkt_'+sec,'browse');
     let inner;
     if(t==='browse'){
-      if(!live.length) inner = '<div class="card">'+empty(W.emptyT, W.emptyD)+'</div>';
+      if(!live.length) inner = searching ? lhNoMatch(sec, false) : '<div class="card">'+empty(W.emptyT, W.emptyD)+'</div>';
       else if(sec==='garage') inner = '<div class="grid g-3">' + live.slice().sort((a,b)=>garageStart(a)-garageStart(b)).map(garageCard).join('') + '</div>';
       else {
         let pool = live, kindRow = '';
@@ -3053,7 +3102,8 @@ const HOME = {
           : '<div class="card">'+empty('Nothing here yet','Pick another filter or All to see every '+W.noun+'.')+'</div>');
       }
     } else {
-      if(!mine.length) inner = '<div class="card">'+empty('Nothing submitted yet','Use “'+W.cta+'” and the admin office will review it.')+'</div>';
+      if(!mine.length) inner = '<div class="card">'+(searching ? empty('No matches for “'+lhSearch.trim()+'”','None of your '+W.nouns+' match. Clear the search to see them all.')
+        : empty('Nothing submitted yet','Use “'+W.cta+'” and the admin office will review it.'))+'</div>';
       else if(sec==='garage') inner = '<div class="card"><ul class="list">' + mine.map(mktMineRow).join('') + '</ul></div>';
       else {
         const cur = tabOf(mineKey,'All');
@@ -3065,7 +3115,7 @@ const HOME = {
     }
     return head('Livelihood and Marketplace', LH_INTRO,
       '<button class="btn btn-primary" style="width:auto" onclick="'+W.form+'()">'+esc(W.cta)+'</button>') +
-      lhSectionSwitch(false) +
+      lhSectionSwitch(false) + lhSearchBar(false) +
       tabs('mkt_'+sec,[
         {id:'browse',label:W.browse,n:live.length},
         {id:'mine',label:W.mine,n:mine.length}],'browse') + inner;
