@@ -431,6 +431,25 @@ html[data-theme="dark"] .lh-verified{color:#4C9BFF}
 .ann-img img{width:100%;display:block;aspect-ratio:2/3;object-fit:cover}
 .ann-img span{position:absolute;left:8px;bottom:8px;background:rgba(16,23,37,.75);color:#fff;font-size:12px;font-weight:600;padding:4px 9px;border-radius:20px}
 .ann-img:hover,.ann-img:focus-visible{border-color:var(--slate)}
+.hotlines{margin-bottom:14px;overflow:hidden}
+.hotlines summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:12px;padding:14px 16px}
+.hotlines summary::-webkit-details-marker{display:none}
+.hotlines summary b{display:block;font-size:15px}
+.hotlines .hl-ico{width:34px;height:34px;border-radius:50%;background:#D62828;color:#fff;display:grid;place-items:center;flex:none}
+.hotlines .hl-caret{color:var(--ink-3);transition:transform .15s}
+.hotlines:not([open]) .hl-caret{transform:rotate(-90deg)}
+.hotlines .hl-body{padding:0 16px 16px}
+.hl-inline{margin-top:10px}
+.hl-inline summary{cursor:pointer;font-weight:700;font-size:13.5px;color:var(--slate)}
+.hl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.hl-box{border:1px solid var(--line);border-top:4px solid var(--hl);border-radius:12px;background:var(--surface);padding:11px 13px;min-width:0}
+.hl-box h4{margin:0 0 6px;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--hl)}
+html[data-theme="dark"] .hl-box h4{color:var(--ink)}
+.hl-line{display:flex;flex-direction:column;padding:3px 0;min-width:0}
+.hl-line span{font-size:11.5px;color:var(--ink-3)}
+.hl-line a,.hl-line b{font-family:var(--mono);font-weight:700;font-size:15px;color:var(--ink);text-decoration:none;overflow-wrap:anywhere}
+.hl-line a:hover{color:var(--slate)}
+.hl-line a.mail{font-family:inherit;font-size:13px;font-weight:600;color:var(--slate)}
 .ann-qrs{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-top:12px}
 .ann-qr{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:12px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;min-width:0}
 .ann-qr-lbl{font-weight:700;font-size:13.5px;color:var(--ink)}
@@ -677,7 +696,7 @@ const store = {
   userAccess:{},
 
   announcements:[
-    { id:'behoai-hotlines', title:'Emergency hotlines — save these numbers', date:'2026-10-20', category:'Security', pinned:true,
+    { id:'behoai-hotlines', title:'Emergency hotlines — save these numbers', date:'2026-10-20', category:'Security', pinned:true, hotlines:true,
       images:['announcements/behoai-emergency-hotlines.jpg'],
       body:'Important numbers for your safety and peace of mind. Save them on your phone.\n\n' +
         'Brgy. Molino IV hotlines\n• Smart: 0969 161 1999 (Duplex Delta Base)\n• Globe (Viber): 0917 724 0303 (Duplex Delta Base)\n• Landline PLDT: (046) 884 6599\n\n' +
@@ -721,6 +740,23 @@ const store = {
     { id:'a3', title:'Barangay clean-up drive — Sept 5', date:'2026-08-18', category:'Event',
       body:'Assembly at the covered court, 6:30 AM. Bring gloves and a rake if you have one. Each participating household gets a ₱200 credit on October dues.',
       attach:'route-map.png', vis:'all', at:new Date(Date.now()-864e5*8) }
+  ],
+  hotlines:[
+    { id:'hl-brgy', name:'Brgy. Molino IV hotlines', tone:'green', lines:[
+      { label:'Smart · Duplex Delta Base', value:'0969 161 1999' }, { label:'Globe (Viber) · Duplex Delta Base', value:'0917 724 0303' }, { label:'Landline PLDT', value:'(046) 884 6599' }] },
+    { id:'hl-guards', name:'BEHOAI security guards', tone:'green', lines:[ { label:'', value:'0962 650 9132' }, { label:'', value:'0964 842 9013' }] },
+    { id:'hl-rescue', name:'Bacoor emergency hotline (Rescue 161)', tone:'orange', lines:[ { label:'', value:'161' }, { label:'', value:'(046) 417 0207' }] },
+    { id:'hl-pnp', name:'PNP Cavite', tone:'red', lines:[ { label:'', value:'0998 598 6953' }] },
+    { id:'hl-fire', name:'Bureau of Fire Cavite', tone:'red', lines:[
+      { label:'Central station', value:'0965 865 7240' }, { label:'Central station', value:'0966 695 9711' }, { label:'Molino sub station', value:'0966 938 2591' }] },
+    { id:'hl-msmc', name:'Metro South Medical Center (MSMC)', tone:'green', lines:[
+      { label:'', value:'(046) 894 1630' }, { label:'', value:'(046) 885 6113' }, { label:'', value:'0918 904 8736' }] },
+    { id:'hl-ccc', name:'Cavite Command Center', tone:'purple', lines:[ { label:'', value:'0905 844 1334' }, { label:'', value:'0908 815 0650' }] },
+    { id:'hl-aqualink', name:'Aqualink Inc. (water)', tone:'blue', lines:[
+      { label:'', value:'0967 457 6140' }, { label:'', value:'0949 625 3489' }, { label:'', value:'aqualinkresources@macroasiaproperties.com' }] },
+    { id:'hl-breighton', name:'Breighton Land admin office', tone:'maroon', lines:[
+      { label:'Allieda Leuterio', value:'0928 770 1922' }, { label:'', value:'bfehoainc@gmail.com' }, { label:'', value:'bellefortestatesvaoffice01@gmail.com' },
+      { label:'', value:'aleuterio@breightonland.com' }, { label:'Bryle Cabarloc', value:'bcabarloc@breightonland.com' }] }
   ],
   requests:[
     { id:'r1', unit:'A-04', by:'Marco Villanueva', type:'Streetlight', title:'Streetlight out near A-04',
@@ -2275,7 +2311,8 @@ const ADMIN = {
         {id:'pending',label:'Pending',n:lhPendingIn(sec)},
         {id:'listings',label:'All '+W.nouns,n:all.length}],'pending') + inner;
     }
-    return head('Livelihood and Marketplace','Review what residents submit before it goes public, and run the seasonal booth events.') +
+    return head('Livelihood and Marketplace','Review what residents submit before it goes public, and run the seasonal booth events.',
+      sec==='business' ? '<button class="btn btn-primary" style="width:auto" onclick="businessForm()">Add business</button>' : '') +
       lhSectionSwitch(true) + lhSearchBar(true) + body;
   },
   /* ---------- MESSAGES ---------- */
@@ -2349,7 +2386,7 @@ const ADMIN = {
             '<div class="meta">'+annTags(a) +
             '<span>'+((a.vis||'all')==='all' ? 'Everyone' : 'Owners only')+'</span>' +
             (a.attach?'<span class="mono" style="font-size:11.5px">📎 '+esc(a.attach)+'</span>':'')+'</div>' +
-            '<div class="body">'+esc(a.body)+'</div>' + annImages(a) + annQrs(a) +
+            annBodyHtml(a) + annImages(a) + annQrs(a) +
             '<div class="btn-row" style="margin-top:11px">' +
               '<button class="btn btn-ghost btn-sm" onclick="announceForm(\''+a.id+'\')">Edit</button>' +
               '<button class="btn btn-danger btn-sm" onclick="deleteAnnounce(\''+a.id+'\')">Delete</button></div>' +
@@ -3217,7 +3254,7 @@ const HOME = {
         '<div class="meta">Closes '+fmtDate(store.election.closes)+' · one vote per household</div></div>' +
         '<button class="btn btn-primary" style="width:auto" onclick="go(\'elections\')">Vote now</button></div></div>' : '';
     return head('Hello, '+s.name.split(' ')[0], 'Unit '+s.unit+' · '+(fresh ? fresh+' new update'+(fresh>1?'s':'')+' from the board' : 'You are all caught up')) +
-    banner + voteBanner +
+    hotlinesPanel() + banner + voteBanner +
     '<div class="qa" style="margin-bottom:20px">' +
       quick('peso','Pay dues', due && due.status==='Paid' ? 'August settled' : 'August · '+peso(due ? due.amount : unitDues(myUnit())), 'payForm()') +
       quick('wrench','Report an issue','Streetlights, drainage, repairs','requestForm()') +
@@ -3232,7 +3269,7 @@ const HOME = {
             '<div class="ttl">'+esc(a.title)+(isNew?' <span class="newpill">NEW</span>':'')+'</div>' +
             '<div class="meta">'+annTags(a) +
             (a.attach?'<span class="mono" style="font-size:11.5px">📎 '+esc(a.attach)+'</span>':'')+'</div>' +
-            '<div class="body">'+esc(a.body)+'</div>' + annImages(a) + annQrs(a) +
+            annBodyHtml(a) + annImages(a) + annQrs(a) +
             (isNew?'<button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="markSeen(\''+a.id+'\')">Mark read</button>':'') +
           '</div></div></li>';
         }).join('') + '</ul></div>' +
@@ -3522,6 +3559,65 @@ function annImages(a){
     '<button type="button" class="ann-img" onclick="openAnnImage(\''+a.id+'\','+i+')" aria-label="View poster '+(i+1)+' full size">' +
       '<img src="'+esc(src)+'" alt="'+esc(a.title)+' — poster" loading="lazy"><span>View poster</span></button>').join('') + '</div>';
 }
+/* ---- emergency hotlines: one box per agency, numbers tap to call ---- */
+const HL_TONES = { green:'#1E7A46', maroon:'#9B2335', blue:'#1D4ED8', orange:'#D9661F', purple:'#6B3FA0', red:'#D62828', slate:'#4B5BC4' };
+function hlLink(v){
+  v = String(v||'').trim();
+  if(/@/.test(v) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return '<a class="mail" href="mailto:'+esc(v)+'">'+esc(v)+'</a>';
+  const tel = v.replace(/[^\d+]/g,'');
+  return tel.length >= 3 ? '<a href="tel:'+esc(tel)+'">'+esc(v)+'</a>' : '<b>'+esc(v)+'</b>';
+}
+function hotlineBoxes(){
+  const list = (store.hotlines||[]).filter(h => h && h.name);
+  if(!list.length) return '<div class="meta">No hotlines yet.</div>';
+  return '<div class="hl-grid">' + list.map(h =>
+    '<div class="hl-box" style="--hl:'+(HL_TONES[h.tone]||HL_TONES.slate)+'"><h4>'+esc(h.name)+'</h4>' +
+      (h.lines||[]).map(l => '<div class="hl-line">'+(l.label?'<span>'+esc(l.label)+'</span>':'')+hlLink(l.value)+'</div>').join('') +
+    '</div>').join('') + '</div>';
+}
+function hotlinesPanel(){
+  return '<details class="card hotlines" open><summary>' +
+      '<span class="hl-ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg></span>' +
+      '<span style="flex:1;min-width:0"><b>Emergency hotlines</b><span class="meta" style="margin:0">Tap a number to call. Save them on your phone.</span></span>' +
+      (isAdmin() ? '<button type="button" class="btn btn-ghost btn-sm" onclick="event.preventDefault();hotlinesForm()">Edit</button>' : '') +
+      '<span class="hl-caret" aria-hidden="true">▾</span></summary>' +
+    '<div class="hl-body">'+hotlineBoxes()+'</div></details>';
+}
+/* announcement text, except the hotlines notice which shows the boxes */
+function annBodyHtml(a){
+  if(a.hotlines) return '<div class="body">'+esc(String(a.body||'').split('\n\n')[0])+'</div>' +
+    '<details class="hl-inline"><summary>Show all '+(store.hotlines||[]).length+' hotlines</summary><div style="margin-top:10px">'+hotlineBoxes()+'</div></details>';
+  return '<div class="body">'+esc(a.body)+'</div>';
+}
+/* admin editor: each box is a name plus one line per number, written "Label | number" */
+function hotlinesForm(){
+  const box = (h, i) => '<div class="card card-pad hl-edit" style="background:var(--paper);margin-bottom:10px" data-id="'+esc(h.id||'')+'">' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Box name</span><input class="input hl-name" value="'+esc(h.name||'')+'" placeholder="PNP Cavite"></label>' +
+      '<label class="fld"><span>Colour</span><select class="input hl-tone">'+Object.keys(HL_TONES).map(t=>'<option value="'+t+'"'+((h.tone||'slate')===t?' selected':'')+'>'+t.charAt(0).toUpperCase()+t.slice(1)+'</option>').join('')+'</select></label></div>' +
+    '<label class="fld" style="margin-bottom:6px"><span>Numbers and emails, one per line</span><textarea class="input hl-lines" rows="3" placeholder="Central station | 0965 865 7240">' +
+      esc((h.lines||[]).map(l => (l.label ? l.label+' | ' : '')+l.value).join('\n'))+'</textarea></label>' +
+    '<button type="button" class="btn btn-danger btn-sm" onclick="this.closest(\'.hl-edit\').remove()">Remove box</button></div>';
+  modal('Edit emergency hotlines', 'Shown at the top of every feed and in the hotlines announcement. Write each line as “Label | number”, or just the number.',
+    '<div id="hlBoxes">'+(store.hotlines||[]).map(box).join('')+'</div>' +
+    '<button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById(\'hlBoxes\').insertAdjacentHTML(\'beforeend\', hlBlankBox())">+ Add a box</button>',
+    'Save hotlines', () => {
+      const out = [];
+      for(const el of document.querySelectorAll('#hlBoxes .hl-edit')){
+        const name = el.querySelector('.hl-name').value.trim();
+        const lines = el.querySelector('.hl-lines').value.split('\n').map(t=>t.trim()).filter(Boolean).map(t => {
+          const i = t.lastIndexOf('|'); return i>=0 ? { label:t.slice(0,i).trim(), value:t.slice(i+1).trim() } : { label:'', value:t };
+        }).filter(l => l.value);
+        if(!name && !lines.length) continue;
+        if(!name){ toast('info','Name every box','One box has numbers but no name.'); return false; }
+        if(!lines.length){ toast('info','Add a number','“'+name+'” has no numbers yet.'); return false; }
+        out.push({ id: el.dataset.id || uid(), name, tone: el.querySelector('.hl-tone').value, lines });
+      }
+      store.hotlines = out;
+      commit('Emergency hotlines updated — '+out.length+' boxes.', {title:'Hotlines updated', audience:'admin'});
+      return true; });
+  window.hlBlankBox = () => box({ name:'', tone:'slate', lines:[] });
+}
 const annQrCache = {};
 function annQrData(url){
   if(annQrCache[url]) return annQrCache[url];
@@ -3557,6 +3653,7 @@ function noticesView(){
   const fresh = items.filter(a=>!store.seen.has(a.id)).length;
   return head('Announcements', 'Notices from the HOA office for everyone in the community. '+(fresh ? fresh+' new.' : 'You are all caught up.'),
       isAdmin() ? '<button class="btn btn-primary" style="width:auto" onclick="announceForm()">Post announcement</button>' : '') +
+    hotlinesPanel() +
     '<div class="card"><div class="card-head"><h3>Community announcements</h3><span class="spacer"></span>' +
       (fresh ? '<button class="btn btn-ghost btn-sm" onclick="markAllSeen()">Mark all read</button>' : '<span class="meta">Up to date</span>') + '</div>' +
       (items.length ? '<ul class="list">' + items.map(a => {
@@ -3564,7 +3661,7 @@ function noticesView(){
         return '<li class="announce'+(isNew?' fresh':'')+'"><div class="row"><div class="grow">' +
           '<div class="ttl">'+esc(a.title)+(isNew?' <span class="newpill">NEW</span>':'')+'</div>' +
           '<div class="meta">'+annTags(a)+'</div>' +
-          '<div class="body">'+esc(a.body)+'</div>' + annImages(a) + annQrs(a) +
+          annBodyHtml(a) + annImages(a) + annQrs(a) +
           (isNew?'<button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="markSeen(\''+a.id+'\')">Mark read</button>':'') +
         '</div></div></li>';
       }).join('') + '</ul>' : empty('No announcements yet','Notices from the HOA office will show up here.')) + '</div>';
@@ -3579,6 +3676,10 @@ function seedAnnouncementPack(){
   if(!store.settings.annPacks.includes(key)){
     pack.slice().reverse().forEach(a => { if(!store.announcements.some(x=>x.id===a.id)) store.announcements.unshift(structuredClone(a)); });
     store.settings.annPacks.push(key); changed = true;
+  }
+  if(!store.settings.annPacks.includes(key+'-hl')){          /* hotlines announcement switches to the boxes, once */
+    const x = store.announcements.find(y=>y.id==='behoai-hotlines'); if(x) x.hotlines = true;
+    store.settings.annPacks.push(key+'-hl'); changed = true;
   }
   if(!store.settings.annPacks.includes(key+'-qr')){          /* separate QR cards, added once; an admin's own edits are kept */
     pack.forEach(a => { const x = store.announcements.find(y=>y.id===a.id); if(x && a.qrs && !x.qrs) x.qrs = structuredClone(a.qrs); });
@@ -3606,6 +3707,7 @@ const RENTER = {
     const items = visibleAnnouncements();
     const fresh = items.filter(a=>!store.seen.has(a.id)).length;
     return head('Hello, '+s.name.split(' ')[0], 'Tenant of '+s.unit+' · '+(fresh ? fresh+' new notice'+(fresh>1?'s':'') : 'You are all caught up')) +
+    hotlinesPanel() +
     '<div class="qa" style="margin-bottom:20px">' +
       quick('calendar','Check amenities','What you can book as a tenant','go(\'events\')') +
       quick('wrench','Report an issue','Common area faults','requestForm()') +
@@ -3618,7 +3720,7 @@ const RENTER = {
         return '<li class="announce'+(isNew?' fresh':'')+'"><div class="row"><div class="grow">' +
           '<div class="ttl">'+esc(a.title)+(isNew?' <span class="newpill">NEW</span>':'')+'</div>' +
           '<div class="meta">'+annTags(a)+'</div>' +
-          '<div class="body">'+esc(a.body)+'</div>' + annImages(a) + annQrs(a) + '</div></div></li>';
+          annBodyHtml(a) + annImages(a) + annQrs(a) + '</div></div></li>';
       }).join('') + '</ul></div>' +
     '<div class="card card-pad" style="margin-top:14px">' +
       '<div class="ttl">Billing goes to your landlord</div>' +
@@ -4322,14 +4424,19 @@ function businessForm(id){
   const b = id ? store.marketplace.find(x=>x.id===id) : null;
   const admin = isAdmin();                       /* the admin office edits in place; owners' edits go back for review */
   const links = b ? lhBizLinkFields(b) : { fb:'', web:'' };
-  modal(b ? 'Edit '+b.title : 'List my business',
+  modal(b ? 'Edit '+b.title : admin ? 'Add a business' : 'List my business',
     b ? (admin ? 'Saved straight to the directory. The owner gets a notice that the office updated their profile.'
                : 'Changes go back to the admin office for a quick review before they show in the directory.')
+      : admin ? 'Goes straight into the Business directory. Pick the resident it belongs to so it also shows in their “My businesses”.'
       : 'Your business stays in the Business directory once the admin office approves it. The office can also mark it verified after checking your permits.',
+    (admin && !b ? '<label class="fld"><span>Listed under</span><select class="input" id="f_listedby"><option value="">Admin office (no resident account)</option>' +
+        store.accounts.filter(a => (a.role==='homeowner'||a.role==='renter') && a.status!=='Suspended')
+          .sort((x,y) => String(x.unit).localeCompare(String(y.unit)) || x.name.localeCompare(y.name))
+          .map(a => '<option value="'+a.id+'">'+esc(a.name)+' · '+esc(a.unit)+(a.role==='renter'?' · renter':'')+'</option>').join('') + '</select></label>' : '') +
     (admin && b ? '<div class="card card-pad" style="background:var(--paper);margin-bottom:14px"><div class="meta" style="margin:0"><span>Listed by</span><b style="color:var(--ink)">'+esc(b.by)+'</b><span class="mono">'+esc(b.unit)+'</span><span class="tag '+statusTag(lhStatus(b))+'">'+esc(lhStatus(b))+'</span></div></div>' : '') +
     lhLogoPicker(b ? lhLogo(b) : '') +
     '<label class="fld"><span>Business name</span><input class="input" id="f_title" value="'+esc(b?b.title:'')+'" placeholder="Rina’s Kakanin Kitchen"></label>' +
-    '<label class="fld"><span>Owner / CEO</span><input class="input" id="f_ownername" value="'+esc(b ? lhOwnerName(b) : store.session.name)+'" placeholder="Full name of the owner or CEO"></label>' +
+    '<label class="fld"><span>Owner / CEO</span><input class="input" id="f_ownername" value="'+esc(b ? lhOwnerName(b) : admin ? '' : store.session.name)+'" placeholder="Full name of the owner or CEO"></label>' +
     '<div class="grid g-2" style="gap:0 12px">' +
       '<label class="fld"><span>Category</span><select class="input" id="f_cat">'+BIZ_CATEGORIES.map(c=>'<option'+(b&&lhItemCat(b)===c?' selected':'')+'>'+esc(c)+'</option>').join('')+'</select></label>' +
       '<label class="fld"><span>Hours</span><input class="input" id="f_hours" value="'+esc(b?b.hours||'':'')+'" placeholder="Mon–Sat, 8:00 AM – 6:00 PM"></label></div>' +
@@ -4338,11 +4445,11 @@ function businessForm(id){
       '<label class="fld"><span>Facebook page</span><input class="input" id="f_fbpage" autocomplete="off" value="'+esc(links.fb)+'" placeholder="facebook.com/yourbusiness"></label>' +
       '<label class="fld"><span>Website</span><input class="input" id="f_web" autocomplete="off" value="'+esc(links.web)+'" placeholder="yourbusiness.com"></label></div>' +
     '<p class="meta" style="display:block;margin:-6px 0 12px">Add at least one. Neighbors open these links to see products, services and prices.</p>' +
-    '<label class="fld"><span>Contact number</span><input class="input" id="f_contact" value="'+esc(b?b.contact||'':(store.session.phone||''))+'" placeholder="0917 555 0000"></label>' +
-    (admin && b ? '<div class="switch" style="border-top:1px solid var(--line);padding-top:14px"><div><div class="sl">Verified by the HOA admin office</div>' +
+    '<label class="fld"><span>Contact number</span><input class="input" id="f_contact" value="'+esc(b?b.contact||'':admin?'':(store.session.phone||''))+'" placeholder="0917 555 0000"></label>' +
+    (admin ? '<div class="switch" style="border-top:1px solid var(--line);padding-top:14px"><div><div class="sl">Verified by the HOA admin office</div>' +
       '<div class="sd">Shows the blue check beside the business name.</div></div>' +
-      '<button type="button" class="tgl" id="f_verified" role="switch" aria-checked="'+(b.verified?'true':'false')+'" onclick="this.setAttribute(\'aria-checked\', this.getAttribute(\'aria-checked\')===\'true\'?\'false\':\'true\')"><i></i></button></div>' : ''),
-    b ? (admin ? 'Save changes' : 'Save and send for review') : 'Submit for approval', () => {
+      '<button type="button" class="tgl" id="f_verified" role="switch" aria-checked="'+(b&&b.verified?'true':'false')+'" onclick="this.setAttribute(\'aria-checked\', this.getAttribute(\'aria-checked\')===\'true\'?\'false\':\'true\')"><i></i></button></div>' : ''),
+    b ? (admin ? 'Save changes' : 'Save and send for review') : admin ? 'Add to directory' : 'Submit for approval', () => {
       const title=$('#f_title').value.trim(), desc=$('#f_desc').value.trim(), ownerName=$('#f_ownername').value.trim();
       const fbRaw=$('#f_fbpage').value.trim(), webRaw=$('#f_web').value.trim(), fb=lhWebLink(fbRaw), web=lhWebLink(webRaw);
       if(!title){ toast('info','Add the business name','Tell neighbors what your business is called.'); return false; }
@@ -4360,6 +4467,16 @@ function businessForm(id){
         Object.assign(b, fields);
         if(verify !== !!b.verified){ b.verified = verify; b.verifiedBy = verify ? store.session.name : ''; b.verifiedAt = verify ? new Date() : null; }
         commit('Business “'+title+'” updated by the admin office.', {title:'Business profile updated', forUnit:b.unit, go:'marketplace'});
+        return true;
+      }
+      if(!b && admin){
+        const pick = $('#f_listedby').value, who = pick ? store.accounts.find(a=>a.id===pick) : null;
+        const verify = $('#f_verified').getAttribute('aria-checked')==='true', now = new Date();
+        store.marketplace.unshift(Object.assign({ id:uid(), section:'business', unit: who ? who.unit : 'Admin office', by: who ? who.name : ownerName,
+          price:0, photo:'', photos:[], status:'Approved', rejectReason:'', submittedAt:now, decidedAt:now, decidedBy:store.session.name,
+          verified:verify, verifiedBy: verify ? store.session.name : '', verifiedAt: verify ? now : null }, fields));
+        commit('Business “'+title+'” added to the directory by the admin office'+(who ? ' for '+who.name+' ('+who.unit+')' : '')+'.',
+          who ? {title:'Business added to the directory', forUnit:who.unit, go:'marketplace'} : {title:'Business added to the directory', go:'marketplace'});
         return true;
       }
       if(b){
@@ -5484,7 +5601,7 @@ const sbMail = sbLib ? sbLib.createClient(SUPABASE_URL, SUPABASE_KEY,
   { auth:{ flowType:'implicit', persistSession:false, autoRefreshToken:false, detectSessionInUrl:false, storageKey:'hoa-mailer' } }) : null;
 
 const LOCAL_ONLY = ['theme','prefs','linked','seen'];               /* personal to this device */
-const ADMIN_ONLY = ['settings','hiddenPages','userAccess'];         /* only admins may change these */
+const ADMIN_ONLY = ['settings','hiddenPages','userAccess','hotlines'];         /* only admins may change these */
 const SHARED_KEYS = Object.keys(SEED).filter(k => k !== 'accounts' && !LOCAL_ONLY.includes(k));
 let cloudOn = false, synced = {}, syncedAccts = {}, live = null, pushTimer = null, heartbeat = null,
     membersTimer = null, renderPending = false, lastFailToast = 0;
