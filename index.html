@@ -376,8 +376,7 @@ tr:last-child td{border-bottom:0}
 .mkt-photo{width:100%;aspect-ratio:4/3;border-radius:var(--radius) var(--radius) 0 0;background:var(--paper);color:var(--ink-3);display:grid;place-items:center;overflow:hidden}
 .mkt-photo img{width:100%;height:100%;object-fit:cover;display:block}
 .lh-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:16px}
-.lh-sections button:first-child{grid-column:1 / -1}
-@media(min-width:860px){.lh-sections{grid-template-columns:repeat(5,minmax(0,1fr))}.lh-sections button:first-child{grid-column:auto}}
+@media(min-width:860px){.lh-sections{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .lh-group{margin-bottom:22px}
 .lh-group-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
 .lh-group-head h3{font-size:16.5px;font-weight:700;margin:0}
@@ -458,6 +457,10 @@ html[data-theme="dark"] .hl-box h4{color:var(--ink)}
 .ann-qr .btn{width:100%}
 .ann-linkrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) auto;gap:8px;margin-bottom:8px}
 @media(max-width:520px){.ann-linkrow{grid-template-columns:1fr auto}.ann-linkrow .r-url{grid-column:1/2}}
+.cp-route{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;font-weight:700;font-size:15px;color:var(--ink);min-width:0}
+.cp-route span{min-width:0;overflow-wrap:anywhere}
+.cp-route b{color:var(--slate)}
+.job-pay{font-family:var(--display);font-weight:800;font-size:14.5px;white-space:nowrap;text-align:right;color:var(--ink)}
 .lh-search{position:relative;display:flex;gap:8px;align-items:center;margin-bottom:14px}
 .lh-search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-3);pointer-events:none}
 .lh-search .input{padding-left:38px;flex:1;min-width:0}
@@ -811,6 +814,11 @@ const store = {
              { id:'gi2', name:'Rice cooker (1.8 L)', price:400, status:'Approved', reason:'' },
              { id:'gi3', name:'Box of kids’ books', price:250, status:'Pending', reason:'' }],
       status:'Approved', rejectReason:'', submittedAt:new Date(Date.now()-864e5*2), decidedAt:new Date(Date.now()-864e5), decidedBy:'Arnel Bautista' },
+    { id:'j1', section:'jobs', kind:'Hiring', unit:'B-12', by:'Rina Dela Cruz', title:'Kitchen helper, weekends', company:'Rina\u2019s Kakanin Kitchen',
+      jobType:'Part-time', setup:'On-site', location:'Unit B-12, Bellefort Estates', pay:'₱500 a day', deadline:'',
+      description:'Help prepare and pack kakanin orders on Saturdays and Sundays, 6:00 AM to 2:00 PM. Residents and their family members preferred. No experience needed.',
+      applyLink:'', contact:'0917 555 0142', photo:'', photos:[], price:0, category:'', status:'Approved', rejectReason:'',
+      submittedAt:new Date(Date.now()-864e5*3), decidedAt:new Date(Date.now()-864e5*2), decidedBy:'Arnel Bautista' },
     { id:'m7', unit:'C-21', by:'Jonna Reyes', title:'Wanted: study desk for a Grade 5 student', section:'buysell', kind:'Wanted', condition:'Any condition',
       description:'Looking for a sturdy study desk, around 100 cm wide. Can pick up anywhere in the subdivision.',
       price:1500, category:'Electronics & Home', photo:'', photos:[], contact:'0917 555 0166', status:'Approved', rejectReason:'',
@@ -941,6 +949,14 @@ const store = {
   reportLog:[],
 
   /* resident transport — residents book, drivers accept and post the pickup time */
+  carpools:[
+    { id:'cp1', kind:'Offer', unit:'A-04', by:'Marco Villanueva', from:'Bellefort Estates main gate', to:'Makati CBD (Ayala Avenue)',
+      date:new Date(Date.now()+864e5).toISOString().slice(0,10), time:'06:30', seats:3, share:150, contact:'0917 555 0121',
+      note:'Weekday mornings. Coming back around 7:00 PM if you need a ride home too.', riders:[], status:'Open', at:new Date(Date.now()-36e5*5) },
+    { id:'cp2', kind:'Request', unit:'C-21', by:'Jonna Reyes', from:'Bellefort Estates, Unit C-21', to:'SM City Bacoor',
+      date:new Date(Date.now()+864e5*2).toISOString().slice(0,10), time:'09:00', seats:3, share:0, contact:'0917 555 0166',
+      note:'Grocery run with my two kids. Happy to chip in for gas.', riders:[], status:'Open', at:new Date(Date.now()-36e5*20) }
+  ],
   rides:[
     { id:'rd1', unit:'B-12', by:'Rina Dela Cruz', accountId:'u1', pickup:'Unit B-12', dropoff:'SM City Calamba',
       date:new Date(Date.now()+864e5).toISOString().slice(0,10), time:'09:00', passengers:2, note:'With a stroller.',
@@ -1010,6 +1026,7 @@ function mktCat(m){ return MKT_CATEGORIES.includes(m.category) ? m.category : (M
 const LH_SECTIONS = [
   { id:'business', label:'Business directory' },
   { id:'buysell',  label:'Buy and sell' },
+  { id:'jobs',     label:'Job openings and referrals' },
   { id:'garage',   label:'Garage sales' },
   { id:'booths',   label:'Seasonal booth events' }];
 const LH_WORDS = {
@@ -1019,10 +1036,23 @@ const LH_WORDS = {
     browse:'Browse', mine:'My listings', emptyT:'Nothing listed yet', emptyD:'Approved Sell and Wanted listings from your neighbors show up here.' },
   garage:{ icon:'calendar', noun:'garage sale', nouns:'garage sales', live1:'upcoming sale', liveN:'upcoming sales', cta:'Host a garage sale', form:'garageForm',
     browse:'Upcoming', mine:'My garage sales', emptyT:'No garage sales coming up', emptyD:'Approved garage sales show here until they end.' },
+  jobs:{ icon:'users', noun:'job post', nouns:'job posts', live1:'open post', liveN:'open posts', cta:'Post a job', form:'jobForm',
+    browse:'Openings', mine:'My job posts', emptyT:'No job posts yet', emptyD:'Job openings, referrals and neighbors looking for work show up here once approved.' },
   booths:{ icon:'flag', noun:'booth application', nouns:'booth applications', live1:'upcoming event', liveN:'upcoming events' },
   all:{ icon:'grid', noun:'item', nouns:'items', live1:'thing to browse', liveN:'things to browse' }
 };
 const LH_INTRO = 'Support resident businesses, buy and sell with neighbors, find garage sales and join seasonal bazaars. The admin office reviews everything before it goes public. Payment is arranged directly between residents.';
+const JOB_KINDS = { Hiring:'Hiring', Referral:'Referral', Seeking:'Looking for work' };
+const JOB_TYPES = ['Full-time','Part-time','Contract','Freelance','Household help','Internship'];
+const JOB_SETUPS = ['On-site','Remote','Hybrid'];
+function jobKind(m){ return JOB_KINDS[m.kind] ? m.kind : 'Hiring'; }
+function jobKindTag(m){ const k = jobKind(m); return '<span class="tag '+(k==='Hiring'?'t-slate':k==='Referral'?'t-emerald':'t-amber')+'">'+JOB_KINDS[k]+'</span>'; }
+/* how to apply: a web link or an email address */
+function jobApplyLink(m){
+  const v = String(m.applyLink||'').trim(); if(!v) return null;
+  if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return { href:'mailto:'+v, label:'Email to apply' };
+  const w = lhWebLink(v); return w ? { href:w.url, label:'Apply online' } : null;
+}
 const BIZ_CATEGORIES = ['Food & Catering','Home Services & Repairs','Beauty & Wellness','Tutoring & Lessons','Retail & Goods',
   'Micro-Retail Store','Community Rice Retailer','Premium Frozen Meats','Specialty Meats Retailer','Rice and Grain Supplier','Other services'];
 const MKT_CONDITIONS = ['New','Like new','Good','Fair','For parts'];
@@ -1049,9 +1079,11 @@ function lhItemCat(m){
   const sec = mktSection(m);
   if(sec==='business') return BIZ_CATEGORIES.includes(m.category) ? m.category : 'Other services';
   if(sec==='garage') return 'Garage sale';
+  if(sec==='jobs') return JOB_TYPES.includes(m.jobType) ? m.jobType : 'Full-time';
   return mktCat(m);
 }
-function lhCats(sec){ return sec==='business' ? BIZ_CATEGORIES : MKT_CATEGORIES; }
+function lhCats(sec){ return sec==='business' ? BIZ_CATEGORIES : sec==='jobs' ? JOB_TYPES : MKT_CATEGORIES; }
+function lhTimed(m){ const s = mktSection(m); return s==='buysell' || s==='jobs'; }   /* sections that run for a set number of days */
 function mktCatFilter(list, key){
   const cur = tabOf(key||'mktcat','All');
   return cur==='All' ? list : list.filter(m=>lhItemCat(m)===cur);
@@ -1081,6 +1113,13 @@ function fmtTime(t){
   return ((h%12)||12)+':'+String(mi||0).padStart(2,'0')+' '+(h<12?'AM':'PM');
 }
 function lhExpiry(m){
+  if(mktSection(m)==='jobs' && m.deadline){             /* a job post also comes down after its apply-by date */
+    const dl = new Date(m.deadline+'T23:59:59'), base = lhBaseExpiry(m);
+    return dl < base ? dl : base;
+  }
+  return lhBaseExpiry(m);
+}
+function lhBaseExpiry(m){
   if(m.expiresAt) return new Date(m.expiresAt);
   const from = Math.max(+new Date(m.decidedAt||m.submittedAt||Date.now()), +LH_EXPIRY_START);
   return new Date(from + LH_LISTING_DAYS*864e5);
@@ -1089,7 +1128,7 @@ function lhPosted(m){ return new Date(m.postedAt || m.decidedAt || m.submittedAt
 function lhListDays(m){ return Math.max(1, Math.ceil((+lhExpiry(m) - +lhPosted(m)) / 864e5 - 0.01)); }
 function lhDaysLeft(m){ return Math.max(0, Math.ceil((+lhExpiry(m) - Date.now()) / 864e5)); }
 function lhLeftLabel(m){ const d = lhDaysLeft(m); return d ? d+' day'+(d===1?'':'s')+' left' : 'Ends today'; }
-function lhExpired(m){ return mktSection(m)==='buysell' && m.status==='Approved' && lhExpiry(m) <= new Date(); }
+function lhExpired(m){ return lhTimed(m) && m.status==='Approved' && lhExpiry(m) <= new Date(); }
 function garageStart(m){ return new Date(m.date+'T'+(m.start||'00:00')); }
 function garageEnd(m){ return new Date(m.date+'T'+(m.end||'23:59')); }
 function garageLive(m){ return garageEnd(m) > new Date(); }   /* hidden the moment it ends */
@@ -1130,12 +1169,13 @@ function lhPendingCount(){ return LH_SECTIONS.reduce((n,x)=>n+lhPendingIn(x.id),
 function lhStatus(m){
   if(mktSection(m)==='garage' && m.status==='Approved' && !garageLive(m)) return 'Ended';
   if(lhExpired(m)) return 'Expired';
-  if(mktSection(m)==='buysell' && m.status==='Approved' && m.sold) return mktKind(m)==='Wanted' ? 'Found' : 'Sold';
+  if(lhTimed(m) && m.status==='Approved' && m.sold) return lhSoldWords(m).done;
   return m.status;
 }
 function lhPriceLabel(m){
   const sec = mktSection(m);
   if(sec==='business' || sec==='garage') return '';
+  if(sec==='jobs') return m.pay || '';
   return (mktKind(m)==='Wanted' ? 'Budget ' : '')+peso(m.price);
 }
 /* the detail line under a title: what kind of item it is, plus price, offers or date depending on the section */
@@ -1146,13 +1186,16 @@ function lhMeta(m){
     const n = lhItems(m).length;
     return tag+'<span>'+esc(garageWhen(m))+'</span>'+(n?'<span>'+n+' item'+(n===1?'':'s')+'</span>':'');
   }
+  if(sec==='jobs'){
+    return jobKindTag(m)+tag+(m.company?'<span>'+esc(m.company)+'</span>':'')+'<span>'+esc(m.setup||'On-site')+'</span>'+(m.pay?'<span>'+esc(m.pay)+'</span>':'');
+  }
   if(sec==='business'){
     return tag+(m.verified?'<span class="tag t-slate">Verified</span>':'')+lhBizLinks(m).map(w=>'<span>'+esc(w.host)+'</span>').join('')+(m.hours?'<span>'+esc(m.hours)+'</span>':'');
   }
   return (mktKind(m)==='Wanted' ? '<span class="tag t-amber">Wanted</span>' : '<span class="tag t-slate">For sale</span>') + tag +
     (m.condition?'<span>'+esc(m.condition)+'</span>':'') + '<span class="mono">'+lhPriceLabel(m)+'</span>';
 }
-function lhDetail(m){ return mktSection(m)==='garage' ? esc(garageWhen(m)) : (lhPriceLabel(m) || '—'); }
+function lhDetail(m){ return mktSection(m)==='garage' ? esc(garageWhen(m)) : esc(lhPriceLabel(m) || '—'); }
 /* Facebook / Messenger: accept a profile or Messenger link (or a bare username) and turn it into safe links;
    only Facebook-owned hosts are allowed, so nothing else can be smuggled into the button */
 function lhFbLinks(raw){
@@ -1202,7 +1245,7 @@ function lhHit(text){ const t = lhTerms(), h = text.toLowerCase(); return t.ever
 function lhMatch(m){
   if(!lhTerms().length) return true;
   return lhHit([m.title, m.description, m.by, m.unit, lhItemCat(m), m.condition, m.hours, m.kind==='Wanted'?'wanted':'',
-    m.verified?'verified':'', m.ownerName, lhBizLinks(m).map(w=>w.host).join(' '), lhItems(m).filter(i=>i.status==='Approved'||isAdmin()).map(i=>i.name).join(' '),
+    m.verified?'verified':'', m.ownerName, m.company, m.location, m.setup, mktSection(m)==='jobs' ? JOB_KINDS[jobKind(m)]+' job' : '', lhBizLinks(m).map(w=>w.host).join(' '), lhItems(m).filter(i=>i.status==='Approved'||isAdmin()).map(i=>i.name).join(' '),
     (lhBusiness(m.businessId)||{}).title].filter(Boolean).join(' '));
 }
 function boothMatch(e){
@@ -1283,8 +1326,9 @@ function lhAllRow(r){
     : '<span class="lh-logo" style="width:44px;height:44px">'+(ph[0] ? '<img src="'+ph[0]+'" alt="" style="object-fit:cover">' : svg(LH_WORDS[sec].icon))+'</span>';
   const sub = sec==='business' ? '<span>'+esc(lhItemCat(m))+'</span><span>Owner / CEO: '+esc(lhOwnerName(m))+'</span><span class="mono">'+esc(m.unit)+'</span>'
     : sec==='garage' ? '<span>'+esc(fmtDate(m.date)+' · '+fmtTime(m.start)+' – '+fmtTime(m.end))+'</span><span>'+esc(garageVenue(m))+'</span>'
+    : sec==='jobs' ? jobKindTag(m)+'<span>'+esc(lhItemCat(m))+'</span>'+(m.company?'<span>'+esc(m.company)+'</span>':'')+'<span>Posted '+fmtDate(lhPosted(m))+'</span>'
     : (mktKind(m)==='Wanted'?'<span class="tag t-amber">Wanted</span>':'')+'<span>'+esc(lhItemCat(m))+'</span>'+(m.condition?'<span>'+esc(m.condition)+'</span>':'')+'<span>Posted '+fmtDate(lhPosted(m))+'</span>';
-  const right = sec==='business' ? links.map(w=>esc(w.label)).join(' · ') : sec==='garage' ? 'Garage sale' : m.sold ? '<span class="tag t-rose">'+(mktKind(m)==='Wanted'?'Found':'Sold')+'</span>' : lhPriceLabel(m);
+  const right = sec==='business' ? links.map(w=>esc(w.label)).join(' · ') : sec==='garage' ? 'Garage sale' : m.sold ? '<span class="tag t-rose">'+lhSoldWords(m).done+'</span>' : esc(lhPriceLabel(m) || (sec==='jobs' ? JOB_KINDS[jobKind(m)] : ''));
   return '<li class="lh-row-click"'+open("openLh('"+m.id+"')")+'><div class="row" style="align-items:center">' + thumb +
     '<div class="grow" style="min-width:0"><div class="ttl">'+esc(m.title)+lhVerified(m)+'</div>' +
     '<div class="meta"><span class="tag t-slate">'+esc(r.sec.label)+'</span>'+sub+(sec==='business'?'':'<span>'+esc(m.by)+'</span>')+'</div></div>' +
@@ -1381,7 +1425,7 @@ function setDuesMode(mode){
 const statusTag = s => ({
   'Paid':'t-emerald','Approved':'t-emerald','Resolved':'t-emerald','Closed':'t-emerald','Active':'t-emerald','Open ballot':'t-emerald',
   'Unpaid':'t-amber','Pending':'t-amber','In progress':'t-amber','Under review':'t-amber','For approval':'t-amber','Expiring':'t-amber','Used':'t-grey',
-  'Open':'t-slate','Waitlisted':'t-amber','Sold':'t-rose','Found':'t-rose','Expired':'t-grey','Ended':'t-grey','Cancelled':'t-rose','Escalated':'t-rose','Overdue':'t-rose','Declined':'t-rose','Revoked':'t-rose','Rejected':'t-rose'
+  'Open':'t-slate','Waitlisted':'t-amber','Sold':'t-rose','Filled':'t-rose','Hired':'t-rose','Matched':'t-emerald','Full':'t-amber','Found':'t-rose','Expired':'t-grey','Ended':'t-grey','Cancelled':'t-rose','Escalated':'t-rose','Overdue':'t-rose','Declined':'t-rose','Revoked':'t-rose','Rejected':'t-rose'
 }[s] || 't-grey');
 
 function commit(msg, opts={}){
@@ -1642,11 +1686,12 @@ const NAV = {
       { id:'calendar',   label:'Calendar',                icon:'calendar' },
       { id:'security',   label:'Security & Access',       icon:'shield', badge:()=>store.passes.filter(p=>p.status==='Pending').length },
       { id:'announcements', label:'Announcements',         icon:'megaphone' },
+      { id:'hotlines',   label:'Emergency hotlines', icon:'phone' },
       { id:'governance', label:'Governance & Community',  icon:'megaphone', badge:()=>store.complaints.filter(c=>c.status!=='Resolved').length },
       { id:'financial',  label:'Financial',               icon:'peso', badge:()=>
           store.dues.filter(d=>d.status!=='Paid').length + store.expenses.filter(x=>x.status==='For approval').length },
       { id:'reports',    label:'Reports',                 icon:'chart' },
-      { id:'rides',      label:'Transport',               icon:'car', badge:()=>store.rides.filter(r=>r.status==='Requested').length },
+      { id:'rides',      label:'Shuttle service',         icon:'car', badge:()=>store.rides.filter(r=>r.status==='Requested').length },
       { id:'access',     label:'User Access',             icon:'lock' }
     ]},
     { g:'Account', items:[
@@ -1656,11 +1701,12 @@ const NAV = {
   ],
   renter:[
     { g:'My residence', items:[
+      { id:'hotlines',   label:'Emergency hotlines', icon:'phone' },
       { id:'feed',       label:'Notices',        icon:'megaphone', badge:()=>visibleAnnouncements().filter(a=>!store.seen.has(a.id)).length },
       { id:'events',     label:'Events & amenities', icon:'calendar' },
       { id:'myrequests', label:'My requests',    icon:'wrench' },
       { id:'visitors',   label:'Visitor pass',   icon:'shield', badge:()=>store.passes.filter(p=>p.unit===myUnit()&&p.status==='Pending').length },
-      { id:'rides',      label:'Book a ride',    icon:'car', badge:()=>myRides().filter(r=>r.status==='On the way'||r.status==='Arrived').length },
+      { id:'rides',      label:'Shuttle service', icon:'car', badge:()=>myRides().filter(r=>r.status==='On the way'||r.status==='Arrived').length },
       { id:'concerns',   label:'Concerns',       icon:'chat' }
     ]},
     { g:'Account', items:[
@@ -1672,7 +1718,8 @@ const NAV = {
     { g:'Transport', items:[
       { id:'trips',   label:'Ride requests', icon:'car', badge:()=>store.rides.filter(r=>r.status==='Requested').length },
       { id:'mytrips', label:'My trips',      icon:'calendar', badge:()=>store.rides.filter(r=>r.driver&&r.driver.id===store.session.accountId&&['Accepted','On the way','Arrived'].includes(r.status)).length },
-      { id:'announcements', label:'Announcements', icon:'megaphone', badge:()=>visibleAnnouncements().filter(a=>!store.seen.has(a.id)).length }
+      { id:'announcements', label:'Announcements', icon:'megaphone', badge:()=>visibleAnnouncements().filter(a=>!store.seen.has(a.id)).length },
+      { id:'hotlines',   label:'Emergency hotlines', icon:'phone' }
     ]},
     { g:'Account', items:[
       { id:'support',  label:'Support',  icon:'life' },
@@ -1686,7 +1733,8 @@ const NAV = {
       { id:'vehicles',  label:'Vehicle lookup',  icon:'grid' },
       { id:'incidents', label:'Incident log',    icon:'flag' },
       { id:'roster',    label:'Duty roster',     icon:'users' },
-      { id:'announcements', label:'Announcements', icon:'megaphone', badge:()=>visibleAnnouncements().filter(a=>!store.seen.has(a.id)).length }
+      { id:'announcements', label:'Announcements', icon:'megaphone', badge:()=>visibleAnnouncements().filter(a=>!store.seen.has(a.id)).length },
+      { id:'hotlines',   label:'Emergency hotlines', icon:'phone' }
     ]},
     { g:'Account', items:[
       { id:'support',  label:'Support',  icon:'life' },
@@ -1704,7 +1752,8 @@ const NAV = {
       { id:'documents', label:'Board documents',  icon:'building' },
       { id:'election',  label:'Election',         icon:'ballot' },
       { id:'reports',   label:'Reports',          icon:'chart' },
-      { id:'announcements', label:'Announcements', icon:'megaphone', badge:()=>visibleAnnouncements().filter(a=>!store.seen.has(a.id)).length }
+      { id:'announcements', label:'Announcements', icon:'megaphone', badge:()=>visibleAnnouncements().filter(a=>!store.seen.has(a.id)).length },
+      { id:'hotlines',   label:'Emergency hotlines', icon:'phone' }
     ]},
     { g:'Account', items:[
       { id:'support',  label:'Support',  icon:'life' },
@@ -1713,6 +1762,7 @@ const NAV = {
   ],
   homeowner:[
     { g:'My household', items:[
+      { id:'hotlines',   label:'Emergency hotlines', icon:'phone' },
       { id:'feed',       label:'Community feed', icon:'megaphone', badge:()=>store.announcements.filter(a=>!store.seen.has(a.id)).length },
       { id:'announcements', label:'Announcements', icon:'megaphone' },
       { id:'mydues',     label:'My dues',        icon:'peso' },
@@ -1721,7 +1771,7 @@ const NAV = {
       { id:'book',       label:'Book a facility',icon:'grid' },
       { id:'visitors',   label:'Visitor pass',   icon:'shield', badge:()=>store.passes.filter(p=>p.unit===myUnit()&&p.status==='Pending').length },
       { id:'marketplace',label:'Livelihood and Marketplace', icon:'tag' },
-      { id:'rides',      label:'Book a ride',    icon:'car', badge:()=>myRides().filter(r=>r.status==='On the way'||r.status==='Arrived').length }
+      { id:'rides',      label:'Shuttle service', icon:'car', badge:()=>myRides().filter(r=>r.status==='On the way'||r.status==='Arrived').length }
     ]},
     { g:'Raise it with the board', items:[
       { id:'complaints', label:'Complaints', icon:'flag' },
@@ -1735,6 +1785,7 @@ const NAV = {
   ]
 };
 const ICONS = {
+  phone:'<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/>',
   car:'<path d="M5 17h14M5 17a2 2 0 1 0 4 0M15 17a2 2 0 1 0 4 0M3 17V12l2.2-5.2A2 2 0 0 1 7.04 5.5h9.92a2 2 0 0 1 1.84 1.3L21 12v5M3 12h18"/>',
   lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
   grid:'<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>',
@@ -1996,8 +2047,11 @@ const ADMIN = {
       done: store.rides.filter(r=>['Completed','Cancelled'].includes(r.status))
     };
     const drivers = store.accounts.filter(a=>a.role==='driver');
-    return head('Transport','Every ride residents have booked, and who is driving it. Add drivers from Homeowners → Staff & Board.') +
-      tabs('rides',[{id:'open',label:'Waiting',n:groups.open.length},{id:'active',label:'In progress',n:groups.active.length},{id:'done',label:'Finished'}],'open') +
+    if(t==='carpool') return head('Shuttle service','Shuttle bookings and the carpools residents arrange among themselves.') +
+      tabs('rides',[{id:'open',label:'Waiting',n:groups.open.length},{id:'active',label:'In progress',n:groups.active.length},{id:'done',label:'Finished'},{id:'carpool',label:'Carpooling',n:cpUpcoming().length}],'open') +
+      carpoolView(true);
+    return head('Shuttle service','Every shuttle trip residents have booked, and who is driving it. Add drivers from Homeowners → Staff & Board.') +
+      tabs('rides',[{id:'open',label:'Waiting',n:groups.open.length},{id:'active',label:'In progress',n:groups.active.length},{id:'done',label:'Finished'},{id:'carpool',label:'Carpooling',n:cpUpcoming().length}],'open') +
       sectionCard(t==='open'?'Waiting for a driver':t==='active'?'Accepted and on the road':'Completed and cancelled',
         rideList(groups[t].slice().sort(byWhen),'admin','Nothing here','Ride bookings from residents appear here.')) +
       '<div style="height:14px"></div>' +
@@ -2274,7 +2328,7 @@ const ADMIN = {
     else {
       const all = store.marketplace.filter(m=>mktSection(m)===sec && lhMatch(m));
       const pending = all.filter(m=>m.status==='Pending');
-      const key = sec==='business' ? 'bizcat' : 'mktcat';
+      const key = sec==='business' ? 'bizcat' : sec==='jobs' ? 'jobcat' : 'mktcat';
       const t = tabOf('mktadm_'+sec,'pending');
       let inner;
       if(t==='pending'){
@@ -2284,22 +2338,23 @@ const ADMIN = {
         if(sec==='garage') inner += '<div style="margin-top:14px">'+garageItemQueue()+'</div>';
       } else {
         const shown = sec==='garage' ? all : mktCatFilter(all, key);
-        const colName = sec==='business' ? 'Business' : sec==='garage' ? 'Garage sale' : 'Listing';
-        const colVal = sec==='garage' ? 'When' : sec==='business' ? 'Website' : 'Price';
+        const colName = sec==='business' ? 'Business' : sec==='garage' ? 'Garage sale' : sec==='jobs' ? 'Job post' : 'Listing';
+        const colVal = sec==='garage' ? 'When' : sec==='business' ? 'Website' : sec==='jobs' ? 'Pay' : 'Price';
         inner = (sec==='garage' ? '' : mktCatChips(all, key, lhCats(sec))) + sectionCard('All '+W.nouns, shown.length
-          ? '<div class="tablewrap"><table class="mkt-listings"><thead><tr><th>'+colName+'</th><th class="hide-sm">'+(sec==='business'?'Owner':'Resident')+'</th><th>'+colVal+'</th><th>Status</th><th class="hide-sm">'+(sec==='buysell'?'Posted':'Decided')+'</th><th></th></tr></thead><tbody>' +
+          ? '<div class="tablewrap"><table class="mkt-listings"><thead><tr><th>'+colName+'</th><th class="hide-sm">'+(sec==='business'?'Owner':'Resident')+'</th><th>'+colVal+'</th><th>Status</th><th class="hide-sm">'+(sec==='buysell'||sec==='jobs'?'Posted':'Decided')+'</th><th></th></tr></thead><tbody>' +
           shown.map(m => '<tr><td data-label="'+colName+'"><button class="linkbtn" onclick="openLh(\''+m.id+'\')">'+esc(m.title)+'</button>'+lhVerified(m) +
-              '<div class="meta">'+(sec==='buysell'?(mktKind(m)==='Wanted'?'Wanted · ':'For sale · '):'')+esc(lhItemCat(m))+'</div></td>' +
+              '<div class="meta">'+(sec==='buysell'?(mktKind(m)==='Wanted'?'Wanted · ':'For sale · '):sec==='jobs'?esc(JOB_KINDS[jobKind(m)])+' · '+(m.company?esc(m.company)+' · ':''):'')+esc(lhItemCat(m))+'</div></td>' +
             '<td class="hide-sm" data-label="Resident">'+esc(sec==='business'?lhOwnerName(m):m.by)+'<div class="meta mono">'+esc(m.unit)+(sec==='business'&&lhOwnerName(m)!==m.by?' · listed by '+esc(m.by):'')+'</div></td>' +
             '<td class="'+(sec==='business'?'':'mono')+'" data-label="'+colVal+'">'+(sec==='business' ? (lhBizLinks(m).length ? lhBizLinks(m).map(w=>'<div><a href="'+esc(w.url)+'" target="_blank" rel="noopener noreferrer">'+esc(w.host)+'</a></div>').join('') : '<span class="meta">None yet</span>') : lhDetail(m))+'</td>' +
             '<td data-label="Status"><span class="tag '+statusTag(lhStatus(m))+'">'+esc(lhStatus(m))+'</span>' +
               (m.status==='Rejected'&&m.rejectReason?'<div class="meta">'+esc(m.rejectReason)+'</div>':'')+'</td>' +
-            (sec==='buysell'
+            (sec==='buysell' || sec==='jobs'
               ? '<td class="hide-sm meta" data-label="Posted">'+(m.status==='Approved' ? fmtDate(lhPosted(m))+'<div>'+lhListDays(m)+' days · '+(lhExpired(m)?'ended '+fmtDate(lhExpiry(m)):esc(lhLeftLabel(m).toLowerCase()))+'</div>' : (m.listDays ? 'Will run '+m.listDays+' days' : '—'))+'</td>'
               : '<td class="hide-sm meta" data-label="Decided">'+(m.decidedAt?fmtDate(m.decidedAt)+' · '+esc(m.decidedBy):'—')+'</td>') +
             '<td style="text-align:right"><div class="btn-row" style="justify-content:flex-end">' +
               (sec==='business' ? '<button class="btn btn-ghost btn-sm" onclick="businessForm(\''+m.id+'\')">Edit</button>' : '') +
               (sec==='buysell' ? '<button class="btn btn-ghost btn-sm" onclick="adminListingForm(\''+m.id+'\')">Edit</button>' : '') +
+              (sec==='jobs' ? '<button class="btn btn-ghost btn-sm" onclick="jobForm(\''+m.id+'\')">Edit</button>' : '') +
               (sec==='business' && m.status==='Approved' ? '<button class="btn btn-ghost btn-sm" onclick="toggleVerifyBiz(\''+m.id+'\')">'+(m.verified?'Remove check':'Verify')+'</button>' : '') +
               '<button class="btn btn-danger btn-sm" onclick="deleteMktForm(\''+m.id+'\')">Remove</button></div></td></tr>').join('') +
           '</tbody></table></div>'
@@ -2312,7 +2367,8 @@ const ADMIN = {
         {id:'listings',label:'All '+W.nouns,n:all.length}],'pending') + inner;
     }
     return head('Livelihood and Marketplace','Review what residents submit before it goes public, and run the seasonal booth events.',
-      sec==='business' ? '<button class="btn btn-primary" style="width:auto" onclick="businessForm()">Add business</button>' : '') +
+      sec==='business' ? '<button class="btn btn-primary" style="width:auto" onclick="businessForm()">Add business</button>'
+      : sec==='jobs' ? '<button class="btn btn-primary" style="width:auto" onclick="jobForm()">Post a job</button>' : '') +
       lhSectionSwitch(true) + lhSearchBar(true) + body;
   },
   /* ---------- MESSAGES ---------- */
@@ -2683,6 +2739,22 @@ function mktCard(m){
       '<div class="meta"><span>Posted '+fmtDate(lhPosted(m))+'</span>·<span>'+esc(lhLeftLabel(m))+'</span></div>' +
     '</div></div>';
 }
+function jobCard(m){
+  const apply = jobApplyLink(m);
+  return lhCardOpen(m).replace('class="card lh-click"', 'class="card lh-click'+(m.sold?' lh-is-sold':'')+'"') +
+    '<div class="card-pad">' +
+      '<div class="row" style="align-items:flex-start;gap:10px"><div class="grow" style="min-width:0">' +
+        '<div class="meta" style="margin:0 0 6px">'+jobKindTag(m)+'<span class="tag t-grey">'+esc(lhItemCat(m))+'</span>'+(m.sold?'<span class="tag t-rose">'+lhSoldWords(m).done+'</span>':'')+'</div>' +
+        '<div class="ttl">'+esc(m.title)+'</div>' +
+        '<div class="meta">'+(m.company?'<span>'+esc(m.company)+'</span>':'')+'<span>'+esc(m.setup||'On-site')+'</span>'+(m.location?'<span>'+esc(m.location)+'</span>':'')+'</div></div>' +
+        (m.pay?'<div class="job-pay">'+esc(m.pay)+'</div>':'')+'</div>' +
+      '<div class="body">'+esc(m.description)+'</div>' +
+      '<div class="meta" style="margin-top:10px"><span class="mono">'+esc(m.unit)+'</span>·<span>'+esc(m.by)+'</span>'+(m.contact?'·<span class="mono">'+esc(m.contact)+'</span>':'')+'</div>' +
+      '<div class="meta"><span>Posted '+fmtDate(lhPosted(m))+'</span>·<span>'+(m.deadline?'Apply by '+fmtDate(m.deadline):esc(lhLeftLabel(m)))+'</span></div>' +
+      (apply && !m.sold ? '<div class="btn-row" style="margin-top:10px"><a class="btn btn-primary btn-sm" style="width:auto" href="'+esc(apply.href)+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">'+apply.label+' ↗</a></div>' : '') +
+      (m.unit===myUnit() && !isAdmin() ? '<div class="btn-row" style="margin-top:10px">'+lhSoldButton(m)+'</div>' : '') +
+    '</div></div>';
+}
 function bizCard(m){
   return lhCardOpen(m) +
     '<div class="card-pad">' +
@@ -2728,6 +2800,14 @@ function mktMineRow(m){
     }
     if(st==='Expired' && !m.sold) actions = '<button class="btn btn-primary btn-sm" style="width:auto" onclick="renewMkt(\''+m.id+'\')">Renew for '+LH_LISTING_DAYS+' days</button>';
   }
+  if(sec==='jobs'){
+    if(st==='Approved' || st==='Filled' || st==='Hired'){
+      extra += '<div class="meta"><span>Posted '+fmtDate(lhPosted(m))+'</span>·<span>Listed until '+fmtDate(lhExpiry(m))+'</span>·<span>'+esc(lhLeftLabel(m))+'</span></div>';
+      actions = lhSoldButton(m);
+    }
+    if(st==='Expired' && !m.sold) actions = '<button class="btn btn-primary btn-sm" style="width:auto" onclick="renewMkt(\''+m.id+'\')">Renew for '+LH_LISTING_DAYS+' days</button>';
+    actions += '<button class="btn btn-ghost btn-sm" onclick="jobForm(\''+m.id+'\')">Edit</button>';
+  }
   if(sec==='garage'){
     extra = lhOfferList(lhItems(m).map(i => [i.name, i.price?peso(i.price):'Free',
       ' <span class="tag '+statusTag(i.status)+'">'+esc(i.status)+'</span>'+(i.status==='Rejected'&&i.reason?'<span class="meta" style="display:block">'+esc(i.reason)+'</span>':'')])) +
@@ -2758,6 +2838,7 @@ function lhAdminPendingRow(m){
       (isBiz ? '<button class="btn btn-emerald btn-sm" onclick="approveMkt(\''+m.id+'\', true)">Approve and verify</button>' : '') +
       (isBiz ? '<button class="btn btn-ghost btn-sm" onclick="businessForm(\''+m.id+'\')">Edit</button>' : '') +
       (mktSection(m)==='buysell' ? '<button class="btn btn-ghost btn-sm" onclick="adminListingForm(\''+m.id+'\')">Edit</button>' : '') +
+      (mktSection(m)==='jobs' ? '<button class="btn btn-ghost btn-sm" onclick="jobForm(\''+m.id+'\')">Edit</button>' : '') +
       '<button class="btn btn-danger btn-sm" onclick="rejectMktForm(\''+m.id+'\')">Reject</button>' +
     '</div></div></div></li>';
 }
@@ -2788,6 +2869,16 @@ function openLh(id){
       rows.push([lhExpired(m)?'Expired on':(m.sold?'Stays listed until':'Listed until'), fmtDate(lhExpiry(m))+(lhExpired(m)?'':' · '+lhLeftLabel(m).toLowerCase())]);
     }
   }
+  if(sec==='jobs'){
+    rows.push(['Type', JOB_KINDS[jobKind(m)]]);
+    if(m.company) rows.push([jobKind(m)==='Seeking' ? 'Field' : 'Company', m.company]);
+    rows.push(['Work setup', m.setup||'On-site']);
+    if(m.location) rows.push(['Location', m.location]);
+    if(m.pay) rows.push([jobKind(m)==='Seeking' ? 'Expected pay' : 'Pay', m.pay]);
+    if(m.deadline) rows.push(['Apply by', fmtDate(m.deadline)]);
+    if(m.sold) rows.push(['Status', lhSoldWords(m).done]);
+    if(m.status==='Approved'){ rows.push(['Posted on', fmtDate(lhPosted(m))]); rows.push([lhExpired(m)?'Ended on':'Listed until', fmtDate(lhExpiry(m))]); }
+  }
   if(sec==='business' && m.hours) rows.push(['Hours', m.hours]);
   if(sec==='garage') rows.push(['When', garageWhen(m)], ['Where', garageVenue(m)]);
   rows.push(['Category', lhItemCat(m)]);
@@ -2809,8 +2900,10 @@ function openLh(id){
     rows.map(([k,v])=>'<div class="kv"><span>'+esc(k)+'</span><b>'+esc(v)+'</b></div>').join('') +
     (biz ? '<div class="kv"><span>Business</span><b><button class="linkbtn" onclick="openLh(\''+biz.id+'\')">'+esc(biz.title)+'</button></b></div>' : '') +
     vendorAt.map(e=>'<div class="kv"><span>Find them at</span><b>'+esc(e.title)+' · '+fmtDate(e.date)+'</b></div>').join('') +
-    (m.unit!==myUnit() ? (m.sold ? '' : lhSocialButtons(m, false)) : sec==='buysell' && m.status==='Approved' && !lhExpired(m) ? '<div class="btn-row" style="margin-top:12px">'+lhSoldButton(m)+'</div>' : '') +
-    '<p class="meta" style="display:block;margin-top:12px">Payment is arranged directly with the resident — GCash, bank transfer or cash. The HOA does not handle payments.</p>',
+    (sec==='jobs' && jobApplyLink(m) && !m.sold ? '<div class="btn-row" style="margin-top:12px"><a class="btn btn-primary btn-sm" style="width:auto" href="'+esc(jobApplyLink(m).href)+'" target="_blank" rel="noopener noreferrer">'+jobApplyLink(m).label+' ↗</a></div>' : '') +
+    (m.unit!==myUnit() ? (m.sold ? '' : lhSocialButtons(m, false)) : lhTimed(m) && m.status==='Approved' && !lhExpired(m) ? '<div class="btn-row" style="margin-top:12px">'+lhSoldButton(m)+'</div>' : '') +
+    (sec==='jobs' ? '<p class="meta" style="display:block;margin-top:12px">The HOA does not screen employers or applicants. Never pay a fee to apply for a job, and meet in a public place.</p>'
+      : '<p class="meta" style="display:block;margin-top:12px">Payment is arranged directly with the resident — GCash, bank transfer or cash. The HOA does not handle payments.</p>'),
     'Close', () => true);
   const c = document.getElementById('mCancel'); if(c) c.classList.add('hide'); /* an info view needs one button */
 }
@@ -3335,13 +3428,17 @@ const HOME = {
 
   /* ---------- RIDES ---------- */
   rides(){
+    const t = tabOf('shuttle','shuttle');
     const mine = myRides();
     const active = mine.filter(r=>!['Completed','Cancelled'].includes(r.status)).sort(byWhen);
     const past = mine.filter(r=>['Completed','Cancelled'].includes(r.status)).sort(byWhen).reverse();
-    return head('Book a ride','Request a pickup from the subdivision driver. You will see the driver, the pickup time and when they are on the way.',
-      '<button class="btn btn-primary" style="width:auto" onclick="rideForm()">Book a ride</button>') +
-      sectionCard('My rides', rideList(active,'resident','No rides booked','Tap “Book a ride” to request a pickup.')) +
-      (past.length ? '<div style="height:14px"></div>' + sectionCard('Past rides', rideList(past,'resident','','')) : '');
+    return head('Shuttle service','Book the subdivision shuttle, or share a ride with neighbors going the same way.',
+      '<div class="btn-row"><button class="btn btn-primary" style="width:auto" onclick="goTab(\'shuttle\',\'shuttle\');rideForm()">Book the shuttle</button>' +
+      '<button class="btn btn-ghost" style="width:auto" onclick="goTab(\'shuttle\',\'carpool\')">Carpooling</button></div>') +
+      tabs('shuttle',[{id:'shuttle',label:'Shuttle',n:active.length},{id:'carpool',label:'Carpooling',n:cpUpcoming().length}],'shuttle') +
+      (t==='carpool' ? carpoolView(false)
+        : sectionCard('My shuttle bookings', rideList(active,'resident','No shuttle booked','Tap “Book the shuttle” to request a pickup.')) +
+          (past.length ? '<div style="height:14px"></div>' + sectionCard('Past trips', rideList(past,'resident','','')) : ''));
   },
 
   /* ---------- VISITOR PASSES ---------- */
@@ -3367,7 +3464,7 @@ const HOME = {
     const all = store.marketplace.filter(m=>mktSection(m)===sec);
     const live = lhLiveItems(sec).filter(lhMatch);
     const mine = all.filter(m=>m.unit===myUnit() && lhMatch(m));
-    const key = sec==='business' ? 'bizcat' : 'mktcat', mineKey = sec==='business' ? 'bizminecat' : 'mktminecat';
+    const key = sec==='business' ? 'bizcat' : sec==='jobs' ? 'jobcat' : 'mktcat', mineKey = sec==='business' ? 'bizminecat' : sec==='jobs' ? 'jobminecat' : 'mktminecat';
     const t = tabOf('mkt_'+sec,'browse');
     let inner;
     if(t==='browse'){
@@ -3384,8 +3481,17 @@ const HOME = {
             }).join('') + '</div>';
           if(k!=='All') pool = live.filter(m=>mktKind(m)===k);
         }
+        if(sec==='jobs'){
+          const k = tabOf('jobkind','All');
+          kindRow = '<div class="chiprow" role="group" aria-label="Kind of job post" style="margin-bottom:10px">' +
+            [['All','All posts']].concat(Object.keys(JOB_KINDS).map(x=>[x, JOB_KINDS[x]])).map(([v,l]) => {
+              const n = v==='All' ? live.length : live.filter(m=>jobKind(m)===v).length;
+              return '<button class="chip'+(k===v?' on':'')+'" aria-pressed="'+(k===v)+'" onclick="goTab(\'jobkind\',\''+v+'\')">'+esc(l)+' · '+n+'</button>';
+            }).join('') + '</div>';
+          if(k!=='All') pool = live.filter(m=>jobKind(m)===k);
+        }
         const shown = mktCatFilter(pool, key);
-        inner = kindRow + mktCatChips(pool, key, lhCats(sec)) + (shown.length ? '<div class="grid g-3">' + shown.map(sec==='business'?bizCard:mktCard).join('') + '</div>'
+        inner = kindRow + mktCatChips(pool, key, lhCats(sec)) + (shown.length ? '<div class="grid g-3">' + shown.map(sec==='business'?bizCard:sec==='jobs'?jobCard:mktCard).join('') + '</div>'
           : '<div class="card">'+empty('Nothing here yet','Pick another filter or All to see every '+W.noun+'.')+'</div>');
       }
     } else {
@@ -3985,6 +4091,14 @@ const BOARD = {
   settings(){ return head('Settings','Your profile and how the portal reaches you.') + accountSettings(); }
 };
 
+function hotlinesView(){
+  return head('Emergency hotlines', 'Tap a number to call. Save them on your phone so you have them even without the portal.',
+      isAdmin() ? '<button class="btn btn-primary" style="width:auto" onclick="hotlinesForm()">Edit hotlines</button>' : '') +
+    '<div class="card card-pad" style="margin-bottom:14px;border-left:4px solid #D62828"><div class="ttl">In a life-threatening emergency, call 911 first.</div>' +
+      '<div class="meta" style="display:block;margin-top:4px">Then tell the guard house so they can open the gate and guide responders to your unit.</div></div>' +
+    hotlineBoxes();
+}
+[ADMIN, HOME, RENTER, SECURITY, BOARD, DRIVER].forEach(V => { V.hotlines = hotlinesView; });
 const VIEWS = { admin:ADMIN, homeowner:HOME, renter:RENTER, security:SECURITY, board:BOARD, driver:DRIVER };
 
 /* ============================================================
@@ -4191,9 +4305,119 @@ function requestForm(){
 
 /* rides */
 function gotoRides(){ go(store.session.role==='driver' ? 'mytrips' : 'rides'); }
+/* ---- carpooling: residents offer seats or ask for a ride; the HOA only hosts the board ---- */
+function cpStart(c){ return new Date(c.date+'T'+(c.time||'00:00')); }
+function cpUpcoming(){                                   /* still useful until two hours after the departure time */
+  return (store.carpools||[]).filter(c => c.status!=='Cancelled' && +cpStart(c) > Date.now() - 2*36e5).sort((a,b)=>cpStart(a)-cpStart(b));
+}
+function cpMine(c){ return c.unit===myUnit() && c.by===store.session.name; }
+function cpJoined(c){ return (c.riders||[]).some(r => r.unit===myUnit() && r.name===store.session.name); }
+function cpSeatsLeft(c){ return Math.max(0, (Number(c.seats)||0) - (c.riders||[]).length); }
+function cpCard(c, admin){
+  const offer = c.kind==='Offer', mine = cpMine(c), joined = cpJoined(c), left = cpSeatsLeft(c), riders = c.riders||[];
+  const tag = offer ? '<span class="tag t-slate">Offering a ride</span>' : '<span class="tag t-amber">Looking for a ride</span>';
+  const state = offer ? (left ? left+' of '+c.seats+' seats left' : 'Full') : (riders.length ? 'Ride found' : c.seats+' riding');
+  let actions = '';
+  if(admin) actions = '<button class="btn btn-danger btn-sm" onclick="cancelCarpool(\''+c.id+'\', true)">Remove</button>';
+  else if(mine) actions = '<button class="btn btn-ghost btn-sm" onclick="cancelCarpool(\''+c.id+'\')">Cancel this carpool</button>';
+  else if(offer) actions = joined ? '<button class="btn btn-ghost btn-sm" onclick="leaveCarpool(\''+c.id+'\')">Leave carpool</button>'
+    : left ? '<button class="btn btn-primary btn-sm" style="width:auto" onclick="joinCarpool(\''+c.id+'\')">Join · '+left+' seat'+(left===1?'':'s')+' left</button>' : '<span class="meta">This car is full.</span>';
+  else actions = joined ? '<button class="btn btn-ghost btn-sm" onclick="leaveCarpool(\''+c.id+'\')">Withdraw my offer</button>'
+    : '<button class="btn btn-primary btn-sm" style="width:auto" onclick="joinCarpool(\''+c.id+'\')">I can drive them</button>';
+  const showContact = mine || joined || admin;
+  return '<div class="card card-pad cp-card" style="min-width:0">' +
+    '<div class="row" style="align-items:flex-start;gap:10px"><div class="grow" style="min-width:0">' +
+      '<div class="meta" style="margin:0 0 6px">'+tag+'<span class="tag '+statusTag(offer ? (left?'Open':'Full') : (riders.length?'Matched':'Open'))+'">'+esc(state)+'</span></div>' +
+      '<div class="cp-route"><span>'+esc(c.from)+'</span><b aria-hidden="true">→</b><span>'+esc(c.to)+'</span></div>' +
+      '<div class="meta"><span>'+fmtDate(c.date)+'</span>·<span>'+fmtTime(c.time)+'</span>'+(offer && c.share ? '·<span>₱'+esc(String(c.share))+' gas share per rider</span>' : '')+'</div></div></div>' +
+    (c.note ? '<div class="body">'+esc(c.note)+'</div>' : '') +
+    '<div class="meta" style="margin-top:10px"><span>'+(offer?'Driver':'Asked by')+'</span><b style="color:var(--ink)">'+esc(c.by)+'</b><span class="mono">'+esc(c.unit)+'</span>' +
+      (showContact && c.contact ? '·<span class="mono">'+esc(c.contact)+'</span>' : '') + '</div>' +
+    (!showContact && c.contact ? '<div class="meta"><span>The contact number shows once you '+(offer?'join':'offer to drive')+'.</span></div>' : '') +
+    ((mine || admin) && riders.length ? '<div class="meta" style="display:block;margin-top:6px"><b style="color:var(--ink)">'+(offer?'Riders':'Offered to drive')+':</b> ' +
+      riders.map(r => esc(r.name)+' ('+esc(r.unit)+')'+(r.contact?' · '+esc(r.contact):'')).join(', ')+'</div>' : '') +
+    '<div class="btn-row" style="margin-top:12px">'+actions+'</div></div>';
+}
+function carpoolView(admin){
+  const k = tabOf('cpkind','All');
+  const all = cpUpcoming();
+  const list = k==='All' ? all : all.filter(c=>c.kind===k);
+  const mine = (store.carpools||[]).filter(c => !admin && (cpMine(c) || cpJoined(c)) && c.status!=='Cancelled' && cpUpcoming().includes(c));
+  return '<div class="card card-pad" style="margin-bottom:14px;background:var(--slate-tint);border-color:transparent">' +
+      '<div class="row" style="align-items:center;gap:12px;flex-wrap:wrap"><div class="grow" style="min-width:220px">' +
+        '<div class="ttl">Carpooling with neighbors</div>' +
+        '<div class="meta" style="display:block;margin-top:3px">Offer the empty seats in your car, or ask for a ride. Agree on gas money directly with each other. The HOA does not arrange, check or insure carpools.</div></div>' +
+        (admin ? '' : '<button class="btn btn-primary" style="width:auto" onclick="carpoolForm()">Offer or ask for a ride</button>') + '</div></div>' +
+    '<div class="chiprow" role="group" aria-label="Carpool type" style="margin-bottom:12px">' +
+      [['All','All carpools'],['Offer','Offering a ride'],['Request','Looking for a ride']].map(([v,l]) => {
+        const n = v==='All' ? all.length : all.filter(c=>c.kind===v).length;
+        return '<button class="chip'+(k===v?' on':'')+'" aria-pressed="'+(k===v)+'" onclick="goTab(\'cpkind\',\''+v+'\')">'+l+' · '+n+'</button>';
+      }).join('') + '</div>' +
+    (list.length ? '<div class="grid g-2">'+list.map(c=>cpCard(c, admin)).join('')+'</div>'
+      : '<div class="card">'+empty('No carpools yet', admin ? 'Carpools residents post appear here.' : 'Be the first: offer your empty seats or ask for a ride.')+'</div>') +
+    (mine.length ? '<div class="meta" style="display:block;margin-top:14px">You are part of '+mine.length+' upcoming carpool'+(mine.length===1?'':'s')+'.</div>' : '');
+}
+function gotoCarpool(){ go('rides'); goTab(isAdmin() ? 'rides' : 'shuttle', 'carpool'); }
+function carpoolForm(){
+  const later = new Date(Date.now()+36e5);
+  modal('Offer or ask for a ride','Neighbors see it under Shuttle service → Carpooling straight away. Your contact number shows only to people who join.',
+    '<label class="fld"><span>I am</span><select class="input" id="f_cpkind" onchange="$(\'#f_cpseats_lbl\').textContent = this.value===\'Offer\' ? \'Empty seats\' : \'People riding\'; $(\'#f_cpshare_wrap\').classList.toggle(\'hide\', this.value!==\'Offer\')">' +
+      '<option value="Offer">Driving and have empty seats</option><option value="Request">Looking for a ride</option></select></label>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>From</span><input class="input" id="f_cpfrom" value="Bellefort Estates, Unit '+esc(myUnit())+'"></label>' +
+      '<label class="fld"><span>Going to</span><input class="input" id="f_cpto" placeholder="Makati CBD"></label></div>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Date</span><input class="input" id="f_cpdate" type="date" min="'+lhToday()+'" value="'+lhToday()+'"></label>' +
+      '<label class="fld"><span>Leaving at</span><input class="input" id="f_cptime" type="time" value="'+String(later.getHours()).padStart(2,'0')+':00"></label></div>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span id="f_cpseats_lbl">Empty seats</span><input class="input" id="f_cpseats" type="number" min="1" max="8" value="3"></label>' +
+      '<label class="fld" id="f_cpshare_wrap"><span>Gas share per rider (₱, optional)</span><input class="input" id="f_cpshare" type="number" min="0" step="10" placeholder="150"></label></div>' +
+    '<label class="fld"><span>Contact number</span><input class="input" id="f_cpcontact" value="'+esc(store.session.phone||'')+'" placeholder="0917 555 0000"></label>' +
+    '<label class="fld"><span>Note (optional)</span><input class="input" id="f_cpnote" placeholder="Weekdays only, back around 7 PM"></label>',
+    'Post carpool', () => {
+      const kind=$('#f_cpkind').value, to=$('#f_cpto').value.trim(), date=$('#f_cpdate').value, time=$('#f_cptime').value;
+      const seats=Math.floor(Number($('#f_cpseats').value)), contact=$('#f_cpcontact').value.trim();
+      if(!to){ toast('info','Where to?','Add where the car is going.'); return false; }
+      if(!date || !time){ toast('info','Pick a date and time','Neighbors need to know when you leave.'); return false; }
+      if(+new Date(date+'T'+time) < Date.now()){ toast('info','That time has passed','Pick a time that is still ahead.'); return false; }
+      if(!seats || seats<1 || seats>8){ toast('info','Check the number','Use between 1 and 8.'); return false; }
+      if(!contact){ toast('info','Add a contact number','People who join need a way to reach you.'); return false; }
+      store.carpools = store.carpools || [];
+      store.carpools.unshift({ id:uid(), kind, unit:myUnit(), by:store.session.name, accountId:store.session.accountId,
+        from:$('#f_cpfrom').value.trim()||('Bellefort Estates, Unit '+myUnit()), to, date, time, seats,
+        share: kind==='Offer' ? Math.max(0, Number($('#f_cpshare').value)||0) : 0, contact, note:$('#f_cpnote').value.trim(),
+        riders:[], status:'Open', at:new Date() });
+      commit((kind==='Offer' ? store.session.name+' is offering '+seats+' seat'+(seats===1?'':'s') : store.session.name+' is looking for a ride')+' to '+to+' on '+fmtDate(date)+', '+fmtTime(time)+'.',
+        {title: kind==='Offer' ? 'Carpool offered' : 'Carpool requested', go:gotoCarpool});
+      return true; });
+}
+function joinCarpool(id){
+  const c = (store.carpools||[]).find(x=>x.id===id); if(!c) return;
+  if(c.kind==='Offer' && !cpSeatsLeft(c)){ toast('info','This car is full','Try another carpool or post your own.'); return; }
+  c.riders = c.riders || [];
+  c.riders.push({ name:store.session.name, unit:myUnit(), accountId:store.session.accountId, contact:store.session.phone||'', at:new Date() });
+  commit(c.kind==='Offer' ? store.session.name+' ('+myUnit()+') joined the carpool to '+c.to+' on '+fmtDate(c.date)+'.'
+                          : store.session.name+' ('+myUnit()+') offered to drive '+c.by+' to '+c.to+' on '+fmtDate(c.date)+'.',
+    {title: c.kind==='Offer' ? 'Someone joined your carpool' : 'Someone can drive you', forUnit:c.unit, go:gotoCarpool});
+}
+function leaveCarpool(id){
+  const c = (store.carpools||[]).find(x=>x.id===id); if(!c) return;
+  c.riders = (c.riders||[]).filter(r => !(r.unit===myUnit() && r.name===store.session.name));
+  commit(store.session.name+' ('+myUnit()+') left the carpool to '+c.to+' on '+fmtDate(c.date)+'.', {title:'Carpool update', forUnit:c.unit, go:gotoCarpool});
+}
+function cancelCarpool(id, byAdmin){
+  const c = (store.carpools||[]).find(x=>x.id===id); if(!c) return;
+  modal(byAdmin ? 'Remove this carpool?' : 'Cancel this carpool?', 'Everyone who joined is told it is off.',
+    '<div class="card card-pad" style="background:var(--paper)"><div class="ttl">'+esc(c.from)+' → '+esc(c.to)+'</div><div class="meta">'+fmtDate(c.date)+' · '+fmtTime(c.time)+' · '+esc(c.by)+'</div></div>',
+    byAdmin ? 'Remove' : 'Cancel carpool', () => {
+      c.status = 'Cancelled';
+      (c.riders||[]).forEach(r => store.notifs.unshift({ id:uid(), title:'Carpool cancelled', msg:'The carpool to '+c.to+' on '+fmtDate(c.date)+' is off.', at:new Date(), audience:'all', forUnit:r.unit, read:false, chat:null, go:gotoCarpool }));
+      commit('Carpool to '+c.to+' on '+fmtDate(c.date)+(byAdmin ? ' removed by the admin office.' : ' cancelled.'), {title:'Carpool cancelled', forUnit:c.unit, go:gotoCarpool});
+      return true; }, true);
+}
 function rideForm(){
   const today = new Date(), later = new Date(Date.now()+36e5);
-  modal('Book a ride','The subdivision driver confirms and tells you the pickup time.',
+  modal('Book the shuttle','The shuttle driver confirms and tells you the pickup time.',
     '<div class="grid g-2" style="gap:0 12px">' +
       '<label class="fld"><span>Pickup</span><input class="input" id="f_pk" value="Unit '+esc(myUnit())+'"></label>' +
       '<label class="fld"><span>Going to</span><input class="input" id="f_dr" placeholder="SM City Calamba"></label></div>' +
@@ -4202,7 +4426,7 @@ function rideForm(){
       '<label class="fld"><span>Pickup time</span><input class="input" id="f_rt" type="time" value="'+String(later.getHours()).padStart(2,'0')+':00"></label></div>' +
     '<label class="fld"><span>Passengers</span><input class="input" id="f_rp" type="number" min="1" max="12" value="1"></label>' +
     '<label class="fld"><span>Note for the driver (optional)</span><input class="input" id="f_rn" placeholder="Luggage, wheelchair, child seat…"></label>',
-    'Book ride', () => {
+    'Book shuttle', () => {
       const dropoff=$('#f_dr').value.trim(), date=$('#f_rd').value, time=$('#f_rt').value;
       if(!dropoff){ toast('info','Where to?','Add where you are going.'); return false; }
       if(!date || !time){ toast('info','Pick a date and time','The driver needs to know when.'); return false; }
@@ -4211,8 +4435,8 @@ function rideForm(){
         note:$('#f_rn').value.trim(), status:'Requested', driver:null, vehicle:'', pickupAt:'', at:new Date(),
         updates:[{ at:new Date(), text:'Ride requested.' }] };
       store.rides.unshift(r);
-      commit('Unit '+myUnit()+' booked a ride to '+dropoff+' on '+fmtDate(date)+', '+fmtTime(time)+'.',
-        { title:'Ride requested', audience:['driver','admin'], go:gotoRides });
+      commit('Unit '+myUnit()+' booked the shuttle to '+dropoff+' on '+fmtDate(date)+', '+fmtTime(time)+'.',
+        { title:'Shuttle requested', audience:['driver','admin'], go:gotoRides });
       return true; });
 }
 function acceptRide(id){
@@ -4489,6 +4713,67 @@ function businessForm(id){
       commit('Business “'+title+'” sent to the admin office for approval.', {title:'Business submitted', audience:'admin', go:'marketplace'});
       return true; });
 }
+/* job openings and referrals: residents' posts go to the office for review; the office's own posts and edits go live at once */
+function jobForm(id){
+  const j = id ? store.marketplace.find(x=>x.id===id) : null;
+  const admin = isAdmin();
+  const k = j ? jobKind(j) : 'Hiring';
+  modal(j ? 'Edit job post' : 'Post a job',
+    j ? (admin ? 'Saved straight away. The resident gets a notice that the office updated their post.' : 'Changes go back to the admin office for a quick review.')
+      : admin ? 'Posted by the admin office, it goes live straight away for '+LH_LISTING_DAYS+' days.'
+      : 'Shown in Job openings and referrals for '+LH_LISTING_DAYS+' days once the admin office approves it.',
+    (admin && j ? '<div class="card card-pad" style="background:var(--paper);margin-bottom:14px"><div class="meta" style="margin:0"><span>Posted by</span><b style="color:var(--ink)">'+esc(j.by)+'</b><span class="mono">'+esc(j.unit)+'</span><span class="tag '+statusTag(lhStatus(j))+'">'+esc(lhStatus(j))+'</span></div></div>' : '') +
+    '<label class="fld"><span>What kind of post</span><select class="input" id="f_jkind" onchange="jobKindChanged(this.value)">' +
+      '<option value="Hiring"'+(k==='Hiring'?' selected':'')+'>Hiring — my business or household has an opening</option>' +
+      '<option value="Referral"'+(k==='Referral'?' selected':'')+'>Referral — my company is hiring and I can refer neighbors</option>' +
+      '<option value="Seeking"'+(k==='Seeking'?' selected':'')+'>Looking for work — I or a family member need a job</option></select></label>' +
+    '<label class="fld"><span id="f_jtitle_lbl">'+(k==='Seeking'?'Kind of work you are looking for':'Position')+'</span><input class="input" id="f_title" value="'+esc(j?j.title:'')+'" placeholder="'+(k==='Seeking'?'Office assistant or encoder':'Kitchen helper, weekends')+'"></label>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span id="f_jcomp_lbl">'+(k==='Seeking'?'Field or skills (optional)':'Company or employer')+'</span><input class="input" id="f_jcomp" value="'+esc(j?j.company||'':'')+'" placeholder="'+(k==='Seeking'?'Admin work, bookkeeping':'Rina’s Kakanin Kitchen')+'"></label>' +
+      '<label class="fld"><span>Job type</span><select class="input" id="f_jtype">'+JOB_TYPES.map(t=>'<option'+(j&&lhItemCat(j)===t?' selected':'')+'>'+esc(t)+'</option>').join('')+'</select></label></div>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Work setup</span><select class="input" id="f_jsetup">'+JOB_SETUPS.map(t=>'<option'+(j&&j.setup===t?' selected':'')+'>'+esc(t)+'</option>').join('')+'</select></label>' +
+      '<label class="fld"><span>Location</span><input class="input" id="f_jloc" value="'+esc(j?j.location||'':'')+'" placeholder="Bacoor, Cavite"></label></div>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span id="f_jpay_lbl">'+(k==='Seeking'?'Expected pay (optional)':'Pay (optional)')+'</span><input class="input" id="f_jpay" value="'+esc(j?j.pay||'':'')+'" placeholder="₱18,000 a month"></label>' +
+      '<label class="fld"><span>Apply by (optional)</span><input class="input" id="f_jdl" type="date" value="'+esc(j?j.deadline||'':'')+'" min="'+lhToday()+'"></label></div>' +
+    '<label class="fld"><span>Details</span><textarea class="input" id="f_desc" placeholder="Duties, schedule, requirements, who to ask for…">'+esc(j?j.description:'')+'</textarea></label>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Contact number</span><input class="input" id="f_contact" value="'+esc(j?j.contact||'':admin?'':(store.session.phone||''))+'" placeholder="0917 555 0000"></label>' +
+      '<label class="fld"><span>Apply link or email (optional)</span><input class="input" id="f_japply" value="'+esc(j?j.applyLink||'':'')+'" placeholder="careers.company.com or hr@company.com"></label></div>',
+    j ? (admin ? 'Save changes' : 'Save and send for review') : admin ? 'Post now' : 'Submit for approval', () => {
+      const kind=$('#f_jkind').value, title=$('#f_title').value.trim(), desc=$('#f_desc').value.trim(), contact=$('#f_contact').value.trim(), applyRaw=$('#f_japply').value.trim();
+      if(!title){ toast('info', kind==='Seeking'?'Say what work you want':'Add the position','Give the post a short title.'); return false; }
+      if(!desc){ toast('info','Add the details','Describe the work, schedule and requirements.'); return false; }
+      if(!contact && !applyRaw){ toast('info','Add a way to reach you','Give a contact number, an apply link or an email.'); return false; }
+      if(applyRaw && !jobApplyLink({ applyLink:applyRaw })){ toast('info','Check the apply link','Use a web address like careers.company.com or an email like hr@company.com.'); return false; }
+      const fields = { kind, title, company:$('#f_jcomp').value.trim(), jobType:$('#f_jtype').value, setup:$('#f_jsetup').value,
+        location:$('#f_jloc').value.trim(), pay:$('#f_jpay').value.trim(), deadline:$('#f_jdl').value, description:desc, contact, applyLink:applyRaw };
+      if(j && admin){
+        Object.assign(j, fields);
+        commit('Job post “'+title+'” updated by the admin office.', {title:'Job post updated', forUnit:j.unit, go:'marketplace'});
+        return true;
+      }
+      if(j){
+        Object.assign(j, fields, { status:'Pending', rejectReason:'', submittedAt:new Date(), decidedAt:null, decidedBy:'' });
+        commit('Job post “'+title+'” updated and sent to the admin office for review.', {title:'Job post updated', audience:'admin', go:'marketplace'});
+        return true;
+      }
+      const now = new Date();
+      const item = Object.assign({ id:uid(), section:'jobs', unit: admin ? 'Admin office' : myUnit(), by:store.session.name, photo:'', photos:[], price:0, category:'',
+        status: admin ? 'Approved' : 'Pending', rejectReason:'', submittedAt:now, decidedAt: admin ? now : null, decidedBy: admin ? store.session.name : '' }, fields);
+      if(admin){ item.postedAt = now; item.expiresAt = new Date(+now + LH_LISTING_DAYS*864e5); }
+      store.marketplace.unshift(item);
+      commit(admin ? 'Job post “'+title+'” is now live in Livelihood and Marketplace.' : 'Job post “'+title+'” sent to the admin office for approval.',
+        admin ? {title:'Job post published', go:'marketplace'} : {title:'Job post submitted', audience:'admin', go:'marketplace'});
+      return true; });
+}
+function jobKindChanged(v){
+  const seek = v==='Seeking';
+  $('#f_jtitle_lbl').textContent = seek ? 'Kind of work you are looking for' : 'Position';
+  $('#f_jcomp_lbl').textContent = seek ? 'Field or skills (optional)' : 'Company or employer';
+  $('#f_jpay_lbl').textContent = seek ? 'Expected pay (optional)' : 'Pay (optional)';
+}
 function toggleVerifyBiz(id){
   const m = store.marketplace.find(x=>x.id===id); if(!m) return;
   m.verified = !m.verified; m.verifiedBy = m.verified ? store.session.name : ''; m.verifiedAt = m.verified ? new Date() : null;
@@ -4623,19 +4908,27 @@ function renewMkt(id){
   commit('“'+m.title+'” renewed. It stays in Buy and sell until '+fmtDate(m.expiresAt)+'.', {title:'Listing renewed', go:'marketplace'});
 }
 /* sold (or found) items stay in Buy and sell with a label until their 30-day listing ends; the seller can switch it back */
+function lhSoldWords(m){
+  if(mktSection(m)==='jobs') return jobKind(m)==='Seeking'
+    ? { done:'Hired', doBtn:'Mark as hired', undoBtn:'Still looking', undoWord:'still looking' }
+    : { done:'Filled', doBtn:'Mark as filled', undoBtn:'Reopen', undoWord:'open again' };
+  return mktKind(m)==='Wanted'
+    ? { done:'Found', doBtn:'Mark as found', undoBtn:'Still looking', undoWord:'still looking' }
+    : { done:'Sold', doBtn:'Mark as sold', undoBtn:'Mark as available', undoWord:'available again' };
+}
 function markSoldMkt(id){
   const m = store.marketplace.find(x=>x.id===id); if(!m) return;
-  const wanted = mktKind(m)==='Wanted';
+  const w = lhSoldWords(m);
   m.sold = !m.sold; m.soldAt = m.sold ? new Date() : null;
-  const word = m.sold ? (wanted ? 'found' : 'sold') : (wanted ? 'still looking' : 'available again');
-  commit('“'+m.title+'” marked '+word+(m.sold ? '. It stays listed with a '+(wanted?'Found':'Sold')+' label until '+fmtDate(lhExpiry(m))+'.' : '.'),
-    {title: m.sold ? (wanted ? 'Marked found' : 'Marked sold') : 'Marked available', go:'marketplace'});
+  const word = m.sold ? w.done.toLowerCase() : w.undoWord;
+  commit('“'+m.title+'” marked '+word+(m.sold ? '. It stays listed with a '+w.done+' label until '+fmtDate(lhExpiry(m))+'.' : '.'),
+    {title: m.sold ? 'Marked '+w.done.toLowerCase() : 'Marked '+w.undoWord, go:'marketplace'});
   if(document.getElementById('mOk') && document.querySelector('.modal .lh-soldbtn')) openLh(id);   /* refresh an open details window */
 }
 function lhSoldButton(m){
-  const wanted = mktKind(m)==='Wanted';
+  const w = lhSoldWords(m);
   return '<button class="btn '+(m.sold?'btn-ghost':'btn-emerald')+' btn-sm lh-soldbtn" style="width:auto" onclick="event.stopPropagation();markSoldMkt(\''+m.id+'\')">' +
-    (m.sold ? (wanted ? 'Still looking' : 'Mark as available') : (wanted ? 'Mark as found' : 'Mark as sold')) + '</button>';
+    (m.sold ? w.undoBtn : w.doBtn) + '</button>';
 }
 function boothApplyForm(eventId){
   const e = store.boothEvents.find(x=>x.id===eventId); if(!e) return;
@@ -4735,7 +5028,7 @@ function approveMkt(id, verify){
   const m = store.marketplace.find(x=>x.id===id);
   m.status='Approved'; m.decidedAt=new Date(); m.decidedBy=store.session.name; m.rejectReason='';
   if(verify){ m.verified = true; m.verifiedBy = store.session.name; m.verifiedAt = new Date(); }
-  if(mktSection(m)==='buysell'){ m.postedAt = new Date(); m.expiresAt = new Date(Date.now() + (m.listDays || LH_LISTING_DAYS)*864e5); }
+  if(lhTimed(m)){ m.postedAt = new Date(); m.expiresAt = new Date(Date.now() + (m.listDays || LH_LISTING_DAYS)*864e5); }
   commit(lhNoun(m)+' “'+m.title+'” approved and now visible in Livelihood and Marketplace.',
     {title:lhNoun(m)+' approved', forUnit:m.unit, go:gotoMarketplace}); }
 function rejectMktForm(id){
