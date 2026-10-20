@@ -431,6 +431,14 @@ html[data-theme="dark"] .lh-verified{color:#4C9BFF}
 .ann-img img{width:100%;display:block;aspect-ratio:2/3;object-fit:cover}
 .ann-img span{position:absolute;left:8px;bottom:8px;background:rgba(16,23,37,.75);color:#fff;font-size:12px;font-weight:600;padding:4px 9px;border-radius:20px}
 .ann-img:hover,.ann-img:focus-visible{border-color:var(--slate)}
+.ann-qrs{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-top:12px}
+.ann-qr{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:12px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;min-width:0}
+.ann-qr-lbl{font-weight:700;font-size:13.5px;color:var(--ink)}
+.ann-qr img{width:150px;max-width:100%;aspect-ratio:1;object-fit:contain;background:#fff;border-radius:8px}
+.ann-qr img.gen{image-rendering:pixelated}
+.ann-qr .btn{width:100%}
+.ann-linkrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) auto;gap:8px;margin-bottom:8px}
+@media(max-width:520px){.ann-linkrow{grid-template-columns:1fr auto}.ann-linkrow .r-url{grid-column:1/2}}
 .lh-search{position:relative;display:flex;gap:8px;align-items:center;margin-bottom:14px}
 .lh-search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-3);pointer-events:none}
 .lh-search .input{padding-left:38px;flex:1;min-width:0}
@@ -590,6 +598,7 @@ html[data-theme="dark"] .bubble.mine{color:#0E121C}
 <div id="toasts" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 /* ============================================================
    STORE — one source of truth for both portals
@@ -684,6 +693,7 @@ const store = {
       attach:'', vis:'all', at:new Date('2026-10-20T08:00:00+08:00') },
     { id:'behoai-defects', title:'Defect reporting, recording and resolution for the BEHOAI', date:'2026-10-20', category:'Maintenance', pinned:true,
       images:['announcements/behoai-defect-reporting.jpg'],
+      qrs:[{ label:'Report a defect', url:'https://www.canvaqr.com/RGVFmY4I71', img:'announcements/qr-defect-report.png' }],
       body:'To keep Bellefort Estates safe and well maintained, we are using a structured process for reporting, recording and resolving defects and concerns in the village.\n\n' +
         'What you can report\n• Streetlights not working\n• Road and pavement issues\n• Drainage concerns\n• Parks, playground and common area facilities\n• Gate and security-related concerns\n• Water supply issues\n• Landscaping and greenery concerns\n• Other BEHOAI property and facility concerns\n\n' +
         'How to report\n1. Scan the QR code on the poster and fill out the Defect Report Form, or send it through our official channels. Homeowners can also use “Report an issue” here in the portal.\n' +
@@ -693,6 +703,9 @@ const store = {
       attach:'', vis:'all', at:new Date('2026-10-20T07:59:00+08:00') },
     { id:'behoai-channels', title:'Hello, Bellefort neighbors! Join our official channels', date:'2026-10-20', category:'Advisory', pinned:true,
       images:['announcements/behoai-official-channels.jpg'],
+      qrs:[{ label:'Community Facebook page', url:'', img:'announcements/qr-fb-page.png' },
+           { label:'Community Viber channel', url:'', img:'announcements/qr-viber-channel.png' },
+           { label:'Community chat', url:'', img:'announcements/qr-community-chat.png' }],
       body:'This keeps everyone informed about important announcements, reminders, community activities and other village matters.\n\n' +
         'Stay connected through the official channels of the Bellefort Estates Homeowners’ Association, Inc. (BEHOAI). Scan the QR codes on the poster to join:\n' +
         '• Community Facebook page\n• Community Viber channel\n• Community chat\n\n' +
@@ -1592,6 +1605,7 @@ const NAV = {
       { id:'marketplace',label:'Livelihood and Marketplace', icon:'tag', badge:()=>lhPendingCount() },
       { id:'calendar',   label:'Calendar',                icon:'calendar' },
       { id:'security',   label:'Security & Access',       icon:'shield', badge:()=>store.passes.filter(p=>p.status==='Pending').length },
+      { id:'announcements', label:'Announcements',         icon:'megaphone' },
       { id:'governance', label:'Governance & Community',  icon:'megaphone', badge:()=>store.complaints.filter(c=>c.status!=='Resolved').length },
       { id:'financial',  label:'Financial',               icon:'peso', badge:()=>
           store.dues.filter(d=>d.status!=='Paid').length + store.expenses.filter(x=>x.status==='For approval').length },
@@ -1664,6 +1678,7 @@ const NAV = {
   homeowner:[
     { g:'My household', items:[
       { id:'feed',       label:'Community feed', icon:'megaphone', badge:()=>store.announcements.filter(a=>!store.seen.has(a.id)).length },
+      { id:'announcements', label:'Announcements', icon:'megaphone' },
       { id:'mydues',     label:'My dues',        icon:'peso' },
       { id:'myrequests', label:'My requests',    icon:'wrench' },
       { id:'events',     label:'Events',         icon:'calendar' },
@@ -2334,7 +2349,7 @@ const ADMIN = {
             '<div class="meta">'+annTags(a) +
             '<span>'+((a.vis||'all')==='all' ? 'Everyone' : 'Owners only')+'</span>' +
             (a.attach?'<span class="mono" style="font-size:11.5px">📎 '+esc(a.attach)+'</span>':'')+'</div>' +
-            '<div class="body">'+esc(a.body)+'</div>' + annImages(a) +
+            '<div class="body">'+esc(a.body)+'</div>' + annImages(a) + annQrs(a) +
             '<div class="btn-row" style="margin-top:11px">' +
               '<button class="btn btn-ghost btn-sm" onclick="announceForm(\''+a.id+'\')">Edit</button>' +
               '<button class="btn btn-danger btn-sm" onclick="deleteAnnounce(\''+a.id+'\')">Delete</button></div>' +
@@ -3217,7 +3232,7 @@ const HOME = {
             '<div class="ttl">'+esc(a.title)+(isNew?' <span class="newpill">NEW</span>':'')+'</div>' +
             '<div class="meta">'+annTags(a) +
             (a.attach?'<span class="mono" style="font-size:11.5px">📎 '+esc(a.attach)+'</span>':'')+'</div>' +
-            '<div class="body">'+esc(a.body)+'</div>' + annImages(a) +
+            '<div class="body">'+esc(a.body)+'</div>' + annImages(a) + annQrs(a) +
             (isNew?'<button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="markSeen(\''+a.id+'\')">Mark read</button>':'') +
           '</div></div></li>';
         }).join('') + '</ul></div>' +
@@ -3507,6 +3522,23 @@ function annImages(a){
     '<button type="button" class="ann-img" onclick="openAnnImage(\''+a.id+'\','+i+')" aria-label="View poster '+(i+1)+' full size">' +
       '<img src="'+esc(src)+'" alt="'+esc(a.title)+' — poster" loading="lazy"><span>View poster</span></button>').join('') + '</div>';
 }
+const annQrCache = {};
+function annQrData(url){
+  if(annQrCache[url]) return annQrCache[url];
+  if(typeof qrcode !== 'function') return '';
+  try{ const q = qrcode(0, 'M'); q.addData(url); q.make(); return annQrCache[url] = q.createDataURL(6, 2); }catch(e){ return ''; }
+}
+function annQrs(a){
+  const list = Array.isArray(a.qrs) ? a.qrs.filter(x => x && (x.url || x.img)) : [];
+  if(!list.length) return '';
+  return '<div class="ann-qrs">' + list.map(x => {
+    const w = lhWebLink(x.url), link = w ? w.url : '', gen = link ? annQrData(link) : '', src = gen || x.img;
+    return '<div class="ann-qr"><div class="ann-qr-lbl">'+esc(x.label || 'Scan me')+'</div>' +
+      (src ? '<img'+(gen?' class="gen"':'')+' src="'+esc(src)+'" alt="QR code for '+esc(x.label || 'this link')+'">' : '') +
+      (link ? '<a class="btn btn-primary btn-sm" href="'+esc(link)+'" target="_blank" rel="noopener noreferrer">Open link ↗</a>'
+            : '<span class="meta">Scan with your phone camera</span>') + '</div>';
+  }).join('') + '</div>';
+}
 function annTags(a){
   return (a.pinned ? '<span class="tag t-amber">Pinned</span>' : '') + '<span class="tag t-slate">'+esc(a.category)+'</span><span>'+fmtDate(a.date)+'</span>';
 }
@@ -3523,7 +3555,8 @@ function openAnnImage(id, i){
 function noticesView(){
   const items = visibleAnnouncements();
   const fresh = items.filter(a=>!store.seen.has(a.id)).length;
-  return head('Announcements', 'Notices from the HOA office for everyone in the community. '+(fresh ? fresh+' new.' : 'You are all caught up.')) +
+  return head('Announcements', 'Notices from the HOA office for everyone in the community. '+(fresh ? fresh+' new.' : 'You are all caught up.'),
+      isAdmin() ? '<button class="btn btn-primary" style="width:auto" onclick="announceForm()">Post announcement</button>' : '') +
     '<div class="card"><div class="card-head"><h3>Community announcements</h3><span class="spacer"></span>' +
       (fresh ? '<button class="btn btn-ghost btn-sm" onclick="markAllSeen()">Mark all read</button>' : '<span class="meta">Up to date</span>') + '</div>' +
       (items.length ? '<ul class="list">' + items.map(a => {
@@ -3531,7 +3564,7 @@ function noticesView(){
         return '<li class="announce'+(isNew?' fresh':'')+'"><div class="row"><div class="grow">' +
           '<div class="ttl">'+esc(a.title)+(isNew?' <span class="newpill">NEW</span>':'')+'</div>' +
           '<div class="meta">'+annTags(a)+'</div>' +
-          '<div class="body">'+esc(a.body)+'</div>' + annImages(a) +
+          '<div class="body">'+esc(a.body)+'</div>' + annImages(a) + annQrs(a) +
           (isNew?'<button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="markSeen(\''+a.id+'\')">Mark read</button>':'') +
         '</div></div></li>';
       }).join('') + '</ul>' : empty('No announcements yet','Notices from the HOA office will show up here.')) + '</div>';
@@ -3541,11 +3574,17 @@ function seedAnnouncementPack(){
   if(store.session.role !== 'admin') return;
   const key = 'behoai-2026-10';
   store.settings.annPacks = store.settings.annPacks || [];
-  if(store.settings.annPacks.includes(key)) return;
   const pack = SEED.announcements.filter(a => /^behoai-/.test(a.id));
-  pack.slice().reverse().forEach(a => { if(!store.announcements.some(x=>x.id===a.id)) store.announcements.unshift(structuredClone(a)); });
-  store.settings.annPacks.push(key);
-  saveSoon(); pushSoon();
+  let changed = false;
+  if(!store.settings.annPacks.includes(key)){
+    pack.slice().reverse().forEach(a => { if(!store.announcements.some(x=>x.id===a.id)) store.announcements.unshift(structuredClone(a)); });
+    store.settings.annPacks.push(key); changed = true;
+  }
+  if(!store.settings.annPacks.includes(key+'-qr')){          /* separate QR cards, added once; an admin's own edits are kept */
+    pack.forEach(a => { const x = store.announcements.find(y=>y.id===a.id); if(x && a.qrs && !x.qrs) x.qrs = structuredClone(a.qrs); });
+    store.settings.annPacks.push(key+'-qr'); changed = true;
+  }
+  if(changed){ saveSoon(); pushSoon(); }
 }
 function matrixTable(){
   return '<div class="tablewrap"><table class="mtable"><thead><tr>' +
@@ -3579,7 +3618,7 @@ const RENTER = {
         return '<li class="announce'+(isNew?' fresh':'')+'"><div class="row"><div class="grow">' +
           '<div class="ttl">'+esc(a.title)+(isNew?' <span class="newpill">NEW</span>':'')+'</div>' +
           '<div class="meta">'+annTags(a)+'</div>' +
-          '<div class="body">'+esc(a.body)+'</div>' + annImages(a) + '</div></div></li>';
+          '<div class="body">'+esc(a.body)+'</div>' + annImages(a) + annQrs(a) + '</div></div></li>';
       }).join('') + '</ul></div>' +
     '<div class="card card-pad" style="margin-top:14px">' +
       '<div class="ttl">Billing goes to your landlord</div>' +
@@ -3660,6 +3699,8 @@ function rideList(list, who, emptyT, emptyD){
 const byWhen = (a,b) => (a.date+(a.pickupAt||a.time)) < (b.date+(b.pickupAt||b.time)) ? -1 : 1;
 
 /* ---------- DRIVER ---------- */
+ADMIN.announcements = () => noticesView();
+HOME.announcements = () => noticesView();
 const DRIVER = {
   announcements(){ return noticesView(); },
   trips(){
@@ -3946,6 +3987,10 @@ function announceForm(id){
       '<label class="fld"><span>Category</span><select class="input" id="f_cat">'+store.settings.categories.map(c=>'<option '+(a&&a.category===c?'selected':'')+'>'+esc(c)+'</option>').join('')+'</select></label></div>' +
     '<label class="fld"><span>Body</span><textarea class="input" id="f_body" placeholder="What do homeowners need to know, and what should they do about it?">'+esc(a?a.body:'')+'</textarea></label>' +
     annPhotoPicker(a ? a.images : []) +
+    '<span class="lh-lbl">Links and QR codes</span>' +
+    '<div id="f_links">'+((a && a.qrs) || []).map(annLinkRow).join('')+'</div>' +
+    '<button type="button" class="btn btn-ghost btn-sm" style="margin:2px 0 6px" onclick="addAnnLink()">+ Add a link</button>' +
+    '<p class="meta" style="display:block;margin:0 0 13px">Each link gets its own QR code and an Open button, e.g. a Viber channel or a Google Form.</p>' +
     '<div class="grid g-2" style="gap:0 12px">' +
       '<label class="fld"><span>Who sees it</span><select class="input" id="f_vis"><option value="all"'+(a&&a.vis==='owners'?'':' selected')+'>Everyone who logs in</option>' +
         '<option value="owners"'+(a&&a.vis==='owners'?' selected':'')+'>Homeowners, board and office only</option></select></label>' +
@@ -3955,8 +4000,9 @@ function announceForm(id){
     a?'Save changes':'Post announcement', () => {
       const title=$('#f_title').value.trim(), body=$('#f_body').value.trim();
       if(!title||!body){ toast('info','Missing details','A title and body are both required.'); return false; }
+      const links = readAnnLinks(); if(links === null) return false;
       const rec={ title, body, date:$('#f_date').value, category:$('#f_cat').value, attach:$('#f_att').value.trim(),
-        images:pendingAnnImages.slice(), vis:$('#f_vis').value, pinned:$('#f_pin').getAttribute('aria-checked')==='true' };
+        images:pendingAnnImages.slice(), qrs:links, vis:$('#f_vis').value, pinned:$('#f_pin').getAttribute('aria-checked')==='true' };
       if(a){ Object.assign(a,rec); commit('Announcement updated — “'+title+'” is live in every feed.',{title:'Announcement updated',go:gotoFeed}); }
       else { store.announcements.unshift(Object.assign({id:uid(),at:new Date()},rec));
         commit('New announcement pushed to 412 households — “'+title+'”.',{title:'Announcement posted',go:gotoFeed}); }
@@ -3964,6 +4010,27 @@ function announceForm(id){
     });
 }
 let pendingAnnImages = [];
+function annLinkRow(x){
+  x = x || {};
+  return '<div class="ann-linkrow" data-img="'+esc(x.img||'')+'">' +
+    '<input class="input r-label" value="'+esc(x.label||'')+'" placeholder="Community Viber channel" aria-label="Link label">' +
+    '<input class="input r-url" value="'+esc(x.url||'')+'" placeholder="https://…" aria-label="Link address">' +
+    '<button type="button" class="btn btn-ghost btn-sm" aria-label="Remove link" onclick="this.parentNode.remove()">×</button></div>';
+}
+function addAnnLink(){ const box = document.getElementById('f_links'); if(box) box.insertAdjacentHTML('beforeend', annLinkRow()); }
+/* null means a link was typed wrong (a message is shown) */
+function readAnnLinks(){
+  const out = [];
+  for(const r of document.querySelectorAll('#f_links .ann-linkrow')){
+    const label = r.querySelector('.r-label').value.trim(), raw = r.querySelector('.r-url').value.trim(), img = r.dataset.img || '';
+    if(!label && !raw) continue;
+    const w = raw ? lhWebLink(raw) : null;
+    if(raw && !w){ toast('info','Check the link','“'+raw+'” does not look like a web address.'); return null; }
+    if(!w && !img){ toast('info','Add the link','“'+(label||'This row')+'” needs a web address so a QR code can be made.'); return null; }
+    out.push({ label: label || 'Open link', url: w ? w.url : '', img });
+  }
+  return out;
+}
 function annPhotoPicker(existing){
   pendingAnnImages = (existing||[]).slice();
   return '<div style="margin-bottom:13px"><span class="lh-lbl">Posters or photos · up to 3</span>' +
