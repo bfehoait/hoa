@@ -3347,7 +3347,7 @@ const HOME = {
         '<div class="meta">Closes '+fmtDate(store.election.closes)+' · one vote per household</div></div>' +
         '<button class="btn btn-primary" style="width:auto" onclick="go(\'elections\')">Vote now</button></div></div>' : '';
     return head('Hello, '+s.name.split(' ')[0], 'Unit '+s.unit+' · '+(fresh ? fresh+' new update'+(fresh>1?'s':'')+' from the board' : 'You are all caught up')) +
-    hotlinesPanel() + banner + voteBanner +
+    banner + voteBanner +
     '<div class="qa" style="margin-bottom:20px">' +
       quick('peso','Pay dues', due && due.status==='Paid' ? 'August settled' : 'August · '+peso(due ? due.amount : unitDues(myUnit())), 'payForm()') +
       quick('wrench','Report an issue','Streetlights, drainage, repairs','requestForm()') +
@@ -3813,7 +3813,6 @@ const RENTER = {
     const items = visibleAnnouncements();
     const fresh = items.filter(a=>!store.seen.has(a.id)).length;
     return head('Hello, '+s.name.split(' ')[0], 'Tenant of '+s.unit+' · '+(fresh ? fresh+' new notice'+(fresh>1?'s':'') : 'You are all caught up')) +
-    hotlinesPanel() +
     '<div class="qa" style="margin-bottom:20px">' +
       quick('calendar','Check amenities','What you can book as a tenant','go(\'events\')') +
       quick('wrench','Report an issue','Common area faults','requestForm()') +
