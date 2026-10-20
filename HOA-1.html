@@ -958,13 +958,13 @@ const store = {
       note:'Grocery run with my two kids. Happy to chip in for gas.', riders:[], status:'Open', at:new Date(Date.now()-36e5*20) }
   ],
   rides:[
-    { id:'rd1', unit:'B-12', by:'Rina Dela Cruz', accountId:'u1', pickup:'Unit B-12', dropoff:'SM City Calamba',
+    { id:'rd1', unit:'B-12', by:'Rina Dela Cruz', accountId:'u1', pickup:'Station 4',
       date:new Date(Date.now()+864e5).toISOString().slice(0,10), time:'09:00', passengers:2, note:'With a stroller.',
       status:'Accepted', driver:{ id:'u10', name:'Ramon Cruz', phone:'0917 555 0190' }, vehicle:'White Toyota Hiace · NAB 2210',
       pickupAt:'08:50', at:new Date(Date.now()-36e5*3),
       updates:[ { at:new Date(Date.now()-36e5*3), text:'Ride requested.' },
                 { at:new Date(Date.now()-36e5*2), text:'Ramon Cruz accepted. Pickup at 8:50 AM.' } ] },
-    { id:'rd2', unit:'A-04', by:'Marco Villanueva', accountId:'u2', pickup:'Unit A-04', dropoff:'Calamba Medical Center',
+    { id:'rd2', unit:'A-04', by:'Marco Villanueva', accountId:'u2', pickup:'Main gate',
       date:new Date(Date.now()+864e5*2).toISOString().slice(0,10), time:'14:00', passengers:1, note:'',
       status:'Requested', driver:null, vehicle:'', pickupAt:'', at:new Date(Date.now()-36e5),
       updates:[ { at:new Date(Date.now()-36e5), text:'Ride requested.' } ] }
@@ -3862,6 +3862,9 @@ const RENTER = {
 const RIDE_STEPS = ['Requested','Accepted','On the way','Arrived','Completed'];
 const RIDE_TAG = { 'Requested':'t-amber','Accepted':'t-slate','On the way':'t-slate','Arrived':'t-emerald','Completed':'t-emerald','Cancelled':'t-grey' };
 const myRides = () => store.rides.filter(r => r.unit===myUnit() && (r.accountId ? r.accountId===store.session.accountId : true));
+/* shuttle pickups are by station only — drivers never see who booked or which unit */
+const RIDE_STATIONS = [...Array.from({length:12}, (_,i) => 'Station '+(i+1)), 'Main gate'];
+const rideStop = r => RIDE_STATIONS.includes(r.pickup) ? r.pickup : 'Station not set';
 function fmtTime(hm){
   if(!hm) return '';
   const [h,m] = String(hm).split(':').map(Number);
@@ -3887,9 +3890,9 @@ function rideCard(r, who){
   if(who==='admin' && !['Completed','Cancelled'].includes(r.status))
     actions.push('<button class="btn btn-danger btn-sm" onclick="cancelRide(\''+r.id+'\')">Cancel ride</button>');
   return '<li><div class="row"><div class="grow">' +
-    '<div class="ttl">'+esc(r.pickup)+' → '+esc(r.dropoff)+'</div>' +
+    '<div class="ttl">Pickup at '+esc(rideStop(r))+'</div>' +
     '<div class="meta"><span>'+esc(fmtDate(r.date))+', '+esc(fmtTime(r.time))+'</span>·<span>'+r.passengers+' passenger'+(r.passengers>1?'s':'')+'</span>' +
-      (who!=='resident' ? '·<span class="mono">'+esc(r.unit)+'</span>·<span>'+esc(r.by)+'</span>' : '') + '</div>' +
+      (who==='admin' ? '·<span class="mono">'+esc(r.unit)+'</span>·<span>'+esc(r.by)+'</span>' : '') + '</div>' +
     (r.note ? '<div class="body">'+esc(r.note)+'</div>' : '') +
     (r.driver ? '<div class="meta">Driver: <strong style="color:var(--ink)">'+esc(r.driver.name)+'</strong>'+(r.driver.phone?' · <span class="mono">'+esc(r.driver.phone)+'</span>':'')+(r.vehicle?' · '+esc(r.vehicle):'')+'</div>' : '') +
     eta + steps +
@@ -4414,31 +4417,30 @@ function cancelCarpool(id, byAdmin){
 function rideForm(){
   const today = new Date(), later = new Date(Date.now()+36e5);
   modal('Book the shuttle','The shuttle driver confirms and tells you the pickup time.',
-    '<div class="grid g-2" style="gap:0 12px">' +
-      '<label class="fld"><span>Pickup</span><input class="input" id="f_pk" value="Unit '+esc(myUnit())+'"></label>' +
-      '<label class="fld"><span>Going to</span><input class="input" id="f_dr" placeholder="SM City Calamba"></label></div>' +
+    '<label class="fld"><span>Station number</span><select class="input" id="f_pk"><option value="">Choose a station…</option>' +
+      RIDE_STATIONS.map(s => '<option>'+s+'</option>').join('') + '</select></label>' +
     '<div class="grid g-2" style="gap:0 12px">' +
       '<label class="fld"><span>Date</span><input class="input" id="f_rd" type="date" value="'+iso(today)+'"></label>' +
       '<label class="fld"><span>Pickup time</span><input class="input" id="f_rt" type="time" value="'+String(later.getHours()).padStart(2,'0')+':00"></label></div>' +
     '<label class="fld"><span>Passengers</span><input class="input" id="f_rp" type="number" min="1" max="12" value="1"></label>' +
     '<label class="fld"><span>Note for the driver (optional)</span><input class="input" id="f_rn" placeholder="Luggage, wheelchair, child seat…"></label>',
     'Book shuttle', () => {
-      const dropoff=$('#f_dr').value.trim(), date=$('#f_rd').value, time=$('#f_rt').value;
-      if(!dropoff){ toast('info','Where to?','Add where you are going.'); return false; }
+      const pickup=$('#f_pk').value, date=$('#f_rd').value, time=$('#f_rt').value;
+      if(!pickup){ toast('info','Choose a station','Pick the station where the shuttle should collect you.'); return false; }
       if(!date || !time){ toast('info','Pick a date and time','The driver needs to know when.'); return false; }
       const r = { id:uid(), unit:myUnit(), by:store.session.name, accountId:store.session.accountId,
-        pickup:$('#f_pk').value.trim()||('Unit '+myUnit()), dropoff, date, time, passengers:Math.max(1,Number($('#f_rp').value)||1),
+        pickup, date, time, passengers:Math.max(1,Number($('#f_rp').value)||1),
         note:$('#f_rn').value.trim(), status:'Requested', driver:null, vehicle:'', pickupAt:'', at:new Date(),
         updates:[{ at:new Date(), text:'Ride requested.' }] };
       store.rides.unshift(r);
-      commit('Unit '+myUnit()+' booked the shuttle to '+dropoff+' on '+fmtDate(date)+', '+fmtTime(time)+'.',
+      commit('Shuttle booked for pickup at '+pickup+' on '+fmtDate(date)+', '+fmtTime(time)+'.',
         { title:'Shuttle requested', audience:['driver','admin'], go:gotoRides });
       return true; });
 }
 function acceptRide(id){
   const r = store.rides.find(x=>x.id===id); if(!r) return;
   const changing = r.driver && r.driver.id===store.session.accountId;
-  modal(changing ? 'Change pickup time' : 'Accept this ride', r.pickup+' → '+r.dropoff+' · '+fmtDate(r.date)+', requested for '+fmtTime(r.time),
+  modal(changing ? 'Change pickup time' : 'Accept this ride', 'Pickup at '+rideStop(r)+' · '+fmtDate(r.date)+', requested for '+fmtTime(r.time),
     '<label class="fld"><span>Pickup time you will arrive</span><input class="input" id="f_pa" type="time" value="'+esc(r.pickupAt||r.time)+'"></label>' +
     '<label class="fld"><span>Vehicle (optional)</span><input class="input" id="f_vh" value="'+esc(r.vehicle||'')+'" placeholder="White Toyota Hiace · NAB 2210"></label>',
     changing ? 'Update time' : 'Accept ride', () => {
@@ -4451,14 +4453,14 @@ function acceptRide(id){
       const text = changing ? 'Pickup time changed to '+fmtTime(at)+'.' : s.name+' accepted. Pickup at '+fmtTime(at)+'.';
       r.updates.push({ at:new Date(), text });
       commit(changing
-        ? 'Your ride to '+r.dropoff+': '+s.name+' will now pick you up at '+fmtTime(at)+' on '+fmtDate(r.date)+'.'
-        : 'Ride confirmed — '+s.name+' will pick up unit '+r.unit+' at '+fmtTime(at)+' on '+fmtDate(r.date)+'.',
+        ? 'Your shuttle from '+rideStop(r)+': '+s.name+' will now pick you up at '+fmtTime(at)+' on '+fmtDate(r.date)+'.'
+        : 'Ride confirmed — '+s.name+' will pick you up at '+rideStop(r)+', '+fmtTime(at)+' on '+fmtDate(r.date)+'.',
         { title: changing ? 'Pickup time changed' : 'Ride confirmed', forUnit:r.unit, audience:['admin'], go:gotoRides });
       return true; });
 }
 function rideOnTheWay(id){
   const r = store.rides.find(x=>x.id===id); if(!r) return;
-  modal('On the way','How many minutes until you reach '+r.pickup+'?',
+  modal('On the way','How many minutes until you reach '+rideStop(r)+'?',
     '<label class="fld"><span>Minutes away</span><input class="input" id="f_eta" type="number" min="1" max="120" value="10"></label>',
     'Send update', () => {
       const mins = Math.max(1, Number($('#f_eta').value)||10), when = new Date(Date.now()+mins*6e4);
@@ -4471,19 +4473,19 @@ function rideStatus(id, status, detail){
   r.status = status;
   const d = r.driver ? r.driver.name : 'The driver';
   const text = { 'On the way': d+' is on the way'+(detail?' — '+detail:'')+'.',
-                 'Arrived':    d+' has arrived at '+r.pickup+'.',
-                 'Completed':  'Trip to '+r.dropoff+' completed.' }[status] || status+'.';
+                 'Arrived':    d+' has arrived at '+rideStop(r)+'.',
+                 'Completed':  'Trip from '+rideStop(r)+' completed.' }[status] || status+'.';
   r.updates.push({ at:new Date(), text });
   commit(text, { title:'Ride '+status.toLowerCase(), forUnit:r.unit, audience:['admin'], go:gotoRides });
 }
 function cancelRide(id){
   const r = store.rides.find(x=>x.id===id); if(!r) return;
-  modal('Cancel this ride?', r.pickup+' → '+r.dropoff+' · '+fmtDate(r.date)+', '+fmtTime(r.pickupAt||r.time),
+  modal('Cancel this ride?', 'Pickup at '+rideStop(r)+' · '+fmtDate(r.date)+', '+fmtTime(r.pickupAt||r.time),
     '<p class="meta" style="display:block">'+(r.driver ? esc(r.driver.name)+' will be told it is cancelled.' : 'No driver has taken it yet.')+'</p>',
     'Cancel ride', () => {
       r.status = 'Cancelled';
-      r.updates.push({ at:new Date(), text:'Cancelled by '+store.session.name+'.' });
-      commit('Ride for unit '+r.unit+' to '+r.dropoff+' on '+fmtDate(r.date)+' was cancelled.',
+      r.updates.push({ at:new Date(), text:'Cancelled by '+(isAdmin() ? 'the admin office' : 'the resident')+'.' });
+      commit('Shuttle pickup at '+rideStop(r)+' on '+fmtDate(r.date)+' was cancelled.',
         { title:'Ride cancelled', forUnit:r.unit, audience:['driver','admin'], go:gotoRides });
       return true; }, true);
 }
