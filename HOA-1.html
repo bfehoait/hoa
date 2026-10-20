@@ -3387,7 +3387,7 @@ const HOME = {
 
   myrequests(){
     const mine = store.requests.filter(r=>r.unit===myUnit());
-    return head('My requests','Status changes made by the admin office appear here as they happen.',
+    return head('My requests (relative to community / neighborhood)','Status changes made by the admin office appear here as they happen.',
       '<button class="btn btn-primary" style="width:auto" onclick="requestForm()">New request</button>') +
     (mine.length ? '<div class="card"><ul class="list">' + mine.map(r =>
       '<li><div class="row"><div class="grow"><div class="ttl">'+esc(r.title)+newReplyTag(r)+'</div>' +
@@ -3515,7 +3515,7 @@ const HOME = {
   complaints(){
     const mine = store.complaints.filter(c=>c.unit===myUnit());
     return head('Complaints','A formal filing against a house rule violation. The board logs it with a reference number and responds in writing.',
-      '<button class="btn btn-primary" style="width:auto" onclick="complaintForm()">File a complaint</button>') +
+      '<button class="btn btn-primary" style="width:auto" onclick="complaintForm()">File a complaint (relative to neighbors)</button>') +
     '<div class="grid g-2">' +
       '<div class="card span-2"><div class="card-head"><h3>My filings</h3></div>' +
       (mine.length ? '<ul class="list">' + mine.map(c =>
@@ -3579,7 +3579,7 @@ const HOME = {
   concerns(){
     const mine = store.concerns.filter(c=>c.unit===myUnit());
     return head('Concerns','Suggestions, questions and feedback for the board. Lighter than a complaint — this starts a conversation, not a case.',
-      '<button class="btn btn-primary" style="width:auto" onclick="concernForm()">Raise a concern</button>') +
+      '<button class="btn btn-primary" style="width:auto" onclick="concernForm()">Raise a concern (for BOD / Officers)</button>') +
     '<div class="grid g-2">' +
       '<div class="card span-2"><div class="card-head"><h3>My threads</h3></div>' +
       (mine.length ? '<ul class="list">' + mine.map(n =>
@@ -3594,9 +3594,9 @@ const HOME = {
         '<span>A neighbouring household</span>·<span class="tag '+(n.replies&&n.replies.length?'t-emerald':'t-amber')+'">'+(n.replies&&n.replies.length?'Replied':'Awaiting reply')+'</span></div></li>').join('') +
         (store.concerns.filter(c=>c.unit!==myUnit()).length?'':'<li>'+empty('Nothing yet','Community threads show up here.')+'</li>') + '</ul>') +
       sectionCard('Complaint or concern?','<div class="card-pad">' +
-        '<div style="padding:9px 0;border-bottom:1px dashed var(--line)"><strong style="font-size:14px">File a complaint</strong>' +
+        '<div style="padding:9px 0;border-bottom:1px dashed var(--line)"><strong style="font-size:14px">File a complaint (relative to neighbors)</strong>' +
         '<div class="meta" style="margin-top:2px">A house rule was broken and you want it on record with a reference number.</div></div>' +
-        '<div style="padding:9px 0"><strong style="font-size:14px">Raise a concern</strong>' +
+        '<div style="padding:9px 0"><strong style="font-size:14px">Raise a concern (for BOD / Officers)</strong>' +
         '<div class="meta" style="margin-top:2px">You have an idea, a question, or feedback that needs a reply, not a ruling.</div></div>' +
         '<button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="go(\'complaints\')">Go to complaints</button></div>') +
     '</div>';
@@ -5437,7 +5437,7 @@ function resolveComplaint(id){
       commit('Complaint '+c.ref+' resolved and posted to unit '+c.unit+'.',{title:'Complaint resolved',forUnit:c.unit,chat:{kind:'complaint',id:c.id}}); return true; });
 }
 function complaintForm(){
-  modal('File a complaint','The board logs this with a reference number and answers in writing.',
+  modal('File a complaint (relative to neighbors)','The board logs this with a reference number and answers in writing.',
     '<div class="grid g-2" style="gap:0 12px">' +
       '<label class="fld"><span>Category</span><select class="input" id="f_cat">'+CMP_TYPES.map(c=>'<option>'+c+'</option>').join('')+'</select></label>' +
       '<label class="fld"><span>Unit involved</span><input class="input" id="f_ag" placeholder="Unit C-19 or Common area"></label></div>' +
@@ -5455,7 +5455,7 @@ function complaintForm(){
       commit('Complaint '+ref+' filed by unit '+myUnit()+' — '+title+'.',{title:'Complaint filed',audience:['admin','board'],chat:{kind:'complaint',id:item.id}}); return true; });
 }
 function concernForm(){
-  modal('Raise a concern','This starts a thread with the board. Expect a reply, not a ruling.',
+  modal('Raise a concern (for BOD / Officers)','This starts a thread with the board. Expect a reply, not a ruling.',
     '<label class="fld"><span>Topic</span><select class="input" id="f_top">'+CON_TOPICS.map(t=>'<option>'+t+'</option>').join('')+'</select></label>' +
     '<label class="fld"><span>Subject</span><input class="input" id="f_sub" placeholder="Add a covered waiting shed at the gate"></label>' +
     '<label class="fld"><span>Your message</span><textarea class="input" id="f_msg"></textarea></label>',
