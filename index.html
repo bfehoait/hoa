@@ -457,6 +457,16 @@ html[data-theme="dark"] .hl-box h4{color:var(--ink)}
 .ann-qr .btn{width:100%}
 .ann-linkrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) auto;gap:8px;margin-bottom:8px}
 @media(max-width:520px){.ann-linkrow{grid-template-columns:1fr auto}.ann-linkrow .r-url{grid-column:1/2}}
+.st-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.st-box{border:1px solid var(--line);border-top:4px solid var(--slate);border-radius:12px;background:var(--surface);padding:12px 14px;min-width:0}
+.st-box.st-waiting{border-top-color:var(--amber)}
+.st-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+.st-name{display:flex;align-items:center;gap:7px;color:var(--slate-dk)}
+.st-name b{font-size:16px;color:var(--ink)}
+.st-row{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.st-row:first-of-type{border-top:0}
+.st-who{font-weight:700;font-size:14.5px}
+.st-today{color:var(--emerald);font-weight:700}
 .cp-route{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;font-weight:700;font-size:15px;color:var(--ink);min-width:0}
 .cp-route span{min-width:0;overflow-wrap:anywhere}
 .cp-route b{color:var(--slate)}
@@ -1717,6 +1727,7 @@ const NAV = {
   driver:[
     { g:'Transport', items:[
       { id:'trips',   label:'Ride requests', icon:'car', badge:()=>store.rides.filter(r=>r.status==='Requested').length },
+      { id:'stations', label:'Stations',     icon:'flag', badge:()=>stationRides('today').length },
       { id:'mytrips', label:'My trips',      icon:'calendar', badge:()=>store.rides.filter(r=>r.driver&&r.driver.id===store.session.accountId&&['Accepted','On the way','Arrived'].includes(r.status)).length },
       { id:'announcements', label:'Announcements', icon:'megaphone', badge:()=>visibleAnnouncements().filter(a=>!store.seen.has(a.id)).length },
       { id:'hotlines',   label:'Emergency hotlines', icon:'phone' }
@@ -3908,8 +3919,58 @@ const byWhen = (a,b) => (a.date+(a.pickupAt||a.time)) < (b.date+(b.pickupAt||b.t
 /* ---------- DRIVER ---------- */
 ADMIN.announcements = () => noticesView();
 HOME.announcements = () => noticesView();
+/* ---- shuttle stations: who is waiting where ---- */
+function rideActive(r){ return ['Requested','Accepted','On the way','Arrived'].includes(r.status); }
+function stationRides(day){
+  const today = lhToday();
+  return store.rides.filter(r => rideActive(r) && (day==='today' ? r.date===today : r.date>=today));
+}
+function stationActions(r){
+  const me = store.session.accountId, mine = r.driver && r.driver.id===me;
+  if(r.status==='Requested') return '<button class="btn btn-emerald btn-sm" onclick="acceptRide(\''+r.id+'\')">Accept</button>';
+  if(!mine) return '<span class="meta">Taken by '+esc(r.driver ? r.driver.name : 'another driver')+'</span>';
+  if(r.status==='Accepted') return '<button class="btn btn-primary btn-sm" style="width:auto" onclick="rideOnTheWay(\''+r.id+'\')">I\'m on the way</button>';
+  if(r.status==='On the way') return '<button class="btn btn-primary btn-sm" style="width:auto" onclick="rideStatus(\''+r.id+'\',\'Arrived\')">I\'ve arrived</button>';
+  if(r.status==='Arrived') return '<button class="btn btn-emerald btn-sm" onclick="rideStatus(\''+r.id+'\',\'Completed\')">Trip completed</button>';
+  return '';
+}
+function stationBox(name, list){
+  const today = lhToday(), pax = list.reduce((n,r)=>n+(Number(r.passengers)||1),0);
+  const waiting = list.filter(r=>r.status==='Requested').length;
+  return '<div class="st-box'+(waiting?' st-waiting':'')+'">' +
+    '<div class="st-head"><div class="st-name">'+svg('flag')+'<b>'+esc(name)+'</b></div>' +
+      '<span class="tag '+(waiting?'t-amber':'t-slate')+'">'+list.length+' booking'+(list.length===1?'':'s')+' · '+pax+' pax</span></div>' +
+    list.slice().sort(byWhen).map(r =>
+      '<div class="st-row"><div class="grow" style="min-width:0">' +
+        '<div class="st-who">'+esc(r.by)+'</div>' +
+        '<div class="meta"><span class="'+(r.date===today?'st-today':'')+'">'+(r.date===today?'Today':esc(fmtDate(r.date)))+', '+esc(fmtTime(r.pickupAt||r.time))+'</span><span>'+(Number(r.passengers)||1)+' passenger'+((Number(r.passengers)||1)>1?'s':'')+'</span></div>' +
+        (r.note ? '<div class="meta"><span>'+esc(r.note)+'</span></div>' : '') +
+        '<div class="btn-row" style="margin-top:8px;align-items:center">'+stationActions(r)+'</div></div>' +
+        '<span class="tag '+(RIDE_TAG[r.status]||'t-grey')+'">'+esc(r.status)+'</span></div>').join('') +
+  '</div>';
+}
+function stationsView(){
+  const day = tabOf('stday','today');
+  const rides = stationRides(day);
+  const by = {};
+  rides.forEach(r => { const st = rideStop(r); (by[st] = by[st] || []).push(r); });
+  const order = RIDE_STATIONS.concat(by['Station not set'] ? ['Station not set'] : []);
+  const busy = order.filter(x=>by[x]), quiet = RIDE_STATIONS.filter(x=>!by[x]);
+  const waiting = rides.filter(r=>r.status==='Requested').length, pax = rides.reduce((n,r)=>n+(Number(r.passengers)||1),0);
+  return head('Stations','Where residents are waiting for the shuttle. Each box is a pickup station with the people booked there.') +
+    tabs('stday',[{id:'today',label:'Today',n:stationRides('today').length},{id:'upcoming',label:'Today and upcoming',n:stationRides('upcoming').length}],'today') +
+    '<div class="grid g-3" style="margin-bottom:14px">' +
+      stat('Stations with riders', busy.length, 'of '+RIDE_STATIONS.length+' stations') +
+      stat('Waiting for a driver', waiting, 'Not accepted yet') +
+      stat('Passengers', pax, day==='today' ? 'Booked for today' : 'Today and later') +
+    '</div>' +
+    (busy.length ? '<div class="st-grid">'+busy.map(x=>stationBox(x, by[x])).join('')+'</div>'
+      : '<div class="card">'+empty(day==='today' ? 'No one is booked today' : 'No upcoming bookings', 'Shuttle bookings show up here under the station the resident picked.')+'</div>') +
+    (busy.length && quiet.length ? '<div class="card card-pad" style="margin-top:14px"><div class="meta" style="margin:0"><span>No one booked at</span>'+quiet.map(x=>'<span class="tag t-grey">'+esc(x)+'</span>').join('')+'</div></div>' : '');
+}
 const DRIVER = {
   announcements(){ return noticesView(); },
+  stations(){ return stationsView(); },
   trips(){
     const open = store.rides.filter(r=>r.status==='Requested').slice().sort(byWhen);
     return head('Ride requests','Residents waiting for a driver. Accept one and set the pickup time — the resident is told straight away.') +
