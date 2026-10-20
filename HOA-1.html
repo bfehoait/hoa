@@ -9,13 +9,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --paper:#F5F6F8; --surface:#FFFFFF; --ink:#101725; --ink-2:#475069; --ink-3:#7C859B; --line:#E3E6ED;
-  --slate:#4B5BC4; --slate-dk:#3B489E; --slate-tint:#EEF0FC;
-  --emerald:#0E9F6E; --emerald-tint:#E6F6EF;
-  --amber:#B9791A; --amber-tint:#FCF2E1;
-  --rose:#C2415A; --rose-tint:#FCEDF0;
+  --bg:#FFFFFF; --paper:#F7F6F6; --surface:#FFFFFF; --ink:#1B1A1D; --ink-2:#4B4A50; --ink-3:#7B7A82; --line:#E6E3E4;
+  /* brand: deep burgundy #800020 — buttons, selected tabs and highlights */
+  --slate:#800020; --slate-dk:#5E0017; --slate-tint:#F8ECEF; --brand-line:#ECCBD3;
+  --emerald:#0E8A60; --emerald-tint:#E6F4EE;
+  --amber:#A86A12; --amber-tint:#FBF1E0;
+  --rose:#D0342C; --rose-tint:#FDEDEC;
   --radius:14px; --radius-sm:9px;
-  --shadow:0 1px 2px rgba(16,23,37,.05), 0 8px 24px -12px rgba(16,23,37,.18);
+  --shadow:0 1px 2px rgba(27,26,29,.05), 0 8px 24px -14px rgba(27,26,29,.16);
   --sans:'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --display:'Bricolage Grotesque','Inter', ui-sans-serif, system-ui, sans-serif;
   --mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -23,7 +24,7 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
-body{font-family:var(--sans);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.5}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.5}
 h1,h2,h3,h4{font-family:var(--display);margin:0;letter-spacing:-.02em;line-height:1.15}
 button,input,select,textarea{font:inherit;color:inherit}
 a{color:var(--slate)}
@@ -35,11 +36,11 @@ a{color:var(--slate)}
 /* AUTH */
 #auth{min-height:100dvh;display:grid;grid-template-columns:1fr}
 @media (min-width:940px){#auth{grid-template-columns:1.05fr .95fr}}
-.auth-art{background:radial-gradient(120% 90% at 15% 0%, #5866CE 0%, #3A4694 55%, #232B60 100%);color:#fff;padding:34px 26px 40px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+.auth-art{background:radial-gradient(120% 90% at 15% 0%, #A3253F 0%, #800020 52%, #45000F 100%);color:#fff;padding:34px 26px 40px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
 .auth-art::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px);background-size:38px 38px;mask-image:radial-gradient(80% 60% at 70% 40%, #000 0%, transparent 78%)}
 .auth-art>*{position:relative;z-index:1}
 .brandmark{display:flex;align-items:center;gap:11px;font-family:var(--display);font-weight:800;letter-spacing:-.03em}
-.brandmark .glyph{width:44px;height:36px;border-radius:11px;display:grid;place-items:center;background:#fff;color:#3A4694;font-size:14px;flex:none;letter-spacing:-.04em}
+.brandmark .glyph{width:44px;height:36px;border-radius:11px;display:grid;place-items:center;background:#fff;color:#800020;font-size:14px;flex:none;letter-spacing:-.04em}
 .brand-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:22px}
 .brand-row .divider-v{width:1px;align-self:stretch;min-height:34px;background:rgba(255,255,255,.3);flex:none}
 .partner-logo{display:inline-flex}
@@ -115,7 +116,7 @@ textarea.input{min-height:96px;resize:vertical}
 .topbar .brand .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media(max-width:430px){.topbar .brand .nm{display:none}}
 .topbar .spacer{flex:1}
-.rolebadge{display:inline-flex;align-items:center;gap:7px;background:var(--slate-tint);color:var(--slate-dk);border:1px solid #DADFF8;padding:6px 12px;border-radius:20px;font-size:12.5px;font-weight:700;white-space:nowrap}
+.rolebadge{display:inline-flex;align-items:center;gap:7px;background:var(--slate-tint);color:var(--slate-dk);border:1px solid var(--brand-line);padding:6px 12px;border-radius:20px;font-size:12.5px;font-weight:700;white-space:nowrap}
 .rolebadge i{width:6px;height:6px;border-radius:50%;background:var(--slate-dk);flex:none}
 .rolebadge.admin{background:var(--emerald-tint);color:var(--emerald);border-color:#CBEBDC}
 .rolebadge.admin i{background:var(--emerald)}
@@ -129,14 +130,14 @@ textarea.input{min-height:96px;resize:vertical}
 .chip.on,.chip.on:hover{border-color:var(--slate);background:var(--slate);color:#fff}
 html[data-theme="dark"] .chip.on,html[data-theme="dark"] .chip.on:hover{border-color:var(--slate);background:var(--slate);color:#0E121C}
 html[data-theme="dark"]{
-  --paper:#0E121C; --surface:#161B27; --ink:#EEF1F7; --ink-2:#AEB6C7; --ink-3:#7C859B; --line:#28303F;
-  --slate:#7C8BEA; --slate-dk:#A3AEF5; --slate-tint:#232A45;
+  --bg:#121013; --paper:#121013; --surface:#1C191D; --ink:#F2EFF1; --ink-2:#BDB6BC; --ink-3:#8C858B; --line:#302B30;
+  --slate:#E58C9E; --slate-dk:#F3B6C3; --slate-tint:#3A1A23; --brand-line:#5A2A35;
   --emerald:#3DC393; --emerald-tint:#152C25;
   --amber:#DDA94A; --amber-tint:#2E2416;
   --rose:#E2778E; --rose-tint:#2E1A20;
   --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.7);
 }
-html[data-theme="dark"] .topbar{background:rgba(22,27,39,.92)}
+html[data-theme="dark"] .topbar{background:rgba(28,25,29,.92)}
 html[data-theme="dark"] .btn-ghost,html[data-theme="dark"] .icon-btn,html[data-theme="dark"] .oauth,
 html[data-theme="dark"] .input,html[data-theme="dark"] .card,html[data-theme="dark"] .sidebar,
 html[data-theme="dark"] .tabs button,html[data-theme="dark"] .chip,html[data-theme="dark"] .modal,
@@ -240,7 +241,7 @@ html[data-theme="dark"] .syncrail.flash{animation:railFlashDark 1.3s ease}
 .ride-steps span.now{background:var(--slate);color:#fff;border-color:transparent}
 .ride-eta{display:inline-flex;align-items:center;gap:8px;margin-top:10px;padding:8px 12px;border-radius:10px;background:var(--slate-tint);color:var(--slate-dk);font-weight:700;font-size:14px}
 html[data-theme="dark"] .ride-steps span.now{color:#0E121C}
-.avatar{width:34px;height:34px;border-radius:50%;background:var(--slate-tint);color:var(--slate-dk);display:grid;place-items:center;font-weight:700;font-size:13px;border:1px solid #DADFF8;overflow:hidden;flex:none}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--slate-tint);color:var(--slate-dk);display:grid;place-items:center;font-weight:700;font-size:13px;border:1px solid var(--brand-line);overflow:hidden;flex:none}
 button.avatar{padding:0;font:inherit;cursor:pointer;transition:.15s}
 button.avatar:hover{filter:brightness(0.94)}
 button.avatar:focus-visible{outline:2.5px solid var(--slate);outline-offset:2px}
@@ -283,7 +284,7 @@ main{padding:18px 14px 90px;max-width:1180px;width:100%;min-width:0}
 .tabs::-webkit-scrollbar{display:none}
 .tabs button{white-space:nowrap;border:1px solid var(--line);background:#fff;padding:8px 13px;border-radius:20px;font-size:13.5px;font-weight:600;color:var(--ink-2);cursor:pointer;transition:.14s}
 .tabs button:hover{border-color:#CFD5E4}
-.tabs button[aria-selected="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tabs button[aria-selected="true"]{background:var(--slate);color:#fff;border-color:var(--slate)}
 
 /* cards */
 .grid{display:grid;gap:14px}
@@ -3675,7 +3676,7 @@ function annImages(a){
       '<img src="'+esc(src)+'" alt="'+esc(a.title)+' — poster" loading="lazy"><span>View poster</span></button>').join('') + '</div>';
 }
 /* ---- emergency hotlines: one box per agency, numbers tap to call ---- */
-const HL_TONES = { green:'#1E7A46', maroon:'#9B2335', blue:'#1D4ED8', orange:'#D9661F', purple:'#6B3FA0', red:'#D62828', slate:'#4B5BC4' };
+const HL_TONES = { green:'#1E7A46', maroon:'#9B2335', blue:'#1D4ED8', orange:'#D9661F', purple:'#6B3FA0', red:'#D62828', slate:'#800020' };
 function hlLink(v){
   v = String(v||'').trim();
   if(/@/.test(v) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return '<a class="mail" href="mailto:'+esc(v)+'">'+esc(v)+'</a>';
