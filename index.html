@@ -3759,7 +3759,6 @@ function noticesView(){
   const fresh = items.filter(a=>!store.seen.has(a.id)).length;
   return head('Announcements', 'Notices from the HOA office for everyone in the community. '+(fresh ? fresh+' new.' : 'You are all caught up.'),
       isAdmin() ? '<button class="btn btn-primary" style="width:auto" onclick="announceForm()">Post announcement</button>' : '') +
-    hotlinesPanel() +
     '<div class="card"><div class="card-head"><h3>Community announcements</h3><span class="spacer"></span>' +
       (fresh ? '<button class="btn btn-ghost btn-sm" onclick="markAllSeen()">Mark all read</button>' : '<span class="meta">Up to date</span>') + '</div>' +
       (items.length ? '<ul class="list">' + items.map(a => {
