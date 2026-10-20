@@ -426,6 +426,11 @@ html[data-theme="dark"] .lh-verified{color:#4C9BFF}
 .lh-sold{position:absolute;left:10px;top:10px;z-index:1;background:var(--rose);color:#fff;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:6px}
 .lh-is-sold .mkt-photo img,.lh-is-sold .mkt-photo svg{opacity:.45}
 .lh-is-sold .card-pad > .row div[style*="font-weight:800"]{text-decoration:line-through;color:var(--ink-3)}
+.ann-imgs{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.ann-img{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;padding:0;background:var(--paper);cursor:pointer;width:min(220px,100%);display:block}
+.ann-img img{width:100%;display:block;aspect-ratio:2/3;object-fit:cover}
+.ann-img span{position:absolute;left:8px;bottom:8px;background:rgba(16,23,37,.75);color:#fff;font-size:12px;font-weight:600;padding:4px 9px;border-radius:20px}
+.ann-img:hover,.ann-img:focus-visible{border-color:var(--slate)}
 .lh-search{position:relative;display:flex;gap:8px;align-items:center;margin-bottom:14px}
 .lh-search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-3);pointer-events:none}
 .lh-search .input{padding-left:38px;flex:1;min-width:0}
@@ -663,6 +668,37 @@ const store = {
   userAccess:{},
 
   announcements:[
+    { id:'behoai-hotlines', title:'Emergency hotlines — save these numbers', date:'2026-10-20', category:'Security', pinned:true,
+      images:['announcements/behoai-emergency-hotlines.jpg'],
+      body:'Important numbers for your safety and peace of mind. Save them on your phone.\n\n' +
+        'Brgy. Molino IV hotlines\n• Smart: 0969 161 1999 (Duplex Delta Base)\n• Globe (Viber): 0917 724 0303 (Duplex Delta Base)\n• Landline PLDT: (046) 884 6599\n\n' +
+        'BEHOAI security guards\n• 0962 650 9132\n• 0964 842 9013\n\n' +
+        'Bacoor Emergency Hotline (Rescue 161)\n• 161 / (046) 417 0207\n\n' +
+        'PNP Cavite\n• 0998 598 6953\n\n' +
+        'Bureau of Fire Cavite\n• Central station: 0965 865 7240 | 0966 695 9711\n• Molino sub station: 0966 938 2591\n\n' +
+        'Metro South Medical Center (MSMC)\n• (046) 894 1630 | (046) 885 6113\n• 0918 904 8736\n\n' +
+        'Cavite Command Center\n• 0905 844 1334\n• 0908 815 0650\n\n' +
+        'Aqualink Inc. (water)\n• 0967 457 6140\n• 0949 625 3489\n• aqualinkresources@macroasiaproperties.com\n\n' +
+        'Breighton Land admin office\n• Allieda Leuterio — 0928 770 1922\n• bfehoainc@gmail.com\n• bellefortestatesvaoffice01@gmail.com\n• aleuterio@breightonland.com\n• Bryle Cabarloc — bcabarloc@breightonland.com\n\n' +
+        'Stay informed. Stay safe.',
+      attach:'', vis:'all', at:new Date('2026-10-20T08:00:00+08:00') },
+    { id:'behoai-defects', title:'Defect reporting, recording and resolution for the BEHOAI', date:'2026-10-20', category:'Maintenance', pinned:true,
+      images:['announcements/behoai-defect-reporting.jpg'],
+      body:'To keep Bellefort Estates safe and well maintained, we are using a structured process for reporting, recording and resolving defects and concerns in the village.\n\n' +
+        'What you can report\n• Streetlights not working\n• Road and pavement issues\n• Drainage concerns\n• Parks, playground and common area facilities\n• Gate and security-related concerns\n• Water supply issues\n• Landscaping and greenery concerns\n• Other BEHOAI property and facility concerns\n\n' +
+        'How to report\n1. Scan the QR code on the poster and fill out the Defect Report Form, or send it through our official channels. Homeowners can also use “Report an issue” here in the portal.\n' +
+        '2. Give complete details: location, description and a photo if you have one.\n3. Recording and assessment: the BEHOAI records and assesses the concern.\n4. Resolution and update: you are told the status and the resolution.\n\n' +
+        'Important reminders\n• Include clear photos and the exact location.\n• For emergencies or safety hazards, tell the guard house immediately.\n• Reports are prioritized by urgency, impact and available resources.\n\n' +
+        'Together, let’s maintain and improve our Bellefort Estates!',
+      attach:'', vis:'all', at:new Date('2026-10-20T07:59:00+08:00') },
+    { id:'behoai-channels', title:'Hello, Bellefort neighbors! Join our official channels', date:'2026-10-20', category:'Advisory', pinned:true,
+      images:['announcements/behoai-official-channels.jpg'],
+      body:'This keeps everyone informed about important announcements, reminders, community activities and other village matters.\n\n' +
+        'Stay connected through the official channels of the Bellefort Estates Homeowners’ Association, Inc. (BEHOAI). Scan the QR codes on the poster to join:\n' +
+        '• Community Facebook page\n• Community Viber channel\n• Community chat\n\n' +
+        'You will get official announcements, community updates, events and activities, and reminders.\n\n' +
+        'Let’s continue to work together for a better Bellefort Estates!',
+      attach:'', vis:'all', at:new Date('2026-10-20T07:58:00+08:00') },
     { id:'a1', title:'Water interruption — Friday, Aug 28', date:'2026-08-24', category:'Advisory',
       body:'Laguna Water will shut the main line from 9:00 AM to 4:00 PM for valve replacement along Solana Drive. Store water the night before. Phases 2 and 3 are affected; Phase 1 stays on the auxiliary tank.',
       attach:'advisory-letter.pdf', vis:'all', at:new Date(Date.now()-864e5*2) },
@@ -1585,7 +1621,8 @@ const NAV = {
   driver:[
     { g:'Transport', items:[
       { id:'trips',   label:'Ride requests', icon:'car', badge:()=>store.rides.filter(r=>r.status==='Requested').length },
-      { id:'mytrips', label:'My trips',      icon:'calendar', badge:()=>store.rides.filter(r=>r.driver&&r.driver.id===store.session.accountId&&['Accepted','On the way','Arrived'].includes(r.status)).length }
+      { id:'mytrips', label:'My trips',      icon:'calendar', badge:()=>store.rides.filter(r=>r.driver&&r.driver.id===store.session.accountId&&['Accepted','On the way','Arrived'].includes(r.status)).length },
+      { id:'announcements', label:'Announcements', icon:'megaphone', badge:()=>visibleAnnouncements().filter(a=>!store.seen.has(a.id)).length }
     ]},
     { g:'Account', items:[
       { id:'support',  label:'Support',  icon:'life' },
@@ -1598,7 +1635,8 @@ const NAV = {
       { id:'visitorlookup', label:'Visitor lookup', icon:'users', badge:()=>visitorProfiles().filter(v=>v.reasons.length).length },
       { id:'vehicles',  label:'Vehicle lookup',  icon:'grid' },
       { id:'incidents', label:'Incident log',    icon:'flag' },
-      { id:'roster',    label:'Duty roster',     icon:'users' }
+      { id:'roster',    label:'Duty roster',     icon:'users' },
+      { id:'announcements', label:'Announcements', icon:'megaphone', badge:()=>visibleAnnouncements().filter(a=>!store.seen.has(a.id)).length }
     ]},
     { g:'Account', items:[
       { id:'support',  label:'Support',  icon:'life' },
@@ -1615,7 +1653,8 @@ const NAV = {
       { id:'financials',label:'Approved summaries',icon:'peso' },
       { id:'documents', label:'Board documents',  icon:'building' },
       { id:'election',  label:'Election',         icon:'ballot' },
-      { id:'reports',   label:'Reports',          icon:'chart' }
+      { id:'reports',   label:'Reports',          icon:'chart' },
+      { id:'announcements', label:'Announcements', icon:'megaphone', badge:()=>visibleAnnouncements().filter(a=>!store.seen.has(a.id)).length }
     ]},
     { g:'Account', items:[
       { id:'support',  label:'Support',  icon:'life' },
@@ -2290,11 +2329,12 @@ const ADMIN = {
     const inner = {
       announcements(){
         return sectionCard('Announcements',
-          store.announcements.length ? '<ul class="list">' + store.announcements.map(a =>
+          store.announcements.length ? '<ul class="list">' + annSorted(store.announcements).map(a =>
             '<li><div class="row"><div class="grow"><div class="ttl">'+esc(a.title)+'</div>' +
-            '<div class="meta"><span class="tag t-slate">'+esc(a.category)+'</span><span>'+fmtDate(a.date)+'</span>' +
+            '<div class="meta">'+annTags(a) +
+            '<span>'+((a.vis||'all')==='all' ? 'Everyone' : 'Owners only')+'</span>' +
             (a.attach?'<span class="mono" style="font-size:11.5px">📎 '+esc(a.attach)+'</span>':'')+'</div>' +
-            '<div class="body">'+esc(a.body)+'</div>' +
+            '<div class="body">'+esc(a.body)+'</div>' + annImages(a) +
             '<div class="btn-row" style="margin-top:11px">' +
               '<button class="btn btn-ghost btn-sm" onclick="announceForm(\''+a.id+'\')">Edit</button>' +
               '<button class="btn btn-danger btn-sm" onclick="deleteAnnounce(\''+a.id+'\')">Delete</button></div>' +
@@ -3171,13 +3211,13 @@ const HOME = {
     '<div class="grid g-2">' +
       '<div class="card span-2"><div class="card-head"><h3>Community feed</h3><span class="spacer"></span>' +
         (fresh ? '<button class="btn btn-ghost btn-sm" onclick="markAllSeen()">Mark all read</button>' : '<span class="meta">Up to date</span>') + '</div>' +
-        '<ul class="list">' + store.announcements.map(a => {
+        '<ul class="list">' + visibleAnnouncements().map(a => {
           const isNew = !store.seen.has(a.id);
           return '<li class="announce'+(isNew?' fresh':'')+'"><div class="row"><div class="grow">' +
             '<div class="ttl">'+esc(a.title)+(isNew?' <span class="newpill">NEW</span>':'')+'</div>' +
-            '<div class="meta"><span class="tag t-slate">'+esc(a.category)+'</span><span>'+fmtDate(a.date)+'</span>' +
+            '<div class="meta">'+annTags(a) +
             (a.attach?'<span class="mono" style="font-size:11.5px">📎 '+esc(a.attach)+'</span>':'')+'</div>' +
-            '<div class="body">'+esc(a.body)+'</div>' +
+            '<div class="body">'+esc(a.body)+'</div>' + annImages(a) +
             (isNew?'<button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="markSeen(\''+a.id+'\')">Mark read</button>':'') +
           '</div></div></li>';
         }).join('') + '</ul></div>' +
@@ -3454,9 +3494,58 @@ const HOME = {
 /* ============================================================
    ROLE MATRIX + ADDITIONAL ROLE PORTALS
 ============================================================ */
+/* owners, the board and the office see every notice; renters, guards and drivers see the ones meant for all residents */
 function visibleAnnouncements(){
-  return store.announcements.filter(a =>
-    store.session.role==='renter' ? (a.vis||'all')==='all' : true);
+  const r = store.session.role;
+  return annSorted(store.announcements.filter(a => ['homeowner','admin','board'].includes(r) ? true : (a.vis||'all')==='all'));
+}
+function annSorted(list){ return list.slice().sort((a,b) => (b.pinned?1:0) - (a.pinned?1:0)); }
+function annImages(a){
+  const im = Array.isArray(a.images) ? a.images.filter(Boolean) : [];
+  if(!im.length) return '';
+  return '<div class="ann-imgs">' + im.map((src,i) =>
+    '<button type="button" class="ann-img" onclick="openAnnImage(\''+a.id+'\','+i+')" aria-label="View poster '+(i+1)+' full size">' +
+      '<img src="'+esc(src)+'" alt="'+esc(a.title)+' — poster" loading="lazy"><span>View poster</span></button>').join('') + '</div>';
+}
+function annTags(a){
+  return (a.pinned ? '<span class="tag t-amber">Pinned</span>' : '') + '<span class="tag t-slate">'+esc(a.category)+'</span><span>'+fmtDate(a.date)+'</span>';
+}
+function openAnnImage(id, i){
+  const a = store.announcements.find(x=>x.id===id); if(!a || !a.images || !a.images[i]) return;
+  const src = a.images[i];
+  modal(a.title, fmtDate(a.date)+' · '+a.category,
+    '<img src="'+esc(src)+'" alt="'+esc(a.title)+' — poster" style="width:100%;border-radius:10px;display:block;border:1px solid var(--line)">' +
+    (/^data:/.test(src) ? '' : '<div class="btn-row" style="margin-top:12px"><a class="btn btn-ghost btn-sm" style="width:auto" href="'+esc(src)+'" target="_blank" rel="noopener">Open full size ↗</a></div>'),
+    'Close', () => true);
+  const c = document.getElementById('mCancel'); if(c) c.classList.add('hide');
+}
+/* the same notice list for guards, drivers and the board */
+function noticesView(){
+  const items = visibleAnnouncements();
+  const fresh = items.filter(a=>!store.seen.has(a.id)).length;
+  return head('Announcements', 'Notices from the HOA office for everyone in the community. '+(fresh ? fresh+' new.' : 'You are all caught up.')) +
+    '<div class="card"><div class="card-head"><h3>Community announcements</h3><span class="spacer"></span>' +
+      (fresh ? '<button class="btn btn-ghost btn-sm" onclick="markAllSeen()">Mark all read</button>' : '<span class="meta">Up to date</span>') + '</div>' +
+      (items.length ? '<ul class="list">' + items.map(a => {
+        const isNew = !store.seen.has(a.id);
+        return '<li class="announce'+(isNew?' fresh':'')+'"><div class="row"><div class="grow">' +
+          '<div class="ttl">'+esc(a.title)+(isNew?' <span class="newpill">NEW</span>':'')+'</div>' +
+          '<div class="meta">'+annTags(a)+'</div>' +
+          '<div class="body">'+esc(a.body)+'</div>' + annImages(a) +
+          (isNew?'<button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="markSeen(\''+a.id+'\')">Mark read</button>':'') +
+        '</div></div></li>';
+      }).join('') + '</ul>' : empty('No announcements yet','Notices from the HOA office will show up here.')) + '</div>';
+}
+/* the October 2026 BEHOAI posters reach the shared portal data the first time an admin signs in, once */
+function seedAnnouncementPack(){
+  if(store.session.role !== 'admin') return;
+  const key = 'behoai-2026-10';
+  store.settings.annPacks = store.settings.annPacks || [];
+  if(store.settings.annPacks.includes(key)) return;
+  const pack = SEED.announcements.filter(a => /^behoai-/.test(a.id));
+  pack.slice().reverse().forEach(a => { if(!store.announcements.some(x=>x.id===a.id)) store.announcements.unshift(structuredClone(a)); });
+  store.settings.annPacks.push(key);
+  saveSoon(); pushSoon();
 }
 function matrixTable(){
   return '<div class="tablewrap"><table class="mtable"><thead><tr>' +
@@ -3489,8 +3578,8 @@ const RENTER = {
         const isNew = !store.seen.has(a.id);
         return '<li class="announce'+(isNew?' fresh':'')+'"><div class="row"><div class="grow">' +
           '<div class="ttl">'+esc(a.title)+(isNew?' <span class="newpill">NEW</span>':'')+'</div>' +
-          '<div class="meta"><span class="tag t-slate">'+esc(a.category)+'</span><span>'+fmtDate(a.date)+'</span></div>' +
-          '<div class="body">'+esc(a.body)+'</div></div></div></li>';
+          '<div class="meta">'+annTags(a)+'</div>' +
+          '<div class="body">'+esc(a.body)+'</div>' + annImages(a) + '</div></div></li>';
       }).join('') + '</ul></div>' +
     '<div class="card card-pad" style="margin-top:14px">' +
       '<div class="ttl">Billing goes to your landlord</div>' +
@@ -3572,6 +3661,7 @@ const byWhen = (a,b) => (a.date+(a.pickupAt||a.time)) < (b.date+(b.pickupAt||b.t
 
 /* ---------- DRIVER ---------- */
 const DRIVER = {
+  announcements(){ return noticesView(); },
   trips(){
     const open = store.rides.filter(r=>r.status==='Requested').slice().sort(byWhen);
     return head('Ride requests','Residents waiting for a driver. Accept one and set the pickup time — the resident is told straight away.') +
@@ -3592,6 +3682,7 @@ const DRIVER = {
 };
 
 const SECURITY = {
+  announcements(){ return noticesView(); },
   gate(){
     const active = store.passes.filter(p=>p.status==='Active');
     const term = gateFilter.trim().toLowerCase();
@@ -3658,6 +3749,7 @@ const SECURITY = {
 
 /* ---------- BOARD ---------- */
 const BOARD = {
+  announcements(){ return noticesView(); },
   oversight(){
     const e = store.election;
     return head('Governance oversight','Approved summaries only. Household-level operational records stay with the admin office.') +
@@ -3683,7 +3775,7 @@ const BOARD = {
         store.collectionsHistory.map((h,i) => '<div class="b'+(i===store.collectionsHistory.length-1?' hi':'')+'">' +
         '<i style="height:'+(i===store.collectionsHistory.length-1?collectionPct():h.pct)+'%"></i><span>'+esc(h.m)+'</span></div>').join('') +
         '</div></div>') +
-      sectionCard('Community notices','<ul class="list">' + store.announcements.slice(0,3).map(a =>
+      sectionCard('Community notices','<ul class="list">' + annSorted(store.announcements).slice(0,3).map(a =>
         '<li><div class="ttl">'+esc(a.title)+'</div><div class="meta">'+esc(a.category)+' · '+fmtDate(a.date)+'</div></li>').join('') + '</ul>') +
     '</div>';
   },
@@ -3847,22 +3939,49 @@ function dayDetail(dateStr){
 /* announcements */
 function announceForm(id){
   const a = store.announcements.find(x=>x.id===id);
-  modal(a?'Edit announcement':'Post announcement','Homeowners see this in their feed the moment you save.',
+  modal(a?'Edit announcement':'Post announcement','Everyone you choose below sees it in their feed the moment you save.',
     '<label class="fld"><span>Title</span><input class="input" id="f_title" value="'+esc(a?a.title:'')+'" placeholder="Water interruption — Friday"></label>' +
     '<div class="grid g-2" style="gap:0 12px">' +
       '<label class="fld"><span>Date</span><input class="input" id="f_date" type="date" value="'+(a?a.date:new Date().toISOString().slice(0,10))+'"></label>' +
       '<label class="fld"><span>Category</span><select class="input" id="f_cat">'+store.settings.categories.map(c=>'<option '+(a&&a.category===c?'selected':'')+'>'+esc(c)+'</option>').join('')+'</select></label></div>' +
     '<label class="fld"><span>Body</span><textarea class="input" id="f_body" placeholder="What do homeowners need to know, and what should they do about it?">'+esc(a?a.body:'')+'</textarea></label>' +
-    '<label class="fld"><span>Attachment tag (optional)</span><input class="input" id="f_att" value="'+esc(a?a.attach:'')+'" placeholder="advisory-letter.pdf"></label>',
+    annPhotoPicker(a ? a.images : []) +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Who sees it</span><select class="input" id="f_vis"><option value="all"'+(a&&a.vis==='owners'?'':' selected')+'>Everyone who logs in</option>' +
+        '<option value="owners"'+(a&&a.vis==='owners'?' selected':'')+'>Homeowners, board and office only</option></select></label>' +
+      '<label class="fld"><span>Attachment tag (optional)</span><input class="input" id="f_att" value="'+esc(a?a.attach:'')+'" placeholder="advisory-letter.pdf"></label></div>' +
+    '<div class="switch" style="border-top:1px solid var(--line);padding-top:14px"><div><div class="sl">Pin to the top</div><div class="sd">Keeps it above newer notices in every feed.</div></div>' +
+      '<button type="button" class="tgl" id="f_pin" role="switch" aria-checked="'+(a&&a.pinned?'true':'false')+'" onclick="this.setAttribute(\'aria-checked\', this.getAttribute(\'aria-checked\')===\'true\'?\'false\':\'true\')"><i></i></button></div>',
     a?'Save changes':'Post announcement', () => {
       const title=$('#f_title').value.trim(), body=$('#f_body').value.trim();
       if(!title||!body){ toast('info','Missing details','A title and body are both required.'); return false; }
-      const rec={ title, body, date:$('#f_date').value, category:$('#f_cat').value, attach:$('#f_att').value.trim() };
+      const rec={ title, body, date:$('#f_date').value, category:$('#f_cat').value, attach:$('#f_att').value.trim(),
+        images:pendingAnnImages.slice(), vis:$('#f_vis').value, pinned:$('#f_pin').getAttribute('aria-checked')==='true' };
       if(a){ Object.assign(a,rec); commit('Announcement updated — “'+title+'” is live in every feed.',{title:'Announcement updated',go:gotoFeed}); }
       else { store.announcements.unshift(Object.assign({id:uid(),at:new Date()},rec));
         commit('New announcement pushed to 412 households — “'+title+'”.',{title:'Announcement posted',go:gotoFeed}); }
       return true;
     });
+}
+let pendingAnnImages = [];
+function annPhotoPicker(existing){
+  pendingAnnImages = (existing||[]).slice();
+  return '<div style="margin-bottom:13px"><span class="lh-lbl">Posters or photos · up to 3</span>' +
+    '<div class="lh-thumbs" id="annPhotoPreview">'+annThumbs()+'</div>' +
+    '<input type="file" id="annPhotoFile" accept="image/jpeg,image/png,image/webp" multiple class="hide" onchange="handleAnnPhotoFile(event)"></div>';
+}
+function annThumbs(){
+  return pendingAnnImages.map((src,i) => '<div class="lh-thumb"><img src="'+esc(src)+'" alt=""><button type="button" aria-label="Remove image '+(i+1)+'" onclick="removeAnnPhoto('+i+')">×</button></div>').join('') +
+    (pendingAnnImages.length < 3 ? '<button type="button" class="lh-thumb add" onclick="document.getElementById(\'annPhotoFile\').click()">+ Add</button>' : '');
+}
+function removeAnnPhoto(i){ pendingAnnImages.splice(i,1); const el = document.getElementById('annPhotoPreview'); if(el) el.innerHTML = annThumbs(); }
+function handleAnnPhotoFile(e){
+  const files = [...(e.target.files||[])]; e.target.value = '';
+  const room = 3 - pendingAnnImages.length;
+  if(files.length > room) toast('info','Up to 3 images', room ? 'Only the first '+room+' were added.' : 'Remove one before adding another.');
+  files.slice(0, room).forEach(f => fileToFitDataUrl(f, 1400, url => {
+    if(pendingAnnImages.length < 3){ pendingAnnImages.push(url); const el = document.getElementById('annPhotoPreview'); if(el) el.innerHTML = annThumbs(); }
+  }, msg => toast('info','Could not use '+f.name, msg)));
 }
 function deleteAnnounce(id){
   const a = store.announcements.find(x=>x.id===id);
@@ -5475,6 +5594,7 @@ async function afterLogin(){
   const acct = store.accounts.find(a => a.id === m.id) || rowAcct(m);
   cloudOn = true;
   enter(acct, 'password');
+  seedAnnouncementPack();
   startLive();
   pushNow();                                                      /* the very first sign-in uploads the starting data */
   return true;
