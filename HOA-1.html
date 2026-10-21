@@ -55,22 +55,10 @@ a{color:var(--slate)}
 .dot{width:8px;height:8px;border-radius:50%;background:#5FE0A8;flex:none;box-shadow:0 0 0 0 rgba(95,224,168,.6);animation:ping 2.4s infinite}
 @keyframes ping{70%{box-shadow:0 0 0 9px rgba(95,224,168,0)}100%{box-shadow:0 0 0 0 rgba(95,224,168,0)}}
 .auth-foot{font-size:12.5px;color:#AEB6E6;margin-top:30px}
-.tutorial-row{display:flex;gap:12px;margin-top:18px;flex-wrap:wrap}
-.tutorial-btn{position:relative;overflow:hidden;isolation:isolate;display:flex;align-items:center;gap:9px;border:0;border-radius:12px;padding:12px 18px;font-size:13.5px;font-weight:700;letter-spacing:.2px;color:#fff;cursor:pointer;font-family:inherit;transition:transform .2s cubic-bezier(.2,.7,.3,1),box-shadow .2s,filter .2s;animation:tutRise .6s .36s cubic-bezier(.2,.7,.3,1) backwards,tutGlow 2.6s 1s ease-in-out infinite}
-#desktopTutorialBtn{background:linear-gradient(135deg,#FF8A3D 0%,#FF4F7B 100%);--glow:255,95,110}
-#mobileTutorialBtn{background:linear-gradient(135deg,#22D3A6 0%,#3B82F6 100%);--glow:45,190,200;animation-delay:.48s,2.3s}
-.tutorial-btn::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.45) 50%,transparent 70%);transform:translateX(-120%);animation:tutShine 3.2s 1.2s ease-in-out infinite}
-#mobileTutorialBtn::before{animation-delay:2.8s}
-.tutorial-btn:hover{transform:translateY(-3px) scale(1.04);filter:brightness(1.08);box-shadow:0 10px 26px -6px rgba(var(--glow),.75)}
-.tutorial-btn:active{transform:translateY(0) scale(.98)}
-.tutorial-btn:focus-visible{outline:2.5px solid #fff;outline-offset:3px}
-.tutorial-btn svg{flex:none;animation:tutIcon 2.6s 1s ease-in-out infinite}
-.tutorial-btn:hover svg{animation-duration:.9s}
 @keyframes tutRise{from{opacity:0;transform:translateY(12px) scale(.96)}}
 @keyframes tutGlow{0%,100%{box-shadow:0 4px 14px -4px rgba(var(--glow),.55),0 0 0 0 rgba(var(--glow),.5)}50%{box-shadow:0 6px 20px -4px rgba(var(--glow),.75),0 0 0 7px rgba(var(--glow),0)}}
 @keyframes tutShine{0%{transform:translateX(-120%)}45%,100%{transform:translateX(120%)}}
 @keyframes tutIcon{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
-@media(prefers-reduced-motion:reduce){.tutorial-btn,.tutorial-btn::before,.tutorial-btn svg{animation:none}.tutorial-btn:hover{transform:none}}
 .auth-panel{background:var(--surface);padding:34px 22px 46px;display:flex;align-items:center;justify-content:center}
 .auth-card{width:100%;max-width:392px}
 .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
@@ -528,18 +516,8 @@ html[data-theme="dark"] .bubble.mine{color:#0E121C}
         <div class="pulse-row"><span class="dot"></span> Unit B-12 settled August dues · ₱1,850</div>
         <div class="pulse-row"><span class="dot"></span> Election for 2026–2028 board is open</div>
       </div>
-      <div class="tutorial-row">
-        <button class="tutorial-btn" id="desktopTutorialBtn" type="button" onclick="openTutorial('desktop','Desktop')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M10 8.3v7.4l6.2-3.7z" fill="currentColor" stroke="none"/></svg>
-          Desktop Tutorial
-        </button>
-        <button class="tutorial-btn" id="mobileTutorialBtn" type="button" onclick="openTutorial('mobile','Mobile')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2.3"/><path d="M10.5 9.2v5.6l4.6-2.8z" fill="currentColor" stroke="none"/></svg>
-          Mobile Tutorial
-        </button>
-      </div>
     </div>
-    <p class="auth-foot">Accounts are created by the admin office. Your data is stored securely online.</p>
+    <p class="auth-foot">New homeowner? Register and the admin office will verify you before your account is opened. Your data is stored securely online.</p>
   </div>
   <div class="auth-panel">
     <div class="auth-card">
@@ -566,6 +544,7 @@ html[data-theme="dark"] .bubble.mine{color:#0E121C}
       </label>
       <button class="btn btn-primary" id="signin">Sign in</button>
       <button class="btn btn-ghost" id="magicLink" type="button" style="width:100%;margin-top:8px">First time, or forgot your password? Email me a sign-in link</button>
+      <button class="btn btn-ghost" id="registerBtn" type="button" style="width:100%;margin-top:8px;border-color:var(--slate);color:var(--slate);font-weight:700" onclick="registerForm()">New homeowner? Register here</button>
       <p class="hint" style="color:var(--rose);font-weight:600;line-height:1.6">If you want to see the full demo: contact Multiply Talents for a scheduled booking. We'll provide you a temporary access.<br>Email: <a href="mailto:solutions@multiplytalents.io" style="color:inherit">solutions@multiplytalents.io</a><br>WhatsApp: <a href="https://wa.me/639998832130" target="_blank" rel="noopener" style="color:inherit">+639998832130</a></p>
       <p id="authErr" class="hint hide" style="color:var(--rose);font-weight:600"></p>
       <details class="matrix" id="roleMatrix">
@@ -1395,13 +1374,6 @@ function lhSectionSwitch(admin){
 /* ============================================================
    HELPERS
 ============================================================ */
-// Paste tutorial video URLs here once recorded — leave as '' to keep the "coming soon" toast.
-const TUTORIAL_URLS = { desktop:'', mobile:'https://youtube.com/shorts/54XtRSx3YME?feature=share' };
-function openTutorial(key, label){
-  const url = TUTORIAL_URLS[key];
-  if(url) window.open(url, '_blank', 'noopener');
-  else toast('info', label + ' tutorial', 'Coming soon');
-}
 const $ = s => document.querySelector(s);
 const uid = () => Math.random().toString(36).slice(2,9);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1689,7 +1661,7 @@ const NAV = {
       { id:'messages',   label:'Messages',                icon:'chat', badge:()=>
           store.concerns.filter(c=>c.status!=='Closed').length + store.complaints.filter(c=>c.status!=='Resolved').length +
           store.requests.filter(r=>r.status!=='Resolved').length + store.tickets.filter(t=>t.status!=='Resolved').length },
-      { id:'homeowners', label:'Homeowners',              icon:'users', badge:()=>store.accounts.filter(a=>a.status==='Invited').length },
+      { id:'homeowners', label:'Homeowners',              icon:'users', badge:()=>store.accounts.filter(a=>a.status==='Invited').length + regPending().length },
       { id:'profiles',   label:'Homeowner Profiles',      icon:'users' },
       { id:'property',   label:'Property',                icon:'building' },
       { id:'operations', label:'Operations & Maintenance',icon:'wrench', badge:()=>store.requests.filter(r=>r.status!=='Resolved').length },
@@ -2160,6 +2132,7 @@ const ADMIN = {
           : '<button class="btn btn-danger btn-sm" onclick="setUserStatus(\''+a.id+'\',\'Suspended\')">Suspend</button>') +
       '</div></td></tr>';
     const inner = {
+      requests(){ return registrationsTab(); },
       roles(){
         return sectionCard('Access matrix', matrixTable()) +
         '<div class="card card-pad" style="margin-top:14px"><div class="ttl">How this is enforced</div>' +
@@ -2206,6 +2179,7 @@ const ADMIN = {
     return head('Homeowners','Register residents and staff, invite them to the portal, and control what each role can reach.') +
       tabs('usr',[
         {id:'accounts',label:'Residents',n:owners.length},
+        {id:'requests',label:'Registrations',n:regPending().length},
         {id:'invites',label:'Invitations',n:store.accounts.filter(a=>a.status==='Invited').length},
         {id:'admins',label:'Staff & Board',n:admins.length},
         {id:'roles',label:'Access matrix'}],'accounts') + inner;
@@ -5856,6 +5830,132 @@ function setPasswordForm(first){
 }
 
 /* ============================================================
+   SELF-REGISTRATION — anyone can ask for an account from the sign-in
+   page; the request waits in Homeowners → Registrations until an
+   admin checks it against the unit registry and approves or rejects it.
+============================================================ */
+let regs = [], regsLoaded = false;
+const regPending = () => regs.filter(r => r.status === 'Pending');
+function registerForm(){
+  modal('Register as a homeowner',
+    'Fill this out and the admin office will check that you are part of the subdivision. You will get an email once your account is approved.',
+    '<label class="fld"><span>Full name</span><input class="input" id="rg_n" placeholder="Juan Dela Cruz" autocomplete="name"></label>' +
+    '<label class="fld"><span>Email</span><input class="input" id="rg_e" type="email" placeholder="you@email.com" autocomplete="email"></label>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Mobile number</span><input class="input" id="rg_p" placeholder="0917 555 0000" autocomplete="tel"></label>' +
+      '<label class="fld"><span>Unit (Block / Lot)</span><input class="input" id="rg_u" placeholder="B-12"></label></div>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>I am the</span><select class="input" id="rg_r">' +
+        '<option value="homeowner">Owner of the unit</option><option value="renter">Tenant / renter</option></select></label>' +
+      '<label class="fld"><span>Proof of residence</span><select class="input" id="rg_d">' +
+        '<option>Title (TCT / CCT)</option><option>Deed of sale</option><option>Contract to sell</option>' +
+        '<option>Lease contract</option><option>Other</option></select></label></div>' +
+    '<label class="fld"><span>Document or reference number</span><input class="input" id="rg_ref" placeholder="e.g. TCT No. 123-456"></label>' +
+    '<label class="fld"><span>Name of registered owner (if you are a tenant)</span><input class="input" id="rg_o"></label>' +
+    '<label class="fld"><span>Anything else the admin should know</span><textarea class="input" id="rg_m" rows="2"></textarea></label>' +
+    '<label style="display:flex;gap:9px;align-items:flex-start;font-size:13px;color:var(--ink-2);margin-bottom:6px">' +
+      '<input type="checkbox" id="rg_ok" style="margin-top:3px"> I confirm these details are true and allow the HOA admin office to verify them.</label>',
+    'Submit registration',
+    () => {
+      const v = id => $(id).value.trim();
+      const row = { name:v('#rg_n'), email:v('#rg_e').toLowerCase(), phone:v('#rg_p'), unit:v('#rg_u').toUpperCase(),
+        role:$('#rg_r').value, proof:$('#rg_d').value, proof_ref:v('#rg_ref'), owner_name:v('#rg_o'), note:v('#rg_m') };
+      if(!row.name || !row.email || !row.phone || !row.unit){ toast('info','Missing details','Name, email, mobile number and unit are all required.'); return false; }
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(row.email)){ toast('info','Check the email','That email address does not look right.'); return false; }
+      if(!$('#rg_ok').checked){ toast('info','Please confirm','Tick the box to confirm your details are true.'); return false; }
+      if(!sbMail){ toast('info','Not sent','Could not reach the portal server. Check your connection and try again.'); return false; }
+      const btn = $('#mOk'); btn.disabled = true; btn.textContent = 'Sending…';
+      sbMail.from('registrations').insert(row).then(({ error }) => {
+        if(error){
+          btn.disabled = false; btn.textContent = 'Submit registration';
+          toast('info','Registration not sent', /registrations/.test(error.message) || error.code === '42P01'
+            ? 'Registration is not switched on yet. Please contact the admin office.' : error.message);
+          return;
+        }
+        closeModal();
+        toast('ok','Registration sent','Thank you, '+row.name.split(' ')[0]+'. The admin office will verify your details and email '+row.email+' once approved.');
+      });
+      return false;
+    });
+}
+async function loadRegs(){
+  if(!cloudOn || !isAdmin()) return;
+  const { data, error } = await sb.from('registrations').select('*').order('created_at', { ascending:false });
+  if(error) return;
+  regs = data; regsLoaded = true;
+  liveRender();
+}
+function regCheck(r){
+  const u = store.units.find(x => x.unit.toUpperCase() === String(r.unit).toUpperCase());
+  const acct = store.accounts.find(a => a.email.toLowerCase() === r.email);
+  const norm = x => String(x||'').toLowerCase().replace(/[^a-z]/g,'');
+  const ownerMatch = u && (norm(u.owner) === norm(r.name) || (r.owner_name && norm(u.owner) === norm(r.owner_name)));
+  const out = [];
+  out.push(u ? ['t-emerald','Unit '+u.unit+' is in the registry'] : ['t-rose','Unit not found in registry']);
+  if(u) out.push(ownerMatch ? ['t-emerald','Owner name matches'] : ['t-amber','Registry owner: '+u.owner]);
+  if(acct) out.push(['t-rose','Email already has an account']);
+  return out.map(x => '<span class="tag '+x[0]+'" style="margin:2px 4px 2px 0">'+esc(x[1])+'</span>').join('');
+}
+function registrationsTab(){
+  if(!regsLoaded) loadRegs();
+  const pend = regPending(), done = regs.filter(r => r.status !== 'Pending');
+  const item = r =>
+    '<li><div class="row" style="align-items:flex-start;flex-wrap:wrap;gap:10px"><div class="grow" style="min-width:220px">' +
+      '<div class="ttl">'+esc(r.name)+' <span class="tag t-grey">'+esc(ROLE_LABEL(r.role))+'</span></div>' +
+      '<div class="meta"><span class="mono">'+esc(r.unit)+'</span>·<span>'+esc(r.email)+'</span>·<span>'+esc(r.phone)+'</span>·<span>Sent '+fmtDate(new Date(r.created_at))+'</span></div>' +
+      '<div class="meta" style="display:block;margin-top:4px">Proof: <b>'+esc(r.proof||'—')+'</b>'+(r.proof_ref?' · '+esc(r.proof_ref):'')+
+        (r.owner_name?' · Registered owner: '+esc(r.owner_name):'')+'</div>' +
+      (r.note ? '<div class="meta" style="display:block;margin-top:4px">“'+esc(r.note)+'”</div>' : '') +
+      (r.status === 'Pending' ? '<div style="margin-top:6px">'+regCheck(r)+'</div>'
+        : '<div class="meta" style="display:block;margin-top:4px"><span class="tag '+(r.status==='Approved'?'t-emerald':'t-rose')+'">'+esc(r.status)+'</span> '+
+          (r.reviewed_by?'by '+esc(r.reviewed_by):'')+(r.review_note?' — '+esc(r.review_note):'')+'</div>') +
+    '</div>' +
+    (r.status === 'Pending' ? '<div class="btn-row"><button class="btn btn-danger btn-sm" onclick="rejectReg(\''+r.id+'\')">Reject</button>' +
+      '<button class="btn btn-emerald btn-sm" onclick="approveReg(\''+r.id+'\')">Verify &amp; approve</button></div>' : '') +
+    '</div></li>';
+  return sectionCard('Waiting for verification', pend.length ? '<ul class="list">'+pend.map(item).join('')+'</ul>'
+      : empty(regsLoaded ? 'No registrations waiting' : 'Loading registrations…', 'New sign-ups from the Register button on the sign-in page appear here.'),
+      '<button class="btn btn-ghost btn-sm" onclick="regsLoaded=false;loadRegs()">Refresh</button>') +
+    (done.length ? '<div style="margin-top:14px">'+sectionCard('Reviewed', '<ul class="list">'+done.slice(0,30).map(item).join('')+'</ul>')+'</div>' : '');
+}
+async function reviewReg(r, status, note){
+  const by = realSession().name || realSession().email;
+  const { error } = await sb.from('registrations').update({ status, review_note:note||'', reviewed_by:by,
+    reviewed_at:new Date().toISOString() }).eq('id', r.id);
+  if(error){ toast('info','Not saved', error.message); return false; }
+  Object.assign(r, { status, review_note:note||'', reviewed_by:by });
+  return true;
+}
+function approveReg(id){
+  const r = regs.find(x => x.id === id); if(!r) return;
+  if(store.accounts.some(a => a.email.toLowerCase() === r.email)){ toast('info','Email already in use','An account already signs in with '+r.email+'. Reject this request or edit the existing account.'); return; }
+  modal('Approve '+r.name, 'Only approve once you have checked they really own or rent unit '+r.unit+'. An invitation email goes to '+r.email+' so they can set a password.',
+    '<div class="card card-pad" style="background:var(--paper);margin-bottom:14px">'+regCheck(r)+'</div>' +
+    '<label class="fld"><span>Note (optional)</span><input class="input" id="rv_note" placeholder="e.g. Checked TCT copy at admin office"></label>',
+    'Approve & invite', () => {
+      const note = $('#rv_note').value.trim();
+      reviewReg(r, 'Approved', note).then(ok => {
+        if(!ok) return;
+        store.accounts.push({ id:uid(), name:r.name, email:r.email, password:'', role:r.role, unit:r.unit,
+          title:r.role==='homeowner' ? 'Owner of record' : 'Tenant of '+r.unit, phone:r.phone,
+          status:'Invited', added:new Date().toISOString().slice(0,10), lastSeen:null });
+        commit('Registration approved for '+r.name+' ('+r.unit+').', { title:'Registration approved' });
+        sendInvite(r.email, r.name);
+      });
+      return true;
+    });
+}
+function rejectReg(id){
+  const r = regs.find(x => x.id === id); if(!r) return;
+  modal('Reject '+r.name+'?', 'They will not get an account. Say why, so other admins can see it.',
+    '<label class="fld"><span>Reason</span><input class="input" id="rv_note" placeholder="e.g. Not listed as owner or tenant of '+esc(r.unit)+'"></label>',
+    'Reject', () => {
+      reviewReg(r, 'Rejected', $('#rv_note').value.trim()).then(ok => { if(ok){ toast('ok','Registration rejected', r.name+' ('+r.unit+')'); render(); } });
+      return true;
+    }, true);
+}
+
+/* ============================================================
    MODAL
 ============================================================ */
 let modalOpen = false;
@@ -6104,6 +6204,7 @@ function startLive(){
       if(canon(row.value) === synced[row.key]) return;            /* our own change coming back */
       if(applyRow(row)) liveRender();
     })
+    .on('postgres_changes', { event:'*', schema:'public', table:'registrations' }, () => { regsLoaded = false; loadRegs(); })
     .on('postgres_changes', { event:'*', schema:'public', table:'members' }, () => {
       if(!membersTimer) membersTimer = setTimeout(reloadMembers, 600);
     })
@@ -6133,6 +6234,7 @@ async function afterLogin(){
   enter(acct, 'password');
   seedAnnouncementPack();
   startLive();
+  regs = []; regsLoaded = false; loadRegs();
   pushNow();                                                      /* the very first sign-in uploads the starting data */
   return true;
 }
