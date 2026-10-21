@@ -6234,7 +6234,11 @@ function startLive(){
       if(canon(row.value) === synced[row.key]) return;            /* our own change coming back */
       if(applyRow(row)) liveRender();
     })
-    .on('postgres_changes', { event:'*', schema:'public', table:'registrations' }, () => { regsLoaded = false; loadRegs(); })
+    .on('postgres_changes', { event:'*', schema:'public', table:'registrations' }, p => {
+      if(p.eventType === 'INSERT' && p.new && isAdmin())
+        toast('ok','New registration', p.new.name+' ('+p.new.unit+') is waiting in Homeowners → Registrations.');
+      regsLoaded = false; loadRegs();
+    })
     .on('postgres_changes', { event:'*', schema:'public', table:'members' }, () => {
       if(!membersTimer) membersTimer = setTimeout(reloadMembers, 600);
     })
