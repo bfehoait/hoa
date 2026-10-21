@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Terms and Privacy — Bellefort Homeowner Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FFFFFF; --paper:#F7F6F6; --ink:#1B1A1D; --ink-2:#4B4A50; --ink-3:#7B7A82; --line:#E6E3E4;
+  --slate:#800020; --slate-dk:#5E0017; --slate-tint:#F8ECEF; --brand-line:#ECCBD3;
+  --amber:#A86A12; --amber-tint:#FBF1E0; --mark:#FFF1B8;
+  --sans:'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --display:'Bricolage Grotesque','Inter', ui-sans-serif, system-ui, sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+html,body{margin:0;padding:0}
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.65}
+h1,h2,h3{font-family:var(--display);letter-spacing:-.02em;line-height:1.2;margin:0}
+a{color:var(--slate)}
+:focus-visible{outline:2.5px solid var(--slate);outline-offset:2px;border-radius:6px}
+mark{background:var(--mark);color:inherit;padding:0 3px;border-radius:4px;font-weight:600}
+
+.hero{background:radial-gradient(120% 90% at 15% 0%, #A3253F 0%, #800020 52%, #45000F 100%);color:#fff;padding:28px 16px 34px}
+.wrap{max-width:860px;margin:0 auto}
+.brandmark{display:flex;align-items:center;gap:11px;font-family:var(--display);font-weight:800;letter-spacing:-.03em}
+.brandmark .glyph{width:44px;height:36px;border-radius:11px;display:grid;place-items:center;background:#fff;color:#800020;font-size:14px;flex:none}
+.hero h1{font-size:clamp(26px,5.5vw,38px);font-weight:800;margin:26px 0 8px}
+.hero p{margin:0;color:#F3D6DC;max-width:62ch}
+.back{display:inline-block;margin-top:18px;color:#fff;font-weight:700;font-size:13.5px;text-decoration:none;border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.1);border-radius:10px;padding:8px 14px}
+.back:hover{background:rgba(255,255,255,.2)}
+
+nav.toc{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:6px;overflow-x:auto;padding:10px 16px;scrollbar-width:none}
+nav.toc a{flex:none;text-decoration:none;color:var(--ink-2);font-weight:600;font-size:13.5px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:#fff}
+nav.toc a:hover{border-color:var(--brand-line);background:var(--slate-tint);color:var(--slate)}
+
+main{padding:24px 16px 60px}
+.doc{background:#fff;border:1px solid var(--line);border-radius:14px;padding:26px 22px;margin-bottom:22px;box-shadow:0 1px 2px rgba(27,26,29,.05), 0 8px 24px -14px rgba(27,26,29,.16)}
+@media (min-width:700px){.doc{padding:34px 40px}}
+.doc>h2{font-size:clamp(22px,4vw,28px);font-weight:800;color:var(--slate)}
+.doc .sub{color:var(--ink-3);font-size:13.5px;margin:6px 0 4px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13.5px;color:var(--ink-2);margin:10px 0 0}
+.meta b{color:var(--ink)}
+.doc h3{font-size:17px;font-weight:700;margin:26px 0 6px;display:flex;gap:10px;align-items:baseline}
+.doc h3 .n{color:var(--slate);font-variant-numeric:tabular-nums;min-width:1.4em}
+.doc p{margin:0 0 12px;color:var(--ink-2)}
+.note{background:var(--amber-tint);border-left:4px solid var(--amber);border-radius:9px;padding:12px 14px;margin:16px 0 4px;font-size:14px;color:#5B3A08}
+.note b{color:#3E2805}
+.internal{border-top:4px solid var(--amber)}
+.badge{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--amber);background:var(--amber-tint);border-radius:999px;padding:3px 10px;margin-bottom:10px}
+
+.tbl{width:100%;border-collapse:collapse;margin:14px 0 16px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+.tbl th{background:var(--slate-tint);color:var(--slate-dk);font-weight:700;font-size:13px}
+.tbl td{color:var(--ink-2)}
+.tbl td:first-child{font-weight:600;color:var(--ink)}
+@media (max-width:600px){
+  .tbl thead{display:none}
+  .tbl tr{display:block;border:1px solid var(--line);border-radius:10px;margin-bottom:10px;padding:4px 0}
+  .tbl td{display:block;border:0;padding:6px 12px}
+  .tbl td[data-l]::before{content:attr(data-l);display:block;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-3)}
+}
+.check{display:flex;gap:10px;align-items:flex-start;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:8px 0 10px;color:var(--ink)}
+.check .box{flex:none;width:18px;height:18px;border:2px solid var(--ink-3);border-radius:4px;margin-top:3px;background:#fff}
+ol.refs{padding-left:20px;color:var(--ink-2)}
+ol.refs li{margin-bottom:8px}
+.foot{text-align:center;color:var(--ink-3);font-size:13px}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="brandmark"><span class="glyph">HOA</span> BEHomeowners Association</div>
+    <h1>Terms of Use and Privacy Notice</h1>
+    <p>Sample for HOA review. Draft version 1.0 prepared 20 October 2026. Highlighted fields are still to be completed.</p>
+    <a class="back" href="index.html">&larr; Back to the portal</a>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Sections">
+  <div class="wrap">
+    <a href="#terms">Terms of Use</a>
+    <a href="#privacy">Privacy Notice</a>
+    <a href="#checkbox">Checkbox wording</a>
+    <a href="#publication">Publication notes</a>
+  </div>
+</nav>
+
+<main>
+<div class="wrap">
+
+  <!-- TERMS OF USE -->
+  <section class="doc" id="terms">
+    <h2>Bellefort Homeowner Portal Terms of Use</h2>
+    <p class="sub">Sample for HOA review. Draft version 1.0 prepared 20 October 2026.</p>
+    <div class="meta">
+      <span><b>Effective date</b> <mark>[DATE]</mark></span>
+      <span><b>Operator</b> <mark>[FULL REGISTERED HOA NAME]</mark></span>
+    </div>
+    <div class="note"><b>Before publication:</b> Complete every highlighted field and obtain the appropriate HOA, privacy and Philippine legal review. This is proposed policy wording. The security statements must match the controls actually implemented. Pages 1 to 4 contain sample public policies. Pages 5 and 6 contain checkbox wording and internal adoption notes.</div>
+
+    <h3><span class="n">1</span>Portal purpose and acceptance</h3>
+    <p>The Bellefort Homeowner Portal is operated by <mark>[FULL REGISTERED HOA NAME]</mark>, referred to as the Association, we or us. It supports approved community announcements, documents and service requests. These Terms govern access applications and use of the features made available to your account. Read these Terms and the separate Privacy Notice before proceeding. Your acceptance is recorded electronically with the applicable version and date.</p>
+
+    <h3><span class="n">2</span>Access requests and verification</h3>
+    <p>Submitting a request does not automatically create an active account. Authorized HOA personnel will verify your identity and eligibility against appropriate Association records or an approved verification process. We may ask for necessary clarification. We will communicate the outcome privately and provide a route to request correction or review through <mark>[HOA SUPPORT CONTACT]</mark>. Portal access does not itself establish property ownership, legal HOA membership or voting eligibility.</p>
+
+    <h3><span class="n">3</span>Your account responsibilities</h3>
+    <p>Provide accurate information and update details that affect your account. Use your own approved account, keep credentials and activation links private, and sign out of shared devices. Do not lend your account or use another person’s credentials. Report suspected unauthorized access promptly through <mark>[SECURITY SUPPORT CONTACT]</mark>. Representatives must have the authority required by the approved HOA rules.</p>
+
+    <h3><span class="n">4</span>Acceptable use and respectful communication</h3>
+    <p>Use the portal for lawful Association business and approved community services. Do not impersonate others, submit knowingly false information, harass users, distribute malicious files, bypass access controls or obtain another household’s private records. Raise concerns and disagreements respectfully. Legitimate criticism, requests for records and complaints made through lawful channels remain permitted.</p>
+
+    <h3><span class="n">5</span>Privacy of other people</h3>
+    <p>Share only information necessary for your request and which you may lawfully provide. Avoid including unrelated family details or other residents’ information. Do not upload government ID images, health information or children’s details unless the Association has established a specific authorized process for them. Do not publish or forward restricted portal material without lawful authority. Your own information remains subject to your rights under applicable law.</p>
+
+    <h3><span class="n">6</span>Requests and official communications</h3>
+    <p>A submission receipt confirms that the system received your request. It does not by itself confirm approval, payment, a reservation or completion of a service. The applicable confirmation and approved service rules will identify the outcome. Portal content does not amend the Association’s governing documents or replace notices and procedures required by law. New features, including payments, elections, visitors or shuttle bookings, require their own approved operating rules and any additional privacy information.</p>
+
+    <h3><span class="n">7</span>Availability and assistance</h3>
+    <p>The portal may be unavailable during maintenance, incidents or interruptions in internet and third party services. We will provide service information and assistance through <mark>[HOA SUPPORT CONTACT AND OFFICE CHANNEL]</mark>. The portal is not an emergency response channel. Use verified emergency contacts for urgent situations. Homeowners who cannot use the portal may request assistance or use the Association’s available offline channels. Applicable statutory rights remain available through lawful procedures.</p>
+
+    <h3><span class="n">8</span>Restriction and review of access</h3>
+    <p>We may temporarily restrict an account where reasonably necessary to contain a security incident, address misuse or verify a material access concern. Restrictions must be authorized, recorded and proportionate. Where appropriate, we will explain the reason and provide an opportunity to correct an error or seek review. An urgent security restriction may precede notice. A portal restriction does not by itself determine HOA membership, impose a financial penalty or remove rights provided by law.</p>
+
+    <h3><span class="n">9</span>Software content and community support</h3>
+    <p>Software, Association materials and third party resources remain subject to their applicable ownership, licences and written agreements. Portal access does not transfer copyright in the software. You retain rights you hold in material you submit and allow the Association to use it only as needed to handle the request, maintain appropriate records and meet lawful obligations. These Terms do not assign volunteer or developer intellectual property, authorize commercial reuse of resident data or replace separate project agreements.</p>
+    <p>Sponsors, companies and community volunteers may provide approved support. Their contribution does not give them automatic access to personal information, priority for services or authority to approve their own access or work. The Association remains responsible for its authorized portal operations and oversight.</p>
+
+    <h3><span class="n">10</span>Changes responsibility and lawful remedies</h3>
+    <p>We will identify the effective date and publish updated Terms before applying material changes, requesting fresh acceptance where appropriate. Privacy changes follow the separate Privacy Notice and applicable consent requirements. Nothing in these Terms releases the Association or a service provider from responsibilities imposed by law, waives data privacy rights or prevents a lawful complaint. Philippine law applies. Contact <mark>[HOA SUPPORT CONTACT]</mark> for portal concerns, without prejudice to available regulatory, administrative or judicial remedies.</p>
+  </section>
+
+  <!-- PRIVACY NOTICE -->
+  <section class="doc" id="privacy">
+    <h2>Bellefort Homeowner Portal Privacy Notice</h2>
+    <p class="sub">Sample for HOA review. Version <mark>[PRIVACY VERSION]</mark>. Effective date <mark>[DATE]</mark>.</p>
+    <p style="margin-top:14px">This Notice explains how <mark>[FULL REGISTERED HOA NAME]</mark>, the personal information controller for the approved portal, handles information about access applicants and users. It also covers demonstration scheduling where the Association operates that service. The controller is the organization that decides why and how information is processed. Contact our <mark>[DPO OR DESIGNATED PRIVACY ROLE]</mark> at <mark>[PRIVACY EMAIL]</mark>, or write to <mark>[HOA OFFICE ADDRESS]</mark>.</p>
+
+    <h3><span class="n">1</span>Information we collect and its sources</h3>
+    <p>For an access request, we collect your name, email address, property or membership reference and approved relationship to the property. A telephone number is optional unless a particular approved service needs it. We obtain information directly from you and, for verification, from authorized HOA records or a properly authorized representative. We do not ask for an entire household registry as a condition of initial registration.</p>
+    <p>After approval, records may include your account identifier, authorized role, submitted service requests, responses and relevant attachments. We record policy versions and your acceptance or acknowledgement. The system processes authentication and essential security information, including <mark>[ACTUAL LOGGED TECHNICAL DATA]</mark>. For a demo booking, we collect your name, contact email, preferred schedule and any optional topic you provide.</p>
+
+    <h3><span class="n">2</span>Purposes and lawful bases</h3>
+    <p>We use information only for stated, lawful purposes and collect what is necessary for them. The approved basis for each activity is identified below. Acknowledging this Notice is not consent to every use of information. Where we rely on consent, we request it separately for the specific purpose. Sensitive personal information requires a separate assessment under the applicable rules.</p>
+    <table class="tbl">
+      <thead><tr><th>Activity</th><th>Purpose</th><th>Approved lawful basis</th></tr></thead>
+      <tbody>
+        <tr><td>Registration and access</td><td data-l="Purpose">Verify eligibility and administer the account you request.</td><td data-l="Approved lawful basis"><mark>[BASIS AND DPA PROVISION]</mark></td></tr>
+        <tr><td>Approved portal services</td><td data-l="Purpose">Handle the requests and related communications you submit.</td><td data-l="Approved lawful basis"><mark>[BASIS AND DPA PROVISION]</mark></td></tr>
+        <tr><td>Security and required records</td><td data-l="Purpose">Protect accounts, investigate incidents and meet identified recordkeeping duties.</td><td data-l="Approved lawful basis"><mark>[BASIS AND DPA PROVISION]</mark></td></tr>
+        <tr><td>Demo booking</td><td data-l="Purpose">Arrange and respond to your request for a demonstration.</td><td data-l="Approved lawful basis"><mark>[BASIS AND DPA PROVISION]</mark></td></tr>
+      </tbody>
+    </table>
+    <p>Access applications are reviewed by authorized personnel. The initial portal does not use automated decisions alone to determine legal membership, voting rights or entitlement to HOA services. If that changes, we will provide the necessary information and safeguards before introducing the processing.</p>
+
+    <h3><span class="n">3</span>Access recipients and technology providers</h3>
+    <p>Access is limited to authorized HOA personnel who need information for assigned duties. Homeowners may view only the records and services authorized for their accounts. Board office, sponsorship or volunteer participation does not automatically provide access to every resident record. Approved technology providers may process information on our instructions under appropriate agreements. The active providers, their functions and any overseas processing are listed at <mark>[PROVIDER DISCLOSURE URL OR INSERT LIST]</mark>.</p>
+    <p>We do not sell resident information or authorize its use for a sponsor’s advertising, company sales pipeline or election campaigning. We may disclose information where legally required or otherwise lawfully justified, subject to necessary safeguards. If processing occurs outside the Philippines, the Association remains accountable for appropriate protection. Demo accounts contain fictional records and cannot access live homeowner information.</p>
+
+    <h3><span class="n">4</span>Protection cookies and incidents</h3>
+    <p>Our approved safeguards include access permissions, strong authentication, protected connections, activity logging and backup and recovery procedures. Privileged access is restricted and subject to additional authentication. We review access and remove it when no longer authorized. No internet service can promise absolute security. We investigate incidents and give notifications where the applicable legal conditions require them. Report concerns to <mark>[PRIVACY OR SECURITY CONTACT]</mark>.</p>
+    <p>We use necessary session or authentication technology to operate sign in. The actual cookies and similar tools, purposes and durations are described at <mark>[COOKIE DETAILS URL OR INSERT DETAILS]</mark>. Optional analytics or third party trackers require separate review and any applicable choice. Rejecting a nonessential tool must not block necessary portal functions.</p>
+
+    <h3><span class="n">5</span>Retention and disposal</h3>
+    <p>We retain identifiable information only for the applicable purpose, lawful recordkeeping or justified legal claims, and then securely delete or anonymize it. Our approved retention periods are access requests <mark>[PERIOD AND START EVENT]</mark>, account and service records <mark>[PERIOD AND START EVENT]</mark>, demo bookings <mark>[PERIOD AND START EVENT]</mark>, and policy evidence and security logs <mark>[PERIOD AND START EVENT]</mark>. Backups follow <mark>[BACKUP EXPIRY OR ROTATION]</mark>. If preservation is legally necessary, we restrict the retained information and document the reason.</p>
+
+    <h3><span class="n">6</span>Your choices rights and questions</h3>
+    <p>You may ask about processing, request access or correction, and seek erasure, blocking or portability where applicable. You may withdraw consent for processing that relies on it through <mark>[PRIVACY CONTACT OR SETTINGS]</mark>. We will explain any effect on the particular optional service and any lawful reason for retaining information. Withdrawal does not invalidate earlier lawful processing. We use proportionate identity checks before releasing or changing records. Rights and any applicable limitations are determined by law.</p>
+    <p>You may contact our privacy representative or raise a complaint with the National Privacy Commission at <a href="https://privacy.gov.ph" target="_blank" rel="noopener">privacy.gov.ph</a>. This Notice does not waive those rights or require you to give up lawful remedies. We will date and publish material changes before applying them and obtain new consent when the applicable processing change requires it.</p>
+  </section>
+
+  <!-- CHECKBOX WORDING -->
+  <section class="doc internal" id="checkbox">
+    <span class="badge">Implementation reference</span>
+    <h2>Checkbox wording and form notices</h2>
+    <p style="margin-top:12px">These sample labels accompany the approved public documents. Keep all boxes unchecked by default. The Terms and Privacy Notice must open without requiring an account. Link the full documents beside their labels. This page is an implementation reference.</p>
+
+    <h3>Terms acceptance</h3>
+    <div class="check"><span class="box" aria-hidden="true"></span><span>I have read and agree to the Bellefort Homeowner Portal <a href="#terms">Terms of Use</a>.</span></div>
+    <p>Use beside the access request form and before sign in. Link “Terms of Use” to the approved document. Acceptance covers portal use only and does not approve an assessment, amend HOA rules or waive statutory rights.</p>
+
+    <h3>Privacy acknowledgement</h3>
+    <div class="check"><span class="box" aria-hidden="true"></span><span>I acknowledge that I have read the Bellefort Homeowner Portal <a href="#privacy">Privacy Notice</a>, including the information collected, its purposes, who may access it, how long it is kept and how I can exercise my rights.</span></div>
+    <p>Use separately from Terms acceptance. This records that the notice was presented and acknowledged. Do not label it as consent to all processing or combine it with advertising permissions.</p>
+
+    <h3>Access request notice</h3>
+    <p>We will use the details you provide to review your request for portal access and contact you about the outcome, as explained in our Privacy Notice. Submitting a request does not activate an account. Please provide only the requested information. For assistance, contact <mark>[HOA SUPPORT CONTACT]</mark>.</p>
+
+    <h3>Separate consent only when applicable</h3>
+    <p>Use the following only if the privacy reviewer confirms that consent is the chosen valid basis for this specific registration activity. Complete the fields and explain the assisted alternative. Otherwise omit it.</p>
+    <div class="check"><span class="box" aria-hidden="true"></span><span>I consent to <mark>[FULL REGISTERED HOA NAME]</mark> using my name, email address, property reference and relationship to the property to verify my portal access request and contact me about the result, for <mark>[RETENTION PERIOD AND START EVENT]</mark>. I may withdraw this consent through <mark>[PRIVACY CONTACT]</mark>. Withdrawal may prevent completion of this digital verification, and I may request assistance through <mark>[OFFLINE CONTACT]</mark>.</span></div>
+
+    <h3>Developer implementation</h3>
+    <p>Require the requested acceptance and acknowledgement before proceeding, then bind them to the authenticated user before releasing protected data. Save the user or request identifier, document versions, action and server timestamp. Keep approved versions available. Check direct sign in, invitations, reset and magic link callbacks. A browser checkbox cannot approve membership or replace server authorization. Request fresh consent only where required for the particular processing change.</p>
+  </section>
+
+  <!-- PUBLICATION NOTES -->
+  <section class="doc internal" id="publication">
+    <span class="badge">Internal review page</span>
+    <h2>Publication notes and Philippine references</h2>
+    <p style="margin-top:12px">Internal review page. Publish the approved Terms and Privacy Notice as separate public pages. Remove draft labels and the preparation note. Use the checkbox labels and short notices in the relevant forms. Do not publish incomplete highlighted fields or this internal review page.</p>
+
+    <h3>Complete before publication</h3>
+    <table class="tbl">
+      <thead><tr><th>Item</th><th>Required completion</th></tr></thead>
+      <tbody>
+        <tr><td>Identity and authority</td><td data-l="Required completion">Verify the registered HOA name, authorized operator, adoption decision, policy versions and effective dates.</td></tr>
+        <tr><td>Contacts and review</td><td data-l="Required completion">Provide working support, security and privacy contacts and an assisted access route. Ask Philippine counsel and the privacy lead to review the final policy.</td></tr>
+        <tr><td>Lawful processing</td><td data-l="Required completion">Approve a basis for each activity. Section 12(b) may fit requested account or booking services only if its conditions are met. Legal obligations must be identified. Legitimate interest needs the required assessment. Sensitive data needs a Section 13 condition.</td></tr>
+        <tr><td>Providers and controls</td><td data-l="Required completion">Name the actual providers and their roles, relevant locations, actual logs and cookies. Disclose Multiply Talents if it has a processing or support role, even when company branding is removed. Verify every security statement.</td></tr>
+        <tr><td>Retention and rights</td><td data-l="Required completion">Fill in a justified period and start event for each record category and backups. Test access, correction, withdrawal, deletion and recovery procedures. Assess applicable DPO and NPC registration requirements.</td></tr>
+        <tr><td>Independent oversight</td><td data-l="Required completion">Keep access approval, publication and acceptance under authorized HOA control. Record company interests and independent approval. Retained code rights, source delivery and successor support belong in separate agreements.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>References checked on 20 October 2026</h3>
+    <ol class="refs">
+      <li>Republic Act No. 10173. Sections 11 to 14, 16 to 18 and 20 to 21. Data Privacy Act on the NPC website</li>
+      <li>NPC Circular No. 2023-04. Section 3(D)(5) on notice and consent, Section 8 on specific consent, Sections 11 to 13 on evidence and withdrawal, and Sections 20 to 21 on rights and validity. Official signed consent guidelines</li>
+      <li>NPC Circular No. 2023-06. Sections 4 to 9 on safeguards and retention, and Sections 11 to 16 on protection and access. Official signed security circular</li>
+      <li>NPC Circular No. 2023-07. Sections 3 to 8 on legitimate interest assessment and documentation. Official signed legitimate interest guidelines</li>
+      <li>Current official NPC index for applicable issuances. NPC advisories and circulars</li>
+    </ol>
+    <p>The draft does not establish the Association’s particular approval authority, deployment controls or processing bases. Those facts remain unverified until the relevant governing records, contracts and system configuration are reviewed. The checkbox labels are an implementation choice and are not prescribed wording under Philippine law.</p>
+  </section>
+
+  <p class="foot"><a href="index.html">&larr; Back to the portal</a></p>
+</div>
+</main>
+</body>
+</html>
