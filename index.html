@@ -44,17 +44,24 @@ a{color:var(--slate)}
 .brand-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:22px}
 .auth-art h1{font-size:clamp(30px,6.5vw,46px);font-weight:800;margin:34px 0 14px;max-width:14ch}
 .auth-art p{max-width:42ch;color:#D3D8F5;margin:0}
-.pulse-rail{display:flex;flex-direction:column;gap:10px;margin-top:36px}
-.pulse-row{display:flex;gap:11px;align-items:center;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);border-radius:11px;padding:11px 13px;font-size:13.5px;color:#E7EAFB;animation:riseIn .6s cubic-bezier(.2,.7,.3,1) backwards}
-.pulse-row:nth-child(2){animation-delay:.12s}.pulse-row:nth-child(3){animation-delay:.24s}
 @keyframes riseIn{from{opacity:0;transform:translateY(10px)}}
 .dot{width:8px;height:8px;border-radius:50%;background:#5FE0A8;flex:none;box-shadow:0 0 0 0 rgba(95,224,168,.6);animation:ping 2.4s infinite}
 @keyframes ping{70%{box-shadow:0 0 0 9px rgba(95,224,168,0)}100%{box-shadow:0 0 0 0 rgba(95,224,168,0)}}
 .auth-foot{font-size:12.5px;color:#AEB6E6;margin-top:30px}
-@keyframes tutRise{from{opacity:0;transform:translateY(12px) scale(.96)}}
-@keyframes tutGlow{0%,100%{box-shadow:0 4px 14px -4px rgba(var(--glow),.55),0 0 0 0 rgba(var(--glow),.5)}50%{box-shadow:0 6px 20px -4px rgba(var(--glow),.75),0 0 0 7px rgba(var(--glow),0)}}
-@keyframes tutShine{0%{transform:translateX(-120%)}45%,100%{transform:translateX(120%)}}
-@keyframes tutIcon{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+.about-stack{display:flex;flex-direction:column;gap:10px;margin-top:26px;max-width:62ch}
+.about-sec{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:0 16px;animation:riseIn .6s cubic-bezier(.2,.7,.3,1) backwards}
+.about-sec summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;font-weight:700;font-size:15px;color:#fff}
+.about-sec summary::-webkit-details-marker{display:none}
+.about-sec summary::after{content:"+";font-size:20px;font-weight:400;line-height:1;opacity:.8}
+.about-sec[open] summary::after{content:"\2212"}
+.about-sec summary:focus-visible{outline:2px solid #fff;outline-offset:3px;border-radius:6px}
+.auth-art .about-sec p{max-width:none;font-size:13.5px;line-height:1.6;color:#E7EAFB;margin:0 0 12px}
+.auth-art .about-sec p.about-status{background:rgba(0,0,0,.2);border-radius:9px;padding:10px 12px;color:#F3D6DC}
+.about-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.about-btn{border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.1);color:#fff;border-radius:10px;padding:10px 15px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s,transform .15s}
+.about-btn:hover{background:rgba(255,255,255,.2);transform:translateY(-1px)}
+.about-btn:focus-visible{outline:2px solid #fff;outline-offset:3px}
+@media (min-width:940px){.auth-panel{align-items:flex-start}.auth-card{position:sticky;top:34px}}
 .auth-panel{background:var(--surface);padding:34px 22px 46px;display:flex;align-items:center;justify-content:center}
 .auth-card{width:100%;max-width:392px}
 .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
@@ -504,11 +511,33 @@ html[data-theme="dark"] .bubble.mine{color:#0E121C}
     </div>
     <div>
       <h1>The whole subdivision, on one page.</h1>
-      <p>Dues, tickets, gate passes, elections and board announcements — for 412 households across three phases.</p>
-      <div class="pulse-rail" aria-hidden="true">
-        <div class="pulse-row"><span class="dot"></span> Board posted “Water interruption — Aug 28”</div>
-        <div class="pulse-row"><span class="dot"></span> Unit B-12 settled August dues · ₱1,850</div>
-        <div class="pulse-row"><span class="dot"></span> Election for 2026–2028 board is open</div>
+      <div class="about-stack">
+        <details class="about-sec" open>
+          <summary>About the Bellefort HOA Portal</summary>
+          <p>A proposed community website where verified homeowners can find approved updates, follow service requests and discover opportunities within Bellefort. The initial phase includes announcements and events, approved project updates and records, request tracking, and the Livelihood program. Meeting and task tools will support authorised officers and committees.</p>
+          <p class="about-status"><b>Project status:</b> Working demo and readiness review. Pilot scope, funding, privacy controls and formal handover remain subject to the appropriate approvals. Demo access does not mean the production system has been approved.</p>
+        </details>
+        <details class="about-sec">
+          <summary>Livelihood in one community link</summary>
+          <p>The Livelihood Committee will manage eligibility checks, listing review, corrections and updates. The proposed five selections are Business Directory, Marketplace Buy and Sell, Garage Sales, Booth Events, and Job Openings and Referrals. Registration is free and voluntary for eligible, verified homeowners.</p>
+          <p>Participants can promote their offers and choose business-page, website, Messenger, Viber or WhatsApp links. Job applications and CVs should go privately to the listed employer or referrer. External chats stay in the selected app; the portal will not automatically read or import them.</p>
+        </details>
+        <details class="about-sec">
+          <summary>Your information and your choices</summary>
+          <p>Portal participation is voluntary. To create an account, willing homeowners will need to provide the minimum details needed for verification and the services they choose. This may include a name, contact details and home address; business details are needed only when creating a listing.</p>
+          <p>Before you submit information, the relevant privacy notice will explain the purpose, responsible entity, lawful basis, recipients, retention, privacy contact and your rights. Optional publication of contact or business information will have separate, specific choices. Home addresses, identity documents and private household records will not appear in member listings by default.</p>
+          <p>Existing QR-code or form submissions are not blanket permission to reuse data in this portal. Each import must have a compatible purpose and a valid lawful basis. Existing or assisted HOA service channels should remain available for homeowners who do not join.</p>
+        </details>
+        <details class="about-sec">
+          <summary>Security with evidence</summary>
+          <p>The proposed safeguards include individual logins, restricted household and role access, two-step authentication for administrators, controlled publication, activity records, protected backups and tested recovery. We will report which controls have been verified before opening the relevant services.</p>
+          <p>Implementation must follow the Data Privacy Act, RA 10173, and applicable NPC requirements. A privacy notice, a consent checkbox or a cloud subscription does not by itself prove full compliance. NPC registration, where required, will be assessed and documented; no certification or registration is claimed without evidence.</p>
+        </details>
+      </div>
+      <div class="about-actions">
+        <button class="about-btn" type="button" onclick="aboutLink('privacy')">Read the Privacy Notice</button>
+        <button class="about-btn" type="button" onclick="aboutLink('demo')">Request a Demo</button>
+        <button class="about-btn" type="button" onclick="aboutLink('livelihood')">Express Interest in Livelihood</button>
       </div>
     </div>
     <p class="auth-foot">New homeowner? Register and the admin office will verify you before your account is opened. Your data is stored securely online.</p>
@@ -1367,6 +1396,14 @@ function lhSectionSwitch(admin){
 /* ============================================================
    HELPERS
 ============================================================ */
+// Links for the buttons on the sign-in page — leave as '' to show the "coming soon" message.
+const ABOUT_LINKS = { privacy:'', demo:'', livelihood:'' };
+const ABOUT_LABELS = { privacy:'Privacy Notice', demo:'Demo requests', livelihood:'Livelihood sign-up' };
+function aboutLink(key){
+  const url = ABOUT_LINKS[key];
+  if(url) window.open(url, '_blank', 'noopener');
+  else toast('info', ABOUT_LABELS[key], 'Coming soon — this will open once it has been approved.');
+}
 const $ = s => document.querySelector(s);
 const uid = () => Math.random().toString(36).slice(2,9);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
