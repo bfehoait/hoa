@@ -511,6 +511,21 @@ html[data-theme="dark"] .hl-box h4{color:var(--ink)}
 .modal-foot .btn{flex:1}
 /* facility booking: calendar + time-slot grid */
 .modal.modal-wide{max-width:820px}
+/* add-account form: who has access now */
+.acc-roster{width:100%;border-collapse:collapse;font-size:13px}
+.acc-roster th{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+.acc-roster td{padding:8px;border-bottom:1px dashed var(--line);vertical-align:top}
+.acc-roster tr:last-child td{border-bottom:0}
+.acc-roster td.n{font-family:var(--mono);font-weight:700;text-align:center;width:44px}
+.acc-roster tr.on td{background:var(--slate-tint)}
+.acc-roster tr.on td:first-child{box-shadow:inset 3px 0 0 var(--slate)}
+.acc-who{display:flex;flex-wrap:wrap;gap:4px 6px}
+.acc-who span{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:2px 9px;font-size:12px;white-space:nowrap}
+.acc-who span em{font-style:normal;color:var(--ink-3);margin-left:4px;font-family:var(--mono);font-size:11px}
+.acc-who span.off{color:var(--ink-3);text-decoration:line-through}
+.acc-who summary{cursor:pointer;color:var(--slate);font-size:12px;font-weight:600;list-style:none}
+.acc-who details{flex-basis:100%}
+.acc-who details[open] summary{margin-bottom:4px}
 /* gate pass slip */
 .gp-slip{border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--surface,#fff)}
 .gp-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:12px}
@@ -6250,6 +6265,7 @@ function userForm(id, presetRole){
           '<div class="mv" id="rp_exp" style="font-size:13px;color:var(--ink-2);margin-top:3px"></div>' +
           '<div class="mk" style="font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);margin-top:9px">Kept from them</div>' +
           '<div class="mv" id="rp_deny" style="font-size:13px;color:var(--rose);margin-top:3px"></div></div>') +
+    (a ? '' : accessRosterHTML(role)) +
     '<label class="fld"><span>Full name</span><input class="input" id="f_n" value="'+esc(a?a.name:'')+'" placeholder="Estrella Ocampo"></label>' +
     '<label class="fld"><span>Email for sign-in</span><input class="input" id="f_e" type="email" value="'+esc(a?a.email:'')+'"'+(a?' disabled':'')+' placeholder="name@hoa-community.ph"></label>' +
     '<div class="grid g-2" style="gap:0 12px">' +
@@ -6321,6 +6337,26 @@ function userForm(id, presetRole){
       return true;
     });
   rolePreview(role);
+  if(!a) bkWide();
+}
+/* who already has portal access, grouped by role — shown while adding an account */
+const ROSTER_ORDER = ['admin','homeowner','renter','board','security','driver'];
+function accessRosterHTML(sel){
+  const chip = a => '<span class="'+(a.status==='Suspended'?'off':'')+'" title="'+esc(a.email)+(a.status!=='Active'?' · '+a.status:'')+'">'+esc(a.name) +
+    '<em>'+esc(a.role==='admin' ? (a.title||'Admin') : a.unit||'')+(a.status==='Invited'?' · invited':'')+'</em></span>';
+  const rows = ROSTER_ORDER.map(r => {
+    const people = store.accounts.filter(a => a.role===r).sort((x,y) => x.name.localeCompare(y.name));
+    const shown = people.slice(0, 8), rest = people.slice(8);
+    return '<tr data-role="'+r+'"'+(r===sel?' class="on"':'')+'><td><strong>'+esc(ROLE_LABEL(r))+'</strong></td><td class="n">'+people.length+'</td>' +
+      '<td><div class="acc-who">'+(people.length ? shown.map(chip).join('') +
+        (rest.length ? '<details><summary>+'+rest.length+' more</summary><div class="acc-who">'+rest.map(chip).join('')+'</div></details>' : '')
+        : '<span class="meta" style="border:0;background:none;padding:0">No one yet</span>')+'</div></td></tr>';
+  }).join('');
+  const total = store.accounts.length, active = store.accounts.filter(a=>a.status==='Active').length;
+  return '<div class="card" style="margin-bottom:14px"><div class="card-head"><h3>Who has access now</h3><span class="spacer"></span>' +
+    '<span class="meta" style="margin:0">'+total+' accounts · '+active+' active</span></div>' +
+    '<div style="overflow-x:auto;padding:4px 8px 8px"><table class="acc-roster"><thead><tr><th>Role</th><th style="text-align:center">#</th><th>Members</th></tr></thead><tbody>'+rows+'</tbody></table></div>' +
+    '<p class="meta" style="display:block;margin:0;padding:0 16px 12px">The role you are adding is highlighted. Struck-through names are suspended.</p></div>';
 }
 /* roles an admin can switch an existing account to (Administrator is added only by "Add administrator") */
 const ACCT_ROLES = ['homeowner','renter','security','board','driver'];
@@ -6359,6 +6395,13 @@ function rolePreview(r){
   const tw = $('#f_t_wrap'), pw = $('#f_pos_wrap');
   if(tw) tw.classList.toggle('hide', r==='admin');
   if(pw) pw.classList.toggle('hide', r!=='admin');
+  document.querySelectorAll('.acc-roster tr[data-role]').forEach(tr => tr.classList.toggle('on', tr.dataset.role===r));
+  /* a new account's title follows the role, unless the admin typed their own */
+  const t = $('#f_t'), u = $('#f_u');
+  if(t && $('#f_e') && !$('#f_e').disabled && r!=='admin'){
+    const defaults = ACCT_ROLES.map(x => acctDefaultTitle(x, u ? u.value.trim() : '')).concat(['Owner of record','Tenant of ']);
+    if(!t.value.trim() || defaults.includes(t.value) || /^Tenant of /.test(t.value)) t.value = acctDefaultTitle(r, u ? u.value.trim() : '');
+  }
 }
 function setUserStatus(id, status){
   const a = store.accounts.find(x=>x.id===id);
