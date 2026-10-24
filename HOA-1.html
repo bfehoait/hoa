@@ -228,6 +228,12 @@ html[data-theme="dark"] .syncrail.flash{animation:railFlashDark 1.3s ease}
 .rolebadge.renter i{background:var(--ink-3)}
 .rolebadge.driver{background:#E7F3FA;color:#1F6E99;border-color:#C6E2F1}
 .rolebadge.driver i{background:#1F6E99}
+.rolesw{width:auto;max-width:230px;padding:6px 9px;font-size:12.5px;font-weight:700;border-radius:20px}
+.xr-row{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}
+.xr-row label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:20px;padding:5px 11px;font-size:13px;cursor:pointer;background:var(--surface,#fff)}
+.xr-row label.on{border-color:var(--slate);background:var(--slate-tint);color:var(--slate-dk);font-weight:600}
+.xr-row label.dis{opacity:.4;cursor:not-allowed}
+.xr-row input{margin:0}
 .ride-steps{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 .ride-steps span{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:20px;background:var(--paper);color:var(--ink-3);border:1px solid var(--line)}
 .ride-steps span.done{background:var(--emerald-tint);color:var(--emerald);border-color:transparent}
@@ -701,6 +707,7 @@ html[data-theme="dark"] .bubble.mine{color:#0E121C}
     <div class="brand"><span class="glyph">BEHOA</span><span class="nm" id="brandName">Homeowners Association</span></div>
     <div class="spacer"></div>
     <span class="rolebadge" id="roleBadge"></span>
+    <select class="input rolesw hide" id="roleSwitch" onchange="switchRole(this.value)" aria-label="Switch which portal you are viewing" title="You have more than one role — switch portal"></select>
     <select class="input hide" id="viewAsSel" onchange="viewAs(this.value)" aria-label="View the portal as" title="View the portal as someone else" style="width:auto;max-width:190px;padding:7px 10px;font-size:13px;font-weight:600"></select>
     <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" aria-label="Switch to dark mode" title="Dark mode"></button>
     <div class="bellwrap hide" id="availWrap">
@@ -1189,10 +1196,37 @@ const ROLE_MATRIX = [
     deny:'Dues, billing, Board records and resident data beyond the trip itself.' }
 ];
 const ROLE_LABEL = r => (ROLE_MATRIX.find(m=>m.role===r)||{label:r}).label;
+/* an account has a main role and may hold extra roles (e.g. a renter who is also an admin) */
+const ALL_ROLES = ['admin','homeowner','renter','board','security','driver'];
+function acctRoles(a){ return a ? [a.role].concat((a.extraRoles||[]).filter(r => r!==a.role && ALL_ROLES.includes(r))) : []; }
+function hasRole(a, r){ return acctRoles(a).includes(r); }
+function roleTags(a){ return acctRoles(a).map((r,i) => '<span class="tag '+(i?'t-slate':'t-grey')+'" title="'+(i?'Extra role':'Main role')+'">'+esc(ROLE_LABEL(r))+'</span>').join(' '); }
+const roleKey = id => 'hoa-role-'+id;
+function pickRole(acct){
+  let r = ''; try{ r = localStorage.getItem(roleKey(acct.id)) || ''; }catch(e){}
+  return hasRole(acct, r) ? r : acct.role;
+}
+function switchRole(r){
+  const acct = store.accounts.find(a => a.id===store.session.accountId);
+  if(!acct || !hasRole(acct, r) || store.adminSession) return;
+  store.session.role = r;
+  try{ localStorage.setItem(roleKey(acct.id), r); }catch(e){}
+  store.view = r==='admin' ? 'overview' : 'feed'; store.tab = {};
+  render(); window.scrollTo({ top:0 });
+  toast('info','Now viewing as '+ROLE_LABEL(r), 'Switch back any time from the menu beside your role.');
+}
+function paintRoleSwitch(){
+  const sel = $('#roleSwitch'); if(!sel) return;
+  const acct = !store.adminSession && store.accounts.find(a => a.id===store.session.accountId);
+  const roles = acctRoles(acct);
+  if(roles.length < 2){ sel.classList.add('hide'); return; }
+  sel.classList.remove('hide');
+  sel.innerHTML = roles.map(r => '<option value="'+r+'"'+(r===store.session.role?' selected':'')+'>Viewing as '+esc(ROLE_LABEL(r))+'</option>').join('');
+}
 /* an admin's position (their account title, e.g. "HOA President"); empty for everyone else */
 function adminPosition(accountId){
   const a = store.accounts.find(x=>x.id===accountId);
-  return a && a.role==='admin' ? String(a.title||'').trim() : '';
+  return a && hasRole(a,'admin') ? String(a.title||'').trim() : '';
 }
 const ADMIN_POSITIONS = ['HOA President','Vice President','Secretary','Treasurer','Auditor','Board Member','BOD','BOD/Officer','Portal Administrator'];
 function adminPositionField(current){
@@ -1858,7 +1892,7 @@ function enter(acct, method){
   if(!acct.avatar){ const saved = loadAvatar(acct.id); if(saved) acct.avatar = saved; }
   acct.availability = 'available'; /* every fresh sign-in starts Available; they set lunch/break/away themselves after */
   store.session = { authed:true, method, accountId:acct.id, name:acct.name, email:acct.email,
-                    phone:acct.phone, unit:acct.unit, role:acct.role, avatar:acct.avatar||null, availability:acct.availability };
+                    phone:acct.phone, unit:acct.unit, role:pickRole(acct), avatar:acct.avatar||null, availability:acct.availability };
   store.adminSession = null;
   store.view = isAdmin() ? 'overview' : 'feed';
   store.tab = {};
@@ -2105,7 +2139,7 @@ function render(){
   badge.innerHTML = '<i></i>' + esc(ROLE_LABEL(s.role)) +
     (s.role==='admin' && adminPosition(s.accountId) ? '<span class="unit"> · '+esc(adminPosition(s.accountId))+'</span>' : '') +
     (s.role==='homeowner'||s.role==='renter' ? '<span class="unit"> · '+esc(s.unit)+'</span>' : '');
-  paintBell(); applyTheme(); paintMsgBtn(); paintAvail();
+  paintBell(); applyTheme(); paintMsgBtn(); paintAvail(); paintRoleSwitch();
   const availWrap = $('#availWrap'); if(availWrap) availWrap.classList.toggle('hide', s.role !== 'admin');
 
   const nav = navFor(s.role, s.accountId);
@@ -2253,7 +2287,7 @@ const ADMIN = {
       active: store.rides.filter(r=>['Accepted','On the way','Arrived'].includes(r.status)),
       done: store.rides.filter(r=>['Completed','Cancelled'].includes(r.status))
     };
-    const drivers = store.accounts.filter(a=>a.role==='driver');
+    const drivers = store.accounts.filter(a=>hasRole(a,'driver'));
     if(t==='carpool') return head('Shuttle service','Shuttle bookings and the carpools residents arrange among themselves.') +
       tabs('rides',[{id:'open',label:'Waiting',n:groups.open.length},{id:'active',label:'In progress',n:groups.active.length},{id:'done',label:'Finished'},{id:'carpool',label:'Carpooling',n:cpUpcoming().length}],'open') +
       carpoolView(true);
@@ -2340,11 +2374,11 @@ const ADMIN = {
   /* ---------- HOMEOWNERS (user accounts) ---------- */
   homeowners(){
     const t = tabOf('usr','accounts');
-    const owners = store.accounts.filter(a=>a.role==='homeowner'||a.role==='renter');
-    const admins = store.accounts.filter(a=>a.role==='admin'||a.role==='security'||a.role==='board'||a.role==='driver');
+    const owners = store.accounts.filter(a=>hasRole(a,'homeowner')||hasRole(a,'renter'));
+    const admins = store.accounts.filter(a=>['admin','security','board','driver'].some(r=>hasRole(a,r)));
     const card = a =>
       '<tr><td data-label="Name"><button class="btn-ghost" style="border:0;background:none;padding:0;cursor:pointer;text-align:left;font:inherit;color:var(--slate)" onclick="homeownerProfile(\''+a.unit+'\')"><strong>'+esc(a.name)+'</strong></button><div class="meta">'+esc(a.email)+'</div></td>' +
-      '<td data-label="Role"><span class="tag t-grey">'+esc(ROLE_LABEL(a.role))+'</span>'+(a.role==='admin'&&a.title?'<div class="meta">'+esc(a.title)+'</div>':'')+'<div class="meta mono">'+esc(a.unit)+'</div></td>' +
+      '<td data-label="Role">'+roleTags(a)+(hasRole(a,'admin')&&a.title?'<div class="meta">'+esc(a.title)+'</div>':'')+'<div class="meta mono">'+esc(a.unit)+'</div></td>' +
       '<td class="hide-sm" data-label="Mobile">'+esc(a.phone||'—')+'</td>' +
       '<td class="hide-sm meta" data-label="Last seen">'+(a.lastSeen?ago(a.lastSeen):'Never signed in')+'</td>' +
       '<td data-label="Status"><span class="tag '+(a.status==='Active'?'t-emerald':a.status==='Invited'?'t-amber':'t-rose')+'">'+esc(a.status)+'</span></td>' +
@@ -3274,7 +3308,7 @@ function chatBubble(m){
     '<div class="txt">'+esc(m.text)+'</div>' +
     '<div class="when">'+ago(m.at)+'</div></div>';
 }
-function staffAccounts(){ return store.accounts.filter(a => (a.role==='admin'||a.role==='board') && a.status==='Active'); }
+function staffAccounts(){ return store.accounts.filter(a => (hasRole(a,'admin')||hasRole(a,'board')) && a.status==='Active'); }
 function staffOnline(){
   return staffAccounts().filter(a => a.lastSeen && (Date.now()-new Date(a.lastSeen)) < STAFF_AWAY_MS &&
     (a.availability||'available')==='available');
@@ -3365,7 +3399,7 @@ function openLoadOf(name){
   return n;
 }
 function pickAvailableAdmin(){
-  const online = staffOnline().filter(a=>a.role==='admin');
+  const online = staffOnline().filter(a=>hasRole(a,'admin'));
   if(!online.length) return null;
   return online.slice().sort((a,b)=>openLoadOf(a.name)-openLoadOf(b.name))[0];
 }
@@ -4034,7 +4068,7 @@ function gpSecurityView(){
    (and the admin office). Removing access blocks the guard's gate pages.
 ============================================================ */
 const secAdmin = () => store.secAdmin || (store.secAdmin = { oic:'', secondary:'', revoked:{} });
-const secAccounts = () => store.accounts.filter(a => a.role==='security');
+const secAccounts = () => store.accounts.filter(a => hasRole(a,'security'));
 function secDesignation(id){ const s = secAdmin(); return id && id===s.oic ? 'OIC' : id && id===s.secondary ? 'Secondary OIC' : 'Guard'; }
 function canRunRoster(){ const r = store.session.role, id = store.session.accountId, s = secAdmin();
   return r==='admin' || (r==='security' && !secRevokedMe() && (id===s.oic || id===s.secondary)); }
@@ -6265,14 +6299,19 @@ function userForm(id, presetRole){
           '<div class="mv" id="rp_exp" style="font-size:13px;color:var(--ink-2);margin-top:3px"></div>' +
           '<div class="mk" style="font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);margin-top:9px">Kept from them</div>' +
           '<div class="mv" id="rp_deny" style="font-size:13px;color:var(--rose);margin-top:3px"></div></div>') +
+    (a && a.id===realSession().accountId
+      ? (acctRoles(a).length>1 ? '<div class="card card-pad" style="background:var(--paper);margin:-8px 0 14px"><div class="kv"><span>Also has access as</span><b>'+acctRoles(a).slice(1).map(ROLE_LABEL).join(', ')+'</b></div></div>' : '')
+      : '<div class="fld"><span style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Also has access as (optional)</span>' +
+          '<div class="xr-row" id="f_xr">'+extraRolesHTML(role, a ? acctRoles(a).slice(1) : [])+'</div>' +
+          '<p class="meta" style="display:block;margin:0 0 12px">Tick any extra roles, e.g. a renter who is also an admin. They switch between portals with the “Viewing as” menu at the top.</p></div>') +
     (a ? '' : accessRosterHTML(role)) +
     '<label class="fld"><span>Full name</span><input class="input" id="f_n" value="'+esc(a?a.name:'')+'" placeholder="Estrella Ocampo"></label>' +
     '<label class="fld"><span>Email for sign-in</span><input class="input" id="f_e" type="email" value="'+esc(a?a.email:'')+'"'+(a?' disabled':'')+' placeholder="name@hoa-community.ph"></label>' +
     '<div class="grid g-2" style="gap:0 12px">' +
       '<label class="fld"><span>Unit or post</span><input class="input" id="f_u" value="'+esc(a?a.unit:'')+'" placeholder="D-15 or Main gate"></label>' +
       '<label class="fld"><span>Mobile number</span><input class="input" id="f_p" value="'+esc(a?a.phone:'')+'" placeholder="0917 555 0000"></label></div>' +
-    '<div id="f_t_wrap"'+(role==='admin'?' class="hide"':'')+'><label class="fld"><span>Title</span><input class="input" id="f_t" value="'+esc(a?a.title:'Owner of record')+'"></label></div>' +
-    '<div id="f_pos_wrap"'+(role==='admin'?'':' class="hide"')+'>'+adminPositionField(a&&a.role==='admin'?a.title:'')+'</div>' +
+    '<div id="f_t_wrap"'+(hasRole(a||{role},'admin')?' class="hide"':'')+'><label class="fld"><span>Title</span><input class="input" id="f_t" value="'+esc(a?a.title:'Owner of record')+'"></label></div>' +
+    '<div id="f_pos_wrap"'+(hasRole(a||{role},'admin')?'':' class="hide"')+'>'+adminPositionField(a&&hasRole(a,'admin')?a.title:'')+'</div>' +
     (a ? '' :
       '<label class="fld"><span>How they get access</span><select class="input" id="f_s" onchange="pwFieldToggle(this.value)">' +
         '<option value="Active">Set their password now — no email needed</option>' +
@@ -6296,15 +6335,22 @@ function userForm(id, presetRole){
       const clash = store.accounts.find(x => x.email.toLowerCase()===email && x.id!==(a&&a.id));
       if(clash){ toast('info','Email already in use',ROLE_LABEL(clash.role)+' account '+clash.unit+' already signs in with that address.'); return false; }
       if(res && !unit){ toast('info','Add a unit','Resident accounts are tied to a unit number.'); return false; }
-      const title = chosen==='admin' ? adminPositionValue() : $('#f_t').value.trim();
-      if(chosen==='admin' && !title){ toast('info','Add a position','Pick the administrator\u2019s position, such as HOA President or Treasurer.'); return false; }
+      const extras = $('#f_xr') ? readExtraRoles(chosen) : (a ? acctRoles(a).slice(1) : []);
+      const adminAny = chosen==='admin' || extras.includes('admin');
+      const title = adminAny ? adminPositionValue() : $('#f_t').value.trim();
+      if(adminAny && !title){ toast('info','Add a position','Pick the administrator\u2019s position, such as HOA President or Treasurer.'); return false; }
 
       if(a){
-        const was = a.role;
+        const was = a.role, wasRoles = acctRoles(a);
         Object.assign(a, { name, email, unit:unit||a.unit, phone:$('#f_p').value.trim(),
-          title: chosen!==was && chosen!=='admin' && title===a.title ? acctDefaultTitle(chosen, unit||a.unit) : title, role:chosen });
+          title: chosen!==was && !adminAny && title===a.title ? acctDefaultTitle(chosen, unit||a.unit) : title, role:chosen, extraRoles:extras });
+        if(wasRoles.includes('security') && !hasRole(a,'security')) secForget(a.id);
+        const added = acctRoles(a).filter(r=>!wasRoles.includes(r)), removed = wasRoles.filter(r=>!acctRoles(a).includes(r));
+        if(was===chosen && (added.length || removed.length)){
+          commit(name+'\u2019s access updated'+(added.length?' — added '+added.map(ROLE_LABEL).join(', '):'')+(removed.length?(added.length?';':' —')+' removed '+removed.map(ROLE_LABEL).join(', '):'')+'. Roles now: '+acctRoles(a).map(ROLE_LABEL).join(', ')+'.',{title:'Access changed'});
+          return true;
+        }
         if(was!==chosen){
-          if(was==='security') secForget(a.id);
           commit(name+'’s access changed from '+ROLE_LABEL(was)+' to '+ROLE_LABEL(chosen)+'. It applies the next time they sign in.',{title:'Access changed'});
           return true;
         }
@@ -6316,7 +6362,7 @@ function userForm(id, presetRole){
       const status = $('#f_s').value, pw = status==='Active' ? $('#f_pw').value : '';
       if(status==='Active' && pw.length < 8){ toast('info','Password too short','Use at least eight characters.'); return false; }
       const temp = '';
-      store.accounts.push({ id:uid(), name, email, password:temp, role:chosen, unit:unit||'Admin office',
+      store.accounts.push({ id:uid(), name, email, password:temp, role:chosen, extraRoles:extras, unit:unit||'Admin office',
         title:title||ROLE_LABEL(chosen), phone:$('#f_p').value.trim(),
         status, added:new Date().toISOString().slice(0,10), lastSeen:null });
 
@@ -6343,9 +6389,9 @@ function userForm(id, presetRole){
 const ROSTER_ORDER = ['admin','homeowner','renter','board','security','driver'];
 function accessRosterHTML(sel){
   const chip = a => '<span class="'+(a.status==='Suspended'?'off':'')+'" title="'+esc(a.email)+(a.status!=='Active'?' · '+a.status:'')+'">'+esc(a.name) +
-    '<em>'+esc(a.role==='admin' ? (a.title||'Admin') : a.unit||'')+(a.status==='Invited'?' · invited':'')+'</em></span>';
+    '<em>'+esc(hasRole(a,'admin') && a.title && !/^(Owner|Tenant)/.test(a.title) ? a.title : a.unit||'')+(a.status==='Invited'?' · invited':'')+(acctRoles(a).length>1?' · '+acctRoles(a).length+' roles':'')+'</em></span>';
   const rows = ROSTER_ORDER.map(r => {
-    const people = store.accounts.filter(a => a.role===r).sort((x,y) => x.name.localeCompare(y.name));
+    const people = store.accounts.filter(a => hasRole(a, r)).sort((x,y) => x.name.localeCompare(y.name));
     const shown = people.slice(0, 8), rest = people.slice(8);
     return '<tr data-role="'+r+'"'+(r===sel?' class="on"':'')+'><td><strong>'+esc(ROLE_LABEL(r))+'</strong></td><td class="n">'+people.length+'</td>' +
       '<td><div class="acc-who">'+(people.length ? shown.map(chip).join('') +
@@ -6373,7 +6419,7 @@ function secForget(id){
 function deleteUserForm(id){
   const a = store.accounts.find(x=>x.id===id); if(!a) return;
   if(a.id===realSession().accountId){ toast('info','Not allowed','You cannot delete the account you are signed in with.'); return; }
-  if(a.role==='admin' && store.accounts.filter(x=>x.role==='admin' && x.status!=='Suspended').length<=1){
+  if(hasRole(a,'admin') && store.accounts.filter(x=>hasRole(x,'admin') && x.status!=='Suspended').length<=1){
     toast('info','Keep one administrator','Add another administrator before deleting this one.'); return; }
   modal('Delete '+a.name+'’s access?','They can no longer sign in. Their past requests, bookings and records stay in the portal.',
     '<div class="card card-pad" style="background:var(--paper);margin-bottom:12px">' +
@@ -6382,10 +6428,25 @@ function deleteUserForm(id){
     '<p class="meta" style="display:block;margin:0">This cannot be undone. To block access for a while instead, use <b>Suspend</b>. To give them access again later, add the account again.</p>',
     'Delete access', () => {
       store.accounts = store.accounts.filter(x=>x.id!==id);
-      if(a.role==='security') secForget(id);
+      if(hasRole(a,'security')) secForget(id);
       if(store.userAccess && store.userAccess[id]){ const u = Object.assign({}, store.userAccess); delete u[id]; store.userAccess = u; }
       commit(a.name+'’s portal access ('+ROLE_LABEL(a.role)+', '+a.unit+') was deleted.',{title:'Access deleted'});
       return true; }, true);
+}
+function extraRolesHTML(primary, extras){
+  return ALL_ROLES.map(r => { const main = r===primary, on = !main && extras.includes(r);
+    return '<label class="'+(main?'dis':on?'on':'')+'"'+(main?' title="This is their main role"':'')+'><input type="checkbox" value="'+r+'"'+(on?' checked':'')+(main?' disabled':'') +
+      ' onchange="this.parentNode.classList.toggle(\'on\', this.checked);xrChanged()">'+esc(ROLE_LABEL(r))+'</label>'; }).join('');
+}
+function readExtraRoles(primary){
+  return [...document.querySelectorAll('#f_xr input:checked')].map(i=>i.value).filter(r => r!==primary && ALL_ROLES.includes(r));
+}
+/* the position field shows whenever Administrator is the main role or an extra one */
+function xrChanged(){
+  const r = $('#f_r') ? $('#f_r').value : '', adminAny = r==='admin' || readExtraRoles(r).includes('admin');
+  const tw = $('#f_t_wrap'), pw = $('#f_pos_wrap');
+  if(tw) tw.classList.toggle('hide', adminAny);
+  if(pw) pw.classList.toggle('hide', !adminAny);
 }
 function rolePreview(r){
   const m = ROLE_MATRIX.find(x=>x.role===r); if(!m) return;
@@ -6393,12 +6454,14 @@ function rolePreview(r){
   if(e) e.textContent = m.exp;
   if(d) d.textContent = m.deny;
   const tw = $('#f_t_wrap'), pw = $('#f_pos_wrap');
-  if(tw) tw.classList.toggle('hide', r==='admin');
-  if(pw) pw.classList.toggle('hide', r!=='admin');
+  const xr = $('#f_xr'); if(xr) xr.innerHTML = extraRolesHTML(r, readExtraRoles(r));
+  const adminAny = r==='admin' || readExtraRoles(r).includes('admin');
+  if(tw) tw.classList.toggle('hide', adminAny);
+  if(pw) pw.classList.toggle('hide', !adminAny);
   document.querySelectorAll('.acc-roster tr[data-role]').forEach(tr => tr.classList.toggle('on', tr.dataset.role===r));
   /* a new account's title follows the role, unless the admin typed their own */
   const t = $('#f_t'), u = $('#f_u');
-  if(t && $('#f_e') && !$('#f_e').disabled && r!=='admin'){
+  if(t && $('#f_e') && !$('#f_e').disabled && !adminAny){
     const defaults = ACCT_ROLES.map(x => acctDefaultTitle(x, u ? u.value.trim() : '')).concat(['Owner of record','Tenant of ']);
     if(!t.value.trim() || defaults.includes(t.value) || /^Tenant of /.test(t.value)) t.value = acctDefaultTitle(r, u ? u.value.trim() : '');
   }
@@ -6820,7 +6883,7 @@ function saveProfile(){
   store.session.phone = $('#pf_phone').value.trim();
   const acct = store.accounts.find(a=>a.id===store.session.accountId);
   if(acct) Object.assign(acct, { name:store.session.name, email:store.session.email, phone:store.session.phone });
-  if(acct && acct.role==='admin' && $('#pf_position')) acct.title = $('#pf_position').value.trim();
+  if(acct && hasRole(acct,'admin') && $('#pf_position')) acct.title = $('#pf_position').value.trim();
   commit('Profile updated for '+store.session.name+'.',{title:'Profile saved'});
 }
 /* ---- profile photo: stored as a data URL, kept in this browser via localStorage ---- */
@@ -7170,9 +7233,11 @@ const canon = v => JSON.stringify(v, (k, x) => x && typeof x === 'object' && !Ar
   ? Object.keys(x).sort().reduce((o, key) => (o[key] = x[key], o), {}) : x);
 const sig = k => canon(enc(store[k]));
 const acctRow = a => ({ id:a.id, email:String(a.email).toLowerCase(), name:a.name, role:a.role, unit:a.unit||'',
-  title:a.title||'', phone:a.phone||'', status:a.status||'Invited', added:a.added||new Date().toISOString().slice(0,10), avatar:a.avatar||null });
+  title:a.title||'', phone:a.phone||'', status:a.status||'Invited', added:a.added||new Date().toISOString().slice(0,10), avatar:a.avatar||null,
+  ...(Array.isArray(a.extraRoles) ? { extra_roles:acctRoles(a).slice(1) } : {}) });
 const rowAcct = r => ({ id:r.id, email:r.email, name:r.name, role:r.role, unit:r.unit, title:r.title, phone:r.phone,
-  status:r.status, added:r.added, avatar:r.avatar||null, password:'', lastSeen:r.last_seen ? new Date(r.last_seen) : null });
+  status:r.status, added:r.added, avatar:r.avatar||null, password:'', lastSeen:r.last_seen ? new Date(r.last_seen) : null,
+  ...(Array.isArray(r.extra_roles) ? { extraRoles:r.extra_roles } : {}) });
 
 function syncFail(error){
   if(Date.now() - lastFailToast < 30000) return;
