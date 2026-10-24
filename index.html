@@ -350,6 +350,34 @@ tr:last-child td{border-bottom:0}
 .bars .b i{width:100%;background:var(--slate-tint);border-radius:6px 6px 0 0;display:block;transition:height .5s}
 .bars .b.hi i{background:var(--slate)}
 .bars .b span{font-family:var(--mono);font-size:10px;color:var(--ink-3)}
+/* issues / complaints / concerns dashboard */
+:root{--ic-filed:#800020;--ic-done:#0E8A60}
+html[data-theme="dark"]{--ic-filed:#E58C9E;--ic-done:#1F8F68}
+.ic-filters{display:grid;gap:0 12px;grid-template-columns:1fr 1fr}
+@media(min-width:900px){.ic-filters{grid-template-columns:repeat(6,1fr)}}
+.ic-filters label.fld{margin-bottom:10px}
+.ic-filters label.fld>span{display:block;font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:4px}
+.ic-filters .input{padding:8px 10px;font-size:13.5px}
+.ic-stack{display:flex;gap:2px;height:10px;border-radius:5px;overflow:hidden;background:var(--paper);min-width:90px}
+.ic-stack i{display:block;height:100%}
+.ic-s-open{background:var(--slate)}.ic-s-ongoing{background:var(--amber)}.ic-s-resolved{background:var(--emerald)}
+.ic-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2);margin-bottom:10px}
+.ic-legend span{display:inline-flex;align-items:center;gap:6px}
+.ic-legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.ic-trend{display:flex;align-items:flex-end;gap:10px;height:170px;overflow-x:auto;padding-top:4px}
+.ic-trend .col{flex:1;min-width:38px;display:flex;flex-direction:column;align-items:center;height:100%}
+.ic-trend .pair{flex:1;display:flex;align-items:flex-end;gap:2px;width:100%;justify-content:center}
+.ic-trend .pair{border-bottom:1px solid var(--line)}
+.ic-trend .bar{width:14px;border-radius:4px 4px 0 0;position:relative;cursor:default}
+.ic-dash>*{min-width:0}
+.ic-nw{white-space:nowrap}
+.ic-trend .bar b{position:absolute;top:-17px;left:50%;transform:translateX(-50%);font-size:10.5px;font-family:var(--mono);color:var(--ink-2);font-weight:600}
+.ic-trend .lbl{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:6px;white-space:nowrap}
+.ic-heat{border-collapse:separate;border-spacing:2px;font-size:12.5px;width:100%}
+.ic-heat th{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--ink-3);text-align:center;padding:4px;white-space:nowrap}
+.ic-heat th:first-child,.ic-heat td:first-child{text-align:left;color:var(--ink);font-family:var(--sans);font-size:12.5px;white-space:nowrap;padding-right:10px}
+.ic-heat td{text-align:center;padding:6px 4px;border-radius:5px;font-family:var(--mono);min-width:28px}
+.ic-heat td.tot{font-weight:700;color:var(--ink)}
 .kv{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:14px}
 .kv:last-child{border-bottom:0}
 .kv b{font-family:var(--mono);font-weight:700}
@@ -779,7 +807,19 @@ const store = {
     { id:'r2', unit:'C-21', by:'Jonna Reyes', type:'Drainage', title:'Canal backs up when it rains',
       detail:'Water pools at the corner of Solana Drive and Acacia for about an hour after heavy rain.', priority:'High', assignee:'', status:'Open', at:new Date(Date.now()-864e5*3), replies:[] },
     { id:'r3', unit:'B-12', by:'Rina Dela Cruz', type:'Landscaping', title:'Overgrown acacia branch',
-      detail:'A branch is leaning on the service wires at the back fence.', priority:'Normal', assignee:'Grounds crew', status:'Resolved', at:new Date(Date.now()-864e5*11), replies:[] }
+      detail:'A branch is leaning on the service wires at the back fence.', priority:'Normal', assignee:'Grounds crew', status:'Resolved', at:new Date(Date.now()-864e5*11), resolvedAt:new Date(Date.now()-864e5*8), replies:[] },
+    { id:'r4', unit:'A-04', by:'Marco Villanueva', type:'Streetlight', title:'Flickering lamp post on Acacia St',
+      detail:'The lamp post near the corner flickers all night.', priority:'Normal', assignee:'Dante (electrician)', status:'Resolved', at:new Date(Date.now()-864e5*48), resolvedAt:new Date(Date.now()-864e5*45), replies:[] },
+    { id:'r5', unit:'D-07', by:'Ferdie Lim', type:'Drainage', title:'Clogged canal grate at the Phase 3 entrance',
+      detail:'Leaves and plastic are blocking the grate; water spills onto the road.', priority:'High', assignee:'Grounds crew', status:'Resolved', at:new Date(Date.now()-864e5*62), resolvedAt:new Date(Date.now()-864e5*55), replies:[] },
+    { id:'r6', unit:'C-21', by:'Jonna Reyes', type:'Common area repair', title:'Broken swing at the playground',
+      detail:'One chain of the middle swing has snapped.', priority:'Normal', assignee:'Maintenance', status:'Resolved', at:new Date(Date.now()-864e5*34), resolvedAt:new Date(Date.now()-864e5*30), replies:[] },
+    { id:'r7', unit:'B-12', by:'Rina Dela Cruz', type:'Garbage collection', title:'Missed garbage pickup on Tuesday',
+      detail:'The truck skipped our street this week.', priority:'Normal', assignee:'Admin office', status:'Resolved', at:new Date(Date.now()-864e5*20), resolvedAt:new Date(Date.now()-864e5*19), replies:[] },
+    { id:'r8', unit:'D-07', by:'Ferdie Lim', type:'Security', title:'Perimeter light out near the back fence',
+      detail:'The floodlight facing the back fence has been off since the weekend.', priority:'High', assignee:'Dante (electrician)', status:'In progress', at:new Date(Date.now()-864e5*9), replies:[] },
+    { id:'r9', unit:'A-04', by:'Marco Villanueva', type:'Drainage', title:'Standing water near the Phase 1 clubhouse',
+      detail:'Water stays for a day after rain beside the clubhouse steps.', priority:'Normal', assignee:'Grounds crew', status:'Resolved', at:new Date(Date.now()-864e5*75), resolvedAt:new Date(Date.now()-864e5*66), replies:[] }
   ],
   dues:[
     { id:'d1', unit:'A-04', owner:'Marco Villanueva', period:'August 2026', amount:2250, status:'Paid', method:'GCash', paidAt:new Date(Date.now()-864e5*5) },
@@ -913,14 +953,38 @@ const store = {
     { id:'c2', unit:'D-07', by:'Ferdie Lim', against:'Unit D-09', category:'Parking', title:'Vehicle blocking the shared driveway',
       detail:'A van has been parked across the driveway entrance on weekends.',
       status:'Resolved', ref:'CMP-2607-04', filedAt:new Date(Date.now()-864e5*19),
-      resolution:'Owner was given a written reminder. Van has been moved to the visitor bay.', replies:[] }
+      resolution:'Owner was given a written reminder. Van has been moved to the visitor bay.', resolvedAt:new Date(Date.now()-864e5*12), replies:[] },
+    { id:'c3', unit:'C-21', by:'Jonna Reyes', against:'Common area', category:'Pets', title:'Unleashed dog in the park',
+      detail:'A large dog is walked off-leash in the central park every morning.',
+      status:'Resolved', ref:'CMP-2609-02', filedAt:new Date(Date.now()-864e5*40), resolvedAt:new Date(Date.now()-864e5*33),
+      resolution:'Owner identified and reminded of the leash rule. Signage added at the park entrance.', replies:[] },
+    { id:'c4', unit:'D-07', by:'Ferdie Lim', against:'Unit D-11', category:'Construction', title:'Renovation noise on a Sunday',
+      detail:'Grinding and hammering from 7 AM on Sunday.',
+      status:'Resolved', ref:'CMP-2609-05', filedAt:new Date(Date.now()-864e5*27), resolvedAt:new Date(Date.now()-864e5*24),
+      resolution:'Work permit holder was reminded that construction is Monday to Saturday only.', replies:[] },
+    { id:'c5', unit:'A-04', by:'Marco Villanueva', against:'Unit A-09', category:'Garbage', title:'Garbage left outside overnight',
+      detail:'Bags left on the curb overnight are torn open by strays.',
+      status:'Under review', ref:'CMP-2610-01', filedAt:new Date(Date.now()-864e5*6), resolution:'', replies:[] }
   ],
   concerns:[
     { id:'n1', unit:'A-04', by:'Marco Villanueva', topic:'Suggestion', subject:'Add a covered waiting shed at the gate',
       message:'Residents waiting for tricycles get soaked during the rainy season. Could the board look at a small shed beside the guardhouse?',
       status:'Open', at:new Date(Date.now()-864e5*7), replies:[
         { by:'Arnel Bautista', role:'HOA Admin', at:new Date(Date.now()-864e5*5), text:'Thanks Marco — we are getting two quotes and will present them at the September assembly.' }
-      ] }
+      ] },
+    { id:'n2', unit:'B-12', by:'Rina Dela Cruz', topic:'Billing', subject:'Clarify the per-sqm dues rate',
+      message:'Could the board explain how the new per-square-meter rate is computed?',
+      status:'Closed', at:new Date(Date.now()-864e5*50), resolvedAt:new Date(Date.now()-864e5*47), replies:[
+        { by:'Arnel Bautista', role:'HOA Admin', at:new Date(Date.now()-864e5*47), text:'The rate is the approved budget divided by total lot area. The breakdown is in the September notice.' }
+      ] },
+    { id:'n3', unit:'D-07', by:'Ferdie Lim', topic:'Facility', subject:'Pool hours during the rainy season',
+      message:'Will the pool keep its weekend hours during typhoon season?',
+      status:'Closed', at:new Date(Date.now()-864e5*15), resolvedAt:new Date(Date.now()-864e5*13), replies:[
+        { by:'Arnel Bautista', role:'HOA Admin', at:new Date(Date.now()-864e5*13), text:'Yes, except when a storm signal is raised. Closures are posted on the feed.' }
+      ] },
+    { id:'n4', unit:'C-21', by:'Jonna Reyes', topic:'Question', subject:'Schedule for canal declogging',
+      message:'When is the next canal declogging in Phase 2?',
+      status:'Open', at:new Date(Date.now()-864e5*2), replies:[] }
   ],
   rules:[
     { id:'h1', title:'Quiet hours', text:'No amplified sound between 10:00 PM and 6:00 AM, including videoke and construction tools.' },
@@ -1691,6 +1755,7 @@ const NAV = {
       { id:'messages',   label:'Messages',                icon:'chat', badge:()=>
           store.concerns.filter(c=>c.status!=='Closed').length + store.complaints.filter(c=>c.status!=='Resolved').length +
           store.requests.filter(r=>r.status!=='Resolved').length + store.tickets.filter(t=>t.status!=='Resolved').length },
+      { id:'issues',     label:'Issues, Complaints & Concerns', icon:'chart', badge:()=>icRows().filter(r=>r.stage==='Open').length },
       { id:'homeowners', label:'Homeowners',              icon:'users', badge:()=>store.accounts.filter(a=>a.status==='Invited').length + regPending().length },
       { id:'profiles',   label:'Homeowner Profiles',      icon:'users' },
       { id:'property',   label:'Property',                icon:'building' },
@@ -1756,6 +1821,7 @@ const NAV = {
   board:[
     { g:'Governance', items:[
       { id:'oversight', label:'Oversight',        icon:'grid' },
+      { id:'issues',    label:'Issues dashboard', icon:'chart' },
       { id:'messages',  label:'Messages',         icon:'chat', badge:()=>
           store.concerns.filter(c=>c.status!=='Closed').length + store.complaints.filter(c=>c.status!=='Resolved').length +
           store.requests.filter(r=>r.status!=='Resolved').length + store.tickets.filter(t=>t.status!=='Resolved').length },
@@ -1778,7 +1844,6 @@ const NAV = {
       { id:'feed',       label:'Community feed', icon:'megaphone', badge:()=>store.announcements.filter(a=>!store.seen.has(a.id)).length },
       { id:'announcements', label:'Announcements', icon:'megaphone' },
       { id:'mydues',     label:'My dues',        icon:'peso' },
-      { id:'myrequests', label:'My requests',    icon:'wrench' },
       { id:'events',     label:'Events',         icon:'calendar' },
       { id:'book',       label:'Book a facility',icon:'grid' },
       { id:'visitors',   label:'Visitor pass',   icon:'shield', badge:()=>store.passes.filter(p=>p.unit===myUnit()&&p.status==='Pending').length },
@@ -1786,9 +1851,8 @@ const NAV = {
       { id:'rides',      label:'Shuttle service', icon:'car', badge:()=>myRides().filter(r=>r.status==='On the way'||r.status==='Arrived').length }
     ]},
     { g:'Raise it with the board', items:[
-      { id:'complaints', label:'Complaints', icon:'flag' },
-      { id:'elections',  label:'Elections',  icon:'ballot', badge:()=>store.election.status==='Open' && !hasVoted() ? 1 : 0 },
-      { id:'concerns',   label:'Concerns',   icon:'chat' }
+      { id:'issues',     label:'Issues, Complaints & Concerns', icon:'flag', badge:()=>icRows().filter(r=>r.x.unit===myUnit() && r.x.residentUnread).length },
+      { id:'elections',  label:'Elections',  icon:'ballot', badge:()=>store.election.status==='Open' && !hasVoted() ? 1 : 0 }
     ]},
     { g:'Account', items:[
       { id:'support',  label:'Support',  icon:'life' },
@@ -2387,6 +2451,7 @@ const ADMIN = {
   },
   /* ---------- MESSAGES ---------- */
   messages(){ return messagesInboxView(); },
+  issues(){ return head('Issues, Complaints & Concerns','One-stop tracker for every item homeowners raise — status, Phase 1–3 breakdown, days to resolution and category trends.') + icDashboard(true); },
 
   /* ---------- CALENDAR ---------- */
   calendar(){
@@ -3342,11 +3407,257 @@ function accountSettings(){
 /* ============================================================
    HOMEOWNER VIEWS
 ============================================================ */
+/* ============================================================
+   ISSUES, COMPLAINTS & CONCERNS — one tracker over maintenance
+   requests, complaints and concerns. Homeowners see their own
+   Open / Ongoing / Resolved items; admin and board see everything
+   with Phase 1–3 breakdowns, days to resolution and category trends.
+============================================================ */
+const IC_KINDS = {
+  issue:    { store:'requests',   chat:'request',   label:'Issue',     pre:'ISS', ttl:x=>x.title,   cat:x=>x.type,     body:x=>x.detail,  when:x=>x.at },
+  complaint:{ store:'complaints', chat:'complaint', label:'Complaint', pre:'CMP', ttl:x=>x.title,   cat:x=>x.category, body:x=>x.detail,  when:x=>x.filedAt },
+  concern:  { store:'concerns',   chat:'concern',   label:'Concern',   pre:'CON', ttl:x=>x.subject, cat:x=>x.topic,    body:x=>x.message, when:x=>x.at }
+};
+const IC_STAGES = ['Open','Ongoing','Resolved'];
+const IC_STAGE_TAG = { Open:'t-slate', Ongoing:'t-amber', Resolved:'t-emerald' };
+const IC_STAGE_NOTE = {
+  Open:'Received by the admin office, not yet picked up.',
+  Ongoing:'Assigned, under review or in conversation with the Board and Officers.',
+  Resolved:'Fixed, ruled on or answered — the item is closed.'
+};
+const IC_DAY = 864e5;
+
+/* Open = nobody has acted yet; Ongoing = assigned, replied to, under way or escalated; Resolved = resolved or closed */
+function icStage(x){
+  if(x.status==='Resolved' || x.status==='Closed') return 'Resolved';
+  if(x.status==='In progress' || x.status==='Escalated' || x.assignee || (x.replies||[]).some(r => r.by !== x.by)) return 'Ongoing';
+  return 'Open';
+}
+function icResolvedAt(x){
+  if(icStage(x)!=='Resolved') return null;
+  if(x.resolvedAt) return new Date(x.resolvedAt);
+  const last = (x.replies||[]).slice(-1)[0];            /* older records: the last reply is the closest thing to a close date */
+  return last ? new Date(last.at) : null;
+}
+function icPhase(x){
+  if(x.phase) return x.phase;
+  const u = store.units.find(u => u.unit===x.unit);
+  return u && u.phase ? u.phase : 'Unassigned';
+}
+function icRows(){
+  return Object.keys(IC_KINDS).flatMap(kind => {
+    const K = IC_KINDS[kind];
+    return (store[K.store]||[]).map(x => {
+      const filed = new Date(K.when(x)), stage = icStage(x), done = icResolvedAt(x);
+      return { kind, K, x, ref:x.ref || K.pre+'-'+String(x.id).toUpperCase(), title:K.ttl(x), cat:K.cat(x)||'Other',
+        filed, stage, done, phase:icPhase(x),
+        days: done ? Math.max(0, (done-filed)/IC_DAY) : null,
+        age: Math.max(0, Math.floor((Date.now()-filed)/IC_DAY)) };
+    });
+  }).sort((a,b) => b.filed-a.filed);
+}
+function icAvg(rows){ const d = rows.filter(r => r.days!==null); return d.length ? d.reduce((a,r)=>a+r.days,0)/d.length : null; }
+function icDays(v){ if(v===null || v===undefined) return '—'; const n = Math.round(v*10)/10; return n+(n===1?' day':' days'); }
+function icSteps(stage){
+  const i = IC_STAGES.indexOf(stage);
+  return '<div class="ride-steps">' + IC_STAGES.map((s,j) =>
+    '<span class="'+(j<i || stage==='Resolved' ? 'done' : j===i ? 'now' : '')+'">'+s+'</span>').join('') + '</div>';
+}
+
+/* ---------- homeowner: my own items ---------- */
+function icHomeView(){
+  const mine = icRows().filter(r => r.x.unit===myUnit());
+  const t = tabOf('hic','all');
+  const count = s => mine.filter(r => r.stage===s).length;
+  const list = t==='all' ? mine : mine.filter(r => r.stage===t);
+  const avg = icAvg(mine);
+  return head('Issues, Complaints & Concerns','Raise it once and follow it here until it is resolved. Everything your household has reported, filed or asked is tracked in one place.') +
+  '<div class="qa" style="margin-bottom:16px">' +
+    quick('wrench','Report an issue','Something broken or unsafe — streetlights, drainage, roads, parks, gates, water','requestForm()') +
+    quick('flag','File a complaint','A neighbour broke a house rule and you want it on record','complaintForm()') +
+    quick('chat','Raise a concern','A question, suggestion or feedback for the Board and Officers','concernForm()') +
+  '</div>' +
+  '<div class="grid g-4" style="margin-bottom:16px">' +
+    stat('Open', count('Open'), 'Received, not yet picked up') +
+    stat('Ongoing', count('Ongoing'), 'Being worked on or reviewed') +
+    stat('Resolved', count('Resolved'), 'Closed with an answer') +
+    stat('Avg. days to resolve', avg===null ? '—' : Math.round(avg*10)/10, 'Across your resolved items') +
+  '</div>' +
+  tabs('hic',[{id:'all',label:'All',n:mine.length}].concat(IC_STAGES.map(s => ({id:s,label:s,n:count(s)}))),'all') +
+  '<div class="card">' + (list.length ? '<ul class="list">' + list.map(r => { const x = r.x;
+    return '<li><div class="row"><div class="grow"><div class="ttl">'+esc(r.title)+newReplyTag(x)+'</div>' +
+      '<div class="meta"><span class="tag t-grey">'+r.K.label+'</span><span class="tag t-grey">'+esc(r.cat)+'</span>' +
+      '<span class="mono">'+esc(r.ref)+'</span><span>Filed '+fmtDate(r.filed)+'</span>' +
+      (r.done ? '<span>· Resolved in '+icDays(r.days)+'</span>' : '<span>· Open '+r.age+' day'+(r.age===1?'':'s')+'</span>') +
+      (x.against ? '<span>· Against '+esc(x.against)+'</span>' : '') +
+      (x.assignee ? '<span>· Assigned to '+esc(x.assignee)+'</span>' : '') + '</div>' +
+      icSteps(r.stage) +
+      '<div class="body">'+esc(r.K.body(x))+'</div>' +
+      (x.resolution ? '<div class="card card-pad" style="background:var(--emerald-tint);margin-top:10px;border:0">' +
+        '<strong style="font-size:13px">Board resolution</strong><div class="body" style="margin-top:4px">'+esc(x.resolution)+'</div></div>' : '') +
+      threadHTML(x) +
+      '<button class="btn btn-ghost btn-sm" style="margin-top:11px" onclick="openChat(\''+r.K.chat+'\',\''+x.id+'\')">'+(r.stage==='Resolved'?'View conversation':'Message Board &amp; Admin')+'</button>' +
+      '</div><span class="tag '+IC_STAGE_TAG[r.stage]+'" title="Recorded status: '+esc(x.status)+'">'+r.stage+'</span></div></li>'; }).join('') + '</ul>'
+    : empty(t==='all' ? 'Nothing raised yet' : 'Nothing '+t.toLowerCase(),
+        t==='all' ? 'Use the buttons above to report an issue, file a complaint or raise a concern.' : 'Items move here as the admin office updates them.')) + '</div>' +
+  '<div class="grid g-2" style="margin-top:16px">' +
+    sectionCard('Which one should I use?','<div class="card-pad">' +
+      [['Issue','A defect or facility problem in the village. The admin office assigns a crew and updates you.'],
+       ['Complaint','A house rule violation by another household. Logged with a reference number; the Board rules in writing.'],
+       ['Concern','A question, idea or feedback. Starts a conversation with the Board and Officers, not a case.']].map(x =>
+        '<div style="padding:9px 0;border-bottom:1px dashed var(--line)"><strong style="font-size:14px">'+esc(x[0])+'</strong>' +
+        '<div class="meta" style="margin-top:2px">'+esc(x[1])+'</div></div>').join('') + '</div>') +
+    sectionCard('How each item moves','<div class="card-pad">' + IC_STAGES.map(s =>
+      '<div style="padding:9px 0;border-bottom:1px dashed var(--line)"><span class="tag '+IC_STAGE_TAG[s]+'">'+s+'</span>' +
+      '<div class="meta" style="margin-top:4px">'+esc(IC_STAGE_NOTE[s])+'</div></div>').join('') +
+      '<p class="meta" style="margin-top:10px">Unresolved complaints can be escalated to the general assembly or the barangay.</p></div>') +
+    '<div class="span-2">' + sectionCard('House rules you can cite','<ul class="list">' + store.rules.map(r =>
+      '<li><div class="ttl">'+esc(r.title)+'</div><div class="body">'+esc(r.text)+'</div></li>').join('') + '</ul>') + '</div>' +
+  '</div>';
+}
+
+/* ---------- governance: filters ---------- */
+function icFilter(){ return store.icf || (store.icf = { range:'90', from:'', to:'', group:'week', phase:'all', kind:'all' }); }
+function setIcf(k, v){
+  const f = icFilter(); f[k] = v;
+  if(k==='from' || k==='to') f.range = 'custom';
+  if(k==='range' && v!=='custom'){ f.from = ''; f.to = ''; }
+  render();
+}
+function icWeekStart(d){ const s = new Date(d); s.setHours(0,0,0,0); s.setDate(s.getDate()-((s.getDay()+6)%7)); return s; }
+function icBucketStart(d, g){
+  if(g==='day'){ const s = new Date(d); s.setHours(0,0,0,0); return s; }
+  if(g==='week') return icWeekStart(d);
+  return new Date(d.getFullYear(), d.getMonth(), 1);
+}
+function icNextBucket(s, g){ const n = new Date(s); if(g==='day') n.setDate(n.getDate()+1); else if(g==='week') n.setDate(n.getDate()+7); else n.setMonth(n.getMonth()+1); return n; }
+function icBucketLabel(s, g){
+  if(g==='month') return s.toLocaleDateString('en-PH',{month:'short',year:'2-digit'});
+  const l = s.toLocaleDateString('en-PH',{month:'short',day:'numeric'});
+  return l;
+}
+function icBounds(rows){
+  const f = icFilter(), to = new Date(); to.setHours(23,59,59,999);
+  const earliest = rows.length ? new Date(Math.min(...rows.map(r => +r.filed))) : new Date();
+  if(f.range==='custom'){
+    return { from: f.from ? new Date(f.from+'T00:00:00') : earliest, to: f.to ? new Date(f.to+'T23:59:59') : to };
+  }
+  if(f.range==='all') return { from:earliest, to };
+  if(f.range==='week') return { from:icWeekStart(new Date()), to };
+  if(f.range==='month'){ const d = new Date(); return { from:new Date(d.getFullYear(), d.getMonth(), 1), to }; }
+  const from = new Date(+to - Number(f.range)*IC_DAY); from.setHours(0,0,0,0);
+  return { from, to };
+}
+const icIso = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+
+/* ---------- governance: the dashboard ---------- */
+function icDashboard(admin){
+  const f = icFilter();
+  const scoped = icRows().filter(r => (f.phase==='all' || r.phase===f.phase) && (f.kind==='all' || r.kind===f.kind));
+  const { from, to } = icBounds(scoped);
+  const inRange = d => d && d >= from && d <= to;
+  const rows = scoped.filter(r => inRange(r.filed));
+  const resolvedIn = scoped.filter(r => inRange(r.done));
+  const n = s => rows.filter(r => r.stage===s).length;
+  const avg = icAvg(resolvedIn);
+  const openRows = rows.filter(r => r.stage!=='Resolved');
+  const oldest = openRows.length ? Math.max(...openRows.map(r => r.age)) : null;
+
+  /* time buckets: day, week or month — the most recent 16 that fit the range */
+  let buckets = [];
+  for(let b = icBucketStart(from, f.group); b <= to; b = icNextBucket(b, f.group)) buckets.push(b);
+  const trimmed = buckets.length > 16; if(trimmed) buckets = buckets.slice(-16);
+  const bucketOf = d => { const k = +icBucketStart(d, f.group); return buckets.findIndex(b => +b===k); };
+  const filedBy = buckets.map(() => 0), doneBy = buckets.map(() => 0);
+  rows.forEach(r => { const i = bucketOf(r.filed); if(i>=0) filedBy[i]++; });
+  resolvedIn.forEach(r => { const i = bucketOf(r.done); if(i>=0) doneBy[i]++; });
+  const peak = Math.max(1, ...filedBy, ...doneBy);
+  const unit = f.group==='day' ? 'day' : f.group==='week' ? 'week' : 'month';
+
+  const sel = (k, label, opts) => '<label class="fld"><span>'+label+'</span><select class="input" onchange="setIcf(\''+k+'\',this.value)">' +
+    opts.map(o => '<option value="'+o[0]+'"'+(String(f[k])===o[0]?' selected':'')+'>'+o[1]+'</option>').join('') + '</select></label>';
+  const filters = '<div class="card card-pad" style="margin-bottom:16px"><div class="ic-filters">' +
+    sel('range','Date range',[['week','This week'],['month','This month'],['30','Last 30 days'],['90','Last 90 days'],['365','Last 12 months'],['all','All time'],['custom','Custom dates']]) +
+    '<label class="fld"><span>From</span><input class="input" type="date" value="'+icIso(from)+'" max="'+icIso(to)+'" onchange="setIcf(\'from\',this.value)"></label>' +
+    '<label class="fld"><span>To</span><input class="input" type="date" value="'+icIso(to)+'" min="'+icIso(from)+'" onchange="setIcf(\'to\',this.value)"></label>' +
+    sel('group','Group by',[['day','Day'],['week','Week'],['month','Month']]) +
+    sel('phase','Phase',[['all','All phases'],['Phase 1','Phase 1'],['Phase 2','Phase 2'],['Phase 3','Phase 3'],['Unassigned','Unassigned']]) +
+    sel('kind','Type',[['all','All types'],['issue','Issues'],['complaint','Complaints'],['concern','Concerns']]) +
+  '</div><div class="meta" style="margin:0">Showing items filed '+fmtDate(from)+' – '+fmtDate(to)+'. Days to resolution counts items closed in the same window.</div></div>';
+
+  const stats = '<div class="grid g-3" style="margin-bottom:16px">' +
+    stat('Filed', rows.length, 'In the selected window') +
+    stat('Open', n('Open'), 'Not yet picked up') +
+    stat('Ongoing', n('Ongoing'), 'Assigned or under review') +
+    stat('Resolved', n('Resolved'), rows.length ? Math.round(n('Resolved')/rows.length*100)+'% of items filed' : 'Nothing filed') +
+    stat('Avg. days to resolve', avg===null ? '—' : Math.round(avg*10)/10, resolvedIn.length+' item'+(resolvedIn.length===1?'':'s')+' closed in window') +
+    stat('Oldest unresolved', oldest===null ? '—' : oldest+' d', oldest===null ? 'Nothing waiting' : 'Days since filing') +
+  '</div>';
+
+  /* Phase 1–3 breakdown */
+  const phases = ['Phase 1','Phase 2','Phase 3'].concat(rows.some(r => r.phase==='Unassigned') ? ['Unassigned'] : []);
+  const phaseCard = sectionCard('Phase 1–3 breakdown',
+    '<div class="card-pad" style="padding-bottom:4px"><div class="ic-legend">' + IC_STAGES.map(s =>
+      '<span><i class="ic-s-'+s.toLowerCase()+'"></i>'+s+'</span>').join('') + '</div></div>' +
+    '<div class="tablewrap"><table><thead><tr><th>Phase</th><th>Filed</th><th>Open</th><th>Ongoing</th><th>Resolved</th><th>Avg. days</th><th class="hide-sm">Status mix</th></tr></thead><tbody>' +
+    phases.map(ph => {
+      const pr = rows.filter(r => r.phase===ph), c = s => pr.filter(r => r.stage===s).length;
+      const mix = pr.length ? '<div class="ic-stack">' + IC_STAGES.map(s => c(s) ? '<i class="ic-s-'+s.toLowerCase()+'" style="flex:'+c(s)+'" title="'+ph+' · '+s+': '+c(s)+'"></i>' : '').join('') + '</div>' : '<span class="meta">—</span>';
+      return '<tr><td class="ic-nw" data-label="Phase"><strong>'+esc(ph)+'</strong></td><td class="mono" data-label="Filed">'+pr.length+'</td>' +
+        '<td class="mono" data-label="Open">'+c('Open')+'</td><td class="mono" data-label="Ongoing">'+c('Ongoing')+'</td><td class="mono" data-label="Resolved">'+c('Resolved')+'</td>' +
+        '<td class="mono ic-nw" data-label="Avg. days">'+icDays(icAvg(resolvedIn.filter(r => r.phase===ph)))+'</td>' +
+        '<td class="hide-sm" data-label="Status mix">'+mix+'</td></tr>';
+    }).join('') + '</tbody></table></div>');
+
+  /* filed vs resolved over time */
+  const trendCard = sectionCard('Filed vs resolved by '+unit,
+    '<div class="card-pad"><div class="ic-legend"><span><i style="background:var(--ic-filed)"></i>Filed</span><span><i style="background:var(--ic-done)"></i>Resolved</span></div>' +
+    (buckets.length ? '<div class="ic-trend" role="img" aria-label="Items filed and resolved per '+unit+'">' + buckets.map((b,i) =>
+      '<div class="col"><div class="pair">' +
+        '<div class="bar" style="background:var(--ic-filed);height:'+(filedBy[i]/peak*100)+'%" title="'+icBucketLabel(b,f.group)+' · Filed: '+filedBy[i]+'">'+(filedBy[i]?'<b>'+filedBy[i]+'</b>':'')+'</div>' +
+        '<div class="bar" style="background:var(--ic-done);height:'+(doneBy[i]/peak*100)+'%" title="'+icBucketLabel(b,f.group)+' · Resolved: '+doneBy[i]+'">'+(doneBy[i]?'<b>'+doneBy[i]+'</b>':'')+'</div>' +
+      '</div><div class="lbl">'+esc(icBucketLabel(b,f.group))+'</div></div>').join('') + '</div>' : empty('No dates in range','Widen the date range.')) +
+    (trimmed ? '<p class="meta" style="margin-top:10px">Showing the latest 16 '+unit+'s. Group by a longer period to see the whole range.</p>' : '') + '</div>');
+
+  /* category trends: categories × periods, shaded by count */
+  const cats = [...new Set(rows.map(r => r.cat))].map(c => ({ c, rs:rows.filter(r => r.cat===c) })).sort((a,b) => b.rs.length-a.rs.length);
+  const cellPeak = Math.max(1, ...cats.flatMap(c => buckets.map((b,i) => c.rs.filter(r => bucketOf(r.filed)===i).length)));
+  const catCard = sectionCard('Category trends by '+unit, cats.length
+    ? '<div class="card-pad" style="overflow-x:auto"><table class="ic-heat"><thead><tr><th>Category</th>' +
+      buckets.map(b => '<th>'+esc(icBucketLabel(b,f.group))+'</th>').join('') + '<th>Total</th><th>Avg. days</th></tr></thead><tbody>' +
+      cats.map(c => '<tr><td>'+esc(c.c)+'</td>' + buckets.map((b,i) => {
+          const k = c.rs.filter(r => bucketOf(r.filed)===i).length;
+          return '<td style="background:'+(k ? 'color-mix(in srgb, var(--slate) '+Math.round(12+k/cellPeak*38)+'%, transparent)' : 'var(--paper)')+'" title="'+esc(c.c)+' · '+icBucketLabel(b,f.group)+': '+k+'">'+(k||'')+'</td>';
+        }).join('') +
+        '<td class="tot">'+c.rs.length+'</td><td>'+icDays(icAvg(resolvedIn.filter(r => r.cat===c.c)))+'</td></tr>').join('') +
+      '</tbody></table><p class="meta" style="margin-top:8px">Darker cells mean more items filed in that '+unit+'.</p></div>'
+    : empty('No items in this window','Try a wider date range or another phase.'));
+
+  /* register */
+  const shown = rows.slice(0, 60);
+  const regCard = sectionCard('Register', shown.length
+    ? '<div class="tablewrap"><table><thead><tr><th>Ref</th>'+(admin?'<th>Item</th><th class="hide-sm">Unit</th>':'')+'<th>Type</th><th class="hide-sm">Category</th><th>Phase</th><th class="hide-sm">Filed</th><th>Status</th><th>Days open / to resolve</th>'+(admin?'<th></th>':'')+'</tr></thead><tbody>' +
+      shown.map(r => '<tr><td class="mono ic-nw" data-label="Ref">'+esc(r.ref)+'</td>' +
+        (admin ? '<td data-label="Item"><strong>'+esc(r.title)+'</strong>'+newMsgTag(r.x)+'</td><td class="hide-sm mono" data-label="Unit">'+esc(r.x.unit||'—')+'</td>' : '') +
+        '<td data-label="Type">'+r.K.label+'</td><td class="hide-sm" data-label="Category">'+esc(r.cat)+'</td><td class="ic-nw" data-label="Phase">'+esc(r.phase)+'</td>' +
+        '<td class="hide-sm ic-nw" data-label="Filed">'+r.filed.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'2-digit'})+'</td>' +
+        '<td data-label="Status"><span class="tag '+IC_STAGE_TAG[r.stage]+'" title="Recorded status: '+esc(r.x.status)+'">'+r.stage+'</span></td>' +
+        '<td class="mono ic-nw" data-label="Days">'+(r.done ? icDays(r.days) : r.age+' d open')+'</td>' +
+        (admin ? '<td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="openChat(\''+r.K.chat+'\',\''+r.x.id+'\')">Open</button></td>' : '') + '</tr>').join('') +
+      '</tbody></table></div>' + (rows.length > shown.length ? '<p class="meta card-pad" style="margin:0">Showing the latest 60 of '+rows.length+'. Narrow the filters to see the rest.</p>' : '')
+    : empty('Nothing filed in this window','Adjust the date range, phase or type above.'),
+    admin ? '<button class="btn btn-ghost btn-sm" onclick="go(\'messages\')">Open inbox</button>' : '');
+
+  return filters + stats +
+    '<div class="grid ic-dash" style="margin-bottom:16px">' + phaseCard + trendCard + catCard + '</div>' + regCard;
+}
+
 const HOME = {
+  issues(){ return icHomeView(); },
   feed(){
     const s = store.session;
     const due = store.dues.find(d => d.unit===myUnit() && d.period==='August 2026');
-    const mine = store.requests.filter(r => r.unit===myUnit());
+    const mine = icRows().filter(r => r.x.unit===myUnit());
     const fresh = store.announcements.filter(a=>!store.seen.has(a.id)).length;
     const banner = due && due.status!=='Paid'
       ? '<div class="card card-pad" style="border-left:3px solid var(--amber);margin-bottom:14px">' +
@@ -3380,11 +3691,11 @@ const HOME = {
             (isNew?'<button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="markSeen(\''+a.id+'\')">Mark read</button>':'') +
           '</div></div></li>';
         }).join('') + '</ul></div>' +
-      sectionCard('My requests', mine.length ? '<ul class="list">' + mine.slice(0,3).map(r =>
-        '<li><div class="row"><div class="grow"><div class="ttl">'+esc(r.title)+newReplyTag(r)+'</div><div class="meta">'+ago(r.at)+'</div></div>' +
-        '<span class="tag '+statusTag(r.status)+'">'+esc(r.status)+'</span></div></li>').join('') + '</ul>'
+      sectionCard('My issues & concerns', mine.length ? '<ul class="list">' + mine.slice(0,3).map(r =>
+        '<li><div class="row"><div class="grow"><div class="ttl">'+esc(r.title)+newReplyTag(r.x)+'</div><div class="meta">'+r.K.label+' · '+ago(r.filed)+'</div></div>' +
+        '<span class="tag '+IC_STAGE_TAG[r.stage]+'">'+r.stage+'</span></div></li>').join('') + '</ul>'
         : empty('Nothing filed','Report an issue and the board picks it up.'),
-        '<button class="btn btn-ghost btn-sm" onclick="go(\'myrequests\')">See all</button>') +
+        '<button class="btn btn-ghost btn-sm" onclick="go(\'issues\')">See all</button>') +
       sectionCard('Coming up','<ul class="list">' + store.events.slice().sort((a,b)=>a.date<b.date?-1:1).map(e =>
         '<li><div class="ttl">'+esc(e.title)+'</div><div class="meta">'+fmtDate(e.date)+' · '+esc(e.time)+' · '+esc(e.where)+'</div></li>').join('') + '</ul>') +
     '</div>';
@@ -4096,6 +4407,7 @@ const BOARD = {
 
   /* ---------- MESSAGES ---------- */
   messages(){ return messagesInboxView(); },
+  issues(){ return head('Issues dashboard','Every issue, complaint and concern across Phases 1–3 — status, days to resolution and category trends. Names and unit numbers are withheld from Board summaries.') + icDashboard(false); },
 
   /* ---------- CALENDAR ---------- */
   calendar(){
@@ -4342,7 +4654,7 @@ function markSeen(id){ store.seen.add(id); render(); }
 function markAllSeen(){ store.announcements.forEach(a=>store.seen.add(a.id)); render(); }
 
 /* requests */
-function setReq(id,status){ const r=store.requests.find(x=>x.id===id); r.status=status;
+function setReq(id,status){ const r=store.requests.find(x=>x.id===id); r.status=status; r.resolvedAt = status==='Resolved' ? new Date() : null;
   commit('Ticket for unit '+r.unit+' set to '+status.toLowerCase()+'.',{title:'Request updated',chat:{kind:'request',id:r.id}}); }
 function assignForm(id){
   const r = store.requests.find(x=>x.id===id);
@@ -5490,7 +5802,7 @@ function closeIncident(id){ const i=store.incidents.find(x=>x.id===id); i.status
   commit(i.kind+' incident at '+i.where+' closed.',{title:'Incident closed'}); }
 
 /* governance */
-function setComplaint(id,status){ const c=store.complaints.find(x=>x.id===id); c.status=status;
+function setComplaint(id,status){ const c=store.complaints.find(x=>x.id===id); c.status=status; c.resolvedAt = status==='Resolved' ? new Date() : null;
   commit('Complaint '+c.ref+' marked '+status.toLowerCase()+'.',{title:'Complaint updated',chat:{kind:'complaint',id:c.id}}); }
 function resolveComplaint(id){
   const c = store.complaints.find(x=>x.id===id);
@@ -5501,7 +5813,7 @@ function resolveComplaint(id){
     'Post resolution', () => {
       const t=$('#f_res').value.trim();
       if(!t){ toast('info','Write the resolution','The homeowner needs a written answer.'); return false; }
-      c.resolution=t; c.status='Resolved';
+      c.resolution=t; c.status='Resolved'; c.resolvedAt=new Date();
       commit('Complaint '+c.ref+' resolved and posted to unit '+c.unit+'.',{title:'Complaint resolved',forUnit:c.unit,chat:{kind:'complaint',id:c.id}}); return true; });
 }
 function complaintForm(){
@@ -5536,7 +5848,7 @@ function concernForm(){
       store.concerns.unshift(item);
       commit('Concern raised by unit '+myUnit()+' — '+sub+'.',{title:'Concern sent',audience:['admin','board'],chat:{kind:'concern',id:item.id}}); return true; });
 }
-function closeConcern(id){ const n=store.concerns.find(x=>x.id===id); n.status='Closed';
+function closeConcern(id){ const n=store.concerns.find(x=>x.id===id); n.status='Closed'; n.resolvedAt=new Date();
   commit('Thread “'+n.subject+'” closed.',{title:'Thread closed',chat:{kind:'concern',id:n.id}}); }
 function ruleForm(){
   modal('Add a house rule','Homeowners can cite this when filing a complaint.',
