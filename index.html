@@ -6993,6 +6993,11 @@ async function loadCloud(){
 }
 
 function pushSoon(){ if(cloudOn && !pushTimer) pushTimer = setTimeout(pushNow, 400); }
+/* put one section back to what the server holds, after the database refused a change to it */
+async function reloadKey(k){
+  const { data } = await sb.from('portal_data').select('key,value').eq('key', k).maybeSingle();
+  if(data) applyRow(data); else synced[k] = sig(k);
+}
 async function pushNow(){
   clearTimeout(pushTimer); pushTimer = null;
   if(!cloudOn) return;
@@ -7007,7 +7012,18 @@ async function pushNow(){
   });
   if(rows.length){
     const { error } = await sb.from('portal_data').upsert(rows);
-    if(error){ rows.forEach(r => { delete synced[r.key]; }); syncFail(error); }
+    if(error){
+      /* save each section on its own, so one change the database refuses does not hold back the rest */
+      const results = rows.length > 1 ? await Promise.all(rows.map(r => sb.from('portal_data').upsert(r))) : [{ error }];
+      let refused = null, failed = null;
+      for(let i = 0; i < rows.length; i++){
+        const e = results[i].error; if(!e) continue;
+        if(e.code === 'P0001' || e.code === '42501'){ refused = e; await reloadKey(rows[i].key); }   /* a database rule said no */
+        else { failed = e; delete synced[rows[i].key]; }                                             /* network etc. — retry later */
+      }
+      if(refused){ render(); toast('info','Change not allowed', refused.message+' Your screen now shows the saved version.'); }
+      if(failed) syncFail(failed);
+    }
   }
   const now = {};
   store.accounts.forEach(a => { now[a.id] = canon(acctRow(a)); });
