@@ -508,6 +508,37 @@ html[data-theme="dark"] .hl-box h4{color:var(--ink)}
 .modal-foot .btn{flex:1}
 /* facility booking: calendar + time-slot grid */
 .modal.modal-wide{max-width:820px}
+/* gate pass slip */
+.gp-slip{border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--surface,#fff)}
+.gp-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:12px}
+.gp-org{font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2)}
+.gp-title{font-family:var(--display);font-size:22px;font-weight:800;letter-spacing:.06em;margin-top:2px}
+.gp-no{font-size:13px;font-weight:700;margin-bottom:5px}
+.gp-line{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;font-size:13.5px;margin-bottom:10px}
+.gp-grow{flex:1}
+.gp-box{display:inline-grid;place-items:center;width:17px;height:17px;border:1.5px solid var(--ink);border-radius:3px;font-size:12px;font-weight:800;vertical-align:-3px;margin-right:4px}
+.gp-field{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;border-bottom:1px dashed var(--line);padding:6px 0;font-size:13.5px}
+.gp-field span{color:var(--ink-3);font-size:12.5px}
+.gp-items{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+.gp-items th{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);text-align:left;border:1px solid var(--line);padding:6px 8px;background:var(--paper)}
+.gp-items td{border:1px solid var(--line);padding:7px 8px;height:32px}
+.gp-signs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:6px}
+.gp-signs div{border-top:1.5px solid var(--ink);padding-top:5px;font-size:12.5px;display:flex;flex-direction:column;min-width:0}
+.gp-signs b{font-size:13px;overflow-wrap:anywhere}.gp-signs span{color:var(--ink-3);font-size:11.5px}.gp-signs em{font-style:normal;color:var(--ink-2);font-size:11.5px}
+@media(max-width:520px){.gp-signs{grid-template-columns:1fr}}
+.gp-note{margin-top:10px;padding:9px 12px;border-radius:9px;font-size:13px}
+.gp-note.rose{background:var(--rose-tint);color:var(--ink)}
+.gp-row{display:grid;grid-template-columns:2fr .7fr 1fr 1.3fr auto;gap:6px;margin-bottom:6px}
+.gp-row .input{padding:8px 9px;font-size:13.5px}
+@media(max-width:560px){.gp-row{grid-template-columns:1fr 1fr}.gp-row .input:first-child{grid-column:1/-1}}
+.gp-flow{display:grid;gap:10px;grid-template-columns:1fr;margin-bottom:16px}
+@media(min-width:760px){.gp-flow{grid-template-columns:repeat(3,1fr)}}
+.gp-flow>div{border:1px solid var(--line);border-radius:var(--radius);padding:13px 14px;background:var(--surface,#fff)}
+.gp-flow .n{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--slate);color:#fff;font-size:12px;font-weight:700;margin-right:8px}
+.gp-flow b{font-size:14px}.gp-flow p{margin:6px 0 0;font-size:12.5px;color:var(--ink-3)}
+html[data-theme="dark"] .gp-flow .n{color:#0E121C}
+.gp-future{opacity:.75;border-style:dashed}
+@media print{.gp-slip{border:0;padding:0}}
 .bk-pick{display:grid;gap:18px;grid-template-columns:1fr;margin:4px 0 14px;padding-top:14px;border-top:1px solid var(--line)}
 @media(min-width:720px){.bk-pick{grid-template-columns:250px 1fr}}
 .bk-step{font-size:14px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -984,6 +1015,21 @@ const store = {
     { id:'i1', date:'2026-08-23', time:'11:40 PM', kind:'Noise', where:'Phase 2, near C-19', detail:'Videoke past quiet hours; guard issued a reminder and it stopped.', status:'Closed' },
     { id:'i2', date:'2026-08-21', time:'2:15 AM', kind:'Trespassing', where:'Perimeter fence, Phase 3', detail:'Unidentified person seen on CCTV climbing near the back fence. Barangay tanod notified.', status:'Under review' }
   ],
+  gatePasses:[
+    { id:'gp1', no:'GP-2610-001', unit:'A-04', by:'Marco Villanueva', at:new Date(Date.now()-864e5*2), type:'Delivery', purpose:'Delivery',
+      date:new Date(Date.now()+864e5*0).toISOString().slice(0,10), time:'9:00 AM – 12:00 NN', bearer:'Europroves Trading', address:'Unit A-04 · Phase 1',
+      plate:'NAB 2045', items:[{ desc:'Water tank, 750 litres', qty:'1', unit:'pc', remarks:'Rooftop install' }],
+      status:'Approved', notedBy:'Arnel Bautista (HOA President)', notedAt:new Date(Date.now()-864e5*1) },
+    { id:'gp2', no:'GP-2610-002', unit:'C-21', by:'Jonna Reyes', at:new Date(Date.now()-36e5*5), type:'Delivery', purpose:'Construction',
+      date:new Date(Date.now()+864e5*2).toISOString().slice(0,10), time:'8:00 AM – 5:00 PM', bearer:'JR Builders (foreman: Rolly Santos)', address:'Unit C-21 · Phase 2',
+      plate:'TXG 209', items:[{ desc:'Portland cement', qty:'20', unit:'bags', remarks:'Kitchen extension' },{ desc:'Hollow blocks', qty:'200', unit:'pcs', remarks:'' }],
+      status:'Pending' },
+    { id:'gp3', no:'GP-2609-014', unit:'D-07', by:'Ferdie Lim', at:new Date(Date.now()-864e5*9), type:'Pull-out', purpose:'Services',
+      date:new Date(Date.now()-864e5*6).toISOString().slice(0,10), time:'', bearer:'Ramos Aircon Service', address:'Unit D-07 · Phase 3',
+      plate:'', items:[{ desc:'Old window-type aircon', qty:'1', unit:'unit', remarks:'For disposal' }],
+      status:'Checked', notedBy:'Arnel Bautista (HOA President)', notedAt:new Date(Date.now()-864e5*8), checkedBy:'SG Onting', checkedAt:new Date(Date.now()-864e5*6) }
+  ],
+  secAdmin:{ oic:'u7', secondary:'', revoked:{} },
   guards:[
     { post:'Main gate', name:'SG Onting', shift:'6 AM – 6 PM', contact:'0917 555 0110' },
     { post:'Main gate', name:'SG Perez', shift:'6 PM – 6 AM', contact:'0917 555 0111' },
@@ -1100,7 +1146,7 @@ const ROLE_MATRIX = [
     exp:'Renter-visible notices, permitted amenities, visitor passes for the gate, own profile and approved community information.',
     deny:'Owner financial ledger, Board-only records, other residents\u2019 data.' },
   { role:'security', label:'Security',
-    exp:'Gate-related information and visitor pass validation when enabled.',
+    exp:'Approved gate passes, the duty roster and minimum gate information. The OIC and secondary OIC manage the roster and guard access.',
     deny:'Billing, expenses, Board minutes and unrelated resident financial data.' },
   { role:'admin', label:'Admin / Staff',
     exp:'Operational queues, user administration, bookings, notices, documents and assigned reporting.',
@@ -1804,7 +1850,7 @@ const NAV = {
       { id:'homeowners', label:'Homeowners',              icon:'users', badge:()=>store.accounts.filter(a=>a.status==='Invited').length + regPending().length },
       { id:'profiles',   label:'Homeowner Profiles',      icon:'users' },
       { id:'property',   label:'Property',                icon:'building' },
-      { id:'operations', label:'Operations & Maintenance',icon:'wrench', badge:()=>store.requests.filter(r=>r.status!=='Resolved').length },
+      { id:'operations', label:'Operations & Maintenance',icon:'wrench', badge:()=>store.requests.filter(r=>r.status!=='Resolved').length + (store.gatePasses||[]).filter(p=>p.status==='Pending'||p.status==='Held').length },
       { id:'marketplace',label:'Livelihood and Marketplace', icon:'tag', badge:()=>lhPendingCount() },
       { id:'calendar',   label:'Calendar',                icon:'calendar' },
       { id:'security',   label:'Security & Access',       icon:'shield', badge:()=>store.passes.filter(p=>p.status==='Pending').length },
@@ -1828,7 +1874,6 @@ const NAV = {
       { id:'feed',       label:'Notices',        icon:'megaphone', badge:()=>visibleAnnouncements().filter(a=>!store.seen.has(a.id)).length },
       { id:'events',     label:'Events & amenities', icon:'calendar' },
       { id:'myrequests', label:'My requests',    icon:'wrench' },
-      { id:'visitors',   label:'Visitor pass',   icon:'shield', badge:()=>store.passes.filter(p=>p.unit===myUnit()&&p.status==='Pending').length },
       { id:'rides',      label:'Shuttle service', icon:'car', badge:()=>myRides().filter(r=>r.status==='On the way'||r.status==='Arrived').length },
       { id:'concerns',   label:'Concerns',       icon:'chat' }
     ]},
@@ -1851,7 +1896,7 @@ const NAV = {
   ],
   security:[
     { g:'Gate', items:[
-      { id:'gate',      label:'Pass validation', icon:'shield', badge:()=>store.passes.filter(p=>p.status==='Active').length },
+      { id:'gatepasses', label:'Gate passes',    icon:'shield', badge:()=>(store.gatePasses||[]).filter(p=>p.status==='Approved'&&p.date<=gpToday()).length },
       { id:'visitorlookup', label:'Visitor lookup', icon:'users', badge:()=>visitorProfiles().filter(v=>v.reasons.length).length },
       { id:'vehicles',  label:'Vehicle lookup',  icon:'grid' },
       { id:'incidents', label:'Incident log',    icon:'flag' },
@@ -1891,7 +1936,7 @@ const NAV = {
       { id:'mydues',     label:'My dues',        icon:'peso' },
       { id:'events',     label:'Events',         icon:'calendar' },
       { id:'book',       label:'Book a facility',icon:'grid' },
-      { id:'visitors',   label:'Visitor pass',   icon:'shield', badge:()=>store.passes.filter(p=>p.unit===myUnit()&&p.status==='Pending').length },
+      { id:'gatepass',   label:'Gate pass',      icon:'shield', badge:()=>(store.gatePasses||[]).filter(p=>p.unit===myUnit()&&(p.status==='Held'||p.status==='Declined'&&p.notedAt&&Date.now()-new Date(p.notedAt)<864e5*3)).length },
       { id:'marketplace',label:'Livelihood and Marketplace', icon:'tag' },
       { id:'rides',      label:'Shuttle service', icon:'car', badge:()=>myRides().filter(r=>r.status==='On the way'||r.status==='Arrived').length }
     ]},
@@ -1937,6 +1982,7 @@ function pageOn(role, id, accountId){
   return !((store.hiddenPages[role] || []).includes(id));
 }
 function navFor(role, accountId){
+  if(role==='security' && store.session.accountId===accountId && secRevokedMe()) return [{ g:'Account', items:[{ id:'settings', label:'Settings', icon:'gear' }] }];
   return NAV[role].map(g => ({ g:g.g, items:g.items.filter(it => pageOn(role, it.id, accountId)) })).filter(g => g.items.length);
 }
 function go(view){
@@ -2037,7 +2083,7 @@ function render(){
     '<div style="margin-top:5px;font-size:11.5px">Signed in with '+esc(s.method==='password'?'email':s.method)+'</div>';
 
   const V = VIEWS[s.role] || HOME;
-  $('#main').innerHTML = viewAsBar() + syncRail() + (V[store.view] || V[Object.keys(V)[0]])();
+  $('#main').innerHTML = viewAsBar() + syncRail() + (secRevokedMe() && store.view!=='settings' ? secBlockedView() : (V[store.view] || V[Object.keys(V)[0]])());
   saveSoon();
 }
 function syncRail(){
@@ -2405,6 +2451,7 @@ const ADMIN = {
   operations(){
     const t = tabOf('ops','requests');
     const inner = {
+      gatepasses(){ return gpAdminTab(); },
       requests(){
         return sectionCard('Maintenance queue', '<ul class="list">' + store.requests.map(r =>
           '<li><div class="row"><div class="grow"><div class="ttl">'+esc(r.title)+newMsgTag(r)+'</div>' +
@@ -2437,6 +2484,7 @@ const ADMIN = {
     return head('Operations & Maintenance','Tickets from homeowners, facility use and the standing maintenance calendar.') +
       tabs('ops',[
         {id:'requests',label:'Requests',n:store.requests.filter(r=>r.status!=='Resolved').length},
+        {id:'gatepasses',label:'Gate passes',n:(store.gatePasses||[]).filter(p=>p.status==='Pending'||p.status==='Held').length},
         {id:'bookings',label:'Bookings',n:store.bookings.filter(b=>b.status==='Pending').length},
         {id:'schedule',label:'Preventive schedule'}],'requests') + inner;
   },
@@ -2507,7 +2555,7 @@ const ADMIN = {
 
   /* ---------- SECURITY ---------- */
   security(){
-    const t = tabOf('sec','passes');
+    const t = tabOf('sec','gatepasses');
     const inner = {
       passes(){
         return sectionCard('Visitor passes',
@@ -2539,20 +2587,17 @@ const ADMIN = {
           '<button class="btn btn-ghost btn-sm" onclick="incidentForm()">Log incident</button>');
       },
       lookup(){ return visitorLookupBody(); },
-      guards(){
-        return sectionCard('Guard roster',
-          '<div class="tablewrap"><table><thead><tr><th>Post</th><th>Guard on duty</th><th>Shift</th><th class="hide-sm">Contact</th></tr></thead><tbody>' +
-          store.guards.map(g => '<tr><td data-label="Post">'+esc(g.post)+'</td><td data-label="Guard on duty"><strong>'+esc(g.name)+'</strong></td><td data-label="Shift">'+esc(g.shift)+'</td>' +
-            '<td class="hide-sm mono" data-label="Contact">'+esc(g.contact)+'</td></tr>').join('') + '</tbody></table></div>');
-      }
+      guards(){ return rosterManageHTML(); },
+      gatepasses(){ return gpAdminTab(); }
     }[t]();
     return head('Security & Access Control','Gate passes, vehicle tags, the incident log and who is on post.') +
       tabs('sec',[
-        {id:'passes',label:'Visitor passes',n:store.passes.filter(p=>p.status==='Pending').length},
+        {id:'gatepasses',label:'Gate passes',n:(store.gatePasses||[]).filter(p=>p.status==='Pending').length},
+        {id:'passes',label:'Visitor passes (future phase)',n:store.passes.filter(p=>p.status==='Pending').length},
         {id:'lookup',label:'Visitor lookup',n:visitorProfiles().filter(v=>v.reasons.length).length},
         {id:'stickers',label:'Vehicle stickers'},
         {id:'incidents',label:'Incidents'},
-        {id:'guards',label:'Guard roster'}],'passes') + inner;
+        {id:'guards',label:'Guard roster & OIC'}],'gatepasses') + inner;
   },
 
   /* ---------- GOVERNANCE ---------- */
@@ -3707,8 +3752,320 @@ function icDashboard(admin){
     '<div class="grid ic-dash" style="margin-bottom:16px">' + phaseCard + trendCard + catCard + '</div>' + regCard;
 }
 
+/* ============================================================
+   GATE PASS — construction, services and deliveries.
+   Homeowner submits → Admin, Ops & Maintenance approves → the guard
+   on duty sees the approved pass and checks it at the gate.
+   Visitor pre-registration and QR scanning stay a future phase.
+============================================================ */
+const GP_PURPOSES = ['Construction','Services','Delivery'];
+const GP_STATUS_TAG = { Pending:'t-amber', Approved:'t-emerald', Checked:'t-grey', Held:'t-rose', Declined:'t-rose', Cancelled:'t-grey' };
+const gpTag = s => '<span class="tag '+(GP_STATUS_TAG[s]||'t-grey')+'">'+esc(s==='Checked'?'Checked at gate':s)+'</span>';
+const gpToday = () => bkIso(new Date());
+function gpFind(id){ return (store.gatePasses||[]).find(p => p.id===id); }
+function gpAddress(unit){
+  const u = store.units.find(x => x.unit===unit);
+  return 'Unit '+unit+(u && u.phase ? ' · '+u.phase : '');
+}
+function gpNextNo(){
+  const d = new Date(), pre = 'GP-'+String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,'0')+'-';
+  const n = (store.gatePasses||[]).filter(p => String(p.no).startsWith(pre)).length + 1;
+  return pre + String(n).padStart(3,'0');
+}
+
+/* the pass itself, laid out like the paper slip */
+function gpSlipHTML(p){
+  const box = on => '<span class="gp-box">'+(on?'✓':'')+'</span>';
+  const rows = p.items.concat(Array(Math.max(0, 3-p.items.length)).fill({ desc:'', qty:'', unit:'', remarks:'' }));
+  return '<div class="gp-slip">' +
+    '<div class="gp-top"><div><div class="gp-org">'+esc(store.settings.assocName)+'</div><div class="gp-title">GATE PASS</div></div>' +
+      '<div style="text-align:right"><div class="mono gp-no">'+esc(p.no)+'</div>'+gpTag(p.status)+'</div></div>' +
+    '<div class="gp-line"><span>'+box(p.type==='Delivery')+' Delivery</span><span>'+box(p.type==='Pull-out')+' Pull-out</span>' +
+      '<span class="tag t-grey">'+esc(p.purpose)+'</span><span class="gp-grow"></span><span><b>Date:</b> '+fmtDate(p.date)+(p.time?' · '+esc(p.time):'')+'</span></div>' +
+    '<div class="gp-field"><span>This is to authorize the bearer</span><b>'+esc(p.bearer)+'</b></div>' +
+    '<div class="gp-field"><span>To '+(p.type==='Pull-out'?'pull out the following from':'deliver the following to')+' unit</span><b>'+esc(p.address)+'</b></div>' +
+    (p.plate ? '<div class="gp-field"><span>Vehicle plate</span><b class="mono">'+esc(p.plate)+'</b></div>' : '') +
+    '<table class="gp-items"><thead><tr><th>Item / description</th><th>Quantity</th><th>Unit</th><th>Remarks</th></tr></thead><tbody>' +
+      rows.map(i => '<tr><td>'+esc(i.desc)+'</td><td class="mono">'+esc(i.qty)+'</td><td>'+esc(i.unit)+'</td><td>'+esc(i.remarks)+'</td></tr>').join('') +
+    '</tbody></table>' +
+    '<div class="gp-signs">' +
+      '<div><b>'+esc(p.by)+'</b><span>Authorized by · Unit owner</span><em>'+fmtDate(p.at)+'</em></div>' +
+      '<div><b>'+(p.notedBy?esc(p.notedBy):'&nbsp;')+'</b><span>Noted by · Administration office</span><em>'+(p.notedAt?fmtDate(p.notedAt)+' '+clock(p.notedAt):p.status==='Pending'?'Awaiting approval':'—')+'</em></div>' +
+      '<div><b>'+(p.checkedBy?esc(p.checkedBy):'&nbsp;')+'</b><span>Checked by · Guard on duty</span><em>'+(p.checkedAt?fmtDate(p.checkedAt)+' '+clock(p.checkedAt):'—')+'</em></div>' +
+    '</div>' +
+    (p.declineReason ? '<div class="gp-note rose"><b>Declined:</b> '+esc(p.declineReason)+'</div>' : '') +
+    (p.flag ? '<div class="gp-note rose"><b>Held at the gate:</b> '+esc(p.flag)+'</div>' : '') +
+  '</div>';
+}
+function gpView(id){
+  const p = gpFind(id); if(!p) return;
+  modal('Gate pass '+p.no, p.purpose+' · '+gpAddress(p.unit), gpSlipHTML(p), 'Print', () => { gpPrint(id); return false; });
+  bkWide();
+}
+function gpPrint(id){
+  const p = gpFind(id), w = window.open('', '_blank');
+  if(!w){ toast('info','Allow pop-ups','Your browser blocked the print window.'); return; }
+  const css = [...document.querySelectorAll('style')].map(s => s.textContent).join('\n');
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+esc(p.no)+'</title><style>'+css+
+    'body{background:#fff;padding:24px}.gp-slip{max-width:760px;margin:0 auto}</style></head><body>'+gpSlipHTML(p)+'</body></html>');
+  w.document.close(); w.focus(); setTimeout(() => w.print(), 300);
+}
+
+/* ---------- homeowner: request a pass ---------- */
+function gpItemRow(i){
+  i = i || {};
+  return '<div class="gp-row"><input class="input" data-k="desc" placeholder="Item / description" value="'+esc(i.desc||'')+'">' +
+    '<input class="input" data-k="qty" placeholder="Qty" inputmode="decimal" value="'+esc(i.qty||'')+'">' +
+    '<input class="input" data-k="unit" placeholder="Unit (pc, bag)" value="'+esc(i.unit||'')+'">' +
+    '<input class="input" data-k="remarks" placeholder="Remarks" value="'+esc(i.remarks||'')+'">' +
+    '<button type="button" class="btn btn-ghost btn-sm" aria-label="Remove item" onclick="this.parentNode.remove()">✕</button></div>';
+}
+function gpAddRow(){ $('#gpRows').insertAdjacentHTML('beforeend', gpItemRow()); }
+function gpForm(){
+  const today = gpToday();
+  modal('Request a gate pass','For construction materials, service crews and deliveries. Admin – Ops & Maintenance approves it, then the guard on duty sees it at the gate.',
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<div class="fld"><span style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Pass type</span><div class="chiprow" role="radiogroup">' +
+        ['Delivery','Pull-out'].map((t,i) => '<label class="chip"><input type="radio" name="gp_type" value="'+t+'"'+(i===0?' checked':'')+' style="margin-right:6px">'+t+'</label>').join('') + '</div></div>' +
+      '<label class="fld"><span>Purpose</span><select class="input" id="gp_purpose">'+GP_PURPOSES.map(x=>'<option>'+x+'</option>').join('')+'</select></label>' +
+      '<label class="fld"><span>Date</span><input class="input" id="gp_date" type="date" min="'+today+'" value="'+today+'"></label>' +
+      '<label class="fld"><span>Expected time (optional)</span><input class="input" id="gp_time" placeholder="8:00 AM – 12:00 NN"></label>' +
+    '</div>' +
+    '<label class="fld"><span>Authorize the bearer (company or person)</span><input class="input" id="gp_bearer" placeholder="Europroves Trading / Juan Dela Cruz"></label>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>To / from unit (Phase, Block, Lot, Street)</span><input class="input" id="gp_addr" value="'+esc(gpAddress(myUnit()))+'"></label>' +
+      '<label class="fld"><span>Vehicle plate (optional)</span><input class="input" id="gp_plate" placeholder="ABC 1234" style="text-transform:uppercase"></label>' +
+    '</div>' +
+    '<div class="fld"><span style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Items</span>' +
+      '<div id="gpRows">'+gpItemRow()+gpItemRow()+'</div>' +
+      '<button type="button" class="btn btn-ghost btn-sm" onclick="gpAddRow()">Add item</button></div>' +
+    '<p class="meta" style="margin:6px 0 0">Submitting confirms that you, as the unit owner, authorize this pass.</p>',
+    'Submit for approval', () => {
+      const bearer = $('#gp_bearer').value.trim();
+      const items = [...document.querySelectorAll('#gpRows .gp-row')].map(r => {
+        const o = {}; r.querySelectorAll('input').forEach(i => o[i.dataset.k] = i.value.trim()); return o; }).filter(i => i.desc);
+      if(!bearer){ toast('info','Who is the bearer?','Name the company or person bringing the items.'); return false; }
+      if(!items.length){ toast('info','Add an item','List at least one item the guard should check.'); return false; }
+      const date = $('#gp_date').value || today;
+      if(date < today){ toast('info','Pick a later date','A gate pass cannot be for a past date.'); return false; }
+      const p = { id:uid(), no:gpNextNo(), unit:myUnit(), by:store.session.name, at:new Date(),
+        type:(document.querySelector('input[name=gp_type]:checked')||{}).value||'Delivery', purpose:$('#gp_purpose').value,
+        date, time:$('#gp_time').value.trim(), bearer, address:$('#gp_addr').value.trim()||gpAddress(myUnit()),
+        plate:$('#gp_plate').value.trim().toUpperCase(), items, status:'Pending' };
+      (store.gatePasses = store.gatePasses || []).unshift(p);
+      commit('Gate pass '+p.no+' requested by unit '+myUnit()+' — '+p.purpose.toLowerCase()+', '+fmtDate(date)+'.',{title:'Gate pass sent for approval',audience:['admin']});
+      return true; });
+  bkWide();
+}
+function gpCancel(id){
+  const p = gpFind(id); if(!p || p.status!=='Pending') return;
+  p.status = 'Cancelled';
+  commit('Gate pass '+p.no+' cancelled by unit '+p.unit+'.',{title:'Gate pass cancelled'});
+}
+function gpHomeView(){
+  const mine = (store.gatePasses||[]).filter(p => p.unit===myUnit());
+  const t = tabOf('hgp','current');
+  const current = mine.filter(p => ['Pending','Approved','Held'].includes(p.status));
+  const list = t==='current' ? current : mine.filter(p => !current.includes(p));
+  return head('Gate pass','For construction materials, service crews and deliveries. The admin office approves it, then the guard on duty checks it at the gate.',
+    '<button class="btn btn-primary" style="width:auto" onclick="gpForm()">Request a gate pass</button>') +
+  '<div class="gp-flow">' +
+    [['1','You submit','List the bearer, the date and every item coming in or going out.'],
+     ['2','Ops & Maintenance approves','The admin office checks it and notes the pass.'],
+     ['3','Guard checks at the gate','Only approved passes show at the guardhouse. The guard checks the items and logs it.']].map(s =>
+      '<div><span class="n">'+s[0]+'</span><b>'+s[1]+'</b><p>'+s[2]+'</p></div>').join('') + '</div>' +
+  tabs('hgp',[{id:'current',label:'Current',n:current.length},{id:'past',label:'Past',n:mine.length-current.length}],'current') +
+  (list.length ? '<div class="grid g-2">' + list.map(p =>
+    '<div class="card card-pad"><div class="row" style="align-items:flex-start"><div class="grow">' +
+      '<div class="ttl">'+esc(p.bearer)+'</div>' +
+      '<div class="meta"><span class="mono">'+esc(p.no)+'</span><span class="tag t-grey">'+esc(p.type)+'</span><span class="tag t-grey">'+esc(p.purpose)+'</span><span>'+fmtDate(p.date)+'</span></div>' +
+      '<div class="body">'+p.items.map(i => esc((i.qty?i.qty+' ':'')+(i.unit?i.unit+' ':'')+i.desc)).join(' · ')+'</div></div>'+gpTag(p.status)+'</div>' +
+      (p.declineReason ? '<div class="gp-note rose" style="margin-top:10px"><b>Declined:</b> '+esc(p.declineReason)+'</div>' : '') +
+      (p.flag ? '<div class="gp-note rose" style="margin-top:10px"><b>Held at the gate:</b> '+esc(p.flag)+'</div>' : '') +
+      '<div class="btn-row" style="margin-top:12px"><button class="btn btn-ghost btn-sm" onclick="gpView(\''+p.id+'\')">View pass</button>' +
+      (p.status==='Pending' ? '<button class="btn btn-ghost btn-sm" onclick="gpCancel(\''+p.id+'\')">Cancel</button>' : '') + '</div></div>').join('') + '</div>'
+    : '<div class="card">'+empty(t==='current'?'No current gate passes':'Nothing here yet','Request a pass before a delivery, a pull-out or a construction or service crew arrives.')+'</div>') +
+  '<div class="card card-pad gp-future" style="margin-top:16px"><div class="row" style="align-items:center;gap:12px"><div class="qi">'+svg('shield')+'</div><div class="grow">' +
+    '<div class="ttl">Visitor pre-registration and QR entry <span class="tag t-grey">Future phase</span></div>' +
+    '<div class="meta" style="display:block">Coming after the privacy, data-retention and gate procedures are tested. For now, guests are logged at the guardhouse as usual.</div></div></div></div>';
+}
+
+/* ---------- admin, Ops & Maintenance: approve ---------- */
+function gpApprove(id){
+  const p = gpFind(id); if(!p) return;
+  p.status = 'Approved'; p.notedBy = store.session.name+(adminPosition(store.session.accountId)?' ('+adminPosition(store.session.accountId)+')':''); p.notedAt = new Date();
+  commit('Gate pass '+p.no+' for unit '+p.unit+' approved — the guardhouse can see it now.',{title:'Gate pass approved',forUnit:p.unit});
+}
+function gpDecline(id){
+  const p = gpFind(id); if(!p) return;
+  modal('Decline '+p.no,'The homeowner sees this reason on their pass.',
+    '<label class="fld"><span>Reason</span><textarea class="input" id="gp_reason" placeholder="Construction is not allowed on Sundays. Please pick a weekday."></textarea></label>',
+    'Decline pass', () => {
+      const r = $('#gp_reason').value.trim();
+      if(!r){ toast('info','Give a reason','The homeowner needs to know what to fix.'); return false; }
+      p.status = 'Declined'; p.declineReason = r; p.notedBy = store.session.name; p.notedAt = new Date();
+      commit('Gate pass '+p.no+' for unit '+p.unit+' declined.',{title:'Gate pass declined',forUnit:p.unit}); return true; }, true);
+}
+function gpAdminTab(){
+  const all = (store.gatePasses||[]).slice().sort((a,b) => (a.status==='Pending'?0:1)-(b.status==='Pending'?0:1) || (a.date<b.date?-1:1));
+  return sectionCard('Gate passes', all.length
+    ? '<div class="tablewrap"><table><thead><tr><th>Pass</th><th>Bearer</th><th class="hide-sm">Unit</th><th>Date</th><th class="hide-sm">Items</th><th>Status</th><th></th></tr></thead><tbody>' +
+      all.map(p => '<tr><td class="ic-nw" data-label="Pass"><strong class="mono">'+esc(p.no)+'</strong><div class="meta">'+esc(p.type)+' · '+esc(p.purpose)+'</div></td>' +
+        '<td data-label="Bearer">'+esc(p.bearer)+(p.plate?'<div class="meta mono">'+esc(p.plate)+'</div>':'')+'</td>' +
+        '<td class="hide-sm mono ic-nw" data-label="Unit">'+esc(p.unit)+'</td><td class="ic-nw" data-label="Date">'+fmtDate(p.date)+'</td>' +
+        '<td class="hide-sm ic-nw" data-label="Items">'+p.items.length+' item'+(p.items.length===1?'':'s')+'</td>' +
+        '<td class="ic-nw" data-label="Status">'+gpTag(p.status)+'</td>' +
+        '<td style="text-align:right"><div class="btn-row" style="justify-content:flex-end;flex-wrap:nowrap">' +
+          '<button class="btn btn-ghost btn-sm" onclick="gpView(\''+p.id+'\')">View</button>' +
+          (p.status==='Pending' ? '<button class="btn btn-emerald btn-sm" onclick="gpApprove(\''+p.id+'\')">Approve</button><button class="btn btn-danger btn-sm" onclick="gpDecline(\''+p.id+'\')">Decline</button>' : '') +
+          (p.status==='Held' ? '<button class="btn btn-emerald btn-sm" onclick="gpApprove(\''+p.id+'\')">Re-approve</button>' : '') +
+        '</div></td></tr>').join('') + '</tbody></table></div>'
+    : empty('No gate passes yet','Homeowner requests for deliveries, pull-outs and work crews land here for approval.'));
+}
+
+/* ---------- security: approved passes only ---------- */
+function gpCheck(id){
+  const p = gpFind(id); if(!p) return;
+  modal('Check '+p.no,'Confirm the bearer and the items match the pass before letting them through.',
+    gpSlipHTML(p) +
+    '<label class="fld" style="margin-top:14px"><span>Note (optional)</span><input class="input" id="gp_note" placeholder="Arrived 9:10 AM, truck ABC 1234"></label>',
+    'Items match — let through', () => {
+      p.status = 'Checked'; p.checkedBy = store.session.name; p.checkedAt = new Date(); p.checkNote = $('#gp_note').value.trim();
+      commit('Gate pass '+p.no+' checked at the gate by '+store.session.name+'.',{title:'Gate pass checked',forUnit:p.unit}); return true; });
+  bkWide();
+}
+function gpHold(id){
+  const p = gpFind(id); if(!p) return;
+  modal('Hold '+p.no,'Use this when the bearer or the items do not match. The admin office and the homeowner are told.',
+    '<label class="fld"><span>What does not match</span><textarea class="input" id="gp_flag" placeholder="Pass lists 1 water tank; truck carries 2."></textarea></label>',
+    'Hold at the gate', () => {
+      const f = $('#gp_flag').value.trim();
+      if(!f){ toast('info','Describe the problem','The admin office needs to know what to check.'); return false; }
+      p.status = 'Held'; p.flag = f+' — '+store.session.name; p.checkedAt = new Date();
+      commit('Gate pass '+p.no+' held at the gate: '+f,{title:'Gate pass held',forUnit:p.unit}); return true; }, true);
+}
+function gpSecurityView(){
+  const today = gpToday();
+  const visible = (store.gatePasses||[]).filter(p => ['Approved','Checked','Held'].includes(p.status));
+  const t = tabOf('sgp','today');
+  const sets = {
+    today: visible.filter(p => p.date===today && p.status!=='Checked'),
+    upcoming: visible.filter(p => p.date>today && p.status==='Approved').sort((a,b)=>a.date<b.date?-1:1),
+    checked: visible.filter(p => p.status==='Checked').sort((a,b)=>b.checkedAt-a.checkedAt).slice(0,30)
+  };
+  const late = visible.filter(p => p.date<today && p.status==='Approved');
+  const list = t==='today' ? sets.today.concat(late) : sets[t];
+  return head('Gate passes','Approved deliveries, pull-outs and work crews. Only passes the admin office has approved appear here.') +
+  '<div class="grid g-3" style="margin-bottom:14px">' +
+    stat('Expected today', sets.today.filter(p=>p.status==='Approved').length, 'Approved for '+fmtDate(today)) +
+    stat('Checked today', visible.filter(p=>p.status==='Checked' && p.checkedAt && bkIso(new Date(p.checkedAt))===today).length, 'Let through') +
+    stat('Held', visible.filter(p=>p.status==='Held').length, 'Waiting on the admin office') +
+  '</div>' +
+  tabs('sgp',[{id:'today',label:'Today',n:sets.today.length+late.length},{id:'upcoming',label:'Upcoming',n:sets.upcoming.length},{id:'checked',label:'Checked',n:sets.checked.length}],'today') +
+  (list.length ? list.map(p => '<div class="card card-pad" style="margin-bottom:12px">' +
+      (p.date<today && p.status==='Approved' ? '<div class="gp-note rose" style="margin:0 0 10px">This pass was for '+fmtDate(p.date)+'. Call the admin office before letting it through.</div>' : '') +
+      gpSlipHTML(p) +
+      (p.status==='Approved' ? '<div class="btn-row" style="margin-top:12px"><button class="btn btn-emerald btn-sm" onclick="gpCheck(\''+p.id+'\')">Check &amp; let through</button>' +
+        '<button class="btn btn-danger btn-sm" onclick="gpHold(\''+p.id+'\')">Does not match — hold</button></div>' : '') + '</div>').join('')
+    : '<div class="card">'+empty(t==='today'?'Nothing expected today':t==='upcoming'?'Nothing scheduled':'Nothing checked yet','Approved passes from the admin office show up here.')+'</div>');
+}
+
+/* ============================================================
+   GUARD ROSTER & SECURITY ACCESS — run by the OIC and secondary OIC
+   (and the admin office). Removing access blocks the guard's gate pages.
+============================================================ */
+const secAdmin = () => store.secAdmin || (store.secAdmin = { oic:'', secondary:'', revoked:{} });
+const secAccounts = () => store.accounts.filter(a => a.role==='security');
+function secDesignation(id){ const s = secAdmin(); return id && id===s.oic ? 'OIC' : id && id===s.secondary ? 'Secondary OIC' : 'Guard'; }
+function canRunRoster(){ const r = store.session.role, id = store.session.accountId, s = secAdmin();
+  return r==='admin' || (r==='security' && !secRevokedMe() && (id===s.oic || id===s.secondary)); }
+function secRevokedMe(){ return store.session.role==='security' && !!(secAdmin().revoked||{})[store.session.accountId]; }
+function canRemoveSec(id){
+  const me = store.session.accountId, s = secAdmin();
+  if(store.session.role==='admin') return true;
+  if(!canRunRoster() || id===me) return false;
+  return !(id===s.oic && me!==s.oic);                         /* the secondary OIC cannot remove the OIC */
+}
+function secBlockedView(){
+  const r = secAdmin().revoked[store.session.accountId] || {};
+  return head('Gate access removed','You can still update your own account settings.') +
+    '<div class="card card-pad" style="border-left:3px solid var(--rose)"><div class="ttl">Your security access was removed'+(r.by?' by '+esc(r.by):'')+(r.at?' on '+fmtDate(r.at):'')+'.</div>' +
+    '<div class="meta" style="display:block;margin-top:6px">'+(r.reason?esc(r.reason)+' · ':'')+'Talk to the OIC or the admin office if you think this is a mistake.</div></div>';
+}
+function setSecDesignation(key, id){
+  const s = secAdmin();
+  if(key==='oic' && store.session.role!=='admin'){ toast('info','Admin office only','Only the admin office can change the OIC.'); render(); return; }
+  if(!canRunRoster()){ toast('info','Not allowed','Only the OIC, secondary OIC or the admin office can change this.'); render(); return; }
+  if(id && id===(key==='oic'?s.secondary:s.oic)){ toast('info','Pick someone else','The OIC and secondary OIC must be different people.'); render(); return; }
+  s[key] = id;
+  const a = store.accounts.find(x => x.id===id);
+  commit((key==='oic'?'OIC':'Secondary OIC')+' set to '+(a?a.name:'nobody')+'.',{title:'Security designation updated',audience:['admin','security']});
+}
+function secRemove(id){
+  const a = store.accounts.find(x => x.id===id); if(!a || !canRemoveSec(id)) return;
+  modal('Remove security access — '+a.name,'They will no longer see gate passes, the roster or visitor information. You can restore it later.',
+    '<label class="fld"><span>Reason (kept in the log)</span><input class="input" id="sec_reason" placeholder="Reassigned to another site"></label>',
+    'Remove access', () => {
+      const s = secAdmin(); s.revoked = Object.assign({}, s.revoked, { [id]:{ by:store.session.name, at:new Date(), reason:$('#sec_reason').value.trim() } });
+      if(s.secondary===id) s.secondary = '';
+      commit('Security access removed for '+a.name+' by '+store.session.name+'.',{title:'Security access removed',audience:['admin','security']}); return true; }, true);
+}
+function secRestore(id){
+  const a = store.accounts.find(x => x.id===id); if(!a || !canRemoveSec(id)) return;
+  const s = secAdmin(), r = Object.assign({}, s.revoked); delete r[id]; s.revoked = r;
+  commit('Security access restored for '+a.name+' by '+store.session.name+'.',{title:'Security access restored',audience:['admin','security']});
+}
+function guardForm(i){
+  if(!canRunRoster()) return;
+  const g = i===undefined ? { post:'Main gate', name:'', shift:'', contact:'' } : store.guards[i];
+  modal(i===undefined ? 'Add to the roster' : 'Edit roster entry','Who is on post, when, and how to reach them.',
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Post</span><input class="input" id="gr_post" value="'+esc(g.post)+'" list="gr_posts"><datalist id="gr_posts"><option>Main gate</option><option>Gate 2</option><option>Gate 3</option><option>Roving</option></datalist></label>' +
+      '<label class="fld"><span>Guard</span><input class="input" id="gr_name" value="'+esc(g.name)+'" placeholder="SG Dela Cruz" list="gr_names"><datalist id="gr_names">'+secAccounts().map(a=>'<option>'+esc(a.name)+'</option>').join('')+'</datalist></label>' +
+      '<label class="fld"><span>Shift</span><input class="input" id="gr_shift" value="'+esc(g.shift)+'" placeholder="6 AM – 6 PM"></label>' +
+      '<label class="fld"><span>Contact</span><input class="input" id="gr_contact" value="'+esc(g.contact)+'" placeholder="0917 555 0000"></label></div>',
+    'Save', () => {
+      const e = { post:$('#gr_post').value.trim()||'Main gate', name:$('#gr_name').value.trim(), shift:$('#gr_shift').value.trim(), contact:$('#gr_contact').value.trim() };
+      if(!e.name){ toast('info','Add a name','Who is on post?'); return false; }
+      if(i===undefined) store.guards.push(e); else store.guards[i] = e;
+      commit('Roster '+(i===undefined?'updated — '+e.name+' added to '+e.post:'entry for '+e.name+' saved')+'.',{title:'Roster updated',audience:['admin','security']}); return true; });
+}
+function guardRemove(i){
+  if(!canRunRoster()) return;
+  const g = store.guards[i]; store.guards.splice(i,1);
+  commit(g.name+' taken off the '+g.post+' roster.',{title:'Roster updated',audience:['admin','security']});
+}
+function rosterManageHTML(){
+  const manage = canRunRoster(), s = secAdmin(), me = store.session.accountId, isAdm = store.session.role==='admin';
+  const opts = (cur, exclude) => '<option value="">— none —</option>' + secAccounts().filter(a => !s.revoked[a.id] && a.id!==exclude).map(a =>
+    '<option value="'+esc(a.id)+'"'+(a.id===cur?' selected':'')+'>'+esc(a.name)+'</option>').join('');
+  const nameOf = id => { const a = store.accounts.find(x=>x.id===id); return a ? a.name : 'Not set'; };
+  return '<div class="grid g-2" style="margin-bottom:16px">' +
+    sectionCard('Officers in charge','<div class="card-pad">' +
+      '<label class="fld"><span>OIC</span>'+(isAdm ? '<select class="input" onchange="setSecDesignation(\'oic\',this.value)">'+opts(s.oic, s.secondary)+'</select>' : '<div class="ttl">'+esc(nameOf(s.oic))+'</div>')+'</label>' +
+      '<label class="fld"><span>Secondary OIC</span>'+(manage && (isAdm || me===s.oic) ? '<select class="input" onchange="setSecDesignation(\'secondary\',this.value)">'+opts(s.secondary, s.oic)+'</select>' : '<div class="ttl">'+esc(nameOf(s.secondary))+'</div>')+'</label>' +
+      '<p class="meta" style="margin:0">The admin office names the OIC; the OIC names the secondary OIC. Both manage the roster and can remove a guard’s portal access.</p></div>') +
+    sectionCard('Security accounts', secAccounts().length ? '<ul class="list">' + secAccounts().map(a => {
+        const rv = s.revoked[a.id];
+        return '<li><div class="row" style="align-items:center"><div class="grow"><div class="ttl">'+esc(a.name)+(a.id===me?' <span class="meta">(you)</span>':'')+'</div>' +
+          '<div class="meta"><span class="tag t-grey">'+secDesignation(a.id)+'</span><span>'+esc(a.unit||'')+'</span>' +
+          (rv ? '<span class="tag t-rose">Access removed</span><span>by '+esc(rv.by)+' · '+fmtDate(rv.at)+'</span>' : '<span class="tag t-emerald">Active</span>')+'</div></div>' +
+          (canRemoveSec(a.id) ? (rv ? '<button class="btn btn-emerald btn-sm" onclick="secRestore(\''+a.id+'\')">Restore</button>'
+                                    : '<button class="btn btn-danger btn-sm" onclick="secRemove(\''+a.id+'\')">Remove access</button>') : '') +
+          '</div></li>'; }).join('') + '</ul>'
+      : empty('No security accounts','The admin office adds guard accounts under Homeowners → User accounts.')) +
+  '</div>' +
+  sectionCard('Guard roster', '<div class="tablewrap"><table><thead><tr><th>Post</th><th>Guard</th><th>Shift</th><th class="hide-sm">Contact</th>'+(manage?'<th></th>':'')+'</tr></thead><tbody>' +
+    store.guards.map((g,i) => '<tr><td data-label="Post">'+esc(g.post)+'</td><td data-label="Guard"><strong>'+esc(g.name)+'</strong></td><td data-label="Shift">'+esc(g.shift)+'</td>' +
+      '<td class="hide-sm mono" data-label="Contact">'+esc(g.contact)+'</td>' +
+      (manage ? '<td style="text-align:right"><div class="btn-row" style="justify-content:flex-end"><button class="btn btn-ghost btn-sm" onclick="guardForm('+i+')">Edit</button>' +
+        '<button class="btn btn-danger btn-sm" onclick="guardRemove('+i+')">Remove</button></div></td>' : '') + '</tr>').join('') +
+    '</tbody></table></div>', manage ? '<button class="btn btn-ghost btn-sm" onclick="guardForm()">Add guard</button>' : '');
+}
+
 const HOME = {
   issues(){ return icHomeView(); },
+  gatepass(){ return gpHomeView(); },
   feed(){
     const s = store.session;
     const due = store.dues.find(d => d.unit===myUnit() && d.period==='August 2026');
@@ -4363,6 +4720,7 @@ const DRIVER = {
 
 const SECURITY = {
   announcements(){ return noticesView(); },
+  gatepasses(){ return gpSecurityView(); },
   gate(){
     const active = store.passes.filter(p=>p.status==='Active');
     const term = gateFilter.trim().toLowerCase();
@@ -4413,11 +4771,9 @@ const SECURITY = {
       '<span class="tag '+statusTag(i.status)+'">'+esc(i.status)+'</span></div></li>').join('') + '</ul>');
   },
   roster(){
-    return head('Duty roster','Who is on post and how to reach them.') +
-    sectionCard('This cycle',
-      '<div class="tablewrap"><table><thead><tr><th>Post</th><th>Guard</th><th>Shift</th><th class="hide-sm">Contact</th></tr></thead><tbody>' +
-      store.guards.map(g => '<tr><td data-label="Post">'+esc(g.post)+'</td><td data-label="Guard"><strong>'+esc(g.name)+'</strong></td><td data-label="Shift">'+esc(g.shift)+'</td>' +
-        '<td class="hide-sm mono" data-label="Contact">'+esc(g.contact)+'</td></tr>').join('') + '</tbody></table></div>') +
+    return head('Duty roster', canRunRoster() ? 'You are '+secDesignation(store.session.accountId)+': manage who is on post and who has gate access.' : 'Who is on post and how to reach them.') +
+    rosterManageHTML() +
+    '<div style="margin-top:16px"></div>' +
     sectionCard('Emergency numbers','<div class="card-pad">' +
       '<div class="kv"><span>Admin office</span><b>0917 555 0100</b></div>' +
       '<div class="kv"><span>Barangay / police</span><b>911 · (049) 555 0199</b></div>' +
