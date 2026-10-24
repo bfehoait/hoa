@@ -398,7 +398,10 @@ html[data-theme="dark"]{--ic-filed:#E58C9E;--ic-done:#1F8F68}
 .mkt-photo{width:100%;aspect-ratio:4/3;border-radius:var(--radius) var(--radius) 0 0;background:var(--paper);color:var(--ink-3);display:grid;place-items:center;overflow:hidden}
 .mkt-photo img{width:100%;height:100%;object-fit:cover;display:block}
 .lh-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:16px}
-@media(min-width:860px){.lh-sections{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(min-width:860px){.lh-sections{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.tr-date{flex:none;width:48px;border:1px solid var(--brand-line);border-radius:10px;text-align:center;padding:5px 0;background:var(--slate-tint);color:var(--slate-dk)}
+.tr-date b{display:block;font-family:var(--display);font-size:19px;line-height:1.05}
+.tr-date span{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em}
 .lh-group{margin-bottom:22px}
 .lh-group-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
 .lh-group-head h3{font-size:16.5px;font-weight:700;margin:0}
@@ -950,7 +953,19 @@ const store = {
     { id:'m7', unit:'C-21', by:'Jonna Reyes', title:'Wanted: study desk for a Grade 5 student', section:'buysell', kind:'Wanted', condition:'Any condition',
       description:'Looking for a sturdy study desk, around 100 cm wide. Can pick up anywhere in the subdivision.',
       price:1500, category:'Electronics & Home', photo:'', photos:[], contact:'0917 555 0166', status:'Approved', rejectReason:'',
-      submittedAt:new Date(Date.now()-864e5*2), decidedAt:new Date(Date.now()-864e5*2), decidedBy:'Arnel Bautista' }
+      submittedAt:new Date(Date.now()-864e5*2), decidedAt:new Date(Date.now()-864e5*2), decidedBy:'Arnel Bautista' },
+    { id:'t1', section:'training', unit:'Admin office', by:'Livelihood Committee', title:'Food costing and pricing for home sellers',
+      category:'Food business & cooking', facilitator:'Rina Dela Cruz', venue:'Clubhouse', fee:0, slots:25,
+      date:new Date(Date.now()+864e5*9).toISOString().slice(0,10), start:'09:00', end:'12:00',
+      description:'Work out the real cost of each product, set a fair price and keep simple records. Bring a notebook and one product you sell or want to sell.',
+      photosLink:'', contact:'0917 555 0100', attendees:[{ unit:'C-21', name:'Jonna Reyes', at:new Date(Date.now()-864e5) }],
+      price:0, photo:'', photos:[], status:'Approved', rejectReason:'', submittedAt:new Date(Date.now()-864e5*3), decidedAt:new Date(Date.now()-864e5*3), decidedBy:'Arnel Bautista' },
+    { id:'t2', section:'training', unit:'Admin office', by:'Livelihood Committee', title:'Selling online with Facebook Marketplace',
+      category:'Digital & online selling', facilitator:'IT volunteers', venue:'Function hall', fee:100, slots:15,
+      date:new Date(Date.now()+864e5*16).toISOString().slice(0,10), start:'14:00', end:'16:30',
+      description:'Set up a shop page, take good product photos with your phone, and answer buyers safely. Bring your phone, fully charged.',
+      photosLink:'', contact:'0917 555 0100', attendees:[],
+      price:0, photo:'', photos:[], status:'Approved', rejectReason:'', submittedAt:new Date(Date.now()-864e5*2), decidedAt:new Date(Date.now()-864e5*2), decidedBy:'Arnel Bautista' }
   ],
   boothEvents:[
     { id:'be1', title:'Christmas Bazaar 2026', theme:'Food, gifts and holiday décor from resident vendors. One table and two chairs per booth.',
@@ -1184,14 +1199,15 @@ function staffRole(role, accountId){ return adminPosition(accountId) || ROLE_LAB
 const REQ_TYPES = ['Streetlight','Drainage','Landscaping','Security','Garbage collection','Common area repair'];
 const CMP_TYPES = ['Noise','Parking','Pets','Garbage','Construction','Boundary','Other'];
 const CON_TOPICS = ['Suggestion','Question','Feedback','Facility','Billing'];
-const MKT_CATEGORIES = ['Apparel','Electronics & Home','Vehicles & Property','Hobbies, Outdoors & Family','Supplies & Essentials'];
+const MKT_CATEGORIES = ['Food & Beverage','Apparel','Electronics & Home','Vehicles & Property','Hobbies, Outdoors & Family','Supplies & Essentials'];
 /* listings saved before the category update keep their old label; map it onto the new set */
-const MKT_LEGACY = {'Food & Beverage':'Supplies & Essentials','Home & Living':'Electronics & Home','Fashion & Accessories':'Apparel',
+const MKT_LEGACY = {'Home & Living':'Electronics & Home','Fashion & Accessories':'Apparel',
   'Electronics':'Electronics & Home','Services':'Supplies & Essentials','Other':'Supplies & Essentials'};
 function mktCat(m){ return MKT_CATEGORIES.includes(m.category) ? m.category : (MKT_LEGACY[m.category] || 'Supplies & Essentials'); }
 /* Livelihood and Marketplace is split into four sections; items saved before the split are Buy and sell */
 const LH_SECTIONS = [
   { id:'business', label:'Business directory' },
+  { id:'training', label:'Training & workshops' },
   { id:'buysell',  label:'Buy and sell' },
   { id:'jobs',     label:'Job openings and referrals' },
   { id:'garage',   label:'Garage sales' },
@@ -1201,6 +1217,8 @@ const LH_WORDS = {
     browse:'Directory', mine:'My businesses', emptyT:'No businesses listed yet', emptyD:'Resident-run businesses show up here once the admin office approves them.' },
   buysell:{ icon:'tag', noun:'listing', nouns:'listings', live1:'live listing', liveN:'live listings', cta:'Post a listing', form:'marketplaceForm',
     browse:'Browse', mine:'My listings', emptyT:'Nothing listed yet', emptyD:'Approved Sell and Wanted listings from your neighbors show up here.' },
+  training:{ icon:'chart', noun:'training', nouns:'trainings', live1:'upcoming session', liveN:'upcoming sessions', cta:'Offer a training', form:'trainingForm',
+    browse:'Upcoming', mine:'My trainings', emptyT:'No trainings coming up', emptyD:'Workshops from the Livelihood Committee and residents show up here until they end.' },
   garage:{ icon:'calendar', noun:'garage sale', nouns:'garage sales', live1:'upcoming sale', liveN:'upcoming sales', cta:'Host a garage sale', form:'garageForm',
     browse:'Upcoming', mine:'My garage sales', emptyT:'No garage sales coming up', emptyD:'Approved garage sales show here until they end.' },
   jobs:{ icon:'users', noun:'job post', nouns:'job posts', live1:'open post', liveN:'open posts', cta:'Post a job', form:'jobForm',
@@ -1208,7 +1226,7 @@ const LH_WORDS = {
   booths:{ icon:'flag', noun:'booth application', nouns:'booth applications', live1:'upcoming event', liveN:'upcoming events' },
   all:{ icon:'grid', noun:'item', nouns:'items', live1:'thing to browse', liveN:'things to browse' }
 };
-const LH_INTRO = 'Support resident businesses, buy and sell with neighbors, find garage sales and join seasonal bazaars. The admin office reviews everything before it goes public. Payment is arranged directly between residents.';
+const LH_INTRO = 'Support resident businesses, learn a skill at a training or workshop, buy and sell with neighbors, find garage sales and join seasonal bazaars. The admin office reviews everything before it goes public. Payment is arranged directly between residents.';
 const JOB_KINDS = { Hiring:'Hiring', Referral:'Referral', Seeking:'Looking for work' };
 const JOB_TYPES = ['Full-time','Part-time','Contract','Freelance','Household help','Internship'];
 const JOB_SETUPS = ['On-site','Remote','Hybrid'];
@@ -1229,7 +1247,7 @@ const GARAGE_VISIBILITY = {
   request:'Keep it private — residents contact me for the address' };
 const BOOTH_CLOSE_DAYS = 7;    /* booth applications close this many days before setup */
 const LH_LISTING_DAYS = 30;    /* Buy and sell listings run this long after approval */
-const LH_MAX_PHOTOS = 5;
+const LH_MAX_PHOTOS = 1;      /* one cover photo per listing; more photos are linked from Facebook to save portal storage */
 const LH_EXPIRY_START = new Date('2026-10-14T00:00:00+08:00'); /* listings approved before time limits existed count from here */
 function mktSection(m){ return m.section || 'buysell'; }
 function mktKind(m){ return m.kind==='Wanted' ? 'Wanted' : 'Sell'; }
@@ -1246,10 +1264,11 @@ function lhItemCat(m){
   const sec = mktSection(m);
   if(sec==='business') return BIZ_CATEGORIES.includes(m.category) ? m.category : 'Other services';
   if(sec==='garage') return 'Garage sale';
+  if(sec==='training') return TRAIN_CATS.includes(m.category) ? m.category : 'Other skills';
   if(sec==='jobs') return JOB_TYPES.includes(m.jobType) ? m.jobType : 'Full-time';
   return mktCat(m);
 }
-function lhCats(sec){ return sec==='business' ? BIZ_CATEGORIES : sec==='jobs' ? JOB_TYPES : MKT_CATEGORIES; }
+function lhCats(sec){ return sec==='business' ? BIZ_CATEGORIES : sec==='jobs' ? JOB_TYPES : sec==='training' ? TRAIN_CATS : MKT_CATEGORIES; }
 function lhTimed(m){ const s = mktSection(m); return s==='buysell' || s==='jobs'; }   /* sections that run for a set number of days */
 function mktCatFilter(list, key){
   const cur = tabOf(key||'mktcat','All');
@@ -1323,7 +1342,7 @@ function boothFreeNumbers(e, exceptId){
   return out;
 }
 function lhLiveItems(sec){
-  return store.marketplace.filter(m => mktSection(m)===sec && m.status==='Approved' && (sec!=='garage' || garageLive(m)) && !lhExpired(m));
+  return store.marketplace.filter(m => mktSection(m)===sec && m.status==='Approved' && (sec!=='garage' || garageLive(m)) && (sec!=='training' || trainLive(m)) && !lhExpired(m));
 }
 function lhPendingIn(sec){
   if(sec==='booths') return store.boothApps.filter(a=>a.status==='Pending').length;
@@ -1335,6 +1354,7 @@ function lhPendingIn(sec){
 function lhPendingCount(){ return LH_SECTIONS.reduce((n,x)=>n+lhPendingIn(x.id),0); }
 function lhStatus(m){
   if(mktSection(m)==='garage' && m.status==='Approved' && !garageLive(m)) return 'Ended';
+  if(mktSection(m)==='training' && m.status==='Approved' && !trainLive(m)) return 'Ended';
   if(lhExpired(m)) return 'Expired';
   if(lhTimed(m) && m.status==='Approved' && m.sold) return lhSoldWords(m).done;
   return m.status;
@@ -1342,6 +1362,7 @@ function lhStatus(m){
 function lhPriceLabel(m){
   const sec = mktSection(m);
   if(sec==='business' || sec==='garage') return '';
+  if(sec==='training') return trainFee(m);
   if(sec==='jobs') return m.pay || '';
   return (mktKind(m)==='Wanted' ? 'Budget ' : '')+peso(m.price);
 }
@@ -1353,6 +1374,9 @@ function lhMeta(m){
     const n = lhItems(m).length;
     return tag+'<span>'+esc(garageWhen(m))+'</span>'+(n?'<span>'+n+' item'+(n===1?'':'s')+'</span>':'');
   }
+  if(sec==='training'){
+    return tag+'<span>'+esc(trainWhen(m))+'</span><span>'+esc(m.venue||'Venue to follow')+'</span><span>'+esc(trainFee(m))+'</span><span>'+esc(trainSpots(m))+'</span>';
+  }
   if(sec==='jobs'){
     return jobKindTag(m)+tag+(m.company?'<span>'+esc(m.company)+'</span>':'')+'<span>'+esc(m.setup||'On-site')+'</span>'+(m.pay?'<span>'+esc(m.pay)+'</span>':'');
   }
@@ -1362,7 +1386,7 @@ function lhMeta(m){
   return (mktKind(m)==='Wanted' ? '<span class="tag t-amber">Wanted</span>' : '<span class="tag t-slate">For sale</span>') + tag +
     (m.condition?'<span>'+esc(m.condition)+'</span>':'') + '<span class="mono">'+lhPriceLabel(m)+'</span>';
 }
-function lhDetail(m){ return mktSection(m)==='garage' ? esc(garageWhen(m)) : esc(lhPriceLabel(m) || '—'); }
+function lhDetail(m){ const sec = mktSection(m); return sec==='garage' ? esc(garageWhen(m)) : sec==='training' ? esc(trainWhen(m)) : esc(lhPriceLabel(m) || '—'); }
 /* Facebook / Messenger: accept a profile or Messenger link (or a bare username) and turn it into safe links;
    only Facebook-owned hosts are allowed, so nothing else can be smuggled into the button */
 function lhFbLinks(raw){
@@ -1412,7 +1436,7 @@ function lhHit(text){ const t = lhTerms(), h = text.toLowerCase(); return t.ever
 function lhMatch(m){
   if(!lhTerms().length) return true;
   return lhHit([m.title, m.description, m.by, m.unit, lhItemCat(m), m.condition, m.hours, m.kind==='Wanted'?'wanted':'',
-    m.verified?'verified':'', m.ownerName, m.company, m.location, m.setup, mktSection(m)==='jobs' ? JOB_KINDS[jobKind(m)]+' job' : '', lhBizLinks(m).map(w=>w.host).join(' '), lhItems(m).filter(i=>i.status==='Approved'||isAdmin()).map(i=>i.name).join(' '),
+    m.verified?'verified':'', m.ownerName, m.company, m.facilitator, m.venue, mktSection(m)==='training'?'training workshop':'', m.location, m.setup, mktSection(m)==='jobs' ? JOB_KINDS[jobKind(m)]+' job' : '', lhBizLinks(m).map(w=>w.host).join(' '), lhItems(m).filter(i=>i.status==='Approved'||isAdmin()).map(i=>i.name).join(' '),
     (lhBusiness(m.businessId)||{}).title].filter(Boolean).join(' '));
 }
 function boothMatch(e){
@@ -1493,12 +1517,13 @@ function lhAllRow(r){
     : '<span class="lh-logo" style="width:44px;height:44px">'+(ph[0] ? '<img src="'+ph[0]+'" alt="" style="object-fit:cover">' : svg(LH_WORDS[sec].icon))+'</span>';
   const sub = sec==='business' ? '<span>'+esc(lhItemCat(m))+'</span><span>Owner / CEO: '+esc(lhOwnerName(m))+'</span><span class="mono">'+esc(m.unit)+'</span>'
     : sec==='garage' ? '<span>'+esc(fmtDate(m.date)+' · '+fmtTime(m.start)+' – '+fmtTime(m.end))+'</span><span>'+esc(garageVenue(m))+'</span>'
+    : sec==='training' ? '<span>'+esc(lhItemCat(m))+'</span><span>'+esc(trainWhen(m))+'</span><span>'+esc(m.venue||'Venue to follow')+'</span>'
     : sec==='jobs' ? jobKindTag(m)+'<span>'+esc(lhItemCat(m))+'</span>'+(m.company?'<span>'+esc(m.company)+'</span>':'')+'<span>Posted '+fmtDate(lhPosted(m))+'</span>'
     : (mktKind(m)==='Wanted'?'<span class="tag t-amber">Wanted</span>':'')+'<span>'+esc(lhItemCat(m))+'</span>'+(m.condition?'<span>'+esc(m.condition)+'</span>':'')+'<span>Posted '+fmtDate(lhPosted(m))+'</span>';
-  const right = sec==='business' ? links.map(w=>esc(w.label)).join(' · ') : sec==='garage' ? 'Garage sale' : m.sold ? '<span class="tag t-rose">'+lhSoldWords(m).done+'</span>' : esc(lhPriceLabel(m) || (sec==='jobs' ? JOB_KINDS[jobKind(m)] : ''));
+  const right = sec==='business' ? links.map(w=>esc(w.label)).join(' · ') : sec==='garage' ? 'Garage sale' : sec==='training' ? esc(trainFee(m)+' · '+trainSpots(m)) : m.sold ? '<span class="tag t-rose">'+lhSoldWords(m).done+'</span>' : esc(lhPriceLabel(m) || (sec==='jobs' ? JOB_KINDS[jobKind(m)] : ''));
   return '<li class="lh-row-click"'+open("openLh('"+m.id+"')")+'><div class="row" style="align-items:center">' + thumb +
     '<div class="grow" style="min-width:0"><div class="ttl">'+esc(m.title)+lhVerified(m)+'</div>' +
-    '<div class="meta"><span class="tag t-slate">'+esc(r.sec.label)+'</span>'+sub+(sec==='business'?'':'<span>'+esc(m.by)+'</span>')+'</div></div>' +
+    '<div class="meta"><span class="tag t-slate">'+esc(r.sec.label)+'</span>'+sub+(sec==='business'||sec==='training'?'':'<span>'+esc(m.by)+'</span>')+'</div></div>' +
     '<div class="lh-all-right">'+right+'</div></div></li>';
 }
 function lhAllAdminView(){
@@ -2499,7 +2524,7 @@ const ADMIN = {
     else {
       const all = store.marketplace.filter(m=>mktSection(m)===sec && lhMatch(m));
       const pending = all.filter(m=>m.status==='Pending');
-      const key = sec==='business' ? 'bizcat' : sec==='jobs' ? 'jobcat' : 'mktcat';
+      const key = sec==='business' ? 'bizcat' : sec==='jobs' ? 'jobcat' : sec==='training' ? 'trcat' : 'mktcat';
       const t = tabOf('mktadm_'+sec,'pending');
       let inner;
       if(t==='pending'){
@@ -2509,8 +2534,8 @@ const ADMIN = {
         if(sec==='garage') inner += '<div style="margin-top:14px">'+garageItemQueue()+'</div>';
       } else {
         const shown = sec==='garage' ? all : mktCatFilter(all, key);
-        const colName = sec==='business' ? 'Business' : sec==='garage' ? 'Garage sale' : sec==='jobs' ? 'Job post' : 'Listing';
-        const colVal = sec==='garage' ? 'When' : sec==='business' ? 'Website' : sec==='jobs' ? 'Pay' : 'Price';
+        const colName = sec==='business' ? 'Business' : sec==='garage' ? 'Garage sale' : sec==='jobs' ? 'Job post' : sec==='training' ? 'Training' : 'Listing';
+        const colVal = sec==='garage' || sec==='training' ? 'When' : sec==='business' ? 'Website' : sec==='jobs' ? 'Pay' : 'Price';
         inner = (sec==='garage' ? '' : mktCatChips(all, key, lhCats(sec))) + sectionCard('All '+W.nouns, shown.length
           ? '<div class="tablewrap"><table class="mkt-listings"><thead><tr><th>'+colName+'</th><th class="hide-sm">'+(sec==='business'?'Owner':'Resident')+'</th><th>'+colVal+'</th><th>Status</th><th class="hide-sm">'+(sec==='buysell'||sec==='jobs'?'Posted':'Decided')+'</th><th></th></tr></thead><tbody>' +
           shown.map(m => '<tr><td data-label="'+colName+'"><button class="linkbtn" onclick="openLh(\''+m.id+'\')">'+esc(m.title)+'</button>'+lhVerified(m) +
@@ -2533,6 +2558,7 @@ const ADMIN = {
           : lhTerms().length ? empty('No matches for “'+lhSearch.trim()+'”','Try a shorter word, or clear the search.')
           : empty('No '+W.nouns+' yet','Submissions from residents will show up here.'));
       }
+      if(sec==='training') inner = '<div class="btn-row" style="margin-bottom:12px"><button class="btn btn-primary btn-sm" style="width:auto" onclick="trainingForm()">Add a training</button></div>' + inner;
       body = tabs('mktadm_'+sec,[
         {id:'pending',label:'Pending',n:lhPendingIn(sec)},
         {id:'listings',label:'All '+W.nouns,n:all.length}],'pending') + inner;
@@ -2913,6 +2939,7 @@ function mktCard(m){
       '<div class="body">'+esc(m.description)+'</div>' +
       (biz?'<div class="meta" style="margin-top:10px"><span>Sold by</span><button class="linkbtn" onclick="event.stopPropagation();openLh(\''+biz.id+'\')">'+esc(biz.title)+'</button></div>':'') +
       (m.sold ? '' : lhSocialButtons(m, true)) +
+      (lhLinkButton(m) ? '<div class="btn-row" style="margin-top:8px">'+lhLinkButton(m)+'</div>' : '') +
       (m.unit===myUnit() && !isAdmin() ? '<div class="btn-row" style="margin-top:10px">'+lhSoldButton(m)+'</div>' : '') +
       '<div class="meta" style="margin-top:10px"><span class="mono">'+esc(m.unit)+'</span>·<span>'+esc(m.by)+'</span></div>' +
       '<div class="meta"><span>Posted '+fmtDate(lhPosted(m))+'</span>·<span>'+esc(lhLeftLabel(m))+'</span></div>' +
@@ -2959,6 +2986,7 @@ function garageCard(m){
       '<div class="meta"><span>'+esc(garageWhen(m))+'</span></div>' +
       '<div class="body">'+esc(m.description)+'</div>' +
       lhOfferList(items.map(i=>[i.name, i.price?peso(i.price):'Free']), 4) +
+      (lhLinkButton(m) ? '<div class="btn-row" style="margin-top:10px">'+lhLinkButton(m)+'</div>' : '') +
       '<div class="meta" style="margin-top:10px"><span>Hosted by '+esc(m.by)+'</span>·<span>'+esc(garageVenue(m))+'</span></div>' +
     '</div></div>';
 }
@@ -2987,6 +3015,11 @@ function mktMineRow(m){
     if(st==='Expired' && !m.sold) actions = '<button class="btn btn-primary btn-sm" style="width:auto" onclick="renewMkt(\''+m.id+'\')">Renew for '+LH_LISTING_DAYS+' days</button>';
     actions += '<button class="btn btn-ghost btn-sm" onclick="jobForm(\''+m.id+'\')">Edit</button>';
   }
+  if(sec==='training'){
+    const ppl = trainPeople(m);
+    extra = '<div class="meta"><span>'+esc(trainSpots(m))+'</span>·<span>'+ppl.length+' signed up</span></div>' +
+      (ppl.length ? lhOfferList(ppl.map(a => [a.name, a.unit])) : '') + (lhLinkButton(m) ? '<div class="btn-row" style="margin-top:8px">'+lhLinkButton(m)+'</div>' : '');
+  }
   if(sec==='garage'){
     extra = lhOfferList(lhItems(m).map(i => [i.name, i.price?peso(i.price):'Free',
       ' <span class="tag '+statusTag(i.status)+'">'+esc(i.status)+'</span>'+(i.status==='Rejected'&&i.reason?'<span class="meta" style="display:block">'+esc(i.reason)+'</span>':'')])) +
@@ -3010,6 +3043,7 @@ function lhAdminPendingRow(m){
     (biz?'<div class="meta"><span>Posted for '+esc(biz.title)+'</span></div>':'') +
     '<div class="body">'+esc(m.description)+'</div>' +
     (m.contact?'<div class="meta" style="margin-top:6px"><span>Contact</span><span class="mono">'+esc(m.contact)+'</span>'+(ph.length?'·<span>'+ph.length+' photo'+(ph.length===1?'':'s')+'</span>':'')+'</div>':'') +
+    (lhWebLink(m.photosLink) ? '<div class="meta"><span>Photos / details link</span><a href="'+esc(lhWebLink(m.photosLink).url)+'" target="_blank" rel="noopener noreferrer">'+esc(lhWebLink(m.photosLink).host)+'</a><span>— check it before approving</span></div>' : '') +
     (lhFbLinks(m.fbLink) ? '<div class="meta"><span>Facebook</span><a href="'+esc(lhFbLinks(m.fbLink).fb||lhFbLinks(m.fbLink).msgr)+'" target="_blank" rel="noopener noreferrer">'+esc((lhFbLinks(m.fbLink).fb||lhFbLinks(m.fbLink).msgr).replace(/^https:\/\/(www\.)?/,''))+'</a><span>— check it belongs to '+esc(m.by)+'</span></div>' : '') +
     '<div class="btn-row" style="margin-top:11px">' +
       '<button class="btn btn-ghost btn-sm" onclick="openLh(\''+m.id+'\')">View details</button>' +
@@ -3060,9 +3094,14 @@ function openLh(id){
   }
   if(sec==='business' && m.hours) rows.push(['Hours', m.hours]);
   if(sec==='garage') rows.push(['When', garageWhen(m)], ['Where', garageVenue(m)]);
+  if(sec==='training'){
+    rows.push(['When', trainWhen(m)], ['Venue', m.venue||'To follow'], ['Fee', trainFee(m)], ['Slots', trainSpots(m)]);
+    if(m.facilitator) rows.push(['Facilitator', m.facilitator]);
+    if(trainJoined(m)) rows.push(['Your slot', 'Signed up']);
+  }
   rows.push(['Category', lhItemCat(m)]);
   if(sec==='business'){ rows.push(['Owner / CEO', lhOwnerName(m)]); rows.push(['Listed by', m.by+' · '+m.unit]); }
-  else rows.push([sec==='garage'?'Host':'Posted by', m.by + (sec==='garage' ? '' : ' · '+m.unit)]);
+  else rows.push([sec==='garage'?'Host':sec==='training'?'Organized by':'Posted by', m.by + (sec==='garage' || m.unit==='Admin office' ? '' : ' · '+m.unit)]);
   if(m.contact) rows.push(['Contact', m.contact]);
   if(sec==='business' && m.verified) rows.push(['Verified', 'Yes · by the HOA admin office']);
   const list = sec==='garage' ? lhItems(m).filter(i=>i.status==='Approved' || host).map(i=>[i.name+(i.status!=='Approved'?' ('+i.status.toLowerCase()+')':''), i.price?peso(i.price):'Free'])
@@ -3079,9 +3118,13 @@ function openLh(id){
     rows.map(([k,v])=>'<div class="kv"><span>'+esc(k)+'</span><b>'+esc(v)+'</b></div>').join('') +
     (biz ? '<div class="kv"><span>Business</span><b><button class="linkbtn" onclick="openLh(\''+biz.id+'\')">'+esc(biz.title)+'</button></b></div>' : '') +
     vendorAt.map(e=>'<div class="kv"><span>Find them at</span><b>'+esc(e.title)+' · '+fmtDate(e.date)+'</b></div>').join('') +
+    (sec==='training' ? '<div class="btn-row lh-train" style="margin-top:12px">'+trainSignupBtn(m)+lhLinkButton(m,'btn-primary')+'</div>' +
+      (host && trainPeople(m).length ? '<div class="eyebrow" style="margin:14px 0 4px">Signed up · '+trainPeople(m).length+'</div>'+lhOfferList(trainPeople(m).map(a=>[a.name, a.unit])) : '') : '') +
+    (sec!=='training' && lhLinkButton(m) ? '<div class="btn-row" style="margin-top:12px">'+lhLinkButton(m,'btn-primary')+'</div>' : '') +
     (sec==='jobs' && jobApplyLink(m) && !m.sold ? '<div class="btn-row" style="margin-top:12px"><a class="btn btn-primary btn-sm" style="width:auto" href="'+esc(jobApplyLink(m).href)+'" target="_blank" rel="noopener noreferrer">'+jobApplyLink(m).label+' ↗</a></div>' : '') +
     (m.unit!==myUnit() ? (m.sold ? '' : lhSocialButtons(m, false)) : lhTimed(m) && m.status==='Approved' && !lhExpired(m) ? '<div class="btn-row" style="margin-top:12px">'+lhSoldButton(m)+'</div>' : '') +
-    (sec==='jobs' ? '<p class="meta" style="display:block;margin-top:12px">The HOA does not screen employers or applicants. Never pay a fee to apply for a job, and meet in a public place.</p>'
+    (sec==='training' ? '<p class="meta" style="display:block;margin-top:12px">Any fee is paid directly to the organizer. Cancel your slot if you can no longer come, so a neighbor can take it.</p>'
+      : sec==='jobs' ? '<p class="meta" style="display:block;margin-top:12px">The HOA does not screen employers or applicants. Never pay a fee to apply for a job, and meet in a public place.</p>'
       : '<p class="meta" style="display:block;margin-top:12px">Payment is arranged directly with the resident — GCash, bank transfer or cash. The HOA does not handle payments.</p>'),
     'Close', () => true);
   const c = document.getElementById('mCancel'); if(c) c.classList.add('hide'); /* an info view needs one button */
@@ -4201,7 +4244,7 @@ const HOME = {
     const all = store.marketplace.filter(m=>mktSection(m)===sec);
     const live = lhLiveItems(sec).filter(lhMatch);
     const mine = all.filter(m=>m.unit===myUnit() && lhMatch(m));
-    const key = sec==='business' ? 'bizcat' : sec==='jobs' ? 'jobcat' : 'mktcat', mineKey = sec==='business' ? 'bizminecat' : sec==='jobs' ? 'jobminecat' : 'mktminecat';
+    const key = sec==='business' ? 'bizcat' : sec==='jobs' ? 'jobcat' : sec==='training' ? 'trcat' : 'mktcat', mineKey = sec==='business' ? 'bizminecat' : sec==='jobs' ? 'jobminecat' : sec==='training' ? 'trminecat' : 'mktminecat';
     const t = tabOf('mkt_'+sec,'browse');
     let inner;
     if(t==='browse'){
@@ -4227,8 +4270,9 @@ const HOME = {
             }).join('') + '</div>';
           if(k!=='All') pool = live.filter(m=>jobKind(m)===k);
         }
+        if(sec==='training') pool = pool.slice().sort((a,b)=>trainStart(a)-trainStart(b));
         const shown = mktCatFilter(pool, key);
-        inner = kindRow + mktCatChips(pool, key, lhCats(sec)) + (shown.length ? '<div class="grid g-3">' + shown.map(sec==='business'?bizCard:sec==='jobs'?jobCard:mktCard).join('') + '</div>'
+        inner = kindRow + mktCatChips(pool, key, lhCats(sec)) + (shown.length ? '<div class="grid g-3">' + shown.map(sec==='business'?bizCard:sec==='jobs'?jobCard:sec==='training'?trainingCard:mktCard).join('') + '</div>'
           : '<div class="card">'+empty('Nothing here yet','Pick another filter or All to see every '+W.noun+'.')+'</div>');
       }
     } else {
@@ -5307,6 +5351,108 @@ function visitorForm(){
 
 /* livelihood and marketplace */
 let pendingMktPhotos = [];
+/* ---- Training & Workshops: dated sessions residents can sign up for; they drop off once they end ---- */
+const TRAIN_CATS = ['Food business & cooking','Digital & online selling','Financial literacy','Crafts & repair','Health & wellness','Other skills'];
+function trainStart(m){ return new Date(m.date+'T'+(m.start||'00:00')); }
+function trainEnd(m){ return new Date(m.date+'T'+(m.end||'23:59')); }
+function trainLive(m){ return trainEnd(m) > new Date(); }
+function trainWhen(m){ return fmtDate(m.date)+' · '+fmtTime(m.start)+' – '+fmtTime(m.end); }
+function trainPeople(m){ return Array.isArray(m.attendees) ? m.attendees : []; }
+function trainSlots(m){ return Number(m.slots)||0; }                                   /* 0 = no limit */
+function trainLeft(m){ return trainSlots(m) ? Math.max(0, trainSlots(m) - trainPeople(m).length) : Infinity; }
+function trainJoined(m){ return trainPeople(m).some(a => a.unit===myUnit() && a.name===store.session.name); }
+function trainFee(m){ return Number(m.fee) ? peso(m.fee) : 'Free'; }
+function trainSpots(m){ const s = trainSlots(m); return s ? (trainLeft(m) ? trainLeft(m)+' of '+s+' slots left' : 'Full') : 'Open to all'; }
+function trainSignupBtn(m){
+  if(isAdmin() || m.unit===myUnit() && m.by===store.session.name || store.session.role!=='homeowner' && store.session.role!=='renter') return '';
+  const joined = trainJoined(m), full = !joined && !trainLeft(m);
+  return '<button class="btn '+(joined?'btn-ghost':'btn-emerald')+' btn-sm" style="width:auto"'+(full?' disabled':'')+' onclick="event.stopPropagation();toggleTraining(\''+m.id+'\')">' +
+    (joined ? 'Cancel my slot' : full ? 'Full' : 'Sign up') + '</button>';
+}
+function toggleTraining(id){
+  const m = store.marketplace.find(x=>x.id===id); if(!m) return;
+  const list = trainPeople(m), i = list.findIndex(a => a.unit===myUnit() && a.name===store.session.name);
+  if(i >= 0){ list.splice(i,1); m.attendees = list;
+    commit('Your slot for “'+m.title+'” was cancelled.',{title:'Sign-up cancelled', go:'marketplace'}); }
+  else {
+    if(!trainLeft(m)){ toast('info','Fully booked','All slots are taken. Watch for the next session.'); return; }
+    list.push({ unit:myUnit(), name:store.session.name, at:new Date() }); m.attendees = list;
+    commit('Signed up for “'+m.title+'” on '+trainWhen(m)+'.',{title:'You are signed up', go:'marketplace'});
+  }
+  if(document.querySelector('.modal .lh-train')) openLh(id);                          /* refresh an open details window */
+}
+function trainingCard(m){
+  const d = trainStart(m), today = m.date===lhToday();
+  return lhCardOpen(m) +
+    '<div class="card-pad"><div class="row" style="align-items:flex-start;gap:12px">' +
+      '<div class="tr-date"><b>'+d.getDate()+'</b><span>'+d.toLocaleDateString('en-PH',{month:'short'})+'</span></div>' +
+      '<div class="grow" style="min-width:0"><div class="ttl">'+esc(m.title)+'</div>' +
+        '<div class="meta"><span class="tag t-grey">'+esc(lhItemCat(m))+'</span>'+(today?'<span class="tag t-emerald">Today</span>':'')+'<span>'+esc(trainFee(m))+'</span></div></div></div>' +
+      '<div class="meta"><span>'+esc(fmtTime(m.start)+' – '+fmtTime(m.end))+'</span>·<span>'+esc(m.venue||'Venue to follow')+'</span></div>' +
+      (m.facilitator?'<div class="meta"><span>Facilitator</span><b style="color:var(--ink)">'+esc(m.facilitator)+'</b></div>':'') +
+      '<div class="body">'+esc(m.description)+'</div>' +
+      '<div class="meta" style="margin-top:10px"><span>'+esc(trainSpots(m))+'</span>'+(trainJoined(m)?'<span class="tag t-emerald">You are signed up</span>':'')+'</div>' +
+      '<div class="btn-row" style="margin-top:10px">'+trainSignupBtn(m)+lhLinkButton(m)+'</div>' +
+    '</div></div>';
+}
+function trainingForm(){
+  pendingMktPhotos = [];
+  const admin = isAdmin();
+  const venues = [...new Set(store.settings.facilities.concat(store.settings.boothVenues||[]))];
+  modal(admin ? 'Add a training or workshop' : 'Offer a training or workshop',
+    admin ? 'Posted straight away for residents to sign up.' : 'Share a skill with your neighbors. The admin office reviews it before it is posted.',
+    '<label class="fld"><span>Title</span><input class="input" id="f_title" placeholder="Food costing and pricing for home sellers"></label>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Category</span><select class="input" id="f_cat">'+TRAIN_CATS.map(c=>'<option>'+esc(c)+'</option>').join('')+'</select></label>' +
+      '<label class="fld"><span>Facilitator</span><input class="input" id="f_fac" value="'+esc(admin?'':store.session.name)+'" placeholder="Name of the trainer"></label>' +
+      '<label class="fld"><span>Date</span><input class="input" id="f_tdate" type="date" min="'+lhToday()+'"></label>' +
+      '<label class="fld"><span>Venue</span><input class="input" id="f_venue" list="f_venues" placeholder="Clubhouse"><datalist id="f_venues">'+venues.map(v=>'<option>'+esc(v)+'</option>').join('')+'<option>Online (Zoom / Google Meet)</option></datalist></label>' +
+      '<label class="fld"><span>Starts</span><input class="input" id="f_tstart" type="time" value="09:00"></label>' +
+      '<label class="fld"><span>Ends</span><input class="input" id="f_tend" type="time" value="12:00"></label>' +
+      '<label class="fld"><span>Fee (₱, 0 = free)</span><input class="input" id="f_fee" type="number" min="0" step="1" value="0"></label>' +
+      '<label class="fld"><span>Slots (0 = no limit)</span><input class="input" id="f_slots" type="number" min="0" step="1" value="20"></label></div>' +
+    '<label class="fld"><span>What participants will learn</span><textarea class="input" id="f_desc" placeholder="Topics, what to bring, who it is for…"></textarea></label>' +
+    '<label class="fld"><span>Details, photos or registration link (optional)</span><input class="input" id="f_link" placeholder="facebook.com/events/… or forms.gle/…"></label>' +
+    '<p class="meta" style="display:block;margin:-6px 0 12px">To save space on the portal, posters and photos stay on Facebook or your own page. Residents get a button that opens your link.</p>' +
+    '<label class="fld"><span>Contact number</span><input class="input" id="f_contact" value="'+esc(admin?'':store.session.phone||'')+'" placeholder="0917 555 0000"></label>',
+    admin ? 'Post training' : 'Submit for approval', () => {
+      const title=$('#f_title').value.trim(), date=$('#f_tdate').value, start=$('#f_tstart').value, end=$('#f_tend').value;
+      if(!title){ toast('info','Add a title','Give the session a short title.'); return false; }
+      if(!date){ toast('info','Pick a date','Choose the day of the session.'); return false; }
+      if(!start || !end || end<=start){ toast('info','Check the times','The end time has to be after the start time.'); return false; }
+      const linkRaw = $('#f_link').value.trim(), link = lhWebLink(linkRaw);
+      if(linkRaw && !link){ toast('info','Check the link','Use a full web address, like facebook.com/events/123, or leave it blank.'); return false; }
+      const item = { id:uid(), section:'training', unit:admin?'Admin office':myUnit(), by:admin?'Livelihood Committee':store.session.name, title,
+        category:$('#f_cat').value, facilitator:$('#f_fac').value.trim(), date, start, end, venue:$('#f_venue').value.trim(),
+        fee:Math.max(0, Math.round(Number($('#f_fee').value)||0)), slots:Math.max(0, Math.round(Number($('#f_slots').value)||0)),
+        description:$('#f_desc').value.trim()||'Details to follow.', photosLink: link ? link.url : '', contact:$('#f_contact').value.trim(),
+        attendees:[], price:0, photo:'', photos:[], status: admin ? 'Approved' : 'Pending', rejectReason:'',
+        submittedAt:new Date(), decidedAt: admin ? new Date() : null, decidedBy: admin ? store.session.name : '' };
+      if(!trainLive(item)){ toast('info','That time has passed','Pick a date and end time that are still ahead.'); return false; }
+      if(admin){ store.marketplace.unshift(item); commit('Training “'+title+'” posted for '+trainWhen(item)+'.',{title:'Training posted', go:'marketplace'}); }
+      else lhSubmitted(item, 'Training');
+      return true; });
+}
+/* an outside page for photos and details (Facebook post, page, album, or a form), so the portal does not store them */
+function lhLinkButton(m, cls){
+  const w = lhWebLink(m.photosLink); if(!w) return '';
+  const sec = mktSection(m);
+  const label = sec==='training' ? (w.fb ? 'Details on Facebook' : 'Details & registration') : (w.fb ? 'More photos on Facebook' : 'More photos & details');
+  return '<a class="btn '+(cls||'btn-ghost')+' btn-sm" style="width:auto" href="'+esc(w.url)+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">'+label+' ↗</a>';
+}
+function lhLinkField(value, hint){
+  return '<label class="fld"><span>More photos or details — link (optional)</span><input class="input" id="f_plink" autocomplete="off" value="'+esc(value||'')+'" placeholder="Link to your Facebook post, album or page"></label>' +
+    '<p class="meta" style="display:block;margin:-6px 0 12px">'+esc(hint)+'</p>';
+}
+/* read the link field; returns '' when blank, null when it is not a usable web address */
+function lhReadLink(){
+  const raw = ($('#f_plink')||{value:''}).value.trim(); if(!raw) return '';
+  const w = lhWebLink(raw);
+  if(!w){ toast('info','Check the link','Use a full web address, like facebook.com/yourpage/posts/123, or leave it blank.'); return null; }
+  return w.url;
+}
+
+
 /* scale a photo so its longest side is at most `max` px; re-encoding as JPEG also drops location and camera data */
 function fileToFitDataUrl(file, max, onDone, onError){
   if(!/^image\/(jpeg|png|webp)$/.test(file.type)){ onError('Use a JPG, PNG or WebP photo.'); return; }
@@ -5335,7 +5481,7 @@ function lhThumbs(){
 }
 function lhPhotoPicker(){
   pendingMktPhotos = [];
-  return '<div style="margin-bottom:13px"><span class="lh-lbl">Photos · up to '+LH_MAX_PHOTOS+' (JPG, PNG or WebP)</span>' +
+  return '<div style="margin-bottom:13px"><span class="lh-lbl">Cover photo · '+LH_MAX_PHOTOS+' (JPG, PNG or WebP)</span>' +
     '<div class="lh-thumbs" id="mktPhotoPreview">'+lhThumbs()+'</div>' +
     '<input type="file" id="mktPhotoFile" accept="image/jpeg,image/png,image/webp" multiple class="hide" onchange="handleMktPhotoFile(event)"></div>';
 }
@@ -5391,6 +5537,7 @@ function marketplaceForm(){
         MKT_CONDITIONS.map(c=>'<option>'+esc(c)+'</option>').join('')+'</select></label></div>' +
     '<label class="fld"><span>Description</span><textarea class="input" id="f_desc" placeholder="Size, age, any flaws, pickup or delivery…"></textarea></label>' +
     lhPhotoPicker() +
+    lhLinkField('', 'To save space on the portal, add one cover photo here and keep the rest on your Facebook post, album or business page.') +
     '<div class="grid g-2" style="gap:0 12px">' +
       '<label class="fld"><span>Contact number</span><input class="input" id="f_contact" value="'+esc(store.session.phone||'')+'" placeholder="0917 555 0000"></label>' +
       '<label class="fld"><span>Post as</span><select class="input" id="f_biz"><option value="">Myself (personal sale)</option>' +
@@ -5405,7 +5552,8 @@ function marketplaceForm(){
       if(kind==='Sell' && !cond){ toast('info','Choose the condition','Let buyers know what shape it is in.'); return false; }
       const fbRaw = $('#f_fb').value.trim(), fb = lhFbLinks(fbRaw);
       if(fbRaw && !fb){ toast('info','Check the Facebook link','Use your Facebook profile link (facebook.com/yourname) or Messenger link (m.me/yourname), or leave it blank.'); return false; }
-      lhSubmitted({ id:uid(), section:'buysell', kind, unit:myUnit(), by:store.session.name, title,
+      const photosLink = lhReadLink(); if(photosLink===null) return false;
+      lhSubmitted({ id:uid(), section:'buysell', kind, photosLink, unit:myUnit(), by:store.session.name, title,
         description:$('#f_desc').value.trim()||'No further details given.', price, category:$('#f_cat').value,
         condition: cond || 'Any condition', contact:$('#f_contact').value.trim(), businessId:$('#f_biz').value||'',
         fbLink: fb ? fb.fb || fb.msgr : '',
@@ -5568,6 +5716,7 @@ function toggleVerifyBiz(id){
     {title: m.verified ? 'Business verified' : 'Verification removed', forUnit:m.unit, go:'marketplace'});
 }
 function garageForm(){
+  pendingMktPhotos = [];
   modal('Host a garage sale','The sale and each item are checked by the admin office before neighbors see them. The sale disappears as soon as it ends.',
     '<label class="fld"><span>Title</span><input class="input" id="f_title" placeholder="Moving-out garage sale"></label>' +
     '<label class="fld"><span>Date</span><input class="input" id="f_gdate" type="date" min="'+lhToday()+'"></label>' +
@@ -5578,7 +5727,7 @@ function garageForm(){
       Object.keys(GARAGE_VISIBILITY).map(k=>'<option value="'+k+'">'+esc(GARAGE_VISIBILITY[k])+'</option>').join('')+'</select></label>' +
     '<label class="fld"><span>Notes for shoppers</span><textarea class="input" id="f_desc" placeholder="Parking, payment, what to bring…"></textarea></label>' +
     '<span class="lh-lbl">Items for sale</span>' + lhRowsEditor('f_items', 'Dining table with 4 chairs', 3, '+ Add another item') +
-    lhPhotoPicker() +
+    lhLinkField('', 'Garage sales are listed by item. Put photos on a Facebook post or album and paste the link — the portal does not store garage sale photos.') +
     '<label class="fld"><span>Contact number</span><input class="input" id="f_contact" value="'+esc(store.session.phone||'')+'" placeholder="0917 555 0000"></label>',
     'Submit for approval', () => {
       const title=$('#f_title').value.trim(), date=$('#f_gdate').value, start=$('#f_gstart').value, end=$('#f_gend').value, items=readLhRows('f_items');
@@ -5586,10 +5735,11 @@ function garageForm(){
       if(!date){ toast('info','Pick a date','Choose the day of your garage sale.'); return false; }
       if(!start || !end || end<=start){ toast('info','Check the times','The end time has to be after the start time.'); return false; }
       if(!items.length){ toast('info','Add at least one item','List what you are selling. You can add more items later.'); return false; }
-      const vis=$('#f_gvis').value, contact=$('#f_contact').value.trim();
+      const vis=$('#f_gvis').value, contact=$('#f_contact').value.trim(), photosLink = lhReadLink();
+      if(photosLink===null) return false;
       if(vis==='request' && !contact){ toast('info','Add a contact number','Shoppers need it to ask for your address.'); return false; }
       const item = { id:uid(), section:'garage', unit:myUnit(), by:store.session.name, title, date, start, end, price:0, category:'Garage sale',
-        visibility:vis, contact, items:items.map(r=>({ id:uid(), name:r.name, price:r.price, status:'Pending', reason:'' })),
+        visibility:vis, contact, photosLink, items:items.map(r=>({ id:uid(), name:r.name, price:r.price, status:'Pending', reason:'' })),
         description:$('#f_desc').value.trim()||'Assorted items.', status:'Pending', rejectReason:'',
         submittedAt:new Date(), decidedAt:null, decidedBy:'' };
       if(!garageLive(item)){ toast('info','That time has passed','Pick a date and end time that are still ahead.'); return false; }
@@ -5648,6 +5798,7 @@ function adminListingForm(id){
     '<div class="grid g-2" style="gap:0 12px">' +
       '<label class="fld"><span>Contact number</span><input class="input" id="f_contact" value="'+esc(m.contact||'')+'"></label>' +
       '<label class="fld"><span>Facebook or Messenger link</span><input class="input" id="f_fb" value="'+esc(m.fbLink||'')+'" placeholder="facebook.com/name"></label></div>' +
+    lhLinkField(m.photosLink, 'Where buyers see more photos — a Facebook post, album or page.') +
     '<div class="card card-pad" style="background:var(--paper);margin:4px 0 0">' +
       '<div class="eyebrow" style="margin-bottom:8px">How long it stays posted</div>' +
       '<div class="grid g-2" style="gap:0 12px">' +
@@ -5663,6 +5814,7 @@ function adminListingForm(id){
       if(!n || n<1 || n>90){ toast('info','Check the number of days','Use between 1 and 90 days.'); return false; }
       const fbRaw=$('#f_fb').value.trim(), fb=lhFbLinks(fbRaw);
       if(fbRaw && !fb){ toast('info','Check the Facebook link','Use a facebook.com profile or m.me link, or leave it blank.'); return false; }
+      const photosLink = lhReadLink(); if(photosLink===null) return false;
       let start = posted;
       if(live){
         const d = $('#f_posted').value;
@@ -5672,7 +5824,7 @@ function adminListingForm(id){
       }
       Object.assign(m, { kind, title, price, category:$('#f_cat').value, condition: cond || (kind==='Wanted'?'Any condition':''),
         description:$('#f_desc').value.trim()||'No further details given.', contact:$('#f_contact').value.trim(),
-        fbLink: fb ? fb.fb || fb.msgr : '', listDays:n });
+        fbLink: fb ? fb.fb || fb.msgr : '', photosLink, listDays:n });
       if(live){ m.postedAt = start; m.expiresAt = new Date(+start + n*864e5); }
       commit('Listing “'+title+'” updated by the admin office'+(live ? ' — posted '+fmtDate(start)+', runs '+n+' days until '+fmtDate(m.expiresAt) : ' — will run '+n+' days once approved')+'.',
         {title:'Listing updated', forUnit:m.unit, go:'marketplace'});
