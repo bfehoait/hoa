@@ -1067,6 +1067,7 @@ const store = {
       status:'Checked', notedBy:'Arnel Bautista (HOA President)', notedAt:new Date(Date.now()-864e5*8), checkedBy:'SG Onting', checkedAt:new Date(Date.now()-864e5*6) }
   ],
   secAdmin:{ oic:'u7', secondary:'', revoked:{} },
+  accessAdmins:[],   /* admins who manage User Access; empty means Phoebe and Ralph (see accessManagers) */
   guards:[
     { post:'Main gate', name:'SG Onting', shift:'6 AM – 6 PM', contact:'0917 555 0110' },
     { post:'Main gate', name:'SG Perez', shift:'6 PM – 6 AM', contact:'0917 555 0111' },
@@ -2049,8 +2050,23 @@ const svg = k => '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" st
 /* ---- User Access: Support and Settings always stay on so nobody is locked out of their account ---- */
 const ACCESS_LOCKED = ['support','settings'];
 const ACCESS_ROLES = ['homeowner','renter','security','board','driver'];
+/* who may open User Access and limit other admins */
+const ACCESS_DEFAULT_EMAILS = ['phoebe.kate.tapales@multiplytalents.io'];
+function accessManagers(){
+  const admins = store.accounts.filter(a => hasRole(a,'admin') && a.status!=='Suspended');
+  const set = (store.accessAdmins||[]).filter(id => admins.some(a => a.id===id));
+  if(set.length) return set;
+  return admins.filter(a => ACCESS_DEFAULT_EMAILS.includes(String(a.email).toLowerCase()) || /^ralph\b/i.test(a.name)).map(a => a.id);
+}
+function isAccessManager(id){ return accessManagers().includes(id); }
 function pageOn(role, id, accountId){
-  if(role === 'admin' || ACCESS_LOCKED.includes(id)) return true;
+  if(ACCESS_LOCKED.includes(id)) return true;
+  if(role === 'admin'){
+    if(!accountId || isAccessManager(accountId)) return true;
+    if(id === 'access') return false;                               /* only managers open User Access */
+    const lim = store.userAccess[accountId];
+    return !(lim && lim[id] === false);
+  }
   const mine = accountId && store.userAccess[accountId];
   if(mine && id in mine) return mine[id];
   return !((store.hiddenPages[role] || []).includes(id));
@@ -2304,6 +2320,7 @@ const ADMIN = {
         '<button class="btn btn-ghost btn-sm" onclick="userForm(null,\'driver\')">Add driver</button>');
   },
   access(){
+    if(tabOf('access','homeowner')==='admin') return adminAccessView();
     const role = tabOf('access','homeowner');
     const off = (store.hiddenPages[role]||[]).length;
     const people = store.accounts.filter(a => a.role === role).sort((a,b) => a.name.localeCompare(b.name));
@@ -2318,7 +2335,7 @@ const ADMIN = {
           (locked ? ' disabled style="opacity:.45;cursor:not-allowed"' : ' onclick="flipPage(\''+role+'\',\''+it.id+'\')"')+'><i></i></button></div>';
       }).join('')).join('');
     return head('User Access','Set what each group can see, then use Limit access to fine-tune it for one person.') +
-      tabs('access', ACCESS_ROLES.map(r => ({ id:r, label:ROLE_LABEL(r), n:(store.hiddenPages[r]||[]).length ? (store.hiddenPages[r].length+' off') : '' })), 'homeowner') +
+      accessTabs() +
       sectionCard(ROLE_LABEL(role)+' accounts · '+people.length, people.length ? '<ul class="list">' + people.map(a =>
         '<li><div class="row" style="align-items:center"><div class="avatar">'+(a.avatar ? '<img src="'+a.avatar+'" alt="">' : esc(initials(a.name)))+'</div>' +
         '<div class="grow"><div class="ttl">'+esc(a.name)+'</div>' +
@@ -6821,20 +6838,56 @@ function resolveTicket(id){ const t=store.tickets.find(x=>x.id===id); t.status='
 
 /* settings */
 function flipPage(role, id){
+  if(!isAccessManager(realSession().accountId)){ toast('info','Not allowed','Only the admins who manage User Access can change this.'); return; }
   const list = store.hiddenPages[role] || (store.hiddenPages[role] = []);
   const i = list.indexOf(id), item = NAV[role].flatMap(g=>g.items).find(x=>x.id===id);
   if(i >= 0) list.splice(i,1); else list.push(id);
   commit(item.label+' is now '+(i>=0?'visible':'hidden')+' for '+ROLE_LABEL(role)+' accounts.',{title:'User access updated',audience:'admin'});
 }
+function accessTabs(){
+  const limited = store.accounts.filter(a => hasRole(a,'admin') && !isAccessManager(a.id) && customCount(a.id)).length;
+  return tabs('access', [{ id:'admin', label:ROLE_LABEL('admin'), n: limited ? limited+' limited' : '' }]
+    .concat(ACCESS_ROLES.map(r => ({ id:r, label:ROLE_LABEL(r), n:(store.hiddenPages[r]||[]).length ? (store.hiddenPages[r].length+' off') : '' }))), 'homeowner');
+}
+function adminAccessView(){
+  const admins = store.accounts.filter(a => hasRole(a,'admin')).sort((a,b) => a.name.localeCompare(b.name));
+  const mgr = accessManagers(), me = realSession().accountId;
+  return head('User Access','Set what each group can see, then use Limit access to fine-tune it for one person.') + accessTabs() +
+    sectionCard('Who manages User Access', '<div class="card-pad">' +
+      '<p class="meta" style="display:block;margin:0 0 10px">These admins have every page, open User Access, and can limit what other admins see. The others cannot open User Access.</p>' +
+      admins.map(a => { const on = mgr.includes(a.id), self = a.id===me;
+        return '<div class="switch"><div><div class="sl">'+esc(a.name)+(self?' <span class="meta">(you)</span>':'')+'</div><div class="sd">'+esc(a.title||'Admin')+' · '+esc(a.email)+'</div></div>' +
+          '<button class="tgl" role="switch" aria-checked="'+on+'" aria-label="'+esc(a.name)+' manages User Access"' +
+          (self ? ' disabled title="You cannot remove yourself" style="opacity:.45;cursor:not-allowed"' : ' onclick="flipAccessManager(\''+a.id+'\')"')+'><i></i></button></div>'; }).join('') + '</div>') +
+    '<div style="height:14px"></div>' +
+    sectionCard(ROLE_LABEL('admin')+' accounts · '+admins.length, '<ul class="list">' + admins.map(a => {
+        const isMgr = mgr.includes(a.id), n = customCount(a.id);
+        return '<li><div class="row" style="align-items:center"><div class="avatar">'+(a.avatar ? '<img src="'+a.avatar+'" alt="">' : esc(initials(a.name)))+'</div>' +
+          '<div class="grow"><div class="ttl">'+esc(a.name)+'</div><div class="meta"><span>'+esc(a.title||'Admin')+'</span>·<span>'+esc(a.email)+'</span></div></div>' +
+          (isMgr ? '<span class="tag t-emerald">Full access · manages User Access</span>'
+                 : (n ? '<span class="tag t-amber">'+n+' page'+(n===1?'':'s')+' off</span>' : '<span class="tag t-grey">All pages</span>') +
+                   '<button class="btn btn-ghost btn-sm" onclick="personAccess(\''+a.id+'\')">Limit access</button>') +
+          '</div></li>'; }).join('') + '</ul>');
+}
+function flipAccessManager(id){
+  if(!isAccessManager(realSession().accountId)){ toast('info','Not allowed','Only the admins who manage User Access can change this.'); return; }
+  const a = store.accounts.find(x => x.id===id); if(!a || id===realSession().accountId) return;
+  const cur = accessManagers(), on = cur.includes(id);
+  store.accessAdmins = on ? cur.filter(x => x!==id) : cur.concat(id);
+  if(!on && store.userAccess[id]){ const u = Object.assign({}, store.userAccess); delete u[id]; store.userAccess = u; }   /* managers see everything */
+  commit(a.name+(on ? ' no longer manages User Access.' : ' can now manage User Access and limit other admins.'),{title:'User access updated',audience:'admin'});
+}
 function customCount(accountId){ return Object.keys(store.userAccess[accountId] || {}).length; }
 function personAccess(accountId){
   const a = store.accounts.find(x => x.id === accountId); if(!a) return;
+  if(!isAccessManager(realSession().accountId)){ toast('info','Not allowed','Only the admins who manage User Access can change this.'); return; }
+  if(a.role==='admin' && isAccessManager(a.id)){ toast('info','Full access','This admin manages User Access, so every page stays on. Turn that off first to limit them.'); return; }
   const draft = {};
   NAV[a.role].forEach(g => g.items.forEach(it => { draft[it.id] = pageOn(a.role, it.id, a.id); }));
   window._accessDraft = draft;
   const body = '<div style="max-height:56vh;overflow:auto;margin:6px 0 4px">' + NAV[a.role].map(g =>
     '<p class="navlabel" style="margin:12px 0 2px">'+esc(g.g)+'</p>' + g.items.map(it => {
-      const locked = ACCESS_LOCKED.includes(it.id);
+      const locked = ACCESS_LOCKED.includes(it.id) || (a.role==='admin' && it.id==='access');
       return '<div class="switch"><div><div class="sl">'+esc(it.label)+'</div><div class="sd" id="pa_'+it.id+'">'+personHint(a, it.id)+'</div></div>' +
         '<button class="tgl" role="switch" aria-checked="'+draft[it.id]+'" aria-label="'+esc(it.label)+'"' +
         (locked ? ' disabled style="opacity:.45;cursor:not-allowed"' : ' onclick="flipDraft(this,\''+a.id+'\',\''+it.id+'\')"')+'><i></i></button></div>';
@@ -6843,8 +6896,8 @@ function personAccess(accountId){
   modal('Limit access for '+a.name, ROLE_LABEL(a.role)+' · '+a.unit+'. Turn off any page this person should not see.', body, 'Save', () => {
     const over = {};
     Object.keys(draft).forEach(id => {
-      if(ACCESS_LOCKED.includes(id)) return;
-      if(draft[id] !== pageOn(a.role, id)) over[id] = draft[id];   /* keep only what differs from the group */
+      if(ACCESS_LOCKED.includes(id) || (a.role==='admin' && id==='access')) return;
+      if(draft[id] !== (a.role==='admin' ? true : pageOn(a.role, id))) over[id] = draft[id];   /* keep only what differs from the group */
     });
     if(Object.keys(over).length) store.userAccess[a.id] = over; else delete store.userAccess[a.id];
     commit('Access updated for '+a.name+'.',{title:'User access updated',audience:'admin'});
@@ -6852,7 +6905,8 @@ function personAccess(accountId){
 }
 function personHint(a, id){
   if(ACCESS_LOCKED.includes(id)) return 'Always on.';
-  const d = window._accessDraft[id], grp = pageOn(a.role, id);
+  if(a.role==='admin' && id==='access') return 'Only the admins who manage User Access can open this.';
+  const d = window._accessDraft[id], grp = a.role==='admin' ? true : pageOn(a.role, id);
   return (d ? 'Can see this page' : 'Hidden from this person') + (d === grp ? ' · same as group' : ' · custom');
 }
 function flipDraft(btn, accountId, id){
@@ -6867,6 +6921,7 @@ function clearPersonAccess(accountId){
   commit(a.name+' now follows the '+ROLE_LABEL(a.role)+' group settings.',{title:'User access updated',audience:'admin'});
 }
 function resetAccess(role){
+  if(!isAccessManager(realSession().accountId)){ toast('info','Not allowed','Only the admins who manage User Access can change this.'); return; }
   store.hiddenPages[role] = [];
   commit('Every page is visible again for '+ROLE_LABEL(role)+' accounts.',{title:'User access updated',audience:'admin'});
 }
@@ -7203,7 +7258,7 @@ const sbMail = sbLib ? sbLib.createClient(SUPABASE_URL, SUPABASE_KEY,
   { auth:{ flowType:'implicit', persistSession:false, autoRefreshToken:false, detectSessionInUrl:false, storageKey:'hoa-mailer' } }) : null;
 
 const LOCAL_ONLY = ['theme','prefs','linked','seen'];               /* personal to this device */
-const ADMIN_ONLY = ['settings','hiddenPages','userAccess','hotlines'];         /* only admins may change these */
+const ADMIN_ONLY = ['settings','hiddenPages','userAccess','hotlines','accessAdmins'];         /* only admins may change these */
 const SHARED_KEYS = Object.keys(SEED).filter(k => k !== 'accounts' && !LOCAL_ONLY.includes(k));
 let cloudOn = false, synced = {}, syncedAccts = {}, live = null, pushTimer = null, heartbeat = null,
     membersTimer = null, renderPending = false, lastFailToast = 0;
