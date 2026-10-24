@@ -2340,6 +2340,7 @@ const ADMIN = {
         (a.status==='Suspended'
           ? '<button class="btn btn-emerald btn-sm" onclick="setUserStatus(\''+a.id+'\',\'Active\')">Restore</button>'
           : '<button class="btn btn-danger btn-sm" onclick="setUserStatus(\''+a.id+'\',\'Suspended\')">Suspend</button>') +
+        (a.id!==realSession().accountId ? '<button class="btn btn-danger btn-sm" onclick="deleteUserForm(\''+a.id+'\')">Delete</button>' : '') +
       '</div></td></tr>';
     const inner = {
       requests(){ return registrationsTab(); },
@@ -6238,11 +6239,12 @@ function userForm(id, presetRole){
   modal(a ? 'Edit '+a.name : 'Add a portal account',
     a ? 'Changes apply the next time they sign in.'
       : 'Pick the role first — it decides which portal they reach and what stays hidden.',
-    (a ? '<div class="card card-pad" style="background:var(--paper);margin-bottom:14px">' +
-          '<div class="kv"><span>Role</span><b>'+esc(ROLE_LABEL(a.role))+'</b></div></div>'
-       : '<label class="fld"><span>Role</span><select class="input" id="f_r" onchange="rolePreview(this.value)">' +
-          ROLE_MATRIX.map(m=>'<option value="'+m.role+'" '+(m.role===role?'selected':'')+'>'+esc(m.label)+'</option>').join('') +
+    (a && a.id===realSession().accountId ? '<div class="card card-pad" style="background:var(--paper);margin-bottom:14px">' +
+          '<div class="kv"><span>Role</span><b>'+esc(ROLE_LABEL(a.role))+'</b></div><p class="meta" style="margin:6px 0 0">You cannot change the role of the account you are signed in with.</p></div>'
+       : '<label class="fld"><span>'+(a?'Access (role)':'Role')+'</span><select class="input" id="f_r" onchange="rolePreview(this.value)">' +
+          ROLE_MATRIX.filter(m => !a || ACCT_ROLES.includes(m.role) || m.role===a.role).map(m=>'<option value="'+m.role+'" '+(m.role===role?'selected':'')+'>'+esc(m.label)+'</option>').join('') +
           '</select></label>' +
+         (a ? '<p class="meta" style="display:block;margin:-6px 0 12px">Changing the role changes which portal they see the next time they sign in.</p>' : '') +
          '<div class="card card-pad" style="background:var(--paper);margin-bottom:14px">' +
           '<div class="mk" style="font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3)">They will see</div>' +
           '<div class="mv" id="rp_exp" style="font-size:13px;color:var(--ink-2);margin-top:3px"></div>' +
@@ -6266,10 +6268,11 @@ function userForm(id, presetRole){
       '<div class="switch" style="border-top:1px solid var(--line);padding-top:14px">' +
         '<div><div class="sl">Also add to the unit registry</div>' +
         '<div class="sd">Owners only — creates the property record and the current dues line.</div></div>' +
-        '<button class="tgl" id="f_reg" role="switch" aria-checked="true" onclick="this.setAttribute(\'aria-checked\', this.getAttribute(\'aria-checked\')===\'true\'?\'false\':\'true\')"><i></i></button></div>'),
+        '<button class="tgl" id="f_reg" role="switch" aria-checked="true" onclick="this.setAttribute(\'aria-checked\', this.getAttribute(\'aria-checked\')===\'true\'?\'false\':\'true\')"><i></i></button></div>') +
+    (a && a.id!==realSession().accountId ? '<div style="border-top:1px solid var(--line);margin-top:6px;padding-top:12px"><button type="button" class="btn btn-danger btn-sm" onclick="closeModal();deleteUserForm(\''+a.id+'\')">Delete this account</button></div>' : ''),
     a ? 'Save changes' : 'Add account',
     () => {
-      const chosen = a ? a.role : $('#f_r').value;
+      const chosen = $('#f_r') ? $('#f_r').value : a.role;
       const owner = chosen==='homeowner', res = owner || chosen==='renter';
       const name=$('#f_n').value.trim(), email=$('#f_e').value.trim().toLowerCase(), unit=$('#f_u').value.trim();
       if(!name || !email){ toast('info','Missing details','A name and a sign-in email are both required.'); return false; }
@@ -6281,7 +6284,14 @@ function userForm(id, presetRole){
       if(chosen==='admin' && !title){ toast('info','Add a position','Pick the administrator\u2019s position, such as HOA President or Treasurer.'); return false; }
 
       if(a){
-        Object.assign(a, { name, email, unit:unit||a.unit, phone:$('#f_p').value.trim(), title });
+        const was = a.role;
+        Object.assign(a, { name, email, unit:unit||a.unit, phone:$('#f_p').value.trim(),
+          title: chosen!==was && chosen!=='admin' && title===a.title ? acctDefaultTitle(chosen, unit||a.unit) : title, role:chosen });
+        if(was!==chosen){
+          if(was==='security') secForget(a.id);
+          commit(name+'’s access changed from '+ROLE_LABEL(was)+' to '+ROLE_LABEL(chosen)+'. It applies the next time they sign in.',{title:'Access changed'});
+          return true;
+        }
         if(store.session.accountId===a.id){ store.session.name=a.name; store.session.email=a.email; }
         commit('Account updated for '+name+' ('+ROLE_LABEL(a.role)+').',{title:'Account updated'});
         return true;
@@ -6311,6 +6321,35 @@ function userForm(id, presetRole){
       return true;
     });
   rolePreview(role);
+}
+/* roles an admin can switch an existing account to (Administrator is added only by "Add administrator") */
+const ACCT_ROLES = ['homeowner','renter','security','board','driver'];
+function acctDefaultTitle(role, unit){
+  return { homeowner:'Owner of record', renter:'Tenant of '+unit, security:'Guard on post', board:'Board of Trustees', driver:'Shuttle driver' }[role] || ROLE_LABEL(role);
+}
+/* a guard who leaves the security role, or is deleted, drops out of the OIC settings */
+function secForget(id){
+  const s = store.secAdmin; if(!s) return;
+  if(s.oic===id) s.oic = '';
+  if(s.secondary===id) s.secondary = '';
+  if(s.revoked && s.revoked[id]){ const r = Object.assign({}, s.revoked); delete r[id]; s.revoked = r; }
+}
+function deleteUserForm(id){
+  const a = store.accounts.find(x=>x.id===id); if(!a) return;
+  if(a.id===realSession().accountId){ toast('info','Not allowed','You cannot delete the account you are signed in with.'); return; }
+  if(a.role==='admin' && store.accounts.filter(x=>x.role==='admin' && x.status!=='Suspended').length<=1){
+    toast('info','Keep one administrator','Add another administrator before deleting this one.'); return; }
+  modal('Delete '+a.name+'’s access?','They can no longer sign in. Their past requests, bookings and records stay in the portal.',
+    '<div class="card card-pad" style="background:var(--paper);margin-bottom:12px">' +
+      '<div class="kv"><span>Name</span><b>'+esc(a.name)+'</b></div><div class="kv"><span>Email</span><b>'+esc(a.email)+'</b></div>' +
+      '<div class="kv"><span>Role</span><b>'+esc(ROLE_LABEL(a.role))+'</b></div><div class="kv"><span>Unit or post</span><b>'+esc(a.unit)+'</b></div></div>' +
+    '<p class="meta" style="display:block;margin:0">This cannot be undone. To block access for a while instead, use <b>Suspend</b>. To give them access again later, add the account again.</p>',
+    'Delete access', () => {
+      store.accounts = store.accounts.filter(x=>x.id!==id);
+      if(a.role==='security') secForget(id);
+      if(store.userAccess && store.userAccess[id]){ const u = Object.assign({}, store.userAccess); delete u[id]; store.userAccess = u; }
+      commit(a.name+'’s portal access ('+ROLE_LABEL(a.role)+', '+a.unit+') was deleted.',{title:'Access deleted'});
+      return true; }, true);
 }
 function rolePreview(r){
   const m = ROLE_MATRIX.find(x=>x.role===r); if(!m) return;
