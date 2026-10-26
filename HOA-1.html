@@ -918,24 +918,16 @@ const store = {
     { unit:'D-07', owner:'Ferdie Lim', phase:'Phase 3', lot:220, type:'Single detached', occupancy:'Owner-occupied', since:'2016' },
     { unit:'D-15', owner:'Estrella Ocampo', phase:'Phase 3', lot:200, type:'Single detached', occupancy:'Vacant', since:'2022' }
   ],
-  ledger:{ opening:412500, reserve:1240000 },
-  expenses:[
-    { id:'x1', date:'2026-08-18', payee:'Laguna Water', category:'Utilities', memo:'Common area water, August', amount:18400, status:'Paid' },
-    { id:'x2', date:'2026-08-15', payee:'Sikat Security Agency', category:'Security', memo:'Guard services, 2nd half of August', amount:96000, status:'Paid' },
-    { id:'x3', date:'2026-08-12', payee:'GreenScape Services', category:'Grounds', memo:'Landscaping and hauling', amount:22500, status:'Paid' },
-    { id:'x4', date:'2026-08-22', payee:'Meralco', category:'Utilities', memo:'Streetlights and clubhouse', amount:31200, status:'For approval' }
+  ledger:{ opening:0, reserve:0 },
+  expenses:[],
+  budget:[   /* categories for recording expenses; amounts are set by the treasurer */
+    { category:'Security', planned:0, actual:0 },
+    { category:'Utilities', planned:0, actual:0 },
+    { category:'Grounds', planned:0, actual:0 },
+    { category:'Repairs', planned:0, actual:0 },
+    { category:'Admin', planned:0, actual:0 }
   ],
-  budget:[
-    { category:'Security', planned:192000, actual:96000 },
-    { category:'Utilities', planned:60000, actual:49600 },
-    { category:'Grounds', planned:45000, actual:22500 },
-    { category:'Repairs', planned:38000, actual:12800 },
-    { category:'Admin', planned:25000, actual:9400 }
-  ],
-  collectionsHistory:[
-    { m:'Mar', pct:88 },{ m:'Apr', pct:91 },{ m:'May', pct:86 },
-    { m:'Jun', pct:94 },{ m:'Jul', pct:92 },{ m:'Aug', pct:50 }
-  ],
+  collectionsHistory:[],
 
   /* security & access */
   passes:[],
@@ -1710,6 +1702,19 @@ $('#signin').addEventListener('click', async () => {
 
 /* sample activity that shipped with earlier versions; an admin's first sign-in after this update removes it everywhere */
 const SAMPLE_ACTIVITY = {"requests":["r1","r2","r3","r4","r5","r6","r7","r8","r9"],"complaints":["c1","c2","c3","c4","c5"],"concerns":["n1","n2","n3","n4"],"dues":["d1","d2","d3","d4","d5"],"bookings":["k1","k2","k3","k4"],"marketplace":["m1","m2","m3","m4","m5","m6","j1","m7","t1","t2"],"boothEvents":["be1"],"boothApps":["ba1","ba2"],"gatePasses":["gp1","gp2","gp3"],"passes":["p1","p2","p3","p4","p5","p6","p7"],"incidents":["i1","i2"],"carpools":["cp1","cp2"],"rides":["rd1","rd2"],"tickets":["t1","t2"],"household":["hh1","hh2","hh3"],"notifs":["n01","n02"]};
+function removeSampleFinance(){
+  if(store.settings.sampleFinanceRemoved) return 0;
+  let n = 0;
+  const before = store.expenses.length;
+  store.expenses = store.expenses.filter(x => !['x1','x2','x3','x4'].includes(x.id)); n += before - store.expenses.length;
+  if(store.ledger.opening===412500 && store.ledger.reserve===1240000){ store.ledger = { opening:0, reserve:0 }; n++; }
+  const sampleBudget = { Security:[192000,96000], Utilities:[60000,49600], Grounds:[45000,22500], Repairs:[38000,12800], Admin:[25000,9400] };
+  store.budget.forEach(b => { const v = sampleBudget[b.category];
+    if(v && b.planned===v[0]){ b.planned = 0; b.actual = Math.max(0, b.actual - v[1]); n++; } });
+  if(JSON.stringify(store.collectionsHistory)==='[{"m":"Mar","pct":88},{"m":"Apr","pct":91},{"m":"May","pct":86},{"m":"Jun","pct":94},{"m":"Jul","pct":92},{"m":"Aug","pct":50}]'){ store.collectionsHistory = []; n++; }
+  store.settings.sampleFinanceRemoved = new Date().toISOString();
+  return n;
+}
 function removeSampleActivity(){
   if(store.settings.sampleActivityRemoved) return false;
   let n = 0;
@@ -1729,7 +1734,7 @@ function enter(acct, method){
   store.session = { authed:true, method, accountId:acct.id, name:acct.name, email:acct.email,
                     phone:acct.phone, unit:acct.unit, role:pickRole(acct), avatar:acct.avatar||null, availability:acct.availability };
   store.adminSession = null;
-  if(hasRole(acct,'admin')){ const n = removeSampleActivity(); if(n) setTimeout(() => toast('ok','Sample data removed', n+' sample records were cleared from the portal for everyone.'), 600); }
+  if(hasRole(acct,'admin')){ const n = removeSampleActivity() + removeSampleFinance(); if(n) setTimeout(() => toast('ok','Sample data removed', n+' sample records were cleared from the portal for everyone.'), 600); }
   store.view = isAdmin() ? 'overview' : 'feed';
   store.tab = {};
   $('#auth').classList.add('hide'); $('#app').classList.remove('hide');
@@ -2027,9 +2032,17 @@ function sectionCard(title, inner, action){
 }
 
 /* derived numbers */
-const augDues = () => store.dues.filter(d=>d.period==='August 2026');
+/* the billing period in use: the latest one in the dues ledger, or this month before any billing run */
+const periodDate = p => { const d = new Date('1 '+p); return isNaN(d) ? 0 : +d; };
+function curPeriod(){
+  const ps = [...new Set(store.dues.map(d => d.period))].sort((a,b) => periodDate(b) - periodDate(a));
+  return ps[0] || new Date().toLocaleDateString('en-US',{ month:'long', year:'numeric' });
+}
+function nextPeriod(){ const d = new Date(periodDate(curPeriod()) || Date.now()); d.setMonth(d.getMonth()+(store.dues.length?1:0)); return d.toLocaleDateString('en-US',{ month:'long', year:'numeric' }); }
+const curMonth = () => curPeriod().split(' ')[0];
+const augDues = () => store.dues.filter(d=>d.period===curPeriod());
 const collected = () => augDues().filter(d=>d.status==='Paid').reduce((a,b)=>a+b.amount,0);
-const collectionPct = () => Math.round(augDues().filter(d=>d.status==='Paid').length / augDues().length * 100);
+const collectionPct = () => augDues().length ? Math.round(augDues().filter(d=>d.status==='Paid').length / augDues().length * 100) : 0;
 const totalExpense = () => store.expenses.filter(x=>x.status==='Paid').reduce((a,b)=>a+b.amount,0);
 function myBallot(){ const e = store.election, id = store.session.accountId; e.ballots = e.ballots || {}; return e.ballots[id] || (e.ballots[id] = {}); }
 const hasVoted = () => Object.keys(myBallot()).length === store.election.positions.length;
@@ -2190,7 +2203,7 @@ const ADMIN = {
     const openCmp = store.complaints.filter(c=>c.status!=='Resolved').length;
     return head('Overview','What needs the board today, and where August stands.') +
     '<div class="grid g-4" style="margin-bottom:14px">' +
-      stat('Collected', peso(collected()), collectionPct()+'% of August billing') +
+      stat('Collected', peso(collected()), collectionPct()+'% of '+curPeriod()+' billing') +
       stat('Open tickets', openReq, openReq?'Operations queue':'All clear') +
       stat('Complaints', openCmp, openCmp?'Under review':'Nothing pending') +
       stat('Ballots cast', store.election.ballotsCast, 'of '+store.election.eligible+' households') +
@@ -2209,7 +2222,7 @@ const ADMIN = {
           '<button class="btn btn-ghost btn-sm" onclick="go(\''+x.v+'\')'+(x.tab?';goTab(\''+({operations:'ops',financial:'fin'}[x.v])+'\',\''+x.tab+'\')':'')+'">Open</button></div></li>').join('') +
         '</ul>') +
       sectionCard('Collection rate, last six months',
-        '<div class="card-pad"><div class="bars">' + store.collectionsHistory.map((h,i) =>
+        '<div class="card-pad">' + (store.collectionsHistory.length ? '' : '<p class="meta" style="margin:0 0 10px">No collection history yet. Past months appear here as billing runs are recorded.</p>') + '<div class="bars">' + store.collectionsHistory.map((h,i) =>
           '<div class="b'+(i===store.collectionsHistory.length-1?' hi':'')+'">' +
           '<i style="height:'+(i===store.collectionsHistory.length-1?collectionPct():h.pct)+'%"></i>' +
           '<span>'+esc(h.m)+'</span></div>').join('') +
@@ -2368,7 +2381,7 @@ const ADMIN = {
       budget(){
         return sectionCard('Budget against actual, 2026',
           '<div class="card-pad">' + store.budget.map(b => {
-            const pct = Math.round(b.actual/b.planned*100);
+            const pct = b.planned ? Math.round(b.actual/b.planned*100) : 0;
             return '<div style="margin-bottom:16px"><div class="row" style="align-items:center;margin-bottom:6px">' +
               '<div class="grow"><strong>'+esc(b.category)+'</strong></div>' +
               '<span class="mono" style="font-size:12.5px;color:var(--ink-2)">'+peso(b.actual)+' / '+peso(b.planned)+'</span></div>' +
@@ -2707,8 +2720,8 @@ const ADMIN = {
     }[t]();
     return head('Financial','Billing, collections and disbursements — the association’s money in one place.') +
     '<div class="grid g-4" style="margin-bottom:14px">' +
-      stat('Opening balance', peso(store.ledger.opening), 'As of August 1') +
-      stat('Collected to date', peso(collected()), collectionPct()+'% of August billing') +
+      stat('Opening balance', peso(store.ledger.opening), store.ledger.opening ? 'Starting balance on file' : 'Not set yet') +
+      stat('Collected to date', peso(collected()), collectionPct()+'% of '+curPeriod()+' billing') +
       stat('Disbursed', peso(totalExpense()), store.expenses.filter(x=>x.status==='Paid').length+' payments released') +
       stat('Working balance', peso(net), 'Reserve fund: '+peso(store.ledger.reserve)) +
     '</div>' +
@@ -2721,7 +2734,7 @@ const ADMIN = {
   /* ---------- REPORTS ---------- */
   reports(){
     const defs = [
-      { id:'collect', t:'Collection summary', d:'August billing, payments received, outstanding balance by household.' },
+      { id:'collect', t:'Collection summary', d:'Current billing, payments received, outstanding balance by household.' },
       { id:'expense', t:'Expense report', d:'Disbursements by category against the approved budget.' },
       { id:'tickets', t:'Maintenance activity', d:'Tickets filed, resolved and still open, with average age.' },
       { id:'security', t:'Security log', d:'Visitor passes issued and incidents recorded for the period.' },
@@ -4030,12 +4043,12 @@ const HOME = {
   gatepass(){ return gpHomeView(); },
   feed(){
     const s = store.session;
-    const due = store.dues.find(d => d.unit===myUnit() && d.period==='August 2026');
+    const due = store.dues.find(d => d.unit===myUnit() && d.period===curPeriod());
     const fresh = store.announcements.filter(a=>!store.seen.has(a.id)).length;
     const banner = due && due.status!=='Paid'
       ? '<div class="card card-pad" style="border-left:3px solid var(--amber);margin-bottom:14px">' +
         '<div class="row" style="align-items:center;flex-wrap:wrap;gap:12px"><div class="grow">' +
-        '<div class="ttl">August dues · '+peso(due.amount)+'</div>' +
+        '<div class="ttl">'+esc(due.period)+' dues · '+peso(due.amount)+'</div>' +
         '<div class="meta">Due on the '+store.settings.dueDay+'th · '+store.settings.lateFeePct+'% late fee after</div></div>' +
         '<button class="btn btn-emerald" style="width:auto" onclick="payForm()">Pay now</button></div></div>' : '';
     const voteBanner = store.election.status==='Open' && !hasVoted()
@@ -4047,7 +4060,7 @@ const HOME = {
     return head('Hello, '+s.name.split(' ')[0], 'Unit '+s.unit+' · '+(fresh ? fresh+' new update'+(fresh>1?'s':'')+' from the board' : 'You are all caught up')) +
     banner + voteBanner +
     '<div class="qa" style="margin-bottom:20px">' +
-      quick('peso','Pay dues', due && due.status==='Paid' ? 'August settled' : 'August · '+peso(due ? due.amount : unitDues(myUnit())), 'payForm()') +
+      quick('peso','Pay dues', due && due.status==='Paid' ? curMonth()+' settled' : curMonth()+' · '+peso(due ? due.amount : unitDues(myUnit())), 'payForm()') +
       quick('wrench','Report an issue','Streetlights, drainage, repairs','requestForm()') +
       quick('calendar','Book a facility','Hall, court, clubhouse, pool','bookForm()') +
     '</div>' +
@@ -4745,7 +4758,7 @@ const BOARD = {
     const e = store.election;
     return head('Governance oversight','Approved summaries only. Household-level operational records stay with the admin office.') +
     '<div class="grid g-4" style="margin-bottom:14px">' +
-      stat('Collection rate', collectionPct()+'%', 'August 2026') +
+      stat('Collection rate', collectionPct()+'%', curPeriod()) +
       stat('Reserve fund', peso(store.ledger.reserve), 'Unrestricted') +
       stat('Open complaints', store.complaints.filter(c=>c.status!=='Resolved').length, 'By category below') +
       stat('Ballot turnout', Math.round(e.ballotsCast/e.eligible*100)+'%', e.ballotsCast+' of '+e.eligible) +
@@ -4785,13 +4798,13 @@ const BOARD = {
     const net = store.ledger.opening + collected() - totalExpense();
     return head('Approved summaries','Aggregate figures for governance. The per-household ledger is not part of the Board view.') +
     '<div class="grid g-4" style="margin-bottom:14px">' +
-      stat('Opening balance', peso(store.ledger.opening), 'As of August 1') +
+      stat('Opening balance', peso(store.ledger.opening), store.ledger.opening ? 'Starting balance on file' : 'Not set yet') +
       stat('Income to date', peso(collected()), 'Dues received') +
       stat('Expenses released', peso(totalExpense()), 'Approved disbursements') +
       stat('Working balance', peso(net), 'Excludes reserve') +
     '</div>' +
     sectionCard('Budget against actual','<div class="card-pad">' + store.budget.map(b => {
-      const pct = Math.round(b.actual/b.planned*100);
+      const pct = b.planned ? Math.round(b.actual/b.planned*100) : 0;
       return '<div style="margin-bottom:16px"><div class="row" style="align-items:center;margin-bottom:6px">' +
         '<div class="grow"><strong>'+esc(b.category)+'</strong></div>' +
         '<span class="mono" style="font-size:12.5px;color:var(--ink-2)">'+peso(b.actual)+' / '+peso(b.planned)+'</span></div>' +
@@ -5963,7 +5976,7 @@ function billingRun(){
   const sqm = store.settings.duesMode==='sqm';
   modal('Generate the next billing run','This creates an unpaid record for every household in the registry, '+
       (sqm ? 'each billed at '+peso(store.settings.duesRatePerSqm)+' per square meter of lot area.' : 'each billed the flat rate of '+peso(store.settings.duesFlatAmount)+'.'),
-    '<label class="fld"><span>Billing period</span><input class="input" id="f_per" value="September 2026"></label>' +
+    '<label class="fld"><span>Billing period</span><input class="input" id="f_per" value="'+esc(nextPeriod())+'"></label>' +
     '<div class="card card-pad" style="background:var(--paper)"><div class="kv"><span>Rate</span><b>'+(sqm ? peso(store.settings.duesRatePerSqm)+' / sqm' : peso(store.settings.duesFlatAmount)+' flat')+'</b></div>' +
     '<div class="meta" style="margin-top:6px">'+(sqm
       ? 'Same rate for every unit — the amount only varies with each unit\'s lot area, so billing stays consistent and disputable-free.'
@@ -6269,8 +6282,8 @@ function userForm(id, presetRole){
         if(!store.units.some(u=>u.unit===unit))
           store.units.push({ unit, owner:name, phase:'Phase 3', lot:150, type:'Townhouse',
             occupancy:'Owner-occupied', since:String(new Date().getFullYear()) });
-        if(!store.dues.some(d=>d.unit===unit && d.period==='August 2026'))
-          store.dues.push({ id:uid(), unit, owner:name, period:'August 2026',
+        if(store.dues.length && !store.dues.some(d=>d.unit===unit && d.period===curPeriod()))
+          store.dues.push({ id:uid(), unit, owner:name, period:curPeriod(),
             amount:unitDues(unit), status:'Unpaid', method:'', paidAt:null });
       }
       commit(status==='Active'
@@ -6730,7 +6743,7 @@ function runReport(key){
   const e = store.election;
   const defs = {
     collect:{ t:'Collection summary', rows:[
-      ['Billing period','August 2026'],['Households billed',augDues().length],
+      ['Billing period',curPeriod()],['Households billed',augDues().length],
       ['Paid',augDues().filter(d=>d.status==='Paid').length],['Unpaid',augDues().filter(d=>d.status==='Unpaid').length],
       ['Overdue',augDues().filter(d=>d.status==='Overdue').length],['Collected',peso(collected())],
       ['Outstanding',peso(augDues().filter(d=>d.status!=='Paid').reduce((a,b)=>a+b.amount,0))],
