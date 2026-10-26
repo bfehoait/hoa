@@ -1068,7 +1068,12 @@ const store = {
       status:'Checked', notedBy:'Arnel Bautista (HOA President)', notedAt:new Date(Date.now()-864e5*8), checkedBy:'SG Onting', checkedAt:new Date(Date.now()-864e5*6) }
   ],
   secAdmin:{ oic:'u7', secondary:'', revoked:{} },
-  accessAdmins:[],   /* admins who manage User Access; empty means Phoebe and Ralph (see accessManagers) */
+  accessAdmins:[],
+  household:[
+    { id:'hh1', unit:'B-12', name:'Paolo Dela Cruz', rel:'Spouse / partner', type:'adult', contact:'0917 555 0143', status:'Confirmed', at:new Date(Date.now()-864e5*40) },
+    { id:'hh2', unit:'B-12', name:'Lourdes Dela Cruz', rel:'Parent', type:'senior', contact:'', status:'Confirmed', at:new Date(Date.now()-864e5*40) },
+    { id:'hh3', unit:'B-12', name:'Marisol Aguilar', rel:'Household help', type:'help', contact:'0908 555 0177', status:'Confirmed', at:new Date(Date.now()-864e5*30) }
+  ],   /* admins who manage User Access; empty means Phoebe and Ralph (see accessManagers) */
   guards:[
     { post:'Main gate', name:'SG Onting', shift:'6 AM – 6 PM', contact:'0917 555 0110' },
     { post:'Main gate', name:'SG Perez', shift:'6 PM – 6 AM', contact:'0917 555 0111' },
@@ -4465,11 +4470,7 @@ const HOME = {
     const t = tabOf('hset','account');
     const inner = { account(){ return accountSettings(); },
       household(){
-        const members = [
-          { name:'Rina Dela Cruz', rel:'Owner of record', contact:'0917 555 0142' },
-          { name:'Paolo Dela Cruz', rel:'Spouse', contact:'0917 555 0143' },
-          { name:'Marisol Aguilar', rel:'Household help', contact:'0908 555 0177' }
-        ];
+        const members = hhOf(myUnit());
         const unit = store.units.find(u=>u.unit===myUnit());
         return '<div class="grid g-2">' +
           sectionCard('Unit details','<div class="card-pad">' +
@@ -4479,10 +4480,13 @@ const HOME = {
             '<div class="kv"><span>Type</span><b>'+esc(unit?unit.type:'—')+'</b></div>' +
             '<div class="kv"><span>Occupancy</span><b>'+esc(unit?unit.occupancy:'—')+'</b></div>' +
             '<p class="meta" style="margin-top:12px">Corrections are handled by the admin office.</p></div>') +
-          sectionCard('Household members','<ul class="list">' + members.map(m =>
-            '<li><div class="row" style="align-items:center"><div class="grow"><div class="ttl">'+esc(m.name)+'</div>' +
-            '<div class="meta">'+esc(m.rel)+' · <span class="mono">'+esc(m.contact)+'</span></div></div></div></li>').join('') + '</ul>',
-            '<button class="btn btn-ghost btn-sm" onclick="toast(\'info\',\'Sent to the office\',\'New members are confirmed within a working day.\')">Add member</button>') +
+          sectionCard('Household members','<ul class="list">' +
+            '<li><div class="row" style="align-items:center"><div class="grow"><div class="ttl">'+esc(store.session.name)+'</div>' +
+              '<div class="meta"><span>Owner of record</span>'+(store.session.phone?'·<span class="mono">'+esc(store.session.phone)+'</span>':'')+'</div></div></div></li>' +
+            members.map(m => hhRow(m, true)).join('') + '</ul>' +
+            hhSummary(members) +
+            '<p class="meta" style="display:block;margin:0;padding:0 16px 14px">Elder and special-needs details are seen only by the admin office, so they can check on your household in an emergency.</p>',
+            '<button class="btn btn-ghost btn-sm" onclick="hhForm()">Add member</button>') +
         '</div>';
       },
       privacy(){
@@ -6568,6 +6572,62 @@ function resetPassword(id){
         : toast('ok','Reset email sent', a.name+' will get a link at '+a.email+' to choose a new password.'));
       return true; });
 }
+/* ---- household members: each unit's family and household help, with a member type ---- */
+const HH_TYPES = [
+  { id:'adult',  label:'Adult (18–59)' },
+  { id:'senior', label:'Elder / senior citizen (60+)', tag:'Senior',        tone:'t-amber' },
+  { id:'child',  label:'Child (under 18)',             tag:'Child',         tone:'t-slate' },
+  { id:'pwd',    label:'Person with disability / special needs', tag:'Special needs', tone:'t-rose' },
+  { id:'help',   label:'Household help / caregiver' }];
+const HH_RELS = ['Spouse / partner','Son / daughter','Parent','Grandparent','Sibling','Relative','Household help','Caregiver','Other'];
+const hhType = id => HH_TYPES.find(t => t.id===id) || HH_TYPES[0];
+function hhOf(unit){ return (store.household||[]).filter(m => m.unit===unit && m.status!=='Removed'); }
+function hhRow(m, mine, admin){
+  const t = hhType(m.type);
+  return '<li><div class="row" style="align-items:center"><div class="grow"><div class="ttl">'+esc(m.name)+'</div>' +
+    '<div class="meta"><span>'+esc(m.rel)+'</span>'+(t.tag?'<span class="tag '+t.tone+'">'+esc(t.tag)+'</span>':'') +
+      (m.contact?'·<span class="mono">'+esc(m.contact)+'</span>':'')+(m.status==='Pending'?'<span class="tag t-amber">Waiting for the office</span>':'')+'</div></div>' +
+    (admin && m.status==='Pending' ? '<button class="btn btn-emerald btn-sm" onclick="hhConfirm(\''+m.id+'\')">Confirm</button>' : '') +
+    (mine || admin ? '<button class="btn btn-ghost btn-sm" onclick="hhRemove(\''+m.id+'\','+(admin?'true':'false')+')">Remove</button>' : '') +
+  '</div></li>';
+}
+function hhSummary(list){
+  const n = id => list.filter(m => m.type===id).length;
+  const bits = [['senior','senior citizen'],['pwd','with special needs'],['child','child']].filter(([id]) => n(id))
+    .map(([id,w]) => n(id)+' '+w+(n(id)>1 && id!=='pwd' ? (id==='child'?'ren':'s') : ''));
+  return '<div class="meta" style="display:block;padding:10px 16px 4px">'+(list.length+1)+' in the household'+(bits.length?' · '+bits.join(' · '):'')+'</div>';
+}
+function hhForm(){
+  modal('Add a household member','The admin office confirms new members within one working day.',
+    '<label class="fld"><span>Full name</span><input class="input" id="hh_name" placeholder="Lourdes Dela Cruz"></label>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Member type</span><select class="input" id="hh_type">'+HH_TYPES.map(t=>'<option value="'+t.id+'">'+esc(t.label)+'</option>').join('')+'</select></label>' +
+      '<label class="fld"><span>Relationship to you</span><select class="input" id="hh_rel">'+HH_RELS.map(r=>'<option>'+esc(r)+'</option>').join('')+'</select></label></div>' +
+    '<label class="fld"><span>Mobile number (optional)</span><input class="input" id="hh_contact" placeholder="0917 555 0000"></label>' +
+    '<p class="meta" style="display:block;margin:0">Choosing Elder / senior citizen or Person with disability lets the admin office know to check on them in an emergency. You do not need to give any medical details.</p>',
+    'Send to the office', () => {
+      const name = $('#hh_name').value.trim();
+      if(!name){ toast('info','Add a name','Type the member\u2019s full name.'); return false; }
+      if(hhOf(myUnit()).some(m => m.name.toLowerCase()===name.toLowerCase())){ toast('info','Already listed', name+' is already in your household.'); return false; }
+      const type = $('#hh_type').value;
+      (store.household = store.household || []).push({ id:uid(), unit:myUnit(), name, rel:$('#hh_rel').value, type,
+        contact:$('#hh_contact').value.trim(), status:'Pending', at:new Date(), by:store.session.name });
+      commit(name+' ('+hhType(type).label.toLowerCase()+') added to unit '+myUnit()+' — waiting for the office to confirm.',{title:'Household member added', audience:'admin'});
+      return true; });
+}
+function hhConfirm(id){
+  const m = (store.household||[]).find(x => x.id===id); if(!m) return;
+  m.status = 'Confirmed'; m.confirmedBy = store.session.name; m.confirmedAt = new Date();
+  commit(m.name+' confirmed as a member of unit '+m.unit+'.',{title:'Household member confirmed', forUnit:m.unit});
+  if(document.querySelector('.modal')) homeownerProfile(m.unit);
+}
+function hhRemove(id, admin){
+  const m = (store.household||[]).find(x => x.id===id); if(!m) return;
+  if(!admin && m.unit!==myUnit()) return;
+  store.household = store.household.filter(x => x.id!==id);
+  commit(m.name+' removed from unit '+m.unit+'\u2019s household.',{title:'Household updated', forUnit:m.unit});
+  if(admin && document.querySelector('.modal')) homeownerProfile(m.unit);
+}
 function homeownerProfile(unit){
   const acc = store.accounts.find(a=>a.unit===unit && (a.role==='homeowner'||a.role==='renter'));
   const u = store.units.find(x=>x.unit===unit);
@@ -6588,6 +6648,7 @@ function homeownerProfile(unit){
       '<div class="kv"><span>Monthly dues</span><b>'+(u?peso(unitDues(u)):'—')+'</b></div>' +
       '<div class="kv"><span>Lifetime dues</span><b>'+peso(collected)+' collected of '+peso(billed)+' billed</b></div>' +
     '</div>' +
+    section('Household members', hhOf(unit), m => hhRow(m, false, true)) +
     section('Dues history', myDues, d => '<li><div class="row" style="align-items:center"><div class="grow"><div class="ttl">'+esc(d.period)+'</div>' +
       '<div class="meta mono">'+peso(d.amount)+(d.method?' · '+esc(d.method):'')+'</div></div><span class="tag '+statusTag(d.status)+'">'+esc(d.status)+'</span></div></li>') +
     section('Requests filed', myReq, r => '<li><div class="ttl">'+esc(r.title)+'</div><div class="meta">'+ago(r.at)+' · <span class="tag '+statusTag(r.status)+'">'+esc(r.status)+'</span></div></li>') +
