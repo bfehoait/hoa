@@ -1972,6 +1972,7 @@ const NAV = {
   security:[
     { g:'Gate', items:[
       { id:'gatepasses', label:'Gate passes',    icon:'shield', badge:()=>(store.gatePasses||[]).filter(p=>p.status==='Approved'&&p.date<=gpToday()).length },
+      { id:'gate',      label:'Visitor passes',  icon:'users', badge:()=>store.passes.filter(p=>p.status==='Active').length },
       { id:'visitorlookup', label:'Visitor lookup', icon:'users', badge:()=>visitorProfiles().filter(v=>v.reasons.length).length },
       { id:'vehicles',  label:'Vehicle lookup',  icon:'grid' },
       { id:'incidents', label:'Incident log',    icon:'flag' },
@@ -2686,7 +2687,7 @@ const ADMIN = {
     return head('Security & Access Control','Gate passes, vehicle tags, the incident log and who is on post.') +
       tabs('sec',[
         {id:'gatepasses',label:'Gate passes',n:(store.gatePasses||[]).filter(p=>p.status==='Pending').length},
-        {id:'passes',label:'Visitor passes (future phase)',n:store.passes.filter(p=>p.status==='Pending').length},
+        {id:'passes',label:'Visitor passes',n:store.passes.filter(p=>p.status==='Pending').length},
         {id:'lookup',label:'Visitor lookup',n:visitorProfiles().filter(v=>v.reasons.length).length},
         {id:'stickers',label:'Vehicle stickers'},
         {id:'incidents',label:'Incidents'},
@@ -3977,15 +3978,17 @@ function gpHomeView(){
   const t = tabOf('hgp','current');
   const current = mine.filter(p => ['Pending','Approved','Held'].includes(p.status));
   const list = t==='current' ? current : mine.filter(p => !current.includes(p));
-  return head('Gate pass','For construction materials, service crews and deliveries. The admin office approves it, then the guard on duty checks it at the gate.',
-    '<button class="btn btn-primary" style="width:auto" onclick="gpForm()">Request a gate pass</button>') +
+  const visitors = store.passes.filter(p=>p.unit===myUnit()).slice().sort((a,b)=>a.date<b.date?1:-1);
+  return head('Gate pass','For deliveries, construction materials and service crews, and for guests you are expecting. The admin office approves each pass, then the guard on duty checks it at the gate.',
+    '<div class="btn-row"><button class="btn btn-primary" style="width:auto" onclick="gpForm()">Request a gate pass</button>' +
+    '<button class="btn btn-ghost" style="width:auto" onclick="visitorForm()">Visitor\u2019s pass</button></div>') +
   '<div class="gp-flow">' +
     [['1','You submit','List the bearer, the date and every item coming in or going out.'],
      ['2','Ops & Maintenance approves','The admin office checks it and notes the pass.'],
      ['3','Guard checks at the gate','Only approved passes show at the guardhouse. The guard checks the items and logs it.']].map(s =>
       '<div><span class="n">'+s[0]+'</span><b>'+s[1]+'</b><p>'+s[2]+'</p></div>').join('') + '</div>' +
-  tabs('hgp',[{id:'current',label:'Current',n:current.length},{id:'past',label:'Past',n:mine.length-current.length}],'current') +
-  (list.length ? '<div class="grid g-2">' + list.map(p =>
+  tabs('hgp',[{id:'current',label:'Current',n:current.length},{id:'past',label:'Past',n:mine.length-current.length},{id:'visitors',label:'Visitor passes',n:visitors.length}],'current') +
+  (t==='visitors' ? gpVisitorList(visitors) : list.length ? '<div class="grid g-2">' + list.map(p =>
     '<div class="card card-pad"><div class="row" style="align-items:flex-start"><div class="grow">' +
       '<div class="ttl">'+esc(p.bearer)+'</div>' +
       '<div class="meta"><span class="mono">'+esc(p.no)+'</span><span class="tag t-grey">'+esc(p.type)+'</span><span class="tag t-grey">'+esc(p.purpose)+'</span><span>'+fmtDate(p.date)+'</span></div>' +
@@ -3996,8 +3999,17 @@ function gpHomeView(){
       (p.status==='Pending' ? '<button class="btn btn-ghost btn-sm" onclick="gpCancel(\''+p.id+'\')">Cancel</button>' : '') + '</div></div>').join('') + '</div>'
     : '<div class="card">'+empty(t==='current'?'No current gate passes':'Nothing here yet','Request a pass before a delivery, a pull-out or a construction or service crew arrives.')+'</div>') +
   '<div class="card card-pad gp-future" style="margin-top:16px"><div class="row" style="align-items:center;gap:12px"><div class="qi">'+svg('shield')+'</div><div class="grow">' +
-    '<div class="ttl">Visitor pre-registration and QR entry <span class="tag t-grey">Future phase</span></div>' +
-    '<div class="meta" style="display:block">Coming after the privacy, data-retention and gate procedures are tested. For now, guests are logged at the guardhouse as usual.</div></div></div></div>';
+    '<div class="ttl">QR scanning at the gate <span class="tag t-grey">Future phase</span></div>' +
+    '<div class="meta" style="display:block">Coming after the privacy, data-retention and gate procedures are tested. For now, give your guest the pass code and the guard checks it at the gate.</div></div></div></div>';
+}
+function gpVisitorList(rows){
+  return rows.length ? '<div class="card tablewrap"><table><thead><tr><th>Visitor</th><th class="hide-sm">Purpose</th><th>Date</th><th>Code</th><th>Status</th></tr></thead><tbody>' +
+    rows.map(p => '<tr><td data-label="Visitor"><strong>'+esc(p.visitor)+'</strong><div class="meta">'+(passMode(p)==='Vehicle'
+        ? 'Vehicle'+(p.plate&&p.plate!=='—'?' · <span class="mono">'+esc(p.plate)+'</span>':'') : 'Commute / on foot')+'</div></td>' +
+      '<td class="hide-sm" data-label="Purpose">'+esc(p.purpose)+'</td><td data-label="Date">'+fmtDate(p.date)+'</td>' +
+      '<td class="mono" data-label="Code">'+(p.status==='Pending' ? '<span class="meta">After approval</span>' : esc(p.code))+'</td>' +
+      '<td data-label="Status"><span class="tag '+statusTag(p.status)+'">'+esc(p.status)+'</span></td></tr>').join('') + '</tbody></table></div>'
+    : '<div class="card">'+empty('No visitor passes yet','Tap Visitor\u2019s pass to tell the gate who to expect. Share the code with your guest once it is approved.')+'</div>';
 }
 
 /* ---------- admin, Ops & Maintenance: approve ---------- */
@@ -5412,7 +5424,8 @@ function visitorForm(){
         date:$('#f_vdate').value || new Date().toISOString().slice(0,10), transport,
         plate:transport==='Vehicle' ? plate : '—', code:genPassCode(), status:'Pending' };
       store.passes.unshift(item);
-      commit('Visitor pass requested by unit '+myUnit()+' for '+visitor+'.',
+      if(store.view==='gatepass') store.tab.hgp = 'visitors';
+      commit('Visitor pass requested by unit '+myUnit()+' for '+visitor+'. You will see the code under Gate pass → Visitor passes once it is approved.',
         {title:'Pass submitted', audience:'admin'}); return true; });
 }
 
