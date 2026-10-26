@@ -498,6 +498,7 @@ html[data-theme="dark"] .hl-box h4{color:var(--ink)}
 .st-row:first-of-type{border-top:0}
 .st-who{font-weight:700;font-size:14.5px}
 .st-today{color:var(--emerald);font-weight:700}
+.cp-old{opacity:.8;background:var(--paper)}
 .cp-route{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;font-weight:700;font-size:15px;color:var(--ink);min-width:0}
 .cp-route span{min-width:0;overflow-wrap:anywhere}
 .cp-route b{color:var(--slate)}
@@ -5218,12 +5219,42 @@ function requestForm(){
 function gotoRides(){ go(store.session.role==='driver' ? 'mytrips' : 'rides'); }
 /* ---- carpooling: residents offer seats or ask for a ride; the HOA only hosts the board ---- */
 function cpStart(c){ return new Date(c.date+'T'+(c.time||'00:00')); }
-function cpUpcoming(){                                   /* still useful until two hours after the departure time */
-  return (store.carpools||[]).filter(c => c.status!=='Cancelled' && +cpStart(c) > Date.now() - 2*36e5).sort((a,b)=>cpStart(a)-cpStart(b));
+const CP_EXPIRE_MS = 36e5;            /* a carpool expires 1 hour after its departure time */
+const CP_ARCHIVE_DAYS = 30;            /* expired and cancelled carpools stay in Archived this long, then are removed */
+function cpExpiresAt(c){ return new Date(+cpStart(c) + CP_EXPIRE_MS); }
+function cpExpired(c){ return c.status!=='Cancelled' && +cpExpiresAt(c) <= Date.now(); }
+function cpArchivedAt(c){ return c.status==='Cancelled' ? new Date(c.cancelledAt || c.at || cpStart(c)) : cpExpiresAt(c); }
+function cpUpcoming(){
+  return (store.carpools||[]).filter(c => c.status!=='Cancelled' && !cpExpired(c)).sort((a,b)=>cpStart(a)-cpStart(b));
+}
+function cpArchived(){
+  return (store.carpools||[]).filter(c => c.status==='Cancelled' || cpExpired(c)).sort((a,b)=>cpArchivedAt(b)-cpArchivedAt(a));
+}
+/* drop carpools that have been archived for more than 30 days */
+function cpPrune(){
+  const cutoff = Date.now() - CP_ARCHIVE_DAYS*864e5, list = store.carpools||[];
+  const keep = list.filter(c => !((c.status==='Cancelled' || cpExpired(c)) && +cpArchivedAt(c) < cutoff));
+  if(keep.length !== list.length) store.carpools = keep;
 }
 function cpMine(c){ return c.unit===myUnit() && c.by===store.session.name; }
 function cpJoined(c){ return (c.riders||[]).some(r => r.unit===myUnit() && r.name===store.session.name); }
 function cpSeatsLeft(c){ return Math.max(0, (Number(c.seats)||0) - (c.riders||[]).length); }
+function cpArchivedCard(c, admin){
+  const offer = c.kind==='Offer', why = c.status==='Cancelled' ? 'Cancelled' : 'Expired';
+  const gone = new Date(+cpArchivedAt(c) + CP_ARCHIVE_DAYS*864e5), riders = c.riders||[];
+  return '<div class="card card-pad cp-card cp-old" style="min-width:0">' +
+    '<div class="meta" style="margin:0 0 6px"><span class="tag t-grey">'+(offer?'Offered a ride':'Asked for a ride')+'</span><span class="tag '+(why==='Cancelled'?'t-rose':'t-grey')+'">'+why+'</span></div>' +
+    '<div class="cp-route"><span>'+esc(c.from)+'</span><b aria-hidden="true">→</b><span>'+esc(c.to)+'</span></div>' +
+    '<div class="meta"><span>'+fmtDate(c.date)+'</span>·<span>'+fmtTime(c.time)+'</span>·<span>'+(offer?'Driver':'Asked by')+' '+esc(c.by)+'</span><span class="mono">'+esc(c.unit)+'</span></div>' +
+    (riders.length ? '<div class="meta"><span>'+riders.length+' '+(offer?'rider':'driver offer')+(riders.length===1?'':'s')+'</span></div>' : '') +
+    '<div class="meta"><span>'+(why==='Expired' ? 'Expired '+fmtDate(cpArchivedAt(c))+' '+clock(cpArchivedAt(c)) : 'Cancelled '+fmtDate(cpArchivedAt(c)))+'</span>·<span>Removed from the archive on '+fmtDate(gone)+'</span></div>' +
+    (admin ? '<div class="btn-row" style="margin-top:10px"><button class="btn btn-ghost btn-sm" onclick="deleteCarpool(\''+c.id+'\')">Delete now</button></div>' : '') +
+  '</div>';
+}
+function deleteCarpool(id){
+  store.carpools = (store.carpools||[]).filter(c => c.id!==id);
+  commit('Archived carpool deleted.',{title:'Carpool deleted'});
+}
 function cpCard(c, admin){
   const offer = c.kind==='Offer', mine = cpMine(c), joined = cpJoined(c), left = cpSeatsLeft(c), riders = c.riders||[];
   const tag = offer ? '<span class="tag t-slate">Offering a ride</span>' : '<span class="tag t-amber">Looking for a ride</span>';
@@ -5250,8 +5281,10 @@ function cpCard(c, admin){
     '<div class="btn-row" style="margin-top:12px">'+actions+'</div></div>';
 }
 function carpoolView(admin){
-  const k = tabOf('cpkind','All');
-  const all = cpUpcoming();
+  cpPrune();
+  const k = tabOf('cpkind','All'), view = tabOf('cpview','active');
+  const archived = cpArchived().filter(c => admin || cpMine(c) || cpJoined(c) || c.status!=='Cancelled');
+  const all = view==='archived' ? archived : cpUpcoming();
   const list = k==='All' ? all : all.filter(c=>c.kind===k);
   const mine = (store.carpools||[]).filter(c => !admin && (cpMine(c) || cpJoined(c)) && c.status!=='Cancelled' && cpUpcoming().includes(c));
   return '<div class="card card-pad" style="margin-bottom:14px;background:var(--slate-tint);border-color:transparent">' +
@@ -5259,13 +5292,18 @@ function carpoolView(admin){
         '<div class="ttl">Carpooling with neighbors</div>' +
         '<div class="meta" style="display:block;margin-top:3px">Offer the empty seats in your car, or ask for a ride. Agree on gas money directly with each other. The HOA does not arrange, check or insure carpools.</div></div>' +
         (admin ? '' : '<button class="btn btn-primary" style="width:auto" onclick="carpoolForm()">Offer or ask for a ride</button>') + '</div></div>' +
+    '<div class="chiprow" role="group" aria-label="Active or archived carpools" style="margin-bottom:8px">' +
+      [['active','Active',cpUpcoming().length],['archived','Archived',archived.length]].map(([v,l,n]) =>
+        '<button class="chip'+(view===v?' on':'')+'" aria-pressed="'+(view===v)+'" onclick="goTab(\'cpview\',\''+v+'\')">'+l+' · '+n+'</button>').join('') + '</div>' +
+    (view==='archived' ? '<p class="meta" style="display:block;margin:0 0 10px">A carpool expires 1 hour after its departure time and moves here. Expired and cancelled carpools stay for '+CP_ARCHIVE_DAYS+' days, then are removed.</p>' : '') +
     '<div class="chiprow" role="group" aria-label="Carpool type" style="margin-bottom:12px">' +
       [['All','All carpools'],['Offer','Offering a ride'],['Request','Looking for a ride']].map(([v,l]) => {
         const n = v==='All' ? all.length : all.filter(c=>c.kind===v).length;
         return '<button class="chip'+(k===v?' on':'')+'" aria-pressed="'+(k===v)+'" onclick="goTab(\'cpkind\',\''+v+'\')">'+l+' · '+n+'</button>';
       }).join('') + '</div>' +
-    (list.length ? '<div class="grid g-2">'+list.map(c=>cpCard(c, admin)).join('')+'</div>'
-      : '<div class="card">'+empty('No carpools yet', admin ? 'Carpools residents post appear here.' : 'Be the first: offer your empty seats or ask for a ride.')+'</div>') +
+    (list.length ? '<div class="grid g-2">'+list.map(c => view==='archived' ? cpArchivedCard(c, admin) : cpCard(c, admin)).join('')+'</div>'
+      : '<div class="card">'+(view==='archived' ? empty('Nothing archived','Carpools move here 1 hour after they leave, or when they are cancelled.')
+        : empty('No carpools yet', admin ? 'Carpools residents post appear here.' : 'Be the first: offer your empty seats or ask for a ride.'))+'</div>') +
     (mine.length ? '<div class="meta" style="display:block;margin-top:14px">You are part of '+mine.length+' upcoming carpool'+(mine.length===1?'':'s')+'.</div>' : '');
 }
 function gotoCarpool(){ go('rides'); goTab(isAdmin() ? 'rides' : 'shuttle', 'carpool'); }
@@ -5321,7 +5359,7 @@ function cancelCarpool(id, byAdmin){
   modal(byAdmin ? 'Remove this carpool?' : 'Cancel this carpool?', 'Everyone who joined is told it is off.',
     '<div class="card card-pad" style="background:var(--paper)"><div class="ttl">'+esc(c.from)+' → '+esc(c.to)+'</div><div class="meta">'+fmtDate(c.date)+' · '+fmtTime(c.time)+' · '+esc(c.by)+'</div></div>',
     byAdmin ? 'Remove' : 'Cancel carpool', () => {
-      c.status = 'Cancelled';
+      c.status = 'Cancelled'; c.cancelledAt = new Date();
       (c.riders||[]).forEach(r => store.notifs.unshift({ id:uid(), title:'Carpool cancelled', msg:'The carpool to '+c.to+' on '+fmtDate(c.date)+' is off.', at:new Date(), audience:'all', forUnit:r.unit, read:false, chat:null, go:gotoCarpool }));
       commit('Carpool to '+c.to+' on '+fmtDate(c.date)+(byAdmin ? ' removed by the admin office.' : ' cancelled.'), {title:'Carpool cancelled', forUnit:c.unit, go:gotoCarpool});
       return true; }, true);
