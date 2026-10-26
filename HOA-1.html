@@ -765,12 +765,7 @@ const store = {
             phone:'0917 555 0142', unit:'B-12', role:'homeowner' },
   view:'feed', tab:{}, seen:new Set(),
   theme: (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light',
-  notifs:[
-    { id:'n01', title:'Announcement posted', msg:'Water interruption — Friday, Aug 28 was published to every feed.',
-      at:new Date(Date.now()-36e5*5), audience:'all', read:false },
-    { id:'n02', title:'Booking approved', msg:'Function hall on Sept 6 approved for unit D-07.',
-      at:new Date(Date.now()-36e5*20), audience:'all', read:true }
-  ],
+  notifs:[],
   calMonth:new Date(new Date().getFullYear(), new Date().getMonth(), 1),
   lastSync:{ msg:'Portal ready. Waiting for activity.', at:new Date() },
 
@@ -903,104 +898,12 @@ const store = {
       { label:'Allieda Leuterio', value:'0928 770 1922' }, { label:'', value:'bfehoainc@gmail.com' }, { label:'', value:'bellefortestatesvaoffice01@gmail.com' },
       { label:'', value:'aleuterio@breightonland.com' }, { label:'Bryle Cabarloc', value:'bcabarloc@breightonland.com' }] }
   ],
-  requests:[
-    { id:'r1', unit:'A-04', by:'Marco Villanueva', type:'Streetlight', title:'Streetlight out near A-04',
-      detail:'The post between A-04 and A-06 has been dark for four nights.', priority:'Normal', assignee:'Dante (electrician)', status:'In progress', at:new Date(Date.now()-864e5*1), replies:[] },
-    { id:'r2', unit:'C-21', by:'Jonna Reyes', type:'Drainage', title:'Canal backs up when it rains',
-      detail:'Water pools at the corner of Solana Drive and Acacia for about an hour after heavy rain.', priority:'High', assignee:'', status:'Open', at:new Date(Date.now()-864e5*3), replies:[] },
-    { id:'r3', unit:'B-12', by:'Rina Dela Cruz', type:'Landscaping', title:'Overgrown acacia branch',
-      detail:'A branch is leaning on the service wires at the back fence.', priority:'Normal', assignee:'Grounds crew', status:'Resolved', at:new Date(Date.now()-864e5*11), resolvedAt:new Date(Date.now()-864e5*8), replies:[] },
-    { id:'r4', unit:'A-04', by:'Marco Villanueva', type:'Streetlight', title:'Flickering lamp post on Acacia St',
-      detail:'The lamp post near the corner flickers all night.', priority:'Normal', assignee:'Dante (electrician)', status:'Resolved', at:new Date(Date.now()-864e5*48), resolvedAt:new Date(Date.now()-864e5*45), replies:[] },
-    { id:'r5', unit:'D-07', by:'Ferdie Lim', type:'Drainage', title:'Clogged canal grate at the Phase 3 entrance',
-      detail:'Leaves and plastic are blocking the grate; water spills onto the road.', priority:'High', assignee:'Grounds crew', status:'Resolved', at:new Date(Date.now()-864e5*62), resolvedAt:new Date(Date.now()-864e5*55), replies:[] },
-    { id:'r6', unit:'C-21', by:'Jonna Reyes', type:'Common area repair', title:'Broken swing at the playground',
-      detail:'One chain of the middle swing has snapped.', priority:'Normal', assignee:'Maintenance', status:'Resolved', at:new Date(Date.now()-864e5*34), resolvedAt:new Date(Date.now()-864e5*30), replies:[] },
-    { id:'r7', unit:'B-12', by:'Rina Dela Cruz', type:'Garbage collection', title:'Missed garbage pickup on Tuesday',
-      detail:'The truck skipped our street this week.', priority:'Normal', assignee:'Admin office', status:'Resolved', at:new Date(Date.now()-864e5*20), resolvedAt:new Date(Date.now()-864e5*19), replies:[] },
-    { id:'r8', unit:'D-07', by:'Ferdie Lim', type:'Security', title:'Perimeter light out near the back fence',
-      detail:'The floodlight facing the back fence has been off since the weekend.', priority:'High', assignee:'Dante (electrician)', status:'In progress', at:new Date(Date.now()-864e5*9), replies:[] },
-    { id:'r9', unit:'A-04', by:'Marco Villanueva', type:'Drainage', title:'Standing water near the Phase 1 clubhouse',
-      detail:'Water stays for a day after rain beside the clubhouse steps.', priority:'Normal', assignee:'Grounds crew', status:'Resolved', at:new Date(Date.now()-864e5*75), resolvedAt:new Date(Date.now()-864e5*66), replies:[] }
-  ],
-  dues:[
-    { id:'d1', unit:'A-04', owner:'Marco Villanueva', period:'August 2026', amount:2250, status:'Paid', method:'GCash', paidAt:new Date(Date.now()-864e5*5) },
-    { id:'d2', unit:'B-12', owner:'Rina Dela Cruz', period:'August 2026', amount:1875, status:'Unpaid', method:'', paidAt:null },
-    { id:'d3', unit:'C-21', owner:'Jonna Reyes', period:'August 2026', amount:1875, status:'Overdue', method:'', paidAt:null },
-    { id:'d4', unit:'D-07', owner:'Ferdie Lim', period:'August 2026', amount:2750, status:'Paid', method:'Bank transfer', paidAt:new Date(Date.now()-864e5*9) },
-    { id:'d5', unit:'B-12', owner:'Rina Dela Cruz', period:'July 2026', amount:1875, status:'Paid', method:'GCash', paidAt:new Date(Date.now()-864e5*33) }
-  ],
-  bookings:[
-    { id:'k1', unit:'D-07', by:'Ferdie Lim', facility:'Function hall', date:'2026-09-06', slot:'2:00 PM – 8:00 PM', purpose:'Debut celebration', status:'Approved' },
-    { id:'k2', unit:'A-04', by:'Marco Villanueva', facility:'Basketball court', date:'2026-08-30', slot:'6:00 AM – 9:00 AM', purpose:'Barangay league practice', status:'Pending' },
-    { id:'k3', unit:'C-21', by:'Jonna Reyes', facility:'Clubhouse', date:'2026-08-29', slot:'1:00 PM – 5:00 PM', purpose:'Bible study group', status:'Approved' },
-    { id:'k4', unit:'B-12', by:'Rina Dela Cruz', facility:'Swimming pool', date:'2026-08-28', slot:'9:00 AM – 12:00 PM', purpose:'Kids swim lesson', status:'Approved' }
-  ],
-  marketplace:[
-    { id:'m1', unit:'B-12', by:'Rina Dela Cruz', title:'Homemade ube halaya (250g jars)', section:'buysell', kind:'Sell', condition:'New',
-      description:'Small-batch ube halaya, made with fresh ube and coconut milk. Good for pasalubong or dessert trays.',
-      price:180, category:'Supplies & Essentials', photo:'', photos:[], contact:'0917 555 0142', businessId:'m4', status:'Approved', rejectReason:'',
-      submittedAt:new Date(Date.now()-864e5*6), decidedAt:new Date(Date.now()-864e5*5), decidedBy:'Arnel Bautista' },
-    { id:'m2', unit:'A-04', by:'Marco Villanueva', title:'Preloved kids bicycle (16-inch)', section:'buysell', kind:'Sell', condition:'Good',
-      description:'Outgrown by our youngest — light scratches only, tires and brakes still good. Pickup at A-04.',
-      price:1200, category:'Hobbies, Outdoors & Family', photo:'', photos:[], contact:'0917 555 0121', status:'Pending', rejectReason:'',
-      submittedAt:new Date(Date.now()-36e5*9), decidedAt:null, decidedBy:'' },
-    { id:'m3', unit:'D-07', by:'Ferdie Lim', title:'Car detailing service, weekends only', section:'buysell', kind:'Sell', condition:'',
-      description:'Full interior and exterior detailing at your carport. Booked by appointment on Saturdays and Sundays.',
-      price:1500, category:'Vehicles & Property', photo:'', photos:[], status:'Rejected',
-      rejectReason:'Please limit the listing to residents of this subdivision — the write-up reads as open to outside customers too.',
-      submittedAt:new Date(Date.now()-864e5*3), decidedAt:new Date(Date.now()-864e5*2), decidedBy:'Arnel Bautista' },
-    { id:'m4', section:'business', unit:'B-12', by:'Rina Dela Cruz', title:'Rina’s Kakanin Kitchen',
-      description:'Kakanin and Filipino desserts made to order. Pickup at B-12, or delivery inside the subdivision for orders over ₱500.',
-      price:180, category:'Food & Catering', hours:'Tue–Sun, 7:00 AM – 5:00 PM', contact:'0917 555 0142', photo:'', photos:[],
-      website:'', logo:'', verified:true, verifiedBy:'Arnel Bautista', verifiedAt:new Date(Date.now()-864e5*11),
-      status:'Approved', rejectReason:'', submittedAt:new Date(Date.now()-864e5*12), decidedAt:new Date(Date.now()-864e5*11), decidedBy:'Arnel Bautista' },
-    { id:'m5', section:'business', unit:'D-07', by:'Ferdie Lim', title:'Lim Aircon Cleaning',
-      description:'Aircon cleaning for residents, with a quick check of the gas and drainage.',
-      price:600, category:'Home Services & Repairs', hours:'Sat–Sun, 8:00 AM – 4:00 PM', contact:'0917 555 0188', photo:'', photos:[],
-      website:'', logo:'', verified:false,
-      status:'Pending', rejectReason:'', submittedAt:new Date(Date.now()-36e5*5), decidedAt:null, decidedBy:'' },
-    { id:'m6', section:'garage', unit:'A-04', by:'Marco Villanueva', title:'Moving-out garage sale',
-      description:'Everything must go before we move. Cash or GCash.',
-      date:new Date(Date.now()+864e5*4).toISOString().slice(0,10), start:'08:00', end:'15:00', price:0, category:'Garage sale',
-      visibility:'dayof', contact:'0917 555 0121', photo:'', photos:[],
-      items:[{ id:'gi1', name:'Dining table with 4 chairs', price:3500, status:'Approved', reason:'' },
-             { id:'gi2', name:'Rice cooker (1.8 L)', price:400, status:'Approved', reason:'' },
-             { id:'gi3', name:'Box of kids’ books', price:250, status:'Pending', reason:'' }],
-      status:'Approved', rejectReason:'', submittedAt:new Date(Date.now()-864e5*2), decidedAt:new Date(Date.now()-864e5), decidedBy:'Arnel Bautista' },
-    { id:'j1', section:'jobs', kind:'Hiring', unit:'B-12', by:'Rina Dela Cruz', title:'Kitchen helper, weekends', company:'Rina\u2019s Kakanin Kitchen',
-      jobType:'Part-time', setup:'On-site', location:'Unit B-12, Bellefort Estates', pay:'₱500 a day', deadline:'',
-      description:'Help prepare and pack kakanin orders on Saturdays and Sundays, 6:00 AM to 2:00 PM. Residents and their family members preferred. No experience needed.',
-      applyLink:'', contact:'0917 555 0142', photo:'', photos:[], price:0, category:'', status:'Approved', rejectReason:'',
-      submittedAt:new Date(Date.now()-864e5*3), decidedAt:new Date(Date.now()-864e5*2), decidedBy:'Arnel Bautista' },
-    { id:'m7', unit:'C-21', by:'Jonna Reyes', title:'Wanted: study desk for a Grade 5 student', section:'buysell', kind:'Wanted', condition:'Any condition',
-      description:'Looking for a sturdy study desk, around 100 cm wide. Can pick up anywhere in the subdivision.',
-      price:1500, category:'Electronics & Home', photo:'', photos:[], contact:'0917 555 0166', status:'Approved', rejectReason:'',
-      submittedAt:new Date(Date.now()-864e5*2), decidedAt:new Date(Date.now()-864e5*2), decidedBy:'Arnel Bautista' },
-    { id:'t1', section:'training', unit:'Admin office', by:'Livelihood Committee', title:'Food costing and pricing for home sellers',
-      category:'Food business & cooking', facilitator:'Rina Dela Cruz', venue:'Clubhouse', fee:0, slots:25,
-      date:new Date(Date.now()+864e5*9).toISOString().slice(0,10), start:'09:00', end:'12:00',
-      description:'Work out the real cost of each product, set a fair price and keep simple records. Bring a notebook and one product you sell or want to sell.',
-      photosLink:'', contact:'0917 555 0100', attendees:[{ unit:'C-21', name:'Jonna Reyes', at:new Date(Date.now()-864e5) }],
-      price:0, photo:'', photos:[], status:'Approved', rejectReason:'', submittedAt:new Date(Date.now()-864e5*3), decidedAt:new Date(Date.now()-864e5*3), decidedBy:'Arnel Bautista' },
-    { id:'t2', section:'training', unit:'Admin office', by:'Livelihood Committee', title:'Selling online with Facebook Marketplace',
-      category:'Digital & online selling', facilitator:'IT volunteers', venue:'Function hall', fee:100, slots:15,
-      date:new Date(Date.now()+864e5*16).toISOString().slice(0,10), start:'14:00', end:'16:30',
-      description:'Set up a shop page, take good product photos with your phone, and answer buyers safely. Bring your phone, fully charged.',
-      photosLink:'', contact:'0917 555 0100', attendees:[],
-      price:0, photo:'', photos:[], status:'Approved', rejectReason:'', submittedAt:new Date(Date.now()-864e5*2), decidedAt:new Date(Date.now()-864e5*2), decidedBy:'Arnel Bautista' }
-  ],
-  boothEvents:[
-    { id:'be1', title:'Christmas Bazaar 2026', theme:'Food, gifts and holiday décor from resident vendors. One table and two chairs per booth.',
-      date:'2026-12-12', setup:'07:00', start:'09:00', end:'21:00', venue:'Covered court', capacity:20, createdBy:'Arnel Bautista', createdAt:new Date(Date.now()-864e5*3) }
-  ],
-  boothApps:[
-    { id:'ba1', eventId:'be1', unit:'B-12', by:'Rina Dela Cruz', vendor:'Rina’s Kakanin Kitchen', businessId:'m4', booth:1,
-      products:'Bibingka, puto bumbong and kakanin trays',
-      contact:'0917 555 0142', status:'Approved', reason:'', submittedAt:new Date(Date.now()-864e5*2), decidedAt:new Date(Date.now()-864e5), decidedBy:'Arnel Bautista' },
-    { id:'ba2', eventId:'be1', unit:'C-21', by:'Jonna Reyes', vendor:'Jonna’s Crafts', businessId:'', booth:null, products:'Handmade parol and Christmas cards',
-      contact:'0917 555 0166', status:'Pending', reason:'', submittedAt:new Date(Date.now()-36e5*20), decidedAt:null, decidedBy:'' }
-  ],
+  requests:[],
+  dues:[],
+  bookings:[],
+  marketplace:[],
+  boothEvents:[],
+  boothApps:[],
   events:[
     { id:'e1', title:'General assembly', date:'2026-09-13', time:'9:00 AM', where:'Covered court', note:'Budget report and officer elections.' },
     { id:'e2', title:'Clean-up drive', date:'2026-09-05', time:'6:30 AM', where:'Covered court', note:'₱200 dues credit per household.' },
@@ -1035,45 +938,17 @@ const store = {
   ],
 
   /* security & access */
-  passes:[
-    { id:'p1', unit:'B-12', visitor:'Ana Marquez', purpose:'Family visit', date:'2026-08-27', plate:'NBC 4412', code:'VS-4K92', status:'Active' },
-    { id:'p2', unit:'A-04', visitor:'Lazada courier', purpose:'Delivery', date:'2026-08-26', plate:'—', code:'VS-7T31', status:'Used' },
-    { id:'p3', unit:'C-21', visitor:'Ramos Aircon Service', purpose:'Contractor', date:'2026-08-29', plate:'TXG 209', code:'VS-2M08', status:'Pending' },
-    { id:'p4', unit:'B-12', visitor:'Ana Marquez', purpose:'Family visit', date:'2026-08-20', plate:'NBC 4412', code:'VS-8Q15', status:'Used' },
-    { id:'p5', unit:'A-04', visitor:'Jun Santos', purpose:'Water filter demo', date:'2026-08-25', plate:'—', code:'VS-3H66', status:'Used' },
-    { id:'p6', unit:'C-21', visitor:'Jun Santos', purpose:'Water filter demo', date:'2026-08-25', plate:'—', code:'VS-5R40', status:'Used' },
-    { id:'p7', unit:'D-07', visitor:'Jun Santos', purpose:'Product follow-up', date:'2026-08-26', plate:'—', code:'VS-9L27', status:'Used' }
-  ],
+  passes:[],
   stickers:[
     { id:'s1', unit:'B-12', plate:'ABC 1234', vehicle:'Toyota Vios, silver', tag:'RFID-0092', expires:'2026-12-31', status:'Active' },
     { id:'s2', unit:'A-04', plate:'NDL 7781', vehicle:'Mitsubishi Xpander, grey', tag:'RFID-0148', expires:'2026-09-30', status:'Expiring' },
     { id:'s3', unit:'D-07', plate:'XYZ 4420', vehicle:'Isuzu D-Max, black', tag:'RFID-0201', expires:'2027-03-31', status:'Active' }
   ],
-  incidents:[
-    { id:'i1', date:'2026-08-23', time:'11:40 PM', kind:'Noise', where:'Phase 2, near C-19', detail:'Videoke past quiet hours; guard issued a reminder and it stopped.', status:'Closed' },
-    { id:'i2', date:'2026-08-21', time:'2:15 AM', kind:'Trespassing', where:'Perimeter fence, Phase 3', detail:'Unidentified person seen on CCTV climbing near the back fence. Barangay tanod notified.', status:'Under review' }
-  ],
-  gatePasses:[
-    { id:'gp1', no:'GP-2610-001', unit:'A-04', by:'Marco Villanueva', at:new Date(Date.now()-864e5*2), type:'Delivery', purpose:'Delivery',
-      date:new Date(Date.now()+864e5*0).toISOString().slice(0,10), time:'9:00 AM – 12:00 NN', bearer:'Europroves Trading', address:'Unit A-04 · Phase 1',
-      plate:'NAB 2045', items:[{ desc:'Water tank, 750 litres', qty:'1', unit:'pc', remarks:'Rooftop install' }],
-      status:'Approved', notedBy:'Arnel Bautista (HOA President)', notedAt:new Date(Date.now()-864e5*1) },
-    { id:'gp2', no:'GP-2610-002', unit:'C-21', by:'Jonna Reyes', at:new Date(Date.now()-36e5*5), type:'Delivery', purpose:'Construction',
-      date:new Date(Date.now()+864e5*2).toISOString().slice(0,10), time:'8:00 AM – 5:00 PM', bearer:'JR Builders (foreman: Rolly Santos)', address:'Unit C-21 · Phase 2',
-      plate:'TXG 209', items:[{ desc:'Portland cement', qty:'20', unit:'bags', remarks:'Kitchen extension' },{ desc:'Hollow blocks', qty:'200', unit:'pcs', remarks:'' }],
-      status:'Pending' },
-    { id:'gp3', no:'GP-2609-014', unit:'D-07', by:'Ferdie Lim', at:new Date(Date.now()-864e5*9), type:'Pull-out', purpose:'Services',
-      date:new Date(Date.now()-864e5*6).toISOString().slice(0,10), time:'', bearer:'Ramos Aircon Service', address:'Unit D-07 · Phase 3',
-      plate:'', items:[{ desc:'Old window-type aircon', qty:'1', unit:'unit', remarks:'For disposal' }],
-      status:'Checked', notedBy:'Arnel Bautista (HOA President)', notedAt:new Date(Date.now()-864e5*8), checkedBy:'SG Onting', checkedAt:new Date(Date.now()-864e5*6) }
-  ],
+  incidents:[],
+  gatePasses:[],
   secAdmin:{ oic:'u7', secondary:'', revoked:{} },
   accessAdmins:[],
-  household:[
-    { id:'hh1', unit:'B-12', name:'Paolo Dela Cruz', rel:'Spouse / partner', type:'adult', contact:'0917 555 0143', status:'Confirmed', at:new Date(Date.now()-864e5*40) },
-    { id:'hh2', unit:'B-12', name:'Lourdes Dela Cruz', rel:'Parent', type:'senior', contact:'', status:'Confirmed', at:new Date(Date.now()-864e5*40) },
-    { id:'hh3', unit:'B-12', name:'Marisol Aguilar', rel:'Household help', type:'help', contact:'0908 555 0177', status:'Confirmed', at:new Date(Date.now()-864e5*30) }
-  ],   /* admins who manage User Access; empty means Phoebe and Ralph (see accessManagers) */
+  household:[],   /* admins who manage User Access; empty means Phoebe and Ralph (see accessManagers) */
   guards:[
     { post:'Main gate', name:'SG Onting', shift:'6 AM – 6 PM', contact:'0917 555 0110' },
     { post:'Main gate', name:'SG Perez', shift:'6 PM – 6 AM', contact:'0917 555 0111' },
@@ -1081,46 +956,8 @@ const store = {
   ],
 
   /* governance & community */
-  complaints:[
-    { id:'c1', unit:'B-12', by:'Rina Dela Cruz', against:'Unit C-19', category:'Noise', title:'Videoke past quiet hours',
-      detail:'Loud singing until around 1 AM on three weeknights this month. We have small children in the house.',
-      status:'Under review', ref:'CMP-2608-01', filedAt:new Date(Date.now()-864e5*4), resolution:'', replies:[] },
-    { id:'c2', unit:'D-07', by:'Ferdie Lim', against:'Unit D-09', category:'Parking', title:'Vehicle blocking the shared driveway',
-      detail:'A van has been parked across the driveway entrance on weekends.',
-      status:'Resolved', ref:'CMP-2607-04', filedAt:new Date(Date.now()-864e5*19),
-      resolution:'Owner was given a written reminder. Van has been moved to the visitor bay.', resolvedAt:new Date(Date.now()-864e5*12), replies:[] },
-    { id:'c3', unit:'C-21', by:'Jonna Reyes', against:'Common area', category:'Pets', title:'Unleashed dog in the park',
-      detail:'A large dog is walked off-leash in the central park every morning.',
-      status:'Resolved', ref:'CMP-2609-02', filedAt:new Date(Date.now()-864e5*40), resolvedAt:new Date(Date.now()-864e5*33),
-      resolution:'Owner identified and reminded of the leash rule. Signage added at the park entrance.', replies:[] },
-    { id:'c4', unit:'D-07', by:'Ferdie Lim', against:'Unit D-11', category:'Construction', title:'Renovation noise on a Sunday',
-      detail:'Grinding and hammering from 7 AM on Sunday.',
-      status:'Resolved', ref:'CMP-2609-05', filedAt:new Date(Date.now()-864e5*27), resolvedAt:new Date(Date.now()-864e5*24),
-      resolution:'Work permit holder was reminded that construction is Monday to Saturday only.', replies:[] },
-    { id:'c5', unit:'A-04', by:'Marco Villanueva', against:'Unit A-09', category:'Garbage', title:'Garbage left outside overnight',
-      detail:'Bags left on the curb overnight are torn open by strays.',
-      status:'Under review', ref:'CMP-2610-01', filedAt:new Date(Date.now()-864e5*6), resolution:'', replies:[] }
-  ],
-  concerns:[
-    { id:'n1', unit:'A-04', by:'Marco Villanueva', topic:'Suggestion', subject:'Add a covered waiting shed at the gate',
-      message:'Residents waiting for tricycles get soaked during the rainy season. Could the board look at a small shed beside the guardhouse?',
-      status:'Open', at:new Date(Date.now()-864e5*7), replies:[
-        { by:'Arnel Bautista', role:'HOA Admin', at:new Date(Date.now()-864e5*5), text:'Thanks Marco — we are getting two quotes and will present them at the September assembly.' }
-      ] },
-    { id:'n2', unit:'B-12', by:'Rina Dela Cruz', topic:'Billing', subject:'Clarify the per-sqm dues rate',
-      message:'Could the board explain how the new per-square-meter rate is computed?',
-      status:'Closed', at:new Date(Date.now()-864e5*50), resolvedAt:new Date(Date.now()-864e5*47), replies:[
-        { by:'Arnel Bautista', role:'HOA Admin', at:new Date(Date.now()-864e5*47), text:'The rate is the approved budget divided by total lot area. The breakdown is in the September notice.' }
-      ] },
-    { id:'n3', unit:'D-07', by:'Ferdie Lim', topic:'Facility', subject:'Pool hours during the rainy season',
-      message:'Will the pool keep its weekend hours during typhoon season?',
-      status:'Closed', at:new Date(Date.now()-864e5*15), resolvedAt:new Date(Date.now()-864e5*13), replies:[
-        { by:'Arnel Bautista', role:'HOA Admin', at:new Date(Date.now()-864e5*13), text:'Yes, except when a storm signal is raised. Closures are posted on the feed.' }
-      ] },
-    { id:'n4', unit:'C-21', by:'Jonna Reyes', topic:'Question', subject:'Schedule for canal declogging',
-      message:'When is the next canal declogging in Phase 2?',
-      status:'Open', at:new Date(Date.now()-864e5*2), replies:[] }
-  ],
+  complaints:[],
+  concerns:[],
   rules:[
     { id:'h1', title:'Quiet hours', text:'No amplified sound between 10:00 PM and 6:00 AM, including videoke and construction tools.' },
     { id:'h2', title:'Visitor parking', text:'Guests park in the visitor bay near the covered court. Street parking is limited to 30 minutes for loading.' },
@@ -1145,12 +982,7 @@ const store = {
   },
 
   /* support */
-  tickets:[
-    { id:'t1', unit:'C-21', by:'Jonna Reyes', subject:'Cannot log in with Facebook', channel:'Portal', priority:'Normal',
-      status:'Open', at:new Date(Date.now()-864e5*2), detail:'The Facebook button spins and returns to the sign-in page.', replies:[] },
-    { id:'t2', unit:'D-07', by:'Ferdie Lim', subject:'Payment posted twice for July', channel:'Email', priority:'High',
-      status:'Resolved', at:new Date(Date.now()-864e5*12), detail:'GCash was charged twice on July 3. Refund confirmed on July 8.', replies:[] }
-  ],
+  tickets:[],
   faqs:[
     { q:'How do I pay my dues?', a:'Open My dues, tap Pay, then pick GCash, Maya, bank transfer or card. A receipt posts to your ledger straight away.' },
     { q:'When are dues considered late?', a:'Payments made after the 30th of the month carry a 2% late fee, applied on the 1st.' },
@@ -1160,26 +992,8 @@ const store = {
   reportLog:[],
 
   /* resident transport — residents book, drivers accept and post the pickup time */
-  carpools:[
-    { id:'cp1', kind:'Offer', unit:'A-04', by:'Marco Villanueva', from:'Bellefort Estates main gate', to:'Makati CBD (Ayala Avenue)',
-      date:new Date(Date.now()+864e5).toISOString().slice(0,10), time:'06:30', seats:3, share:150, contact:'0917 555 0121',
-      note:'Weekday mornings. Coming back around 7:00 PM if you need a ride home too.', riders:[], status:'Open', at:new Date(Date.now()-36e5*5) },
-    { id:'cp2', kind:'Request', unit:'C-21', by:'Jonna Reyes', from:'Bellefort Estates, Unit C-21', to:'SM City Bacoor',
-      date:new Date(Date.now()+864e5*2).toISOString().slice(0,10), time:'09:00', seats:3, share:0, contact:'0917 555 0166',
-      note:'Grocery run with my two kids. Happy to chip in for gas.', riders:[], status:'Open', at:new Date(Date.now()-36e5*20) }
-  ],
-  rides:[
-    { id:'rd1', unit:'B-12', by:'Rina Dela Cruz', accountId:'u1', pickup:'Station 4',
-      date:new Date(Date.now()+864e5).toISOString().slice(0,10), time:'09:00', passengers:2, note:'With a stroller.',
-      status:'Accepted', driver:{ id:'u10', name:'Ramon Cruz', phone:'0917 555 0190' }, vehicle:'White Toyota Hiace · NAB 2210',
-      pickupAt:'08:50', at:new Date(Date.now()-36e5*3),
-      updates:[ { at:new Date(Date.now()-36e5*3), text:'Ride requested.' },
-                { at:new Date(Date.now()-36e5*2), text:'Ramon Cruz accepted. Pickup at 8:50 AM.' } ] },
-    { id:'rd2', unit:'A-04', by:'Marco Villanueva', accountId:'u2', pickup:'Main gate',
-      date:new Date(Date.now()+864e5*2).toISOString().slice(0,10), time:'14:00', passengers:1, note:'',
-      status:'Requested', driver:null, vehicle:'', pickupAt:'', at:new Date(Date.now()-36e5),
-      updates:[ { at:new Date(Date.now()-36e5), text:'Ride requested.' } ] }
-  ]
+  carpools:[],
+  rides:[]
 };
 
 const ROLE_MATRIX = [
@@ -1894,6 +1708,20 @@ $('#signin').addEventListener('click', async () => {
   afterLogin();
 });
 
+/* sample activity that shipped with earlier versions; an admin's first sign-in after this update removes it everywhere */
+const SAMPLE_ACTIVITY = {"requests":["r1","r2","r3","r4","r5","r6","r7","r8","r9"],"complaints":["c1","c2","c3","c4","c5"],"concerns":["n1","n2","n3","n4"],"dues":["d1","d2","d3","d4","d5"],"bookings":["k1","k2","k3","k4"],"marketplace":["m1","m2","m3","m4","m5","m6","j1","m7","t1","t2"],"boothEvents":["be1"],"boothApps":["ba1","ba2"],"gatePasses":["gp1","gp2","gp3"],"passes":["p1","p2","p3","p4","p5","p6","p7"],"incidents":["i1","i2"],"carpools":["cp1","cp2"],"rides":["rd1","rd2"],"tickets":["t1","t2"],"household":["hh1","hh2","hh3"],"notifs":["n01","n02"]};
+function removeSampleActivity(){
+  if(store.settings.sampleActivityRemoved) return false;
+  let n = 0;
+  Object.keys(SAMPLE_ACTIVITY).forEach(k => {
+    if(!Array.isArray(store[k])) return;
+    const ids = new Set(SAMPLE_ACTIVITY[k]), before = store[k].length;
+    store[k] = store[k].filter(x => !(x && ids.has(x.id)));
+    n += before - store[k].length;
+  });
+  store.settings.sampleActivityRemoved = new Date().toISOString();
+  return n;
+}
 function enter(acct, method){
   acct.lastSeen = new Date();
   if(!acct.avatar){ const saved = loadAvatar(acct.id); if(saved) acct.avatar = saved; }
@@ -1901,6 +1729,7 @@ function enter(acct, method){
   store.session = { authed:true, method, accountId:acct.id, name:acct.name, email:acct.email,
                     phone:acct.phone, unit:acct.unit, role:pickRole(acct), avatar:acct.avatar||null, availability:acct.availability };
   store.adminSession = null;
+  if(hasRole(acct,'admin')){ const n = removeSampleActivity(); if(n) setTimeout(() => toast('ok','Sample data removed', n+' sample records were cleared from the portal for everyone.'), 600); }
   store.view = isAdmin() ? 'overview' : 'feed';
   store.tab = {};
   $('#auth').classList.add('hide'); $('#app').classList.remove('hide');
