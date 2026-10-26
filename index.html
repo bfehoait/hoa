@@ -4192,7 +4192,6 @@ const HOME = {
   feed(){
     const s = store.session;
     const due = store.dues.find(d => d.unit===myUnit() && d.period==='August 2026');
-    const mine = icRows().filter(r => r.x.unit===myUnit());
     const fresh = store.announcements.filter(a=>!store.seen.has(a.id)).length;
     const banner = due && due.status!=='Paid'
       ? '<div class="card card-pad" style="border-left:3px solid var(--amber);margin-bottom:14px">' +
@@ -4226,13 +4225,8 @@ const HOME = {
             (isNew?'<button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="markSeen(\''+a.id+'\')">Mark read</button>':'') +
           '</div></div></li>';
         }).join('') + '</ul></div>' +
-      sectionCard('My issues & concerns', mine.length ? '<ul class="list">' + mine.slice(0,3).map(r =>
-        '<li><div class="row"><div class="grow"><div class="ttl">'+esc(r.title)+newReplyTag(r.x)+'</div><div class="meta">'+r.K.label+' · '+ago(r.filed)+'</div></div>' +
-        '<span class="tag '+IC_STAGE_TAG[r.stage]+'">'+r.stage+'</span></div></li>').join('') + '</ul>'
-        : empty('Nothing filed','Report an issue and the board picks it up.'),
-        '<button class="btn btn-ghost btn-sm" onclick="go(\'issues\')">See all</button>') +
-      sectionCard('Coming up','<ul class="list">' + store.events.slice().sort((a,b)=>a.date<b.date?-1:1).map(e =>
-        '<li><div class="ttl">'+esc(e.title)+'</div><div class="meta">'+fmtDate(e.date)+' · '+esc(e.time)+' · '+esc(e.where)+'</div></li>').join('') + '</ul>') +
+      '<div class="span-2">' + sectionCard('Coming up','<ul class="list">' + store.events.slice().sort((a,b)=>a.date<b.date?-1:1).map(e =>
+        '<li><div class="ttl">'+esc(e.title)+'</div><div class="meta">'+fmtDate(e.date)+' · '+esc(e.time)+' · '+esc(e.where)+'</div></li>').join('') + '</ul>') + '</div>' +
     '</div>';
   },
 
