@@ -1758,7 +1758,7 @@ const NAV = {
           store.requests.filter(r=>r.status!=='Resolved').length + store.tickets.filter(t=>t.status!=='Resolved').length },
       { id:'issues',     label:'Issues, Complaints & Concerns', icon:'chart', badge:()=>icRows().filter(r=>r.stage==='Open').length },
       { id:'homeowners', label:'Homeowners',              icon:'users', badge:()=>store.accounts.filter(a=>a.status==='Invited').length + regPending().length },
-      { id:'profiles',   label:'Homeowner Profiles',      icon:'users' },
+      { id:'profiles',   label:'Homeowner Profiles',      icon:'users', badge:()=>hhPending().length },
       { id:'property',   label:'Property',                icon:'building' },
       { id:'operations', label:'Operations & Maintenance',icon:'wrench', badge:()=>store.requests.filter(r=>r.status!=='Resolved').length + (store.gatePasses||[]).filter(p=>p.status==='Pending'||p.status==='Held').length },
       { id:'marketplace',label:'Livelihood and Marketplace', icon:'tag', badge:()=>lhPendingCount() },
@@ -2304,7 +2304,11 @@ const ADMIN = {
     const all = store.accounts.filter(a=>a.role==='homeowner'||a.role==='renter');
     const residents = all.filter(a => !term ||
       a.name.toLowerCase().includes(term) || a.unit.toLowerCase().includes(term) || a.email.toLowerCase().includes(term));
-    return head('Homeowner Profiles','Every resident’s record in one place — dues history, requests, complaints and bookings.') +
+    const waiting = hhPending();
+    return head('Homeowner Profiles','Every resident’s record in one place — household members, dues history, requests, complaints and bookings.') +
+    (waiting.length ? sectionCard('New household members to confirm · '+waiting.length, '<ul class="list">' + waiting.map(m =>
+        hhRow(m, false, true).replace('<div class="grow">', '<div class="grow"><div class="eyebrow" style="margin-bottom:2px">Unit '+esc(m.unit)+(m.by?' · added by '+esc(m.by):'')+' · '+ago(m.at)+'</div>')).join('') + '</ul>') +
+      '<div style="height:14px"></div>' : '') +
     '<div class="fld" style="max-width:360px">' +
       '<input class="input" id="profileSearchInput" type="text" placeholder="Search by name, unit or email…" value="'+esc(profileFilter)+'" oninput="onProfileSearch(this.value)">' +
     '</div>' +
@@ -2326,6 +2330,7 @@ const ADMIN = {
           '<div class="kv"><span>Monthly dues</span><b>'+(u?peso(unitDues(u)):'—')+'</b></div>' +
           '<div class="kv"><span>Dues status</span><span class="tag '+dueTag.c+'">'+dueTag.t+'</span></div>' +
           '<div class="kv"><span>Open items</span><b>'+openItems+'</b></div>' +
+          hhProfileLine(a.unit) +
           '<button class="btn btn-ghost btn-sm" style="width:100%;margin-top:10px" onclick="homeownerProfile(\''+a.unit+'\')">View full profile</button>' +
         '</div>';
       }).join('') +
@@ -6410,15 +6415,25 @@ const HH_TYPES = [
   { id:'help',   label:'Household help / caregiver' }];
 const HH_RELS = ['Spouse / partner','Son / daughter','Parent','Grandparent','Sibling','Relative','Household help','Caregiver','Other'];
 const hhType = id => HH_TYPES.find(t => t.id===id) || HH_TYPES[0];
+function hhName(m){ return m.name || ((hhType(m.type).tag || hhType(m.type).label.replace(/ \(.*\)$/,''))+' · '+m.rel); }
+function hhPending(){ return (store.household||[]).filter(m => m.status==='Pending'); }
 function hhOf(unit){ return (store.household||[]).filter(m => m.unit===unit && m.status!=='Removed'); }
 function hhRow(m, mine, admin){
   const t = hhType(m.type);
-  return '<li><div class="row" style="align-items:center"><div class="grow"><div class="ttl">'+esc(m.name)+'</div>' +
+  return '<li><div class="row" style="align-items:center"><div class="grow"><div class="ttl">'+esc(hhName(m))+(m.name?'':' <span class="meta">(no name given)</span>')+'</div>' +
     '<div class="meta"><span>'+esc(m.rel)+'</span>'+(t.tag?'<span class="tag '+t.tone+'">'+esc(t.tag)+'</span>':'') +
       (m.contact?'·<span class="mono">'+esc(m.contact)+'</span>':'')+(m.status==='Pending'?'<span class="tag t-amber">Waiting for the office</span>':'')+'</div></div>' +
     (admin && m.status==='Pending' ? '<button class="btn btn-emerald btn-sm" onclick="hhConfirm(\''+m.id+'\')">Confirm</button>' : '') +
     (mine || admin ? '<button class="btn btn-ghost btn-sm" onclick="hhRemove(\''+m.id+'\','+(admin?'true':'false')+')">Remove</button>' : '') +
   '</div></li>';
+}
+/* one line for a profile card: how many, who needs looking after, what is waiting */
+function hhProfileLine(unit){
+  const list = hhOf(unit), n = id => list.filter(m => m.type===id).length, wait = list.filter(m => m.status==='Pending').length;
+  return '<div class="kv"><span>Household</span><b>'+(list.length ? list.length+' member'+(list.length===1?'':'s') : 'None added')+'</b></div>' +
+    ((n('senior')||n('pwd')||n('child')||wait) ? '<div class="meta" style="justify-content:flex-end;margin:2px 0 0">' +
+      (n('senior')?'<span class="tag t-amber">'+n('senior')+' senior</span>':'') + (n('pwd')?'<span class="tag t-rose">'+n('pwd')+' special needs</span>':'') +
+      (n('child')?'<span class="tag t-slate">'+n('child')+' child'+(n('child')>1?'ren':'')+'</span>':'') + (wait?'<span class="tag t-amber">'+wait+' to confirm</span>':'') + '</div>' : '');
 }
 function hhSummary(list){
   const n = id => list.filter(m => m.type===id).length;
@@ -6428,7 +6443,7 @@ function hhSummary(list){
 }
 function hhForm(){
   modal('Add a household member','The admin office confirms new members within one working day.',
-    '<label class="fld"><span>Full name</span><input class="input" id="hh_name" placeholder="Lourdes Dela Cruz"></label>' +
+    '<label class="fld"><span>Full name or nickname (optional)</span><input class="input" id="hh_name" placeholder="Lola Lourdes"></label>' +
     '<div class="grid g-2" style="gap:0 12px">' +
       '<label class="fld"><span>Member type</span><select class="input" id="hh_type">'+HH_TYPES.map(t=>'<option value="'+t.id+'">'+esc(t.label)+'</option>').join('')+'</select></label>' +
       '<label class="fld"><span>Relationship to you</span><select class="input" id="hh_rel">'+HH_RELS.map(r=>'<option>'+esc(r)+'</option>').join('')+'</select></label></div>' +
@@ -6436,25 +6451,25 @@ function hhForm(){
     '<p class="meta" style="display:block;margin:0">Choosing Elder / senior citizen or Person with disability lets the admin office know to check on them in an emergency. You do not need to give any medical details.</p>',
     'Send to the office', () => {
       const name = $('#hh_name').value.trim();
-      if(!name){ toast('info','Add a name','Type the member\u2019s full name.'); return false; }
-      if(hhOf(myUnit()).some(m => m.name.toLowerCase()===name.toLowerCase())){ toast('info','Already listed', name+' is already in your household.'); return false; }
+      if(name && hhOf(myUnit()).some(m => (m.name||'').toLowerCase()===name.toLowerCase())){ toast('info','Already listed', name+' is already in your household.'); return false; }
       const type = $('#hh_type').value;
       (store.household = store.household || []).push({ id:uid(), unit:myUnit(), name, rel:$('#hh_rel').value, type,
         contact:$('#hh_contact').value.trim(), status:'Pending', at:new Date(), by:store.session.name });
-      commit(name+' ('+hhType(type).label.toLowerCase()+') added to unit '+myUnit()+' — waiting for the office to confirm.',{title:'Household member added', audience:'admin'});
+      const shown = hhName(store.household[store.household.length-1]);
+      commit(shown+' ('+hhType(type).label.toLowerCase()+') added to unit '+myUnit()+' — waiting for the office to confirm.',{title:'Household member added', audience:'admin', go:'profiles'});
       return true; });
 }
 function hhConfirm(id){
   const m = (store.household||[]).find(x => x.id===id); if(!m) return;
   m.status = 'Confirmed'; m.confirmedBy = store.session.name; m.confirmedAt = new Date();
-  commit(m.name+' confirmed as a member of unit '+m.unit+'.',{title:'Household member confirmed', forUnit:m.unit});
-  if(document.querySelector('.modal')) homeownerProfile(m.unit);
+  commit(hhName(m)+' confirmed as a member of unit '+m.unit+'.',{title:'Household member confirmed', forUnit:m.unit});
+  if(document.querySelector('.modal .modal-foot')) homeownerProfile(m.unit);
 }
 function hhRemove(id, admin){
   const m = (store.household||[]).find(x => x.id===id); if(!m) return;
   if(!admin && m.unit!==myUnit()) return;
   store.household = store.household.filter(x => x.id!==id);
-  commit(m.name+' removed from unit '+m.unit+'\u2019s household.',{title:'Household updated', forUnit:m.unit});
+  commit(hhName(m)+' removed from unit '+m.unit+'\u2019s household.',{title:'Household updated', forUnit:m.unit});
   if(admin && document.querySelector('.modal')) homeownerProfile(m.unit);
 }
 function homeownerProfile(unit){
