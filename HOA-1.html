@@ -5263,7 +5263,7 @@ function cpCard(c, admin){
   else if(offer) actions = joined ? '<button class="btn btn-ghost btn-sm" onclick="leaveCarpool(\''+c.id+'\')">Leave carpool</button>'
     : left ? '<button class="btn btn-primary btn-sm" style="width:auto" onclick="joinCarpool(\''+c.id+'\')">Join · '+left+' seat'+(left===1?'':'s')+' left</button>' : '<span class="meta">This car is full.</span>';
   else actions = joined ? '<button class="btn btn-ghost btn-sm" onclick="leaveCarpool(\''+c.id+'\')">Withdraw my offer</button>'
-    : '<button class="btn btn-primary btn-sm" style="width:auto" onclick="joinCarpool(\''+c.id+'\')">I can drive them</button>';
+    : '<button class="btn btn-primary btn-sm" style="width:auto" onclick="joinCarpool(\''+c.id+'\')">I will join the carpool</button>';
   const showContact = mine || joined || admin;
   return '<div class="card card-pad cp-card" style="min-width:0">' +
     '<div class="row" style="align-items:flex-start;gap:10px"><div class="grow" style="min-width:0">' +
