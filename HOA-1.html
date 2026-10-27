@@ -530,6 +530,8 @@ html[data-theme="dark"] .hl-box h4{color:var(--ink)}
 html[data-theme="dark"] .seg button[aria-pressed="true"]{color:#0E121C}
 .access-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:11px 0;border-bottom:1px dashed var(--line)}
 .access-row>div:first-child{flex:1;min-width:180px}
+.walkin-alert{display:flex;gap:12px;align-items:center;flex-wrap:wrap;border:1px solid var(--amber);background:var(--amber-tint);border-radius:var(--radius);padding:12px 14px;margin-bottom:14px}
+.walkin-alert .grow{min-width:200px}
 .viewonly-bar{display:flex;gap:10px;align-items:center;background:var(--amber-tint);color:var(--ink);border:1px solid var(--amber);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:13.5px}
 .viewonly-bar b{color:var(--amber)}
 #main.view-only button:disabled,#main.view-only input:disabled,#main.view-only select:disabled{cursor:not-allowed;opacity:.5}
@@ -1495,7 +1497,7 @@ function setDuesMode(mode){
 const statusTag = s => ({
   'Paid':'t-emerald','Approved':'t-emerald','Resolved':'t-emerald','Closed':'t-emerald','Active':'t-emerald','Open ballot':'t-emerald',
   'Unpaid':'t-amber','Pending':'t-amber','In progress':'t-amber','Under review':'t-amber','For approval':'t-amber','Expiring':'t-amber','Used':'t-grey',
-  'Open':'t-slate','Waitlisted':'t-amber','Sold':'t-rose','Filled':'t-rose','Hired':'t-rose','Matched':'t-emerald','Full':'t-amber','Found':'t-rose','Expired':'t-grey','Ended':'t-grey','Cancelled':'t-rose','Escalated':'t-rose','Overdue':'t-rose','Declined':'t-rose','Revoked':'t-rose','Rejected':'t-rose'
+  'Open':'t-slate','Waitlisted':'t-amber','At the gate':'t-amber','Allowed':'t-emerald','Not expected':'t-rose','Turned away':'t-rose','Entered':'t-grey','Sold':'t-rose','Filled':'t-rose','Hired':'t-rose','Matched':'t-emerald','Full':'t-amber','Found':'t-rose','Expired':'t-grey','Ended':'t-grey','Cancelled':'t-rose','Escalated':'t-rose','Overdue':'t-rose','Declined':'t-rose','Revoked':'t-rose','Rejected':'t-rose'
 }[s] || 't-grey');
 
 /* View only: the page renders, but anything that would change data is disabled; a change that slips through is undone */
@@ -1851,7 +1853,7 @@ const NAV = {
   security:[
     { g:'Gate', items:[
       { id:'gatepasses', label:'Gate passes',    icon:'shield', badge:()=>(store.gatePasses||[]).filter(p=>p.status==='Approved'&&p.date<=gpToday()).length },
-      { id:'gate',      label:'Visitor passes',  icon:'users', badge:()=>store.passes.filter(p=>p.status==='Active').length },
+      { id:'gate',      label:'Visitor passes',  icon:'users', badge:()=>store.passes.filter(p=>p.status==='Active' || (p.walkIn && ['At the gate','Allowed','Not expected'].includes(p.status))).length },
       { id:'visitorlookup', label:'Visitor lookup', icon:'users', badge:()=>visitorProfiles().filter(v=>v.reasons.length).length },
       { id:'vehicles',  label:'Vehicle lookup',  icon:'grid' },
       { id:'incidents', label:'Incident log',    icon:'flag' },
@@ -1890,7 +1892,7 @@ const NAV = {
       { id:'mydues',     label:'My dues',        icon:'peso' },
       { id:'events',     label:'Events',         icon:'calendar' },
       { id:'book',       label:'Book a facility',icon:'grid' },
-      { id:'gatepass',   label:'Gate pass',      icon:'shield', badge:()=>(store.gatePasses||[]).filter(p=>p.unit===myUnit()&&(p.status==='Held'||p.status==='Declined'&&p.notedAt&&Date.now()-new Date(p.notedAt)<864e5*3)).length },
+      { id:'gatepass',   label:'Gate pass',      icon:'shield', badge:()=>(store.gatePasses||[]).filter(p=>p.unit===myUnit()&&(p.status==='Held'||p.status==='Declined'&&p.notedAt&&Date.now()-new Date(p.notedAt)<864e5*3)).length + store.passes.filter(p=>p.walkIn&&p.unit===myUnit()&&p.status==='At the gate').length },
       { id:'marketplace',label:'Livelihood and Marketplace', icon:'tag' },
       { id:'rides',      label:'Shuttle service', icon:'car', badge:()=>myRides().filter(r=>r.status==='On the way'||r.status==='Arrived').length }
     ]},
@@ -3892,6 +3894,7 @@ function gpHomeView(){
      ['2','Ops & Maintenance approves','The admin office checks it and notes the pass.'],
      ['3','Guard checks at the gate','Only approved passes show at the guardhouse. The guard checks the items and logs it.']].map(s =>
       '<div><span class="n">'+s[0]+'</span><b>'+s[1]+'</b><p>'+s[2]+'</p></div>').join('') + '</div>' +
+  (t==='visitors' ? '' : walkInAlerts()) +
   tabs('hgp',[{id:'current',label:'Current',n:current.length},{id:'past',label:'Past',n:mine.length-current.length},{id:'visitors',label:'Visitor passes',n:visitors.length}],'current') +
   (t==='visitors' ? gpVisitorList(visitors) : list.length ? '<div class="grid g-2">' + list.map(p =>
     '<div class="card card-pad"><div class="row" style="align-items:flex-start"><div class="grow">' +
@@ -3907,14 +3910,22 @@ function gpHomeView(){
     '<div class="ttl">QR scanning at the gate <span class="tag t-grey">Future phase</span></div>' +
     '<div class="meta" style="display:block">Coming after the privacy, data-retention and gate procedures are tested. For now, give your guest the pass code and the guard checks it at the gate.</div></div></div></div>';
 }
+function walkInAlerts(){
+  const mine = store.passes.filter(p => p.walkIn && p.unit===myUnit() && p.status==='At the gate');
+  return mine.map(p => '<div class="walkin-alert" role="alert"><div class="grow"><div class="ttl">'+esc(p.visitor)+(p.people>1?' and '+(p.people-1)+' more are':' is')+' at the gate</div>' +
+      '<div class="meta"><span>'+esc(p.purpose)+'</span>'+(passMode(p)==='Vehicle' && p.plate && p.plate!=='—' ? '<span class="mono">'+esc(p.plate)+'</span>' : '<span>On foot</span>')+'<span>Logged '+ago(p.loggedAt||new Date())+' by '+esc(p.loggedBy||'the guard')+'</span></div>' +
+      (p.note ? '<div class="body" style="margin-top:4px">'+esc(p.note)+'</div>' : '') + '</div>' +
+    '<div class="btn-row"><button class="btn btn-emerald btn-sm" onclick="walkInReply(\''+p.id+'\',true)">Let them in</button>' +
+    '<button class="btn btn-danger btn-sm" onclick="walkInReply(\''+p.id+'\',false)">Not expecting them</button></div></div>').join('');
+}
 function gpVisitorList(rows){
-  return rows.length ? '<div class="card tablewrap"><table><thead><tr><th>Visitor</th><th class="hide-sm">Purpose</th><th>Date</th><th>Code</th><th>Status</th></tr></thead><tbody>' +
+  return walkInAlerts() + (rows.length ? '<div class="card tablewrap"><table><thead><tr><th>Visitor</th><th class="hide-sm">Purpose</th><th>Date</th><th>Code</th><th>Status</th></tr></thead><tbody>' +
     rows.map(p => '<tr><td data-label="Visitor"><strong>'+esc(p.visitor)+'</strong><div class="meta">'+(passMode(p)==='Vehicle'
         ? 'Vehicle'+(p.plate&&p.plate!=='—'?' · <span class="mono">'+esc(p.plate)+'</span>':'') : 'Commute / on foot')+'</div></td>' +
       '<td class="hide-sm" data-label="Purpose">'+esc(p.purpose)+'</td><td data-label="Date">'+fmtDate(p.date)+'</td>' +
-      '<td class="mono" data-label="Code">'+(p.status==='Pending' ? '<span class="meta">After approval</span>' : esc(p.code))+'</td>' +
+      '<td class="mono" data-label="Code">'+(p.walkIn ? '<span class="tag t-grey">Walk-in</span>' : p.status==='Pending' ? '<span class="meta">After approval</span>' : esc(p.code))+'</td>' +
       '<td data-label="Status"><span class="tag '+statusTag(p.status)+'">'+esc(p.status)+'</span></td></tr>').join('') + '</tbody></table></div>'
-    : '<div class="card">'+empty('No visitor passes yet','Tap Visitor\u2019s pass to tell the gate who to expect. Share the code with your guest once it is approved.')+'</div>';
+    : '<div class="card">'+empty('No visitor passes yet','Tap Visitor\u2019s pass to tell the gate who to expect. Share the code with your guest once it is approved.')+'</div>');
 }
 
 /* ---------- admin, Ops & Maintenance: approve ---------- */
@@ -4110,7 +4121,7 @@ const HOME = {
         '<div class="ttl">Your ballot is open — '+esc(store.election.title)+'</div>' +
         '<div class="meta">Closes '+fmtDate(store.election.closes)+' · one vote per household</div></div>' +
         '<button class="btn btn-primary" style="width:auto" onclick="go(\'elections\')">Vote now</button></div></div>' : '';
-    return head('Hello, '+s.name.split(' ')[0], 'Unit '+s.unit+' · '+(fresh ? fresh+' new update'+(fresh>1?'s':'')+' from the board' : 'You are all caught up')) +
+    return walkInAlerts() + head('Hello, '+s.name.split(' ')[0], 'Unit '+s.unit+' · '+(fresh ? fresh+' new update'+(fresh>1?'s':'')+' from the board' : 'You are all caught up')) +
     banner + voteBanner +
     '<div class="qa" style="margin-bottom:20px">' +
       quick('peso','Pay dues', due && due.status==='Paid' ? curMonth()+' settled' : curMonth()+' · '+peso(due ? due.amount : unitDues(myUnit())), 'payForm()') +
@@ -4584,7 +4595,7 @@ const RENTER = {
     const s = store.session;
     const items = visibleAnnouncements();
     const fresh = items.filter(a=>!store.seen.has(a.id)).length;
-    return head('Hello, '+s.name.split(' ')[0], 'Tenant of '+s.unit+' · '+(fresh ? fresh+' new notice'+(fresh>1?'s':'') : 'You are all caught up')) +
+    return walkInAlerts() + head('Hello, '+s.name.split(' ')[0], 'Tenant of '+s.unit+' · '+(fresh ? fresh+' new notice'+(fresh>1?'s':'') : 'You are all caught up')) +
     '<div class="qa" style="margin-bottom:20px">' +
       quick('calendar','Check amenities','What you can book as a tenant','go(\'events\')') +
       quick('wrench','Report an issue','Common area faults','requestForm()') +
@@ -4761,8 +4772,21 @@ const SECURITY = {
     const term = gateFilter.trim().toLowerCase();
     const filtered = store.passes.filter(p => !term ||
       p.code.toLowerCase().includes(term) || p.visitor.toLowerCase().includes(term));
-    return head('Pass validation','Check a code at the gate, then mark it used. Resident billing and board records are not available on this account.',
-      '<button class="btn btn-primary" style="width:auto" onclick="validateForm()">Validate a code</button>') +
+    const walkins = store.passes.filter(p => p.walkIn && ['At the gate','Allowed','Not expected'].includes(p.status));
+    return head('Visitor passes','Log a visitor who arrives at the gate and the household is told right away, or check a pre-registered pass code.',
+      '<div class="btn-row"><button class="btn btn-primary" style="width:auto" onclick="walkInForm()">Log a visitor</button>' +
+      '<button class="btn btn-ghost" style="width:auto" onclick="validateForm()">Validate a code</button></div>') +
+    sectionCard('At the gate now · '+walkins.length, walkins.length ? '<ul class="list">' + walkins.map(p =>
+      '<li><div class="row" style="align-items:center;flex-wrap:wrap;gap:10px"><div class="grow" style="min-width:200px"><div class="ttl">'+esc(p.visitor)+(p.people>1?' <span class="meta">+'+(p.people-1)+' more</span>':'')+'</div>' +
+        '<div class="meta"><span>Visiting</span><b style="color:var(--ink)">'+esc(walkInUnitLabel(p.unit))+'</b><span>'+esc(p.purpose)+'</span>' +
+          (passMode(p)==='Vehicle' && p.plate && p.plate!=='—' ? '<span class="mono">'+esc(p.plate)+'</span>' : '<span>On foot</span>') +
+          '<span>Logged '+clock(p.loggedAt||new Date())+' by '+esc(p.loggedBy||'the gate')+'</span></div>' +
+        (p.reply ? '<div class="meta"><span>Household:</span><b style="color:var(--ink)">'+esc(p.reply)+'</b></div>' : '<div class="meta"><span>Waiting for the household to answer…</span></div>') +
+      '</div><span class="tag '+statusTag(p.status)+'">'+esc(p.status==='At the gate'?'Waiting for household':p.status==='Allowed'?'Household said let in':'Household not expecting')+'</span>' +
+      '<div class="btn-row"><button class="btn '+(p.status==='Not expected'?'btn-ghost':'btn-emerald')+' btn-sm" onclick="walkInEntered(\''+p.id+'\')">'+(p.status==='Allowed'?'Mark entered':'Let in anyway')+'</button>' +
+        '<button class="btn '+(p.status==='Not expected'?'btn-danger':'btn-ghost')+' btn-sm" onclick="walkInAway(\''+p.id+'\')">Turn away</button></div></div></li>').join('') + '</ul>'
+      : empty('Nobody waiting','Tap Log a visitor when someone arrives without a pass. The household gets a notice and can answer from their phone.')) +
+    '<div style="height:14px"></div>' +
     '<div class="grid g-4" style="margin-bottom:14px">' +
       stat('Valid today', active.length, 'Cleared for entry') +
       stat('Used', store.passes.filter(p=>p.status==='Used').length, 'Already entered') +
@@ -4772,15 +4796,15 @@ const SECURITY = {
     '<div class="fld" style="max-width:360px">' +
       '<input class="input" id="gateSearchInput" type="text" placeholder="Search by code or visitor name…" value="'+esc(gateFilter)+'" oninput="onGateSearch(this.value)">' +
     '</div>' +
-    sectionCard('Expected visitors', filtered.length ?
+    sectionCard('All visitor passes', filtered.length ?
       '<div class="tablewrap"><table><thead><tr><th>Code</th><th>Visitor</th><th class="hide-sm">Unit</th><th>Date</th><th>Status</th><th></th></tr></thead><tbody>' +
       filtered.map(p => '<tr><td class="mono" data-label="Code"><strong>'+esc(p.code)+'</strong></td>' +
-        '<td data-label="Visitor">'+esc(p.visitor)+'<div class="meta">'+esc(p.plate)+'</div></td>' +
+        '<td data-label="Visitor">'+esc(p.visitor)+(p.walkIn?' <span class="tag t-grey">Walk-in</span>':'')+'<div class="meta">'+esc(p.plate)+'</div></td>' +
         '<td class="hide-sm mono" data-label="Unit">'+esc(p.unit)+'</td><td data-label="Date">'+fmtDate(p.date)+'</td>' +
         '<td data-label="Status"><span class="tag '+statusTag(p.status)+'">'+esc(p.status)+'</span></td>' +
         '<td style="text-align:right">'+(p.status==='Active'
           ? '<button class="btn btn-emerald btn-sm" onclick="setPass(\''+p.id+'\',\'Used\')">Mark entered</button>'
-          : '<span class="meta">'+(p.status==='Pending'?'Awaiting admin':'Closed')+'</span>')+'</td></tr>').join('') +
+          : '<span class="meta">'+(p.status==='Pending'?'Awaiting admin':p.walkIn&&['At the gate','Allowed','Not expected'].includes(p.status)?'See At the gate':'Closed')+'</span>')+'</td></tr>').join('') +
       '</tbody></table></div>'
       : empty('No matches', 'No pass code or visitor name matches “'+gateFilter+'”.'));
   },
@@ -6628,7 +6652,61 @@ function approveExpense(id){
 
 /* security */
 function setPass(id,status){ const p=store.passes.find(x=>x.id===id); p.status=status;
-  commit('Gate pass '+p.code+' for '+p.visitor+' '+(status==='Active'?'approved':'denied')+'.',{title:'Pass '+status.toLowerCase()}); }
+  commit('Visitor pass '+p.code+' for '+p.visitor+' '+({Active:'approved',Used:'marked entered',Revoked:'denied'}[status]||status.toLowerCase())+'.',{title:'Pass '+status.toLowerCase(), forUnit:p.unit, audience:['admin','security']}); }
+/* the units a guard can send a visitor to: the registry plus any resident account's unit */
+function walkInUnits(){
+  const map = new Map();
+  store.units.forEach(u => map.set(u.unit, u.owner));
+  store.accounts.filter(a => (hasRole(a,'homeowner')||hasRole(a,'renter')) && a.unit).forEach(a => { if(!map.has(a.unit)) map.set(a.unit, a.name); });
+  return [...map.entries()].sort((a,b) => a[0].localeCompare(b[0], undefined, { numeric:true }));
+}
+function walkInUnitLabel(unit){ const e = walkInUnits().find(x => x[0]===unit); return 'Unit '+unit+(e && e[1] ? ' · '+e[1] : ''); }
+function walkInForm(){
+  const units = walkInUnits();
+  modal('Log a visitor at the gate','The household is notified straight away and can answer from their phone.',
+    '<label class="fld"><span>Visitor name</span><input class="input" id="wi_name" placeholder="Juan Dela Cruz"></label>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Visiting unit</span><select class="input" id="wi_unit"><option value="">Choose the unit…</option>' +
+        units.map(([u,o]) => '<option value="'+esc(u)+'">'+esc(u)+(o?' — '+esc(o):'')+'</option>').join('') + '</select></label>' +
+      '<label class="fld"><span>Purpose</span><select class="input" id="wi_purpose">' +
+        ['Family / friend visit','Delivery','Service / repair','Pick-up or drop-off','Other'].map(x=>'<option>'+x+'</option>').join('') + '</select></label>' +
+      '<label class="fld"><span>How many people</span><input class="input" id="wi_people" type="number" min="1" max="30" value="1"></label>' +
+      '<label class="fld"><span>Coming in</span><select class="input" id="wi_mode" onchange="$(\'#wi_platewrap\').classList.toggle(\'hide\', this.value!==\'Vehicle\')"><option value="Commute">On foot</option><option value="Vehicle">Vehicle</option></select></label></div>' +
+    '<label class="fld hide" id="wi_platewrap"><span>Plate number</span><input class="input" id="wi_plate" placeholder="ABC 1234" style="text-transform:uppercase"></label>' +
+    '<label class="fld"><span>Note for the household (optional)</span><input class="input" id="wi_note" placeholder="Says they are your cousin from Imus"></label>',
+    'Log and notify the household', () => {
+      const visitor = $('#wi_name').value.trim(), unit = $('#wi_unit').value, mode = $('#wi_mode').value, plate = $('#wi_plate').value.trim().toUpperCase();
+      if(!visitor){ toast('info','Add the visitor\u2019s name','Ask for the name before notifying the household.'); return false; }
+      if(!unit){ toast('info','Choose the unit','Which household are they visiting?'); return false; }
+      if(mode==='Vehicle' && !plate){ toast('info','Add the plate number','Log the plate when a visitor drives in.'); return false; }
+      const p = { id:uid(), walkIn:true, unit, visitor, purpose:$('#wi_purpose').value, people:Math.max(1, Math.round(Number($('#wi_people').value)||1)),
+        date:bkIso(new Date()), transport:mode, plate: mode==='Vehicle' ? plate : '—', code:genPassCode(), note:$('#wi_note').value.trim(),
+        status:'At the gate', loggedBy:store.session.name, loggedAt:new Date() };
+      store.passes.unshift(p);
+      commit(visitor+' is at the gate to visit '+walkInUnitLabel(unit)+' ('+p.purpose.toLowerCase()+'). Please answer Let them in or Not expecting them.',
+        { title:'Visitor at the gate', forUnit:unit, audience:['admin'], go:'gatepass' });
+      return true; });
+}
+function walkInReply(id, ok){
+  const p = store.passes.find(x => x.id===id); if(!p || p.unit!==myUnit() || p.status!=='At the gate') return;
+  p.status = ok ? 'Allowed' : 'Not expected';
+  p.reply = (ok ? 'Let them in' : 'Not expecting them')+' — '+store.session.name+', '+clock(new Date());
+  p.repliedAt = new Date();
+  commit('Unit '+p.unit+' '+(ok ? 'says let '+p.visitor+' in.' : 'is not expecting '+p.visitor+'.'),
+    { title: ok ? 'Household: let them in' : 'Household: not expecting them', audience:['security','admin'], go:'gate' });
+}
+function walkInEntered(id){
+  const p = store.passes.find(x => x.id===id); if(!p) return;
+  const anyway = p.status!=='Allowed';
+  p.status = 'Used'; p.enteredAt = new Date(); p.enteredBy = store.session.name;
+  commit(p.visitor+' entered for '+walkInUnitLabel(p.unit)+(anyway ? ' (let in before the household answered).' : '.'),
+    { title:'Visitor entered', forUnit:p.unit, audience:['admin'] });
+}
+function walkInAway(id){
+  const p = store.passes.find(x => x.id===id); if(!p) return;
+  p.status = 'Turned away'; p.closedAt = new Date(); p.closedBy = store.session.name;
+  commit(p.visitor+' was turned away at the gate ('+walkInUnitLabel(p.unit)+').', { title:'Visitor turned away', forUnit:p.unit, audience:['admin'] });
+}
 function stickerForm(){
   modal('Issue a vehicle sticker','RFID tags are activated at the gate within one working day.',
     '<div class="grid g-2" style="gap:0 12px">' +
