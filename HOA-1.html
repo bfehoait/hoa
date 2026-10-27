@@ -1848,7 +1848,6 @@ const NAV = {
     { g:'My household', items:[
       { id:'hotlines',   label:'Emergency hotlines', icon:'phone' },
       { id:'feed',       label:'Community feed', icon:'megaphone', badge:()=>store.announcements.filter(a=>!store.seen.has(a.id)).length },
-      { id:'announcements', label:'Announcements', icon:'megaphone' },
       { id:'mydues',     label:'My dues',        icon:'peso' },
       { id:'events',     label:'Events',         icon:'calendar' },
       { id:'book',       label:'Book a facility',icon:'grid' },
@@ -4040,6 +4039,7 @@ function rosterManageHTML(){
 
 const HOME = {
   issues(){ return icHomeView(); },
+  announcements(){ store.view = 'feed'; return HOME.feed(); },
   gatepass(){ return gpHomeView(); },
   feed(){
     const s = store.session;
@@ -4065,9 +4065,11 @@ const HOME = {
       quick('calendar','Book a facility','Hall, court, clubhouse, pool','bookForm()') +
     '</div>' +
     '<div class="grid g-2">' +
-      '<div class="card span-2"><div class="card-head"><h3>Community feed</h3><span class="spacer"></span>' +
+      '<div class="card span-2"><div class="card-head"><h3>Announcements</h3><span class="spacer"></span>' +
         (fresh ? '<button class="btn btn-ghost btn-sm" onclick="markAllSeen()">Mark all read</button>' : '<span class="meta">Up to date</span>') + '</div>' +
-        '<ul class="list">' + visibleAnnouncements().map(a => {
+        feedCatChips() +
+        (feedAnnouncements().length ? '' : '<div class="card-pad">'+empty('Nothing in this category','Pick another category or All to see every notice.')+'</div>') +
+        '<ul class="list">' + feedAnnouncements().map(a => {
           const isNew = !store.seen.has(a.id);
           return '<li class="announce'+(isNew?' fresh':'')+'"><div class="row"><div class="grow">' +
             '<div class="ttl">'+esc(a.title)+(isNew?' <span class="newpill">NEW</span>':'')+'</div>' +
@@ -4359,6 +4361,18 @@ const HOME = {
    ROLE MATRIX + ADDITIONAL ROLE PORTALS
 ============================================================ */
 /* owners, the board and the office see every notice; renters, guards and drivers see the ones meant for all residents */
+/* Community feed: filter announcements by category */
+function feedAnnouncements(){
+  const cat = tabOf('feedcat','All'), all = visibleAnnouncements();
+  return cat==='All' ? all : all.filter(a => a.category===cat);
+}
+function feedCatChips(){
+  const all = visibleAnnouncements(), cats = [...new Set(all.map(a => a.category).filter(Boolean))], cur = tabOf('feedcat','All');
+  if(cats.length < 2) return '';
+  return '<div class="chiprow" role="group" aria-label="Filter announcements by category" style="padding:12px 16px 0">' +
+    ['All'].concat(cats).map(c => { const n = c==='All' ? all.length : all.filter(a => a.category===c).length;
+      return '<button class="chip'+(cur===c?' on':'')+'" aria-pressed="'+(cur===c)+'" onclick="goTab(\'feedcat\',\''+esc(c).replace(/&#39;/g,'')+'\')">'+esc(c)+' · '+n+'</button>'; }).join('') + '</div>';
+}
 function visibleAnnouncements(){
   const r = store.session.role;
   return annSorted(store.announcements.filter(a => ['homeowner','admin','board'].includes(r) ? true : (a.vis||'all')==='all'));
@@ -4614,7 +4628,7 @@ const byWhen = (a,b) => (a.date+a.time) < (b.date+b.time) ? -1 : 1;
 
 /* ---------- DRIVER ---------- */
 ADMIN.announcements = () => noticesView();
-HOME.announcements = () => noticesView();
+/* homeowners read announcements in the Community feed (HOME.announcements opens it) */
 /* ---- shuttle stations: who is waiting where ---- */
 function rideActive(r){ return ['Requested','Accepted','On the way','Arrived'].includes(r.status); }
 function stationRides(day){
