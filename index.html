@@ -532,6 +532,8 @@ html[data-theme="dark"] .seg button[aria-pressed="true"]{color:#0E121C}
 .access-row>div:first-child{flex:1;min-width:180px}
 .walkin-alert{display:flex;gap:12px;align-items:center;flex-wrap:wrap;border:1px solid var(--amber);background:var(--amber-tint);border-radius:var(--radius);padding:12px 14px;margin-bottom:14px}
 .walkin-alert .grow{min-width:200px}
+.st-sum td .st-bar{height:8px;border-radius:4px;background:var(--slate)}
+.st-sum td .st-track{background:var(--paper);border-radius:4px;width:100%;min-width:80px}
 .viewonly-bar{display:flex;gap:10px;align-items:center;background:var(--amber-tint);color:var(--ink);border:1px solid var(--amber);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:13.5px}
 .viewonly-bar b{color:var(--amber)}
 #main.view-only button:disabled,#main.view-only input:disabled,#main.view-only select:disabled{cursor:not-allowed;opacity:.5}
@@ -4723,8 +4725,46 @@ function stationBox(name, list){
         '<span class="tag '+(RIDE_TAG[r.status]||'t-grey')+'">'+esc(r.status)+'</span></div>').join('') +
   '</div>';
 }
+/* how many people were picked up at each station, over a period */
+function stationSummary(){
+  const per = tabOf('stsum','month'), who = tabOf('stwho','all'), me = store.session.accountId;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const from = per==='today' ? today : per==='week' ? new Date(+today - ((today.getDay()+6)%7)*864e5) : per==='month' ? new Date(today.getFullYear(), today.getMonth(), 1) : null;
+  const inPer = r => !from || new Date(r.date+'T00:00:00') >= from;
+  const rides = store.rides.filter(r => inPer(r) && (who==='all' || (r.driver && r.driver.id===me)));
+  const done = rides.filter(r => r.status==='Completed'), pax = r => Number(r.passengers)||1;
+  const rows = RIDE_STATIONS.concat(rides.some(r => rideStop(r)==='Station not set') ? ['Station not set'] : []).map(st => {
+    const d = done.filter(r => rideStop(r)===st);
+    return { st, trips:d.length, people:d.reduce((n,r)=>n+pax(r),0), cancelled:rides.filter(r => rideStop(r)===st && r.status==='Cancelled').length };
+  });
+  const totalPeople = rows.reduce((n,r)=>n+r.people,0), max = Math.max(1, ...rows.map(r=>r.people));
+  const busiest = rows.slice().sort((a,b)=>b.people-a.people)[0];
+  const perLabel = { today:'Today', week:'This week', month:'This month', all:'All time' }[per];
+  const chips = (key, cur, opts) => '<div class="chiprow" role="group" style="margin-bottom:10px">' + opts.map(([v,l]) =>
+    '<button class="chip'+(cur===v?' on':'')+'" aria-pressed="'+(cur===v)+'" onclick="goTab(\''+key+'\',\''+v+'\')">'+l+'</button>').join('') + '</div>';
+  return chips('stsum', per, [['today','Today'],['week','This week'],['month','This month'],['all','All time']]) +
+    chips('stwho', who, [['all','All drivers'],['mine','My trips']]) +
+    '<div class="grid g-3" style="margin-bottom:14px">' +
+      stat('People picked up', totalPeople, perLabel+(who==='mine'?' · my trips':' · all drivers')) +
+      stat('Trips completed', done.length, done.length ? Math.round(totalPeople/done.length*10)/10+' people per trip' : 'No trips yet') +
+      stat('Busiest station', busiest && busiest.people ? busiest.st : '—', busiest && busiest.people ? busiest.people+' picked up' : 'No pickups yet') +
+    '</div>' +
+    sectionCard('Pickups by station · '+perLabel, '<div class="tablewrap"><table class="st-sum"><thead><tr><th>Station</th><th>People picked up</th><th class="hide-sm">Trips</th><th class="hide-sm" style="width:40%">Share</th><th class="hide-sm">Cancelled</th></tr></thead><tbody>' +
+      rows.map(r => '<tr><td data-label="Station"><strong>'+esc(r.st)+'</strong></td>' +
+        '<td class="mono" data-label="People picked up">'+r.people+'</td>' +
+        '<td class="hide-sm mono" data-label="Trips">'+r.trips+'</td>' +
+        '<td class="hide-sm" data-label="Share"><div class="row" style="align-items:center;gap:8px"><div class="st-track"><div class="st-bar" style="width:'+(r.people/max*100)+'%" title="'+esc(r.st)+': '+r.people+' people"></div></div>' +
+          '<span class="meta mono" style="margin:0;min-width:36px;text-align:right">'+(totalPeople ? Math.round(r.people/totalPeople*100) : 0)+'%</span></div></td>' +
+        '<td class="hide-sm mono" data-label="Cancelled">'+r.cancelled+'</td></tr>').join('') +
+      '<tr><td><strong>Total</strong></td><td class="mono"><strong>'+totalPeople+'</strong></td><td class="hide-sm mono"><strong>'+done.length+'</strong></td><td class="hide-sm"></td><td class="hide-sm mono">'+rows.reduce((n,r)=>n+r.cancelled,0)+'</td></tr>' +
+      '</tbody></table></div>' +
+      '<p class="meta" style="display:block;margin:0;padding:10px 16px 14px">Counts completed trips by the date of the ride. A trip counts once the driver taps Trip completed.</p>');
+}
 function stationsView(){
   const day = tabOf('stday','today');
+  if(day==='summary') return head('Stations','How many people were picked up at each station.') +
+    tabs('stday',[{id:'today',label:'Today',n:stationRides('today').length},{id:'upcoming',label:'Today and upcoming',n:stationRides('upcoming').length},{id:'summary',label:'Summary'}],'today') +
+    stationSummary();
   const rides = stationRides(day);
   const by = {};
   rides.forEach(r => { const st = rideStop(r); (by[st] = by[st] || []).push(r); });
@@ -4732,7 +4772,7 @@ function stationsView(){
   const busy = order.filter(x=>by[x]), quiet = RIDE_STATIONS.filter(x=>!by[x]);
   const waiting = rides.filter(r=>r.status==='Requested').length, pax = rides.reduce((n,r)=>n+(Number(r.passengers)||1),0);
   return head('Stations','Where residents are waiting for the shuttle. Each box is a pickup station with the people booked there.') +
-    tabs('stday',[{id:'today',label:'Today',n:stationRides('today').length},{id:'upcoming',label:'Today and upcoming',n:stationRides('upcoming').length}],'today') +
+    tabs('stday',[{id:'today',label:'Today',n:stationRides('today').length},{id:'upcoming',label:'Today and upcoming',n:stationRides('upcoming').length},{id:'summary',label:'Summary'}],'today') +
     '<div class="grid g-3" style="margin-bottom:14px">' +
       stat('Stations with riders', busy.length, 'of '+RIDE_STATIONS.length+' stations') +
       stat('Waiting for a driver', waiting, 'Not accepted yet') +
