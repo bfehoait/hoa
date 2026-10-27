@@ -6352,7 +6352,8 @@ function userForm(id, presetRole){
     '<label class="fld"><span>Full name</span><input class="input" id="f_n" value="'+esc(a?a.name:'')+'" placeholder="Estrella Ocampo"></label>' +
     '<label class="fld"><span>Email for sign-in</span><input class="input" id="f_e" type="email" value="'+esc(a?a.email:'')+'"'+(a?' disabled':'')+' placeholder="name@hoa-community.ph"></label>' +
     '<div class="grid g-2" style="gap:0 12px">' +
-      '<label class="fld"><span>Unit or post</span><input class="input" id="f_u" value="'+esc(a?a.unit:'')+'" placeholder="D-15 or Main gate"></label>' +
+      '<div id="f_addr_wrap" style="grid-column:1/-1"'+(ADDR_ROLES.includes(role)?'':' class="hide"')+'>'+addrFields(a?a.unit:'')+'</div>' +
+      '<label class="fld'+(ADDR_ROLES.includes(role)?' hide':'')+'" id="f_u_wrap"><span>Unit or post</span><input class="input" id="f_u" value="'+esc(a?a.unit:'')+'" placeholder="Main gate or Admin office"></label>' +
       '<label class="fld"><span>Mobile number</span><input class="input" id="f_p" value="'+esc(a?a.phone:'')+'" placeholder="0917 555 0000"></label></div>' +
     '<div id="f_t_wrap"'+(hasRole(a||{role},'admin')?' class="hide"':'')+'><label class="fld"><span>Title</span><input class="input" id="f_t" value="'+esc(a?a.title:'Owner of record')+'"></label></div>' +
     '<div id="f_pos_wrap"'+(hasRole(a||{role},'admin')?'':' class="hide"')+'>'+adminPositionField(a&&hasRole(a,'admin')?a.title:'')+'</div>' +
@@ -6373,7 +6374,8 @@ function userForm(id, presetRole){
     () => {
       const chosen = $('#f_r') ? $('#f_r').value : a.role;
       const owner = chosen==='homeowner', res = owner || chosen==='renter';
-      const name=$('#f_n').value.trim(), email=$('#f_e').value.trim().toLowerCase(), unit=$('#f_u').value.trim();
+      const name=$('#f_n').value.trim(), email=$('#f_e').value.trim().toLowerCase(), unit=readUnitField(chosen, a);
+      if(unit===null) return false;
       if(!name || !email){ toast('info','Missing details','A name and a sign-in email are both required.'); return false; }
       if(!email.includes('@')){ toast('info','Check the email','That address is missing an @.'); return false; }
       const clash = store.accounts.find(x => x.email.toLowerCase()===email && x.id!==(a&&a.id));
@@ -6413,7 +6415,7 @@ function userForm(id, presetRole){
       const reg = $('#f_reg');
       if(owner && reg && reg.getAttribute('aria-checked')==='true'){
         if(!store.units.some(u=>u.unit===unit))
-          store.units.push({ unit, owner:name, phase:'Phase 3', lot:150, type:'Townhouse',
+          store.units.push({ unit, owner:name, phase:unitParts(unit) ? 'Phase '+unitParts(unit).phase : 'Phase 3', block:unitParts(unit) ? unitParts(unit).block : '', lotNo:unitParts(unit) ? unitParts(unit).lot : '', lot:150, type:'Townhouse',
             occupancy:'Owner-occupied', since:String(new Date().getFullYear()) });
         if(store.dues.length && !store.dues.some(d=>d.unit===unit && d.period===curPeriod()))
           store.dues.push({ id:uid(), unit, owner:name, period:curPeriod(),
@@ -6447,6 +6449,34 @@ function accessRosterHTML(sel){
     '<span class="meta" style="margin:0">'+total+' accounts · '+active+' active</span></div>' +
     '<div style="overflow-x:auto;padding:4px 8px 8px"><table class="acc-roster"><thead><tr><th>Role</th><th style="text-align:center">#</th><th>Members</th></tr></thead><tbody>'+rows+'</tbody></table></div>' +
     '<p class="meta" style="display:block;margin:0;padding:0 16px 12px">The role you are adding is highlighted. Struck-through names are suspended.</p></div>';
+}
+/* ---- address: Phase 1–3, Block 1–19 and Lot, saved as a unit code like P1-B5-L12 ---- */
+const ADDR_ROLES = ['homeowner','renter','board'];
+function unitParts(unit){ const m = /^P([1-3])-B(\d{1,2})-L(\d{1,4})$/.exec(String(unit||'')); return m ? { phase:m[1], block:m[2], lot:m[3] } : null; }
+function unitCode(ph, blk, lot){ return 'P'+ph+'-B'+blk+'-L'+lot; }
+function unitPretty(unit){ const p = unitParts(unit); return p ? 'Phase '+p.phase+', Block '+p.block+', Lot '+p.lot : unit; }
+function addrFields(unit){
+  const p = unitParts(unit) || {};
+  const opts = (n, cur) => '<option value="">Choose…</option>' + Array.from({ length:n }, (_,i) => '<option'+(String(i+1)===String(cur)?' selected':'')+'>'+(i+1)+'</option>').join('');
+  return '<div class="grid g-3" style="gap:0 12px;grid-template-columns:repeat(3,minmax(0,1fr))">' +
+      '<label class="fld"><span>Phase</span><select class="input" id="f_aph">'+opts(3, p.phase)+'</select></label>' +
+      '<label class="fld"><span>Block</span><select class="input" id="f_ablk">'+opts(19, p.block)+'</select></label>' +
+      '<label class="fld"><span>Lot</span><input class="input" id="f_alot" type="number" min="1" max="9999" step="1" inputmode="numeric" placeholder="e.g. 12" value="'+esc(p.lot||'')+'"></label></div>' +
+    (unit && !unitParts(unit) ? '<p class="meta" style="display:block;margin:-6px 0 12px">Current unit on file: <b>'+esc(unit)+'</b>. Choose Phase, Block and Lot to replace it, or leave them blank to keep it.</p>' : '');
+}
+/* the unit for the form: Phase/Block/Lot for residents and the Board, free text for staff; null after showing a message */
+function readUnitField(role, a){
+  if(!ADDR_ROLES.includes(role)) return ($('#f_u') ? $('#f_u').value.trim() : (a ? a.unit : ''));
+  const ph = $('#f_aph').value, blk = $('#f_ablk').value, lotRaw = $('#f_alot').value.trim();
+  if(!ph && !blk && !lotRaw){
+    if(a && a.unit && (a.role===role || ADDR_ROLES.includes(a.role))) return a.unit;          /* editing: keep what is on file */
+    if(role==='board') return '';
+    toast('info','Add the address','Choose the Phase and Block, and enter the Lot number.'); return null;
+  }
+  if(!ph || !blk || !lotRaw){ toast('info','Finish the address','Choose the Phase and Block, and enter the Lot number.'); return null; }
+  const lot = Number(lotRaw);
+  if(!Number.isInteger(lot) || lot < 1 || lot > 9999){ toast('info','Check the lot number','Use a whole number, like 12.'); return null; }
+  return unitCode(ph, blk, lot);
 }
 /* roles an admin can switch an existing account to (Administrator is added only by "Add administrator") */
 const ACCT_ROLES = ['homeowner','renter','security','board','driver'];
@@ -6499,6 +6529,9 @@ function rolePreview(r){
   if(d) d.textContent = m.deny;
   const tw = $('#f_t_wrap'), pw = $('#f_pos_wrap');
   const xr = $('#f_xr'); if(xr) xr.innerHTML = extraRolesHTML(r, readExtraRoles(r));
+  const aw = $('#f_addr_wrap'), uw = $('#f_u_wrap');
+  if(aw) aw.classList.toggle('hide', !ADDR_ROLES.includes(r));
+  if(uw) uw.classList.toggle('hide', ADDR_ROLES.includes(r));
   const adminAny = r==='admin' || readExtraRoles(r).includes('admin');
   if(tw) tw.classList.toggle('hide', adminAny);
   if(pw) pw.classList.toggle('hide', !adminAny);
