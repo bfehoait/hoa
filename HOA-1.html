@@ -4125,11 +4125,6 @@ const HOME = {
         '<button class="btn btn-primary" style="width:auto" onclick="go(\'elections\')">Vote now</button></div></div>' : '';
     return walkInAlerts() + head('Hello, '+s.name.split(' ')[0], 'Unit '+s.unit+' · '+(fresh ? fresh+' new update'+(fresh>1?'s':'')+' from the board' : 'You are all caught up')) +
     banner + voteBanner +
-    '<div class="qa" style="margin-bottom:20px">' +
-      quick('peso','Pay dues', due && due.status==='Paid' ? curMonth()+' settled' : curMonth()+' · '+peso(due ? due.amount : unitDues(myUnit())), 'payForm()') +
-      quick('wrench','Report an issue','Streetlights, drainage, repairs','requestForm()') +
-      quick('calendar','Book a facility','Hall, court, clubhouse, pool','bookForm()') +
-    '</div>' +
     '<div class="grid g-2">' +
       '<div class="card span-2"><div class="card-head"><h3>Announcements</h3><span class="spacer"></span>' +
         (fresh ? '<button class="btn btn-ghost btn-sm" onclick="markAllSeen()">Mark all read</button>' : '<span class="meta">Up to date</span>') + '</div>' +
