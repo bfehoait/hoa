@@ -534,6 +534,8 @@ html[data-theme="dark"] .seg button[aria-pressed="true"]{color:#0E121C}
 .walkin-alert .grow{min-width:200px}
 .st-sum td .st-bar{height:8px;border-radius:4px;background:var(--slate)}
 .st-sum td .st-track{background:var(--paper);border-radius:4px;width:100%;min-width:80px}
+.lookup-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:620px;margin-bottom:14px}
+.lookup-bar .input{flex:1;min-width:200px}
 .viewonly-bar{display:flex;gap:10px;align-items:center;background:var(--amber-tint);color:var(--ink);border:1px solid var(--amber);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:13.5px}
 .viewonly-bar b{color:var(--amber)}
 #main.view-only button:disabled,#main.view-only input:disabled,#main.view-only select:disabled{cursor:not-allowed;opacity:.5}
@@ -1503,7 +1505,7 @@ const statusTag = s => ({
 }[s] || 't-grey');
 
 /* View only: the page renders, but anything that would change data is disabled; a change that slips through is undone */
-const VIEW_SAFE = /^\s*(?:event\.stopPropagation\(\);\s*)?(go|goTab|gpView|openLh|homeownerProfile|setIcf|bkMonth|bkPickDate|calShift|calToday|dayDetail|onGateSearch|onLhSearch|onProfileSearch|onVisitorLookup|openAnnImage|openChat|markSeen|markAllSeen|toast|closeModal)\(/;
+const VIEW_SAFE = /^\s*(?:event\.stopPropagation\(\);\s*)?(go|goTab|gpView|openLh|homeownerProfile|setIcf|bkMonth|bkPickDate|calShift|calToday|dayDetail|onGateSearch|onLhSearch|onProfileSearch|onVisitorLookup|onVehicleSearch|openAnnImage|openChat|markSeen|markAllSeen|toast|closeModal)\(/;
 let viewSnap = null;
 function curMode(){ const s = store.session; return s && s.authed ? pageMode(s.role, store.view, s.accountId) : 'edit'; }
 function viewOnlyBar(){
@@ -2127,7 +2129,21 @@ function onProfileSearch(v){
   if(el){ el.focus(); if(pos!=null) el.setSelectionRange(pos,pos); }
 }
 
-let visitorLookupFilter = '';
+let visitorLookupFilter = '', vehicleFilter = '';
+/* a search box with a Search button; typing filters as you go, Search or Enter applies it */
+function lookupBar(id, value, placeholder, fn){
+  return '<form class="lookup-bar" role="search" onsubmit="event.preventDefault();'+fn+'(this.querySelector(\'input\').value)">' +
+    '<input class="input" id="'+id+'" type="search" autocomplete="off" placeholder="'+esc(placeholder)+'" value="'+esc(value)+'" oninput="'+fn+'(this.value)" aria-label="'+esc(placeholder)+'">' +
+    '<button class="btn btn-primary" type="submit" style="width:auto">Search</button>' +
+    (value ? '<button class="btn btn-ghost" type="button" style="width:auto" onclick="'+fn+'(\'\')">Clear</button>' : '') + '</form>';
+}
+const plateKey = v => String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+function onVehicleSearch(v){
+  vehicleFilter = v;
+  const active = document.activeElement, pos = active && active.id==='vehicleSearchInput' ? active.selectionStart : null;
+  render();
+  const el = $('#vehicleSearchInput'); if(el){ el.focus(); if(pos!=null) el.setSelectionRange(pos,pos); }
+}
 function onVisitorLookup(v){
   visitorLookupFilter = v;
   const active = document.activeElement;
@@ -2162,16 +2178,16 @@ function visitorProfiles(){
 function visitorLookupBody(){
   const all = visitorProfiles();
   const term = visitorLookupFilter.trim().toLowerCase();
-  const list = all.filter(v => !term || v.name.toLowerCase().includes(term));
+  const list = all.filter(v => !term || v.name.toLowerCase().includes(term) || v.plates.some(p => plateKey(p).includes(plateKey(term)) && plateKey(term)) ||
+    Object.keys(v.units).some(u => u.toLowerCase().includes(term)));
   const flagged = all.filter(v => v.reasons.length).length;
   return '<div class="grid g-3" style="margin-bottom:14px">' +
       stat('Visitors', all.length, 'Different people logged') +
       stat('Flagged', flagged, VISITOR_HOUSE_LIMIT+'+ houses, or 2+ in one day') +
       stat('Passes', store.passes.length, 'All visitor passes') +
     '</div>' +
-    '<div class="fld" style="max-width:360px">' +
-      '<input class="input" id="visitorLookupInput" type="text" placeholder="Search by visitor name…" value="'+esc(visitorLookupFilter)+'" oninput="onVisitorLookup(this.value)">' +
-    '</div>' +
+    lookupBar('visitorLookupInput', visitorLookupFilter, 'Search by visitor name, plate or unit…', 'onVisitorLookup') +
+    (term ? '<p class="meta" style="display:block;margin:-6px 0 12px">'+list.length+' visitor'+(list.length===1?'':'s')+' match “'+esc(visitorLookupFilter.trim())+'”.</p>' : '') +
     sectionCard('Visitors and the houses they went to', list.length ?
       '<div class="tablewrap"><table><thead><tr><th>Visitor</th><th>Houses</th><th class="hide-sm">Houses visited</th><th class="hide-sm">Last visit</th><th>Check</th></tr></thead><tbody>' +
       list.map(v => '<tr><td data-label="Visitor"><strong>'+esc(v.name)+'</strong>' +
@@ -2186,7 +2202,7 @@ function visitorLookupBody(){
           ? '<span class="tag t-rose">Review</span><div class="meta">'+esc(v.reasons.join(' · '))+'</div>'
           : '<span class="tag t-emerald">Normal</span>')+'</td></tr>').join('') +
       '</tbody></table></div>'
-      : empty('No matches', all.length ? 'No visitor name matches “'+visitorLookupFilter+'”.' : 'Visitors show up here once passes are logged.')) +
+      : empty('No matches', all.length ? 'No visitor name, plate or unit matches “'+visitorLookupFilter+'”.' : 'Visitors show up here once passes are logged.')) +
     '<div class="card card-pad" style="margin-top:14px"><div class="ttl">When a visitor is flagged</div>' +
     '<div class="meta" style="display:block;margin-top:6px">Someone going house to house may be a sales agent, a solicitor, or casing the village. Call the households on the pass before letting them in again, and log an incident if anything is off.</div></div>';
 }
@@ -4849,12 +4865,21 @@ const SECURITY = {
     return head('Visitor lookup','Look up a visitor by name and see how many houses they went to. Plates are checked in Vehicle lookup.') + visitorLookupBody();
   },
   vehicles(){
+    const q = vehicleFilter.trim(), qk = plateKey(q), ql = q.toLowerCase();
+    const list = store.stickers.filter(s => !q || (qk && plateKey(s.plate).includes(qk)) || [s.vehicle, s.unit, s.tag].some(x => String(x||'').toLowerCase().includes(ql)));
+    const seen = q && qk ? store.passes.filter(p => p.plate && p.plate!=='—' && plateKey(p.plate).includes(qk)) : [];
     return head('Vehicle lookup','Check a plate against the registered RFID tags.') +
-    sectionCard('Registered vehicles',
-      '<div class="tablewrap"><table><thead><tr><th>Plate</th><th>Vehicle</th><th class="hide-sm">Unit</th><th class="hide-sm">Tag</th><th>Status</th></tr></thead><tbody>' +
-      store.stickers.map(s => '<tr><td class="mono" data-label="Plate"><strong>'+esc(s.plate)+'</strong></td><td data-label="Vehicle">'+esc(s.vehicle)+'</td>' +
+    lookupBar('vehicleSearchInput', vehicleFilter, 'Search by plate, vehicle, unit or tag…', 'onVehicleSearch') +
+    (q ? '<div class="card card-pad" style="margin-bottom:14px;border-left:3px solid '+(list.length?'var(--emerald)':'var(--amber)')+'">' +
+        '<div class="ttl">'+(list.length ? list.length+' registered vehicle'+(list.length===1?'':'s')+' match “'+esc(q)+'”' : 'No registered vehicle matches “'+esc(q)+'”')+'</div>' +
+        (seen.length ? '<div class="meta" style="display:block;margin-top:6px">Seen on visitor passes: '+seen.slice(0,5).map(p => '<b>'+esc(p.plate)+'</b> · '+esc(p.visitor)+' → unit '+esc(p.unit)+' ('+fmtDate(p.date)+')').join('; ')+'</div>'
+          : (!list.length ? '<div class="meta" style="display:block;margin-top:6px">Not on any visitor pass either. Log the vehicle and call the admin office.</div>' : '')) + '</div>' : '') +
+    sectionCard('Registered vehicles · '+list.length,
+      (list.length ? '<div class="tablewrap"><table><thead><tr><th>Plate</th><th>Vehicle</th><th class="hide-sm">Unit</th><th class="hide-sm">Tag</th><th>Status</th></tr></thead><tbody>' +
+      list.map(s => '<tr><td class="mono" data-label="Plate"><strong>'+esc(s.plate)+'</strong></td><td data-label="Vehicle">'+esc(s.vehicle)+'</td>' +
         '<td class="hide-sm mono" data-label="Unit">'+esc(s.unit)+'</td><td class="hide-sm mono" data-label="Tag">'+esc(s.tag)+'</td>' +
-        '<td data-label="Status"><span class="tag '+statusTag(s.status)+'">'+esc(s.status)+'</span></td></tr>').join('') + '</tbody></table></div>') +
+        '<td data-label="Status"><span class="tag '+statusTag(s.status)+'">'+esc(s.status)+'</span></td></tr>').join('') + '</tbody></table></div>'
+      : empty(q ? 'No matches' : 'No registered vehicles', q ? 'Try part of the plate, the unit, or clear the search.' : 'Vehicle stickers issued by the admin office show up here.'))) +
     '<div class="card card-pad" style="margin-top:14px"><div class="ttl">Expired or unlisted plates</div>' +
     '<div class="meta" style="display:block;margin-top:6px">Log the vehicle at the gate and call the admin office. Do not turn away a resident on a lapsed tag alone.</div></div>';
   },
