@@ -2899,10 +2899,12 @@ function bookingTable(list, actions){
       '<td data-label="When">'+fmtDate(b.date)+'<div class="meta">'+esc(b.slot)+'</div></td>' +
       '<td class="hide-sm" data-label="Requested by">'+esc(b.by)+'<div class="meta mono">'+esc(b.unit)+'</div>'+
         (b.bookedByStaff?'<div class="meta">Added by '+esc(b.bookedByStaff)+'</div>':'')+'</td>' +
-      '<td data-label="Status"><span class="tag '+statusTag(b.status)+'">'+esc(b.status)+'</span></td>' +
+      '<td data-label="Status"><span class="tag '+statusTag(b.status)+'">'+esc(b.status)+'</span>' +
+        (b.status==='Declined' && b.declineReason ? '<div class="meta" style="display:block;max-width:280px;margin-top:4px"><b style="color:var(--ink)">Reason:</b> '+esc(b.declineReason)+'</div>' : '') +
+        (b.reviewedBy && b.status!=='Pending' ? '<div class="meta">'+esc(b.status)+' by '+esc(b.reviewedBy)+(b.reviewedAt?' · '+fmtDate(b.reviewedAt):'')+'</div>' : '') + '</td>' +
       (actions ? '<td style="text-align:right">'+(b.status==='Pending'
         ? '<div class="btn-row" style="justify-content:flex-end"><button class="btn btn-emerald btn-sm" onclick="setBooking(\''+b.id+'\',\'Approved\')">Approve</button>' +
-          '<button class="btn btn-danger btn-sm" onclick="setBooking(\''+b.id+'\',\'Declined\')">Decline</button></div>'
+          '<button class="btn btn-danger btn-sm" onclick="declineBookingForm(\''+b.id+'\')">Decline</button></div>'
         : '<span class="meta">Reviewed</span>')+'</td>' : '') + '</tr>').join('') + '</tbody></table></div>';
 }
 /* ---- marketplace: browse grid + a homeowner's own listings ---- */
@@ -6312,7 +6314,29 @@ function gotoFeed(){
   else if(r==='admin'){ go('governance'); goTab('gov','announcements'); }
 }
 function setBooking(id,status){ const b=store.bookings.find(x=>x.id===id); b.status=status;
-  commit(b.facility+' on '+fmtDate(b.date)+' '+status.toLowerCase()+' for unit '+b.unit+'.',{title:'Booking '+status.toLowerCase(), go:gotoBookings}); }
+  b.reviewedBy = store.session.name; b.reviewedAt = new Date();
+  commit(b.facility+' on '+fmtDate(b.date)+' ('+b.slot+') '+status.toLowerCase()+' for unit '+b.unit+'.',{title:'Booking '+status.toLowerCase(), forUnit:b.unit, audience:['admin'], go:gotoBookings}); }
+/* declining asks for a reason, which the household sees on their booking and in the notice */
+const BOOKING_DECLINE_REASONS = ['The slot is already taken','The facility is under maintenance','An HOA event is scheduled at that time','Please settle outstanding dues first','The request is missing details'];
+function declineBookingForm(id){
+  const b = store.bookings.find(x => x.id===id); if(!b) return;
+  modal('Decline this booking','The household sees your reason on their booking and in their notification.',
+    '<div class="card card-pad" style="background:var(--paper);margin-bottom:12px">' +
+      '<div class="kv"><span>Facility</span><b>'+esc(b.facility)+'</b></div>' +
+      '<div class="kv"><span>When</span><b>'+fmtDate(b.date)+' · '+esc(b.slot)+'</b></div>' +
+      '<div class="kv"><span>Requested by</span><b>'+esc(b.by)+' · '+esc(b.unit)+'</b></div>' +
+      (b.purpose ? '<div class="kv"><span>Purpose</span><b>'+esc(b.purpose)+'</b></div>' : '') + '</div>' +
+    '<div class="chiprow" style="margin-bottom:8px">' + BOOKING_DECLINE_REASONS.map(r =>
+      '<button type="button" class="chip" onclick="$(\'#bk_reason\').value=this.textContent;$(\'#bk_reason\').focus()">'+esc(r)+'</button>').join('') + '</div>' +
+    '<label class="fld"><span>Reason / comments</span><textarea class="input" id="bk_reason" placeholder="Tell them why, and what they can do instead — e.g. try Saturday morning."></textarea></label>',
+    'Decline booking', () => {
+      const why = $('#bk_reason').value.trim();
+      if(!why){ toast('info','Add a reason','Tap a common reason above or write your own.'); return false; }
+      b.status = 'Declined'; b.declineReason = why; b.reviewedBy = store.session.name; b.reviewedAt = new Date();
+      commit(b.facility+' on '+fmtDate(b.date)+' ('+b.slot+') was declined. Reason: '+why,
+        { title:'Booking declined', forUnit:b.unit, audience:['admin'], go:gotoBookings });
+      return true; }, true);
+}
 
 /* security + board actions */
 function validateForm(){
