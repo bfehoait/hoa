@@ -536,6 +536,11 @@ html[data-theme="dark"] .seg button[aria-pressed="true"]{color:#0E121C}
 .st-sum td .st-track{background:var(--paper);border-radius:4px;width:100%;min-width:80px}
 .lookup-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:620px;margin-bottom:14px}
 .lookup-bar .input{flex:1;min-width:200px}
+.audit-box{border:1px dashed var(--brand-line);background:var(--slate-tint);border-radius:var(--radius-sm);padding:12px 14px 4px;margin:6px 0 12px}
+.audit-box .eyebrow{margin-bottom:8px;color:var(--slate-dk)}
+.audit-box .input{background:var(--surface,#fff)}
+.audit-table td{vertical-align:top}
+.audit-table .chg{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);white-space:pre-wrap;word-break:break-word;max-width:320px}
 .viewonly-bar{display:flex;gap:10px;align-items:center;background:var(--amber-tint);color:var(--ink);border:1px solid var(--amber);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:13.5px}
 .viewonly-bar b{color:var(--amber)}
 #main.view-only button:disabled,#main.view-only input:disabled,#main.view-only select:disabled{cursor:not-allowed;opacity:.5}
@@ -1505,7 +1510,7 @@ const statusTag = s => ({
 }[s] || 't-grey');
 
 /* View only: the page renders, but anything that would change data is disabled; a change that slips through is undone */
-const VIEW_SAFE = /^\s*(?:event\.stopPropagation\(\);\s*)?(go|goTab|gpView|openLh|homeownerProfile|setIcf|bkMonth|bkPickDate|calShift|calToday|dayDetail|onGateSearch|onLhSearch|onProfileSearch|onVisitorLookup|onVehicleSearch|openAnnImage|openChat|markSeen|markAllSeen|toast|closeModal)\(/;
+const VIEW_SAFE = /^\s*(?:event\.stopPropagation\(\);\s*)?(go|goTab|gpView|openLh|homeownerProfile|setIcf|bkMonth|bkPickDate|calShift|calToday|dayDetail|onGateSearch|onLhSearch|onProfileSearch|onVisitorLookup|onVehicleSearch|onAuditSearch|openAnnImage|openChat|markSeen|markAllSeen|toast|closeModal)\(/;
 let viewSnap = null;
 function curMode(){ const s = store.session; return s && s.authed ? pageMode(s.role, store.view, s.accountId) : 'edit'; }
 function viewOnlyBar(){
@@ -1821,7 +1826,8 @@ const NAV = {
           store.dues.filter(d=>d.status!=='Paid').length + store.expenses.filter(x=>x.status==='For approval').length },
       { id:'reports',    label:'Reports',                 icon:'chart' },
       { id:'rides',      label:'Shuttle service',         icon:'car', badge:()=>store.rides.filter(r=>r.status==='Requested').length },
-      { id:'access',     label:'User Access',             icon:'lock' }
+      { id:'access',     label:'User Access',             icon:'lock' },
+      { id:'audit',      label:'Audit trail',             icon:'chart' }
     ]},
     { g:'Account', items:[
       { id:'support',  label:'Support', icon:'life', badge:()=>store.tickets.filter(t=>t.status!=='Resolved').length },
@@ -1959,7 +1965,7 @@ function pageMode(role, id, accountId){
   if(ACCESS_LOCKED.includes(id)) return 'edit';
   if(role === 'admin'){
     if(!accountId || isAccessManager(accountId)) return 'edit';
-    if(id === 'access') return 'hidden';                            /* only managers open User Access */
+    if(id === 'access' || id === 'audit') return 'hidden';          /* only managers open User Access and the audit trail */
   }
   const mine = accountId && store.userAccess[accountId];
   if(mine && id in mine) return modeOf(mine[id]);
@@ -2563,6 +2569,7 @@ const ADMIN = {
   },
   /* ---------- MESSAGES ---------- */
   messages(){ return messagesInboxView(); },
+  audit(){ return auditView(); },
   issues(){ return head('Issues, Complaints & Concerns','One-stop tracker for every item homeowners raise — status, Phase 1–3 breakdown, days to resolution and category trends.') + icDashboard(true); },
 
   /* ---------- CALENDAR ---------- */
@@ -6413,6 +6420,7 @@ function userForm(id, presetRole){
         '<div><div class="sl">Also add to the unit registry</div>' +
         '<div class="sd">Owners only — creates the property record and the current dues line.</div></div>' +
         '<button class="tgl" id="f_reg" role="switch" aria-checked="true" onclick="this.setAttribute(\'aria-checked\', this.getAttribute(\'aria-checked\')===\'true\'?\'false\':\'true\')"><i></i></button></div>') +
+    auditFieldsHTML(!a) +
     (a && a.id!==realSession().accountId ? '<div style="border-top:1px solid var(--line);margin-top:6px;padding-top:12px"><button type="button" class="btn btn-danger btn-sm" onclick="closeModal();deleteUserForm(\''+a.id+'\')">Delete this account</button></div>' : ''),
     a ? 'Save changes' : 'Add account',
     () => {
@@ -6429,6 +6437,8 @@ function userForm(id, presetRole){
       const adminAny = chosen==='admin' || extras.includes('admin');
       const title = adminAny ? adminPositionValue() : $('#f_t').value.trim();
       if(adminAny && !title){ toast('info','Add a position','Pick the administrator\u2019s position, such as HOA President or Treasurer.'); return false; }
+      const au = readAudit(!a); if(!au) return false;
+      const before = a ? { name:a.name, unit:a.unit, phone:a.phone, title:a.title, roles:acctRoles(a).join(', ') } : null;
 
       if(a){
         const was = a.role, wasRoles = acctRoles(a);
@@ -6438,14 +6448,17 @@ function userForm(id, presetRole){
         const added = acctRoles(a).filter(r=>!wasRoles.includes(r)), removed = wasRoles.filter(r=>!acctRoles(a).includes(r));
         if(was===chosen && (added.length || removed.length)){
           commit(name+'\u2019s access updated'+(added.length?' — added '+added.map(ROLE_LABEL).join(', '):'')+(removed.length?(added.length?';':' —')+' removed '+removed.map(ROLE_LABEL).join(', '):'')+'. Roles now: '+acctRoles(a).map(ROLE_LABEL).join(', ')+'.',{title:'Access changed'});
+          auditWrite('account.roles_changed', a, au, auditDiff(before, a));
           return true;
         }
         if(was!==chosen){
           commit(name+'’s access changed from '+ROLE_LABEL(was)+' to '+ROLE_LABEL(chosen)+'. It applies the next time they sign in.',{title:'Access changed'});
+          auditWrite('account.roles_changed', a, au, auditDiff(before, a));
           return true;
         }
         if(store.session.accountId===a.id){ store.session.name=a.name; store.session.email=a.email; }
         commit('Account updated for '+name+' ('+ROLE_LABEL(a.role)+').',{title:'Account updated'});
+        auditWrite('account.edited', a, au, auditDiff(before, a));
         return true;
       }
 
@@ -6470,6 +6483,8 @@ function userForm(id, presetRole){
         : 'Invitation sent to '+email+' as '+ROLE_LABEL(chosen)+'.',
         {title:'Account added'});
       if(status==='Active') setLogin(email, pw, name); else sendInvite(email, name);
+      const added = store.accounts[store.accounts.length-1];
+      auditWrite('account.created', added, au, { role:acctRoles(added).join(', '), unit:added.unit, email:added.email, access: status==='Active' ? 'password set by admin' : 'invitation emailed' });
       return true;
     });
   rolePreview(role);
@@ -6552,6 +6567,82 @@ function secForget(id){
   if(s.secondary===id) s.secondary = '';
   if(s.revoked && s.revoked[id]){ const r = Object.assign({}, s.revoked); delete r[id]; s.revoked = r; }
 }
+/* ---- audit trail: every critical account action needs a supporting reference and a reason ---- */
+const AUDIT_ACTIONS = { 'account.created':'Account added', 'account.edited':'Account edited', 'account.roles_changed':'Roles changed',
+  'account.suspended':'Suspended', 'account.restored':'Restored', 'account.deleted':'Deleted' };
+let auditRows = null, auditLocal = [], auditErr = '', auditLoading = false, auditFilter = '';
+function auditRefNo(){ const d = new Date(); return 'AUD-'+String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'-'+Math.random().toString(36).slice(2,6).toUpperCase(); }
+function auditFieldsHTML(docRequired){
+  return '<div class="audit-box"><div class="eyebrow">For the audit trail</div>' +
+    '<label class="fld"><span>Supporting reference or document'+(docRequired?'':' (optional)')+'</span><input class="input" id="au_doc" maxlength="300" placeholder="e.g. Deed of Sale No. 2026-118, lease contract, Board Resolution 2026-07"></label>' +
+    '<label class="fld"><span>Reason</span><textarea class="input" id="au_reason" maxlength="1000" style="min-height:64px" placeholder="Why this change is being made"></textarea></label>' +
+    '<p class="meta" style="display:block;margin:-4px 0 10px">Logged with your name, the time and an audit number. Audit entries cannot be edited or deleted.</p></div>';
+}
+function readAudit(docRequired){
+  const doc = ($('#au_doc')||{value:''}).value.trim(), reason = ($('#au_reason')||{value:''}).value.trim();
+  if(docRequired && !doc){ toast('info','Add a supporting reference','Enter the document or reference number behind this change, e.g. a deed of sale, lease or Board resolution.'); return null; }
+  if(!reason){ toast('info','Add a reason','Say why this change is being made. It goes in the audit trail.'); return null; }
+  return { ref:auditRefNo(), doc, reason };
+}
+/* what changed on an edit, as { field:{from,to} } */
+function auditDiff(before, a){
+  const after = { name:a.name, unit:a.unit, phone:a.phone, title:a.title, roles:acctRoles(a).join(', ') }, out = {};
+  Object.keys(after).forEach(k => { if(String(before[k]||'') !== String(after[k]||'')) out[k] = { from:before[k]||'', to:after[k]||'' }; });
+  return out;
+}
+function auditWrite(action, acct, au, details){
+  const row = { action, target_id:acct ? acct.id : null, target_name:acct ? acct.name : null, ref_no:au.ref, document:au.doc || null, reason:au.reason, details:details||{} };
+  setTimeout(() => toast('ok','Recorded in the audit trail', 'Audit number '+au.ref+'.'), 900);
+  if(!cloudOn || !sb){ auditLocal.unshift(Object.assign({ at:new Date().toISOString(), actor_email:realSession().email, actor_role:realSession().role, source:'portal' }, row)); return; }
+  sb.from('audit_log').insert(row).then(({ error }) => {
+    if(error) toast('info','Audit entry not saved', /audit_log|PGRST205|42P01/.test(error.message+error.code) ? 'The audit trail is not set up yet. Run supabase-audit-trail.sql in Supabase.' : error.message);
+    auditRows = null;                                                 /* reload the page list next time */
+  });
+}
+async function loadAudit(){
+  if(auditLoading) return; auditLoading = true; auditErr = '';
+  if(cloudOn && sb){
+    const { data, error } = await sb.from('audit_log').select('*').order('id', { ascending:false }).limit(500);
+    if(error) auditErr = /audit_log|PGRST205|42P01/.test(error.message+error.code) ? 'The audit trail is not set up yet. Run supabase-audit-trail.sql in Supabase.' : error.message;
+    auditRows = data || [];
+  } else auditRows = auditLocal.slice();
+  auditLoading = false;
+  if(store.view==='audit') render();
+}
+function onAuditSearch(v){
+  auditFilter = v; const act = document.activeElement, pos = act && act.id==='auditSearchInput' ? act.selectionStart : null;
+  render(); const el = $('#auditSearchInput'); if(el){ el.focus(); if(pos!=null) el.setSelectionRange(pos,pos); }
+}
+function auditChanges(r){
+  const d = r.details || {};
+  if(r.action==='account.created' || r.action==='account.deleted')
+    return ['role','extra_roles','unit','email','status','access'].filter(k => d[k]!=null && d[k]!=='' && !(Array.isArray(d[k]) && !d[k].length)).map(k => k+': '+(Array.isArray(d[k]) ? d[k].join(', ') : d[k])).join('\n');
+  return Object.keys(d).map(k => { const v = d[k]; return v && typeof v==='object' && 'to' in v ? k+': '+JSON.stringify(v.from)+' → '+JSON.stringify(v.to) : k+': '+JSON.stringify(v); }).join('\n');
+}
+function auditView(){
+  if(auditRows===null && !auditLoading) loadAudit();
+  const who = e => { const a = store.accounts.find(x => String(x.email).toLowerCase()===String(e||'').toLowerCase()); return a ? a.name : (e||'—'); };
+  const src = tabOf('auditsrc','all'), q = auditFilter.trim().toLowerCase();
+  const rows = (auditRows||[]).filter(r => (src==='all' || r.source===src) &&
+    (!q || [r.target_name, r.target_id, r.ref_no, r.document, r.reason, r.actor_email, who(r.actor_email), AUDIT_ACTIONS[r.action]||r.action].join(' ').toLowerCase().includes(q)));
+  const all = auditRows||[];
+  return head('Audit trail','Every change to portal accounts — who did it, when, and why. Entries cannot be edited or deleted.',
+      '<button class="btn btn-ghost" style="width:auto" onclick="auditRows=null;loadAudit();render()">Refresh</button>') +
+    (auditErr ? '<div class="viewonly-bar" role="alert"><b>Not set up</b><span>'+esc(auditErr)+'</span></div>' : '') +
+    (!cloudOn ? '<div class="viewonly-bar"><b>Offline</b><span>Showing only entries made on this device in this session.</span></div>' : '') +
+    tabs('auditsrc',[{id:'all',label:'All',n:all.length},{id:'portal',label:'With reference & reason',n:all.filter(r=>r.source==='portal').length},{id:'database',label:'Automatic (database)',n:all.filter(r=>r.source==='database').length}],'all') +
+    lookupBar('auditSearchInput', auditFilter, 'Search by name, audit number, reference or reason…', 'onAuditSearch') +
+    sectionCard('Entries · '+rows.length, auditLoading && auditRows===null ? '<div class="card-pad meta">Loading…</div>' : rows.length
+      ? '<div class="tablewrap"><table class="audit-table"><thead><tr><th>When</th><th>By</th><th>Action</th><th>Account</th><th class="hide-sm">Reference & reason</th><th class="hide-sm">Changes</th></tr></thead><tbody>' +
+        rows.map(r => '<tr><td class="ic-nw" data-label="When">'+fmtDate(r.at)+'<div class="meta">'+clock(r.at)+'</div></td>' +
+          '<td data-label="By"><strong>'+esc(who(r.actor_email))+'</strong><div class="meta">'+esc(r.actor_role||'')+'</div></td>' +
+          '<td data-label="Action"><span class="tag '+(/deleted|suspended/.test(r.action)?'t-rose':/created|restored/.test(r.action)?'t-emerald':'t-amber')+'">'+esc(AUDIT_ACTIONS[r.action]||r.action)+'</span>' +
+            '<div class="meta">'+(r.source==='database'?'Automatic':'Portal')+'</div></td>' +
+          '<td data-label="Account">'+esc(r.target_name||'—')+'<div class="meta mono">'+esc(r.target_id||'')+'</div></td>' +
+          '<td class="hide-sm" data-label="Reference & reason">'+(r.ref_no?'<div class="mono" style="font-weight:700">'+esc(r.ref_no)+'</div>':'')+(r.document?'<div><b>Doc:</b> '+esc(r.document)+'</div>':'')+(r.reason?'<div class="meta" style="display:block">'+esc(r.reason)+'</div>':'')+(!r.ref_no&&!r.reason?'<span class="meta">—</span>':'')+'</td>' +
+          '<td class="hide-sm" data-label="Changes"><div class="chg">'+esc(auditChanges(r))+'</div></td></tr>').join('') + '</tbody></table></div>'
+      : empty(q ? 'No matches' : 'No entries yet', q ? 'Try another name, audit number or word.' : 'Account changes are recorded here as they happen.'));
+}
 function deleteUserForm(id){
   const a = store.accounts.find(x=>x.id===id); if(!a) return;
   if(a.id===realSession().accountId){ toast('info','Not allowed','You cannot delete the account you are signed in with.'); return; }
@@ -6561,8 +6652,11 @@ function deleteUserForm(id){
     '<div class="card card-pad" style="background:var(--paper);margin-bottom:12px">' +
       '<div class="kv"><span>Name</span><b>'+esc(a.name)+'</b></div><div class="kv"><span>Email</span><b>'+esc(a.email)+'</b></div>' +
       '<div class="kv"><span>Role</span><b>'+esc(ROLE_LABEL(a.role))+'</b></div><div class="kv"><span>Unit or post</span><b>'+esc(a.unit)+'</b></div></div>' +
-    '<p class="meta" style="display:block;margin:0">This cannot be undone. To block access for a while instead, use <b>Suspend</b>. To give them access again later, add the account again.</p>',
+    '<p class="meta" style="display:block;margin:0 0 10px">This cannot be undone. To block access for a while instead, use <b>Suspend</b>. To give them access again later, add the account again.</p>' +
+    auditFieldsHTML(true),
     'Delete access', () => {
+      const au = readAudit(true); if(!au) return false;
+      auditWrite('account.deleted', a, au, { role:acctRoles(a).join(', '), unit:a.unit, email:a.email, status:a.status });
       store.accounts = store.accounts.filter(x=>x.id!==id);
       if(hasRole(a,'security')) secForget(id);
       if(store.userAccess && store.userAccess[id]){ const u = Object.assign({}, store.userAccess); delete u[id]; store.userAccess = u; }
@@ -6606,10 +6700,21 @@ function rolePreview(r){
   }
 }
 function setUserStatus(id, status){
-  const a = store.accounts.find(x=>x.id===id);
-  if(a.id === store.session.accountId){ toast('info','Not allowed','You cannot suspend the account you are signed in with.'); return; }
-  a.status = status;
-  commit(a.name+' ('+a.unit+') '+(status==='Active'?'restored':'suspended')+'.',{title:'Access '+status.toLowerCase()});
+  const a = store.accounts.find(x=>x.id===id); if(!a) return;
+  if(a.id === realSession().accountId){ toast('info','Not allowed','You cannot suspend the account you are signed in with.'); return; }
+  const suspend = status==='Suspended';
+  modal((suspend ? 'Suspend ' : 'Restore ')+a.name+'\u2019s access?',
+    suspend ? 'They cannot sign in until the account is restored. Nothing is deleted.' : 'They can sign in again straight away.',
+    '<div class="card card-pad" style="background:var(--paper);margin-bottom:12px">' +
+      '<div class="kv"><span>Name</span><b>'+esc(a.name)+'</b></div><div class="kv"><span>Role</span><b>'+esc(acctRoles(a).map(ROLE_LABEL).join(', '))+'</b></div>' +
+      '<div class="kv"><span>Unit or post</span><b>'+esc(a.unit)+'</b></div><div class="kv"><span>Status now</span><b>'+esc(a.status)+'</b></div></div>' +
+    auditFieldsHTML(true),
+    suspend ? 'Suspend access' : 'Restore access', () => {
+      const au = readAudit(true); if(!au) return false;
+      const was = a.status; a.status = status;
+      commit(a.name+' ('+a.unit+') '+(suspend?'suspended':'restored')+'. Audit '+au.ref+'.',{title:'Access '+status.toLowerCase(), audience:['admin']});
+      auditWrite(suspend ? 'account.suspended' : 'account.restored', a, au, { status:{ from:was, to:status } });
+      return true; }, suspend);
 }
 function activateUser(id){
   const a = store.accounts.find(x=>x.id===id);
