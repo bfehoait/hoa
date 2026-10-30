@@ -1093,12 +1093,29 @@ const MKT_CATEGORIES = ['Food & Beverage','Apparel','Electronics & Home','Vehicl
 /* listings saved before the category update keep their old label; map it onto the new set */
 const MKT_LEGACY = {'Home & Living':'Electronics & Home','Fashion & Accessories':'Apparel',
   'Electronics':'Electronics & Home','Services':'Supplies & Essentials','Other':'Supplies & Essentials'};
-function mktCat(m){ return MKT_CATEGORIES.includes(m.category) ? m.category : (MKT_LEGACY[m.category] || 'Supplies & Essentials'); }
+/* services offered by residents (Buy and sell, type "Service"); a Wanted post can ask for goods or a service */
+const SERVICE_CATEGORIES = ['Home repairs & maintenance','Cleaning & laundry','Cooking & catering','Tutoring & lessons','Beauty & wellness',
+  'Pet care','Errands & delivery','Tech & gadget repair','Events & photography','Other services'];
+const SERVICE_RATES = ['per job','per hour','per day','per session','per month'];
+function mktCat(m){
+  if(MKT_CATEGORIES.includes(m.category) || (mktKind(m)!=='Sell' && SERVICE_CATEGORIES.includes(m.category))) return m.category;
+  if(mktKind(m)==='Service') return 'Other services';
+  return MKT_LEGACY[m.category] || 'Supplies & Essentials';
+}
+function mktCatOptions(kind, cur){
+  const grp = (label, list) => '<optgroup label="'+label+'">'+list.map(c => '<option'+(c===cur?' selected':'')+'>'+esc(c)+'</option>').join('')+'</optgroup>';
+  return kind==='Service' ? grp('Services', SERVICE_CATEGORIES)
+    : kind==='Wanted' ? grp('Goods', MKT_CATEGORIES) + grp('Services', SERVICE_CATEGORIES) : grp('Goods', MKT_CATEGORIES);
+}
+function mktKindTag(m){
+  const k = mktKind(m);
+  return k==='Wanted' ? '<span class="tag t-amber">Wanted</span>' : k==='Service' ? '<span class="tag t-emerald">Service</span>' : '<span class="tag t-slate">For sale</span>';
+}
 /* Livelihood and Marketplace is split into four sections; items saved before the split are Buy and sell */
 const LH_SECTIONS = [
   { id:'business', label:'Business directory' },
   { id:'training', label:'Training & workshops' },
-  { id:'buysell',  label:'Buy and sell' },
+  { id:'buysell',  label:'Buy, sell & services' },
   { id:'jobs',     label:'Job openings and referrals' },
   { id:'garage',   label:'Garage sales' },
   { id:'booths',   label:'Seasonal booth events' }];
@@ -1106,7 +1123,7 @@ const LH_WORDS = {
   business:{ icon:'building', noun:'business', nouns:'businesses', live1:'business', liveN:'businesses', cta:'List my business', form:'businessForm',
     browse:'Directory', mine:'My businesses', emptyT:'No businesses listed yet', emptyD:'Resident-run businesses show up here once the admin office approves them.' },
   buysell:{ icon:'tag', noun:'listing', nouns:'listings', live1:'live listing', liveN:'live listings', cta:'Post a listing', form:'marketplaceForm',
-    browse:'Browse', mine:'My listings', emptyT:'Nothing listed yet', emptyD:'Approved Sell and Wanted listings from your neighbors show up here.' },
+    browse:'Browse', mine:'My listings', emptyT:'Nothing listed yet', emptyD:'Approved items for sale, services and Wanted posts from your neighbors show up here.' },
   training:{ icon:'chart', noun:'training', nouns:'trainings', live1:'upcoming session', liveN:'upcoming sessions', cta:'Offer a training', form:'trainingForm',
     browse:'Upcoming', mine:'My trainings', emptyT:'No trainings coming up', emptyD:'Workshops from the Livelihood Committee and residents show up here until they end.' },
   garage:{ icon:'calendar', noun:'garage sale', nouns:'garage sales', live1:'upcoming sale', liveN:'upcoming sales', cta:'Host a garage sale', form:'garageForm',
@@ -1140,7 +1157,7 @@ const LH_LISTING_DAYS = 30;    /* Buy and sell listings run this long after appr
 const LH_MAX_PHOTOS = 1;      /* one cover photo per listing; more photos are linked from Facebook to save portal storage */
 const LH_EXPIRY_START = new Date('2026-10-14T00:00:00+08:00'); /* listings approved before time limits existed count from here */
 function mktSection(m){ return m.section || 'buysell'; }
-function mktKind(m){ return m.kind==='Wanted' ? 'Wanted' : 'Sell'; }
+function mktKind(m){ return m.kind==='Wanted' || m.kind==='Service' ? m.kind : 'Sell'; }
 function lhPhotos(m){ return m.photos && m.photos.length ? m.photos : (m.photo ? [m.photo] : []); }
 function lhOffers(m){ return Array.isArray(m.offers) ? m.offers : []; }
 function lhItems(m){ return Array.isArray(m.items) ? m.items : []; }
@@ -1158,7 +1175,7 @@ function lhItemCat(m){
   if(sec==='jobs') return JOB_TYPES.includes(m.jobType) ? m.jobType : 'Full-time';
   return mktCat(m);
 }
-function lhCats(sec){ return sec==='business' ? BIZ_CATEGORIES : sec==='jobs' ? JOB_TYPES : sec==='training' ? TRAIN_CATS : MKT_CATEGORIES; }
+function lhCats(sec){ return sec==='business' ? BIZ_CATEGORIES : sec==='jobs' ? JOB_TYPES : sec==='training' ? TRAIN_CATS : MKT_CATEGORIES.concat(SERVICE_CATEGORIES); }
 function lhTimed(m){ const s = mktSection(m); return s==='buysell' || s==='jobs'; }   /* sections that run for a set number of days */
 function mktCatFilter(list, key){
   const cur = tabOf(key||'mktcat','All');
@@ -1254,6 +1271,7 @@ function lhPriceLabel(m){
   if(sec==='business' || sec==='garage') return '';
   if(sec==='training') return trainFee(m);
   if(sec==='jobs') return m.pay || '';
+  if(mktKind(m)==='Service') return m.price ? 'From '+peso(m.price)+(m.rateUnit ? ' '+m.rateUnit : '') : 'Ask for rate';
   return (mktKind(m)==='Wanted' ? 'Budget ' : '')+peso(m.price);
 }
 /* the detail line under a title: what kind of item it is, plus price, offers or date depending on the section */
@@ -1273,7 +1291,7 @@ function lhMeta(m){
   if(sec==='business'){
     return tag+(m.verified?'<span class="tag t-slate">Verified</span>':'')+lhBizLinks(m).map(w=>'<span>'+esc(w.host)+'</span>').join('')+(m.hours?'<span>'+esc(m.hours)+'</span>':'');
   }
-  return (mktKind(m)==='Wanted' ? '<span class="tag t-amber">Wanted</span>' : '<span class="tag t-slate">For sale</span>') + tag +
+  return mktKindTag(m) + tag +
     (m.condition?'<span>'+esc(m.condition)+'</span>':'') + '<span class="mono">'+lhPriceLabel(m)+'</span>';
 }
 function lhDetail(m){ const sec = mktSection(m); return sec==='garage' ? esc(garageWhen(m)) : sec==='training' ? esc(trainWhen(m)) : esc(lhPriceLabel(m) || '—'); }
@@ -1307,7 +1325,7 @@ function lhSocialButtons(m, compact){
   return '<div class="btn-row" style="margin-top:'+(compact?'10px':'12px')+'">' +
     '<a class="btn btn-primary btn-sm lh-msgr" style="width:auto" href="'+esc(l.msgr)+'" target="_blank" rel="noopener noreferrer" onclick="'+stop+'">' +
       '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.4 2 2 6.1 2 11.5c0 2.9 1.3 5.4 3.4 7.2V22l3.1-1.7c1.1.3 2.3.5 3.5.5 5.6 0 10-4.1 10-9.3S17.6 2 12 2zm1 12.4-2.5-2.7-5 2.7 5.5-5.8 2.6 2.7 4.9-2.7-5.5 5.8z"/></svg>' +
-      (mktKind(m)==='Wanted' ? 'Message the buyer' : 'Message on Messenger')+'</a>' +
+      (mktKind(m)==='Wanted' ? 'Message the poster' : 'Message on Messenger')+'</a>' +
     (l.fb && !compact ? '<a class="btn btn-ghost btn-sm" style="width:auto" href="'+esc(l.fb)+'" target="_blank" rel="noopener noreferrer" onclick="'+stop+'">Facebook profile</a>' : '') +
   '</div>';
 }
@@ -1409,7 +1427,7 @@ function lhAllRow(r){
     : sec==='garage' ? '<span>'+esc(fmtDate(m.date)+' · '+fmtTime(m.start)+' – '+fmtTime(m.end))+'</span><span>'+esc(garageVenue(m))+'</span>'
     : sec==='training' ? '<span>'+esc(lhItemCat(m))+'</span><span>'+esc(trainWhen(m))+'</span><span>'+esc(m.venue||'Venue to follow')+'</span>'
     : sec==='jobs' ? jobKindTag(m)+'<span>'+esc(lhItemCat(m))+'</span>'+(m.company?'<span>'+esc(m.company)+'</span>':'')+'<span>Posted '+fmtDate(lhPosted(m))+'</span>'
-    : (mktKind(m)==='Wanted'?'<span class="tag t-amber">Wanted</span>':'')+'<span>'+esc(lhItemCat(m))+'</span>'+(m.condition?'<span>'+esc(m.condition)+'</span>':'')+'<span>Posted '+fmtDate(lhPosted(m))+'</span>';
+    : (mktKind(m)!=='Sell'?mktKindTag(m):'')+'<span>'+esc(lhItemCat(m))+'</span>'+(m.condition?'<span>'+esc(m.condition)+'</span>':'')+'<span>Posted '+fmtDate(lhPosted(m))+'</span>';
   const right = sec==='business' ? links.map(w=>esc(w.label)).join(' · ') : sec==='garage' ? 'Garage sale' : sec==='training' ? esc(trainFee(m)+' · '+trainSpots(m)) : m.sold ? '<span class="tag t-rose">'+lhSoldWords(m).done+'</span>' : esc(lhPriceLabel(m) || (sec==='jobs' ? JOB_KINDS[jobKind(m)] : ''));
   return '<li class="lh-row-click"'+open("openLh('"+m.id+"')")+'><div class="row" style="align-items:center">' + thumb +
     '<div class="grow" style="min-width:0"><div class="ttl">'+esc(m.title)+lhVerified(m)+'</div>' +
@@ -2550,7 +2568,7 @@ const ADMIN = {
         inner = (sec==='garage' ? '' : mktCatChips(all, key, lhCats(sec))) + sectionCard('All '+W.nouns, shown.length
           ? '<div class="tablewrap"><table class="mkt-listings"><thead><tr><th>'+colName+'</th><th class="hide-sm">'+(sec==='business'?'Owner':'Resident')+'</th><th>'+colVal+'</th><th>Status</th><th class="hide-sm">'+(sec==='buysell'||sec==='jobs'?'Posted':'Decided')+'</th><th></th></tr></thead><tbody>' +
           shown.map(m => '<tr><td data-label="'+colName+'"><button class="linkbtn" onclick="openLh(\''+m.id+'\')">'+esc(m.title)+'</button>'+lhVerified(m) +
-              '<div class="meta">'+(sec==='buysell'?(mktKind(m)==='Wanted'?'Wanted · ':'For sale · '):sec==='jobs'?esc(JOB_KINDS[jobKind(m)])+' · '+(m.company?esc(m.company)+' · ':''):'')+esc(lhItemCat(m))+'</div></td>' +
+              '<div class="meta">'+(sec==='buysell'?({ Wanted:'Wanted · ', Service:'Service · ' }[mktKind(m)] || 'For sale · '):sec==='jobs'?esc(JOB_KINDS[jobKind(m)])+' · '+(m.company?esc(m.company)+' · ':''):'')+esc(lhItemCat(m))+'</div></td>' +
             '<td class="hide-sm" data-label="Resident">'+esc(sec==='business'?lhOwnerName(m):m.by)+'<div class="meta mono">'+esc(m.unit)+(sec==='business'&&lhOwnerName(m)!==m.by?' · listed by '+esc(m.by):'')+'</div></td>' +
             '<td class="'+(sec==='business'?'':'mono')+'" data-label="'+colVal+'">'+(sec==='business' ? (lhBizLinks(m).length ? lhBizLinks(m).map(w=>'<div><a href="'+esc(w.url)+'" target="_blank" rel="noopener noreferrer">'+esc(w.host)+'</a></div>').join('') : '<span class="meta">None yet</span>') : lhDetail(m))+'</td>' +
             '<td data-label="Status"><span class="tag '+statusTag(lhStatus(m))+'">'+esc(lhStatus(m))+'</span>' +
@@ -2917,9 +2935,12 @@ function prefToggle(label, desc, key){
   return '<div class="switch"><div><div class="sl">'+esc(label)+'</div><div class="sd">'+esc(desc)+'</div></div>' +
     '<button class="tgl" role="switch" aria-checked="'+on+'" aria-label="'+esc(label)+'" onclick="flipPref(\''+key+'\')"><i></i></button></div>';
 }
+/* a household can change its own booking while the board has not yet reviewed it */
+const bkEditable = b => b && b.unit===myUnit() && b.status==='Pending' && b.date >= bkIso(new Date());
 function bookingTable(list, actions){
   if(!list.length) return empty('No bookings','Homeowners can reserve the hall, court or pool from their portal.');
-  return '<div class="tablewrap"><table><thead><tr><th>Facility</th><th>When</th><th class="hide-sm">Requested by</th><th>Status</th>'+(actions?'<th></th>':'')+'</tr></thead><tbody>' +
+  const change = !actions && list.some(bkEditable);
+  return '<div class="tablewrap"><table><thead><tr><th>Facility</th><th>When</th><th class="hide-sm">Requested by</th><th>Status</th>'+(actions||change?'<th></th>':'')+'</tr></thead><tbody>' +
     list.map(b => '<tr><td data-label="Facility"><strong>'+esc(b.facility)+'</strong><div class="meta">'+esc(b.purpose)+'</div></td>' +
       '<td data-label="When">'+fmtDate(b.date)+'<div class="meta">'+esc(b.slot)+'</div></td>' +
       '<td class="hide-sm" data-label="Requested by">'+esc(b.by)+'<div class="meta mono">'+esc(b.unit)+'</div>'+
@@ -2930,7 +2951,8 @@ function bookingTable(list, actions){
       (actions ? '<td style="text-align:right">'+(b.status==='Pending'
         ? '<div class="btn-row" style="justify-content:flex-end"><button class="btn btn-emerald btn-sm" onclick="setBooking(\''+b.id+'\',\'Approved\')">Approve</button>' +
           '<button class="btn btn-danger btn-sm" onclick="declineBookingForm(\''+b.id+'\')">Decline</button></div>'
-        : '<span class="meta">Reviewed</span>')+'</td>' : '') + '</tr>').join('') + '</tbody></table></div>';
+        : '<span class="meta">Reviewed</span>')+'</td>' : '') +
+      (change ? '<td style="text-align:right">'+(bkEditable(b) ? '<button class="btn btn-ghost btn-sm" onclick="bookForm(null,null,\''+b.id+'\')">Change</button>' : '')+'</td>' : '') + '</tr>').join('') + '</tbody></table></div>';
 }
 /* ---- marketplace: browse grid + a homeowner's own listings ---- */
 function lhPhotoBox(m, icon){
@@ -2948,14 +2970,15 @@ function lhOfferList(rows, max){
     (max && rows.length>max ? '<li class="more">+'+(rows.length-max)+' more</li>' : '') + '</ul>';
 }
 function mktCard(m){
-  const biz = lhBusiness(m.businessId), wanted = mktKind(m)==='Wanted';
+  const biz = lhBusiness(m.businessId), kind = mktKind(m), wanted = kind==='Wanted', service = kind==='Service';
+  const priceSub = wanted ? 'budget' : service ? (m.price ? 'from'+(m.rateUnit ? ', '+m.rateUnit : '') : '') : '';
   return lhCardOpen(m).replace('class="card lh-click"', 'class="card lh-click'+(m.sold?' lh-is-sold':'')+'"') +
-    lhPhotoBox(m,'tag').replace('<div class="mkt-photo">', '<div class="mkt-photo">'+(m.sold?'<span class="lh-sold">'+(wanted?'Found':'Sold')+'</span>':'')) +
+    lhPhotoBox(m,'tag').replace('<div class="mkt-photo">', '<div class="mkt-photo">'+(m.sold?'<span class="lh-sold">'+lhSoldWords(m).done+'</span>':'')) +
     '<div class="card-pad">' +
       '<div class="row" style="align-items:flex-start"><div class="grow"><div class="ttl">'+esc(m.title)+'</div>' +
-      '<div class="meta">'+(wanted?'<span class="tag t-amber">Wanted</span>':'')+'<span class="tag t-grey">'+esc(lhItemCat(m))+'</span>'+(m.condition?'<span>'+esc(m.condition)+'</span>':'')+'</div></div>' +
-      '<div style="text-align:right"><div style="font-family:var(--display);font-weight:800;font-size:16.5px;white-space:nowrap">'+peso(m.price)+'</div>' +
-        (wanted?'<div class="meta" style="justify-content:flex-end;margin-top:0">budget</div>':'')+'</div></div>' +
+      '<div class="meta">'+(kind!=='Sell'?mktKindTag(m):'')+'<span class="tag t-grey">'+esc(lhItemCat(m))+'</span>'+(m.condition?'<span>'+esc(m.condition)+'</span>':'')+'</div></div>' +
+      '<div style="text-align:right"><div style="font-family:var(--display);font-weight:800;font-size:16.5px;white-space:nowrap">'+(service && !m.price ? 'Ask for rate' : peso(m.price))+'</div>' +
+        (priceSub?'<div class="meta" style="justify-content:flex-end;margin-top:0">'+esc(priceSub)+'</div>':'')+'</div></div>' +
       '<div class="body">'+esc(m.description)+'</div>' +
       (biz?'<div class="meta" style="margin-top:10px"><span>Sold by</span><button class="linkbtn" onclick="event.stopPropagation();openLh(\''+biz.id+'\')">'+esc(biz.title)+'</button></div>':'') +
       (m.sold ? '' : lhSocialButtons(m, true)) +
@@ -3026,6 +3049,7 @@ function mktMineRow(m){
       actions = lhSoldButton(m);
     }
     if(st==='Expired' && !m.sold) actions = '<button class="btn btn-primary btn-sm" style="width:auto" onclick="renewMkt(\''+m.id+'\')">Renew for '+LH_LISTING_DAYS+' days</button>';
+    actions += '<button class="btn btn-ghost btn-sm" onclick="marketplaceForm(\''+m.id+'\')">Edit</button>';
   }
   if(sec==='jobs'){
     if(st==='Approved' || st==='Filled' || st==='Hired'){
@@ -3039,12 +3063,14 @@ function mktMineRow(m){
     const ppl = trainPeople(m);
     extra = '<div class="meta"><span>'+esc(trainSpots(m))+'</span>·<span>'+ppl.length+' signed up</span></div>' +
       (ppl.length ? lhOfferList(ppl.map(a => [a.name, a.unit])) : '') + (lhLinkButton(m) ? '<div class="btn-row" style="margin-top:8px">'+lhLinkButton(m)+'</div>' : '');
+    if(st!=='Ended') actions = '<button class="btn btn-ghost btn-sm" onclick="trainingForm(\''+m.id+'\')">Edit</button>';
   }
   if(sec==='garage'){
     extra = lhOfferList(lhItems(m).map(i => [i.name, i.price?peso(i.price):'Free',
       ' <span class="tag '+statusTag(i.status)+'">'+esc(i.status)+'</span>'+(i.status==='Rejected'&&i.reason?'<span class="meta" style="display:block">'+esc(i.reason)+'</span>':'')])) +
       '<div class="meta"><span>'+esc(GARAGE_VISIBILITY[m.visibility||'unit'])+'</span></div>';
     if(st==='Pending' || st==='Approved') actions = '<button class="btn btn-ghost btn-sm" onclick="garageItemsForm(\''+m.id+'\')">Add items</button>';
+    if(st!=='Ended') actions += '<button class="btn btn-ghost btn-sm" onclick="garageForm(\''+m.id+'\')">Edit details</button>';
   }
   return '<li><div class="row"><div class="grow"><div class="ttl">'+esc(m.title)+'</div>' +
     '<div class="meta">'+lhMeta(m)+'<span>Submitted '+ago(m.submittedAt)+'</span></div>' +
@@ -3094,9 +3120,11 @@ function openLh(id){
   const sec = mktSection(m), ph = lhPhotos(m), biz = lhBusiness(m.businessId), host = m.unit===myUnit() || isAdmin();
   const rows = [];
   if(sec==='buysell'){
-    rows.push(['Type', mktKind(m)==='Wanted' ? 'Wanted' : 'For sale'], [mktKind(m)==='Wanted'?'Budget':'Price', peso(m.price)]);
+    const k = mktKind(m);
+    rows.push(['Type', { Wanted:'Wanted', Service:'Service' }[k] || 'For sale'],
+      [k==='Wanted'?'Budget':k==='Service'?'Rate':'Price', k==='Service' ? lhPriceLabel(m) : peso(m.price)]);
     if(m.condition) rows.push(['Condition', m.condition]);
-    if(m.sold) rows.push(['Status', (mktKind(m)==='Wanted'?'Found':'Sold')+' · '+fmtDate(m.soldAt||new Date())]);
+    if(m.sold) rows.push(['Status', lhSoldWords(m).done+' · '+fmtDate(m.soldAt||new Date())]);
     if(m.status==='Approved'){
       rows.push(['Posted on', fmtDate(lhPosted(m))]);
       rows.push([lhExpired(m)?'Expired on':(m.sold?'Stays listed until':'Listed until'), fmtDate(lhExpiry(m))+(lhExpired(m)?'':' · '+lhLeftLabel(m).toLowerCase())]);
@@ -3483,12 +3511,13 @@ function supportView(admin){
       return sectionCard(admin?'Support tickets':'My tickets', mine.length ? '<ul class="list">' + mine.map(x =>
         '<li><div class="row"><div class="grow"><div class="ttl">'+esc(x.subject)+(admin?newMsgTag(x):newReplyTag(x))+'</div>' +
         '<div class="meta"><span class="tag t-grey">'+esc(x.channel)+'</span><span class="tag '+(x.priority==='High'?'t-rose':'t-grey')+'">'+esc(x.priority)+'</span>' +
-        (admin?'<span class="mono">'+esc(x.unit)+'</span>·<span>'+esc(x.by)+'</span>·':'')+'<span>'+ago(x.at)+'</span></div>' +
+        (admin?'<span class="mono">'+esc(x.unit)+'</span>·<span>'+esc(x.by)+'</span>·':'')+'<span>'+ago(x.at)+'</span>'+editedTag(x)+'</div>' +
         '<div class="body">'+esc(x.detail)+'</div>' + threadHTML(x) +
         '<div class="btn-row" style="margin-top:10px">' +
           (admin && x.status!=='Resolved' ? '<button class="btn btn-emerald btn-sm" onclick="resolveTicket(\''+x.id+'\')">Mark resolved</button>' : '') +
           (admin ? '<button class="btn btn-ghost btn-sm" onclick="openChat(\'ticket\',\''+x.id+'\')">Reply</button>'
-                 : '<button class="btn btn-ghost btn-sm" onclick="openChat(\'ticket\',\''+x.id+'\')">Message Board &amp; Admin</button>') +
+                 : '<button class="btn btn-ghost btn-sm" onclick="openChat(\'ticket\',\''+x.id+'\')">Message Board &amp; Admin</button>' +
+                   (subEditable(x) ? '<button class="btn btn-ghost btn-sm" onclick="subEditForm(\'ticket\',\''+x.id+'\')">Edit</button>' : '')) +
         '</div>' +
         '</div><span class="tag '+statusTag(x.status)+'">'+esc(x.status)+'</span></div></li>').join('') + '</ul>'
         : empty('No tickets','Nothing has been raised with portal support.'),
@@ -3653,13 +3682,14 @@ function icHomeView(){
       '<span class="mono">'+esc(r.ref)+'</span><span>Filed '+fmtDate(r.filed)+'</span>' +
       (r.done ? '<span>· Resolved in '+icDays(r.days)+'</span>' : '<span>· Open '+r.age+' day'+(r.age===1?'':'s')+'</span>') +
       (x.against ? '<span>· Against '+esc(x.against)+'</span>' : '') +
-      (x.assignee ? '<span>· Assigned to '+esc(x.assignee)+'</span>' : '') + '</div>' +
+      (x.assignee ? '<span>· Assigned to '+esc(x.assignee)+'</span>' : '') + editedTag(x) + '</div>' +
       icSteps(r.stage) +
       '<div class="body">'+esc(r.K.body(x))+'</div>' +
       (x.resolution ? '<div class="card card-pad" style="background:var(--emerald-tint);margin-top:10px;border:0">' +
         '<strong style="font-size:13px">Board resolution</strong><div class="body" style="margin-top:4px">'+esc(x.resolution)+'</div></div>' : '') +
       threadHTML(x) +
-      '<button class="btn btn-ghost btn-sm" style="margin-top:11px" onclick="openChat(\''+r.K.chat+'\',\''+x.id+'\')">'+(r.stage==='Resolved'?'View conversation':'Message Board &amp; Admin')+'</button>' +
+      '<div class="btn-row"><button class="btn btn-ghost btn-sm" style="margin-top:11px" onclick="openChat(\''+r.K.chat+'\',\''+x.id+'\')">'+(r.stage==='Resolved'?'View conversation':'Message Board &amp; Admin')+'</button>' +
+      subEditBtn(r.K.chat, x) + '</div>' +
       '</div><span class="tag '+IC_STAGE_TAG[r.stage]+'" title="Recorded status: '+esc(x.status)+'">'+r.stage+'</span></div></li>'; }).join('') + '</ul>'
     : empty(t==='all' ? 'Nothing raised yet' : 'Nothing '+t.toLowerCase(),
         t==='all' ? 'Use the buttons above to report an issue, file a complaint or raise a concern.' : 'Items move here as the admin office updates them.')) + '</div>' +
@@ -3884,26 +3914,28 @@ function gpItemRow(i){
     '<button type="button" class="btn btn-ghost btn-sm" aria-label="Remove item" onclick="this.parentNode.remove()">✕</button></div>';
 }
 function gpAddRow(){ $('#gpRows').insertAdjacentHTML('beforeend', gpItemRow()); }
-function gpForm(){
+function gpForm(id){
   const today = gpToday();
-  modal('Request a gate pass','For construction materials, service crews and deliveries. Admin – Ops & Maintenance approves it, then the guard on duty sees it at the gate.',
+  const e = id ? gpFind(id) : null;                       /* edit: only the household's own pass, while it is still Pending */
+  if(id && (!e || e.unit!==myUnit() || e.status!=='Pending')){ toast('info','Cannot edit this pass','Only a pending pass can be changed. Once it is approved or declined, request a new one.'); return; }
+  modal(e ? 'Edit gate pass '+e.no : 'Request a gate pass', e ? 'You can change it until the admin office approves it.' : 'For construction materials, service crews and deliveries. Admin – Ops & Maintenance approves it, then the guard on duty sees it at the gate.',
     '<div class="grid g-2" style="gap:0 12px">' +
       '<div class="fld"><span style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Pass type</span><div class="chiprow" role="radiogroup">' +
-        ['Delivery','Pull-out'].map((t,i) => '<label class="chip"><input type="radio" name="gp_type" value="'+t+'"'+(i===0?' checked':'')+' style="margin-right:6px">'+t+'</label>').join('') + '</div></div>' +
-      '<label class="fld"><span>Purpose</span><select class="input" id="gp_purpose">'+GP_PURPOSES.map(x=>'<option>'+x+'</option>').join('')+'</select></label>' +
-      '<label class="fld"><span>Date</span><input class="input" id="gp_date" type="date" min="'+today+'" value="'+today+'"></label>' +
-      '<label class="fld"><span>Expected time (optional)</span><input class="input" id="gp_time" placeholder="8:00 AM – 12:00 NN"></label>' +
+        ['Delivery','Pull-out'].map((t,i) => '<label class="chip"><input type="radio" name="gp_type" value="'+t+'"'+((e ? e.type===t : i===0)?' checked':'')+' style="margin-right:6px">'+t+'</label>').join('') + '</div></div>' +
+      '<label class="fld"><span>Purpose</span><select class="input" id="gp_purpose">'+GP_PURPOSES.map(x=>'<option'+(e&&e.purpose===x?' selected':'')+'>'+x+'</option>').join('')+'</select></label>' +
+      '<label class="fld"><span>Date</span><input class="input" id="gp_date" type="date" min="'+today+'" value="'+esc(e ? e.date : today)+'"></label>' +
+      '<label class="fld"><span>Expected time (optional)</span><input class="input" id="gp_time" value="'+esc(e ? e.time||'' : '')+'" placeholder="8:00 AM – 12:00 NN"></label>' +
     '</div>' +
-    '<label class="fld"><span>Authorize the bearer (company or person)</span><input class="input" id="gp_bearer" placeholder="Europroves Trading / Juan Dela Cruz"></label>' +
+    '<label class="fld"><span>Authorize the bearer (company or person)</span><input class="input" id="gp_bearer" value="'+esc(e ? e.bearer : '')+'" placeholder="Europroves Trading / Juan Dela Cruz"></label>' +
     '<div class="grid g-2" style="gap:0 12px">' +
-      '<label class="fld"><span>To / from unit (Phase, Block, Lot, Street)</span><input class="input" id="gp_addr" value="'+esc(gpAddress(myUnit()))+'"></label>' +
-      '<label class="fld"><span>Vehicle plate (optional)</span><input class="input" id="gp_plate" placeholder="ABC 1234" style="text-transform:uppercase"></label>' +
+      '<label class="fld"><span>To / from unit (Phase, Block, Lot, Street)</span><input class="input" id="gp_addr" value="'+esc(e ? e.address : gpAddress(myUnit()))+'"></label>' +
+      '<label class="fld"><span>Vehicle plate (optional)</span><input class="input" id="gp_plate" value="'+esc(e ? e.plate||'' : '')+'" placeholder="ABC 1234" style="text-transform:uppercase"></label>' +
     '</div>' +
     '<div class="fld"><span style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Items</span>' +
-      '<div id="gpRows">'+gpItemRow()+gpItemRow()+'</div>' +
+      '<div id="gpRows">'+(e ? e.items.map(gpItemRow).join('') : gpItemRow()+gpItemRow())+'</div>' +
       '<button type="button" class="btn btn-ghost btn-sm" onclick="gpAddRow()">Add item</button></div>' +
     '<p class="meta" style="margin:6px 0 0">Submitting confirms that you, as the unit owner, authorize this pass.</p>',
-    'Submit for approval', () => {
+    e ? 'Save changes' : 'Submit for approval', () => {
       const bearer = $('#gp_bearer').value.trim();
       const items = [...document.querySelectorAll('#gpRows .gp-row')].map(r => {
         const o = {}; r.querySelectorAll('input').forEach(i => o[i.dataset.k] = i.value.trim()); return o; }).filter(i => i.desc);
@@ -3911,10 +3943,16 @@ function gpForm(){
       if(!items.length){ toast('info','Add an item','List at least one item the guard should check.'); return false; }
       const date = $('#gp_date').value || today;
       if(date < today){ toast('info','Pick a later date','A gate pass cannot be for a past date.'); return false; }
-      const p = { id:uid(), no:gpNextNo(), unit:myUnit(), by:store.session.name, at:new Date(),
-        type:(document.querySelector('input[name=gp_type]:checked')||{}).value||'Delivery', purpose:$('#gp_purpose').value,
+      const fields = { type:(document.querySelector('input[name=gp_type]:checked')||{}).value||'Delivery', purpose:$('#gp_purpose').value,
         date, time:$('#gp_time').value.trim(), bearer, address:$('#gp_addr').value.trim()||gpAddress(myUnit()),
-        plate:$('#gp_plate').value.trim().toUpperCase(), items, status:'Pending' };
+        plate:$('#gp_plate').value.trim().toUpperCase(), items };
+      if(e){
+        if(e.status!=='Pending'){ toast('info','Already reviewed','The admin office acted on this pass while you were editing. Request a new one instead.'); return true; }
+        Object.assign(e, fields, { editedAt:new Date() });
+        commit('Gate pass '+e.no+' updated by unit '+e.unit+' — '+e.purpose.toLowerCase()+', '+fmtDate(date)+'.',{title:'Gate pass updated',audience:['admin']});
+        return true;
+      }
+      const p = Object.assign({ id:uid(), no:gpNextNo(), unit:myUnit(), by:store.session.name, at:new Date() }, fields, { status:'Pending' });
       (store.gatePasses = store.gatePasses || []).unshift(p);
       commit('Gate pass '+p.no+' requested by unit '+myUnit()+' — '+p.purpose.toLowerCase()+', '+fmtDate(date)+'.',{title:'Gate pass sent for approval',audience:['admin']});
       return true; });
@@ -3949,7 +3987,7 @@ function gpHomeView(){
       (p.declineReason ? '<div class="gp-note rose" style="margin-top:10px"><b>Declined:</b> '+esc(p.declineReason)+'</div>' : '') +
       (p.flag ? '<div class="gp-note rose" style="margin-top:10px"><b>Held at the gate:</b> '+esc(p.flag)+'</div>' : '') +
       '<div class="btn-row" style="margin-top:12px"><button class="btn btn-ghost btn-sm" onclick="gpView(\''+p.id+'\')">View pass</button>' +
-      (p.status==='Pending' ? '<button class="btn btn-ghost btn-sm" onclick="gpCancel(\''+p.id+'\')">Cancel</button>' : '') + '</div></div>').join('') + '</div>'
+      (p.status==='Pending' ? '<button class="btn btn-ghost btn-sm" onclick="gpForm(\''+p.id+'\')">Edit</button><button class="btn btn-ghost btn-sm" onclick="gpCancel(\''+p.id+'\')">Cancel</button>' : '') + '</div></div>').join('') + '</div>'
     : '<div class="card">'+empty(t==='current'?'No current gate passes':'Nothing here yet','Request a pass before a delivery, a pull-out or a construction or service crew arrives.')+'</div>') +
   '<div class="card card-pad gp-future" style="margin-top:16px"><div class="row" style="align-items:center;gap:12px"><div class="qi">'+svg('shield')+'</div><div class="grow">' +
     '<div class="ttl">QR scanning at the gate <span class="tag t-grey">Future phase</span></div>' +
@@ -3964,12 +4002,13 @@ function walkInAlerts(){
     '<button class="btn btn-danger btn-sm" onclick="walkInReply(\''+p.id+'\',false)">Not expecting them</button></div></div>').join('');
 }
 function gpVisitorList(rows){
-  return walkInAlerts() + (rows.length ? '<div class="card tablewrap"><table><thead><tr><th>Visitor</th><th class="hide-sm">Purpose</th><th>Date</th><th>Code</th><th>Status</th></tr></thead><tbody>' +
+  return walkInAlerts() + (rows.length ? '<div class="card tablewrap"><table><thead><tr><th>Visitor</th><th class="hide-sm">Purpose</th><th>Date</th><th>Code</th><th>Status</th><th></th></tr></thead><tbody>' +
     rows.map(p => '<tr><td data-label="Visitor"><strong>'+esc(p.visitor)+'</strong><div class="meta">'+(passMode(p)==='Vehicle'
         ? 'Vehicle'+(p.plate&&p.plate!=='—'?' · <span class="mono">'+esc(p.plate)+'</span>':'') : 'Commute / on foot')+'</div></td>' +
       '<td class="hide-sm" data-label="Purpose">'+esc(p.purpose)+'</td><td data-label="Date">'+fmtDate(p.date)+'</td>' +
       '<td class="mono" data-label="Code">'+(p.walkIn ? '<span class="tag t-grey">Walk-in</span>' : p.status==='Pending' ? '<span class="meta">After approval</span>' : esc(p.code))+'</td>' +
-      '<td data-label="Status"><span class="tag '+statusTag(p.status)+'">'+esc(p.status)+'</span></td></tr>').join('') + '</tbody></table></div>'
+      '<td data-label="Status"><span class="tag '+statusTag(p.status)+'">'+esc(p.status)+'</span></td>' +
+      '<td style="text-align:right">'+(vpEditable(p) ? '<button class="btn btn-ghost btn-sm" onclick="visitorForm(\''+p.id+'\')">Edit</button>' : '')+'</td></tr>').join('') + '</tbody></table></div>'
     : '<div class="card">'+empty('No visitor passes yet','Tap Visitor\u2019s pass to tell the gate who to expect. Share the code with your guest once it is approved.')+'</div>');
 }
 
@@ -4309,7 +4348,7 @@ const HOME = {
         if(sec==='buysell'){
           const k = tabOf('mktkind','All');
           kindRow = '<div class="chiprow" role="group" aria-label="For sale or wanted" style="margin-bottom:10px">' +
-            [['All','All listings'],['Sell','For sale'],['Wanted','Wanted']].map(([v,l]) => {
+            [['All','All listings'],['Sell','For sale'],['Service','Services'],['Wanted','Wanted']].map(([v,l]) => {
               const n = v==='All' ? live.length : live.filter(m=>mktKind(m)===v).length;
               return '<button class="chip'+(k===v?' on':'')+'" aria-pressed="'+(k===v)+'" onclick="goTab(\'mktkind\',\''+v+'\')">'+l+' · '+n+'</button>';
             }).join('') + '</div>';
@@ -4326,7 +4365,10 @@ const HOME = {
         }
         if(sec==='training') pool = pool.slice().sort((a,b)=>trainStart(a)-trainStart(b));
         const shown = mktCatFilter(pool, key);
-        inner = kindRow + mktCatChips(pool, key, lhCats(sec)) + (shown.length ? '<div class="grid g-3">' + shown.map(sec==='business'?bizCard:sec==='jobs'?jobCard:sec==='training'?trainingCard:mktCard).join('') + '</div>'
+        /* Buy and sell: goods categories, plus the service ones in use (or only services on the Services filter) */
+        const bk = tabOf('mktkind','All'), cats = sec!=='buysell' ? lhCats(sec) : bk==='Service' ? SERVICE_CATEGORIES
+          : MKT_CATEGORIES.concat(bk==='Sell' ? [] : SERVICE_CATEGORIES.filter(c => pool.some(m => lhItemCat(m)===c)));
+        inner = kindRow + mktCatChips(pool, key, cats) + (shown.length ? '<div class="grid g-3">' + shown.map(sec==='business'?bizCard:sec==='jobs'?jobCard:sec==='training'?trainingCard:mktCard).join('') + '</div>'
           : '<div class="card">'+empty('Nothing here yet','Pick another filter or All to see every '+W.noun+'.')+'</div>');
       }
     } else {
@@ -5487,20 +5529,35 @@ function cancelRide(id){
 /* passes saved before the commute/vehicle choice existed: a plate means they drove */
 function passMode(p){ return p.transport || (p.plate && p.plate!=='—' ? 'Vehicle' : 'Commute'); }
 function genPassCode(){ return 'VS-'+Math.random().toString(36).slice(2,6).toUpperCase(); }
-function visitorForm(){
-  modal('Log a visitor','The admin office reviews it before the code goes active at the gate.',
-    '<label class="fld"><span>Visitor name</span><input class="input" id="f_vname" placeholder="Ana Marquez"></label>' +
-    '<label class="fld"><span>Purpose</span><input class="input" id="f_vpurpose" placeholder="Family visit, delivery, contractor…"></label>' +
+/* a visitor pass can be changed until it is used; a change to an approved pass goes back for approval */
+const vpEditable = p => p && !p.walkIn && p.unit===myUnit() && (p.status==='Pending' || p.status==='Active');
+function visitorForm(id){
+  const e = id ? store.passes.find(x => x.id===id) : null;
+  if(id && !vpEditable(e)){ toast('info','Cannot edit this pass','Only a pending or approved pass that has not been used can be changed.'); return; }
+  const veh = e && passMode(e)==='Vehicle';
+  modal(e ? 'Edit visitor pass' : 'Log a visitor',
+    e ? (e.status==='Active' ? 'This pass is already approved — saving sends it back to the admin office, and the code works again once they approve it.' : 'You can change it until the admin office approves it.')
+      : 'The admin office reviews it before the code goes active at the gate.',
+    '<label class="fld"><span>Visitor name</span><input class="input" id="f_vname" value="'+esc(e?e.visitor:'')+'" placeholder="Ana Marquez"></label>' +
+    '<label class="fld"><span>Purpose</span><input class="input" id="f_vpurpose" value="'+esc(e?e.purpose:'')+'" placeholder="Family visit, delivery, contractor…"></label>' +
     '<div class="grid g-2" style="gap:0 12px">' +
-      '<label class="fld"><span>Expected date</span><input class="input" id="f_vdate" type="date"></label>' +
+      '<label class="fld"><span>Expected date</span><input class="input" id="f_vdate" type="date" value="'+esc(e?e.date:'')+'"></label>' +
       '<label class="fld"><span>How are they coming?</span><select class="input" id="f_vmode" onchange="$(\'#f_vplatewrap\').classList.toggle(\'hide\', this.value!==\'Vehicle\')">' +
-        '<option value="Commute">Commute / on foot</option><option value="Vehicle">Vehicle</option></select></label></div>' +
-    '<label class="fld hide" id="f_vplatewrap"><span>Plate number</span><input class="input" id="f_vplate" placeholder="ABC 1234"></label>',
-    'Submit pass', () => {
+        '<option value="Commute">Commute / on foot</option><option value="Vehicle"'+(veh?' selected':'')+'>Vehicle</option></select></label></div>' +
+    '<label class="fld'+(veh?'':' hide')+'" id="f_vplatewrap"><span>Plate number</span><input class="input" id="f_vplate" value="'+esc(veh && e.plate!=='—' ? e.plate : '')+'" placeholder="ABC 1234"></label>',
+    e ? 'Save changes' : 'Submit pass', () => {
       const visitor=$('#f_vname').value.trim();
       if(!visitor){ toast('info','Add a name','Tell the gate who to expect.'); return false; }
       const transport=$('#f_vmode').value, plate=$('#f_vplate').value.trim().toUpperCase();
       if(transport==='Vehicle' && !plate){ toast('info','Add the plate number','The gate checks the plate when a visitor drives in.'); return false; }
+      if(e){
+        if(!vpEditable(e)){ toast('info','Already used','The guard logged this pass while you were editing.'); return true; }
+        const wasActive = e.status==='Active';
+        Object.assign(e, { visitor, purpose:$('#f_vpurpose').value.trim()||'Visit', date:$('#f_vdate').value || e.date, transport,
+          plate:transport==='Vehicle' ? plate : '—', status:'Pending', editedAt:new Date() });
+        commit('Visitor pass for '+visitor+' updated by unit '+e.unit+(wasActive ? ' — back with the admin office for approval.' : '.'),
+          {title:'Visitor pass updated', audience:'admin'}); return true;
+      }
       const item = { id:uid(), unit:myUnit(), visitor, purpose:$('#f_vpurpose').value.trim()||'Visit',
         date:$('#f_vdate').value || new Date().toISOString().slice(0,10), transport,
         plate:transport==='Vehicle' ? plate : '—', code:genPassCode(), status:'Pending' };
@@ -5556,27 +5613,30 @@ function trainingCard(m){
       '<div class="btn-row" style="margin-top:10px">'+trainSignupBtn(m)+lhLinkButton(m)+'</div>' +
     '</div></div>';
 }
-function trainingForm(){
+function trainingForm(id){
   pendingMktPhotos = [];
   const admin = isAdmin();
+  const m = id ? store.marketplace.find(x => x.id===id && (admin || x.unit===myUnit())) : null;
+  const v = (k, d) => esc(m ? (m[k]==null ? '' : String(m[k])) : d);
   const venues = [...new Set(store.settings.facilities.concat(store.settings.boothVenues||[]))];
-  modal(admin ? 'Add a training or workshop' : 'Offer a training or workshop',
-    admin ? 'Posted straight away for residents to sign up.' : 'Share a skill with your neighbors. The admin office reviews it before it is posted.',
-    '<label class="fld"><span>Title</span><input class="input" id="f_title" placeholder="Food costing and pricing for home sellers"></label>' +
+  modal(m ? 'Edit training' : admin ? 'Add a training or workshop' : 'Offer a training or workshop',
+    m ? (admin ? 'Saved straight away. Anyone signed up keeps their slot.' : 'Changes go back to the admin office for a quick review. Anyone signed up keeps their slot.')
+      : admin ? 'Posted straight away for residents to sign up.' : 'Share a skill with your neighbors. The admin office reviews it before it is posted.',
+    '<label class="fld"><span>Title</span><input class="input" id="f_title" value="'+v('title','')+'" placeholder="Food costing and pricing for home sellers"></label>' +
     '<div class="grid g-2" style="gap:0 12px">' +
-      '<label class="fld"><span>Category</span><select class="input" id="f_cat">'+TRAIN_CATS.map(c=>'<option>'+esc(c)+'</option>').join('')+'</select></label>' +
-      '<label class="fld"><span>Facilitator</span><input class="input" id="f_fac" value="'+esc(admin?'':store.session.name)+'" placeholder="Name of the trainer"></label>' +
-      '<label class="fld"><span>Date</span><input class="input" id="f_tdate" type="date" min="'+lhToday()+'"></label>' +
-      '<label class="fld"><span>Venue</span><input class="input" id="f_venue" list="f_venues" placeholder="Clubhouse"><datalist id="f_venues">'+venues.map(v=>'<option>'+esc(v)+'</option>').join('')+'<option>Online (Zoom / Google Meet)</option></datalist></label>' +
-      '<label class="fld"><span>Starts</span><input class="input" id="f_tstart" type="time" value="09:00"></label>' +
-      '<label class="fld"><span>Ends</span><input class="input" id="f_tend" type="time" value="12:00"></label>' +
-      '<label class="fld"><span>Fee (₱, 0 = free)</span><input class="input" id="f_fee" type="number" min="0" step="1" value="0"></label>' +
-      '<label class="fld"><span>Slots (0 = no limit)</span><input class="input" id="f_slots" type="number" min="0" step="1" value="20"></label></div>' +
-    '<label class="fld"><span>What participants will learn</span><textarea class="input" id="f_desc" placeholder="Topics, what to bring, who it is for…"></textarea></label>' +
-    '<label class="fld"><span>Details, photos or registration link (optional)</span><input class="input" id="f_link" placeholder="facebook.com/events/… or forms.gle/…"></label>' +
+      '<label class="fld"><span>Category</span><select class="input" id="f_cat">'+TRAIN_CATS.map(c=>'<option'+(m&&lhItemCat(m)===c?' selected':'')+'>'+esc(c)+'</option>').join('')+'</select></label>' +
+      '<label class="fld"><span>Facilitator</span><input class="input" id="f_fac" value="'+v('facilitator', admin?'':store.session.name)+'" placeholder="Name of the trainer"></label>' +
+      '<label class="fld"><span>Date</span><input class="input" id="f_tdate" type="date" min="'+lhToday()+'" value="'+v('date','')+'"></label>' +
+      '<label class="fld"><span>Venue</span><input class="input" id="f_venue" list="f_venues" value="'+v('venue','')+'" placeholder="Clubhouse"><datalist id="f_venues">'+venues.map(x=>'<option>'+esc(x)+'</option>').join('')+'<option>Online (Zoom / Google Meet)</option></datalist></label>' +
+      '<label class="fld"><span>Starts</span><input class="input" id="f_tstart" type="time" value="'+v('start','09:00')+'"></label>' +
+      '<label class="fld"><span>Ends</span><input class="input" id="f_tend" type="time" value="'+v('end','12:00')+'"></label>' +
+      '<label class="fld"><span>Fee (₱, 0 = free)</span><input class="input" id="f_fee" type="number" min="0" step="1" value="'+v('fee','0')+'"></label>' +
+      '<label class="fld"><span>Slots (0 = no limit)</span><input class="input" id="f_slots" type="number" min="0" step="1" value="'+v('slots','20')+'"></label></div>' +
+    '<label class="fld"><span>What participants will learn</span><textarea class="input" id="f_desc" placeholder="Topics, what to bring, who it is for…">'+v('description','')+'</textarea></label>' +
+    '<label class="fld"><span>Details, photos or registration link (optional)</span><input class="input" id="f_link" value="'+v('photosLink','')+'" placeholder="facebook.com/events/… or forms.gle/…"></label>' +
     '<p class="meta" style="display:block;margin:-6px 0 12px">To save space on the portal, posters and photos stay on Facebook or your own page. Residents get a button that opens your link.</p>' +
-    '<label class="fld"><span>Contact number</span><input class="input" id="f_contact" value="'+esc(admin?'':store.session.phone||'')+'" placeholder="0917 555 0000"></label>',
-    admin ? 'Post training' : 'Submit for approval', () => {
+    '<label class="fld"><span>Contact number</span><input class="input" id="f_contact" value="'+v('contact', admin?'':store.session.phone||'')+'" placeholder="0917 555 0000"></label>',
+    m ? (admin ? 'Save changes' : 'Save and send for review') : admin ? 'Post training' : 'Submit for approval', () => {
       const title=$('#f_title').value.trim(), date=$('#f_tdate').value, start=$('#f_tstart').value, end=$('#f_tend').value;
       if(!title){ toast('info','Add a title','Give the session a short title.'); return false; }
       if(!date){ toast('info','Pick a date','Choose the day of the session.'); return false; }
@@ -5590,6 +5650,14 @@ function trainingForm(){
         attendees:[], price:0, photo:'', photos:[], status: admin ? 'Approved' : 'Pending', rejectReason:'',
         submittedAt:new Date(), decidedAt: admin ? new Date() : null, decidedBy: admin ? store.session.name : '' };
       if(!trainLive(item)){ toast('info','That time has passed','Pick a date and end time that are still ahead.'); return false; }
+      if(m){
+        ['title','category','facilitator','date','start','end','venue','fee','slots','description','photosLink','contact'].forEach(k => { m[k] = item[k]; });
+        m.editedAt = new Date();
+        if(!admin) Object.assign(m, { status:'Pending', rejectReason:'', submittedAt:new Date(), decidedAt:null, decidedBy:'' });
+        commit('Training “'+title+'” updated'+(admin ? ' by the admin office.' : ' and sent to the admin office for review.'),
+          admin ? {title:'Training updated', forUnit:m.unit, go:'marketplace'} : {title:'Training updated', audience:'admin', go:'marketplace'});
+        return true;
+      }
       if(admin){ store.marketplace.unshift(item); commit('Training “'+title+'” posted for '+trainWhen(item)+'.',{title:'Training posted', go:'marketplace'}); }
       else lhSubmitted(item, 'Training');
       return true; });
@@ -5640,8 +5708,8 @@ function lhThumbs(){
   return pendingMktPhotos.map((p,i) => '<div class="lh-thumb"><img src="'+p+'" alt=""><button type="button" aria-label="Remove photo '+(i+1)+'" onclick="removeMktPhoto('+i+')">×</button></div>').join('') +
     (pendingMktPhotos.length < LH_MAX_PHOTOS ? '<button type="button" class="lh-thumb add" onclick="document.getElementById(\'mktPhotoFile\').click()">+ Add</button>' : '');
 }
-function lhPhotoPicker(){
-  pendingMktPhotos = [];
+function lhPhotoPicker(current){
+  pendingMktPhotos = (current||[]).slice(0, LH_MAX_PHOTOS);
   return '<div style="margin-bottom:13px"><span class="lh-lbl">Cover photo · '+LH_MAX_PHOTOS+' (JPG, PNG or WebP)</span>' +
     '<div class="lh-thumbs" id="mktPhotoPreview">'+lhThumbs()+'</div>' +
     '<input type="file" id="mktPhotoFile" accept="image/jpeg,image/png,image/webp" multiple class="hide" onchange="handleMktPhotoFile(event)"></div>';
@@ -5680,45 +5748,73 @@ function lhSubmitted(item, what){
   commit(what+' “'+item.title+'” sent to the admin office for approval.',
     {title:what+' submitted', audience:'admin', go:'marketplace'});
 }
+/* the listing form adapts to the type: goods need a condition, services a rate, Wanted a budget */
 function mktKindChanged(v){
-  $('#f_price_lbl').textContent = v==='Wanted' ? 'Budget (₱)' : 'Price (₱)';
+  $('#f_price_lbl').textContent = v==='Wanted' ? 'Budget (₱)' : v==='Service' ? 'Starting rate (₱, optional)' : 'Price (₱)';
   $('#f_cond_any').textContent = v==='Wanted' ? 'Any condition' : 'Choose…';
+  $('#f_condwrap').classList.toggle('hide', v==='Service');
+  $('#f_ratewrap').classList.toggle('hide', v!=='Service');
+  $('#f_cat').innerHTML = mktCatOptions(v, $('#f_cat').value);
+  const t = $('#f_title'); if(t) t.placeholder = v==='Service' ? 'Aircon cleaning and check-up' : v==='Wanted' ? 'Looking for a used study desk' : 'Preloved kids bicycle (16-inch)';
 }
-function marketplaceForm(){
-  const mine = lhMyBusinesses();
-  modal('Post a listing','Shown in Buy and sell for '+LH_LISTING_DAYS+' days once the admin office approves it. You can renew it when it runs out.',
-    '<div class="grid g-2" style="gap:0 12px">' +
+/* type, category, title, price/rate and condition — shared by the resident form and the admin edit */
+function mktTypeFields(m){
+  const k = m ? mktKind(m) : 'Sell';
+  return '<div class="grid g-2" style="gap:0 12px">' +
       '<label class="fld"><span>I want to</span><select class="input" id="f_kind" onchange="mktKindChanged(this.value)">' +
-        '<option value="Sell">Sell something</option><option value="Wanted">Find something (wanted)</option></select></label>' +
-      '<label class="fld"><span>Category</span><select class="input" id="f_cat">'+MKT_CATEGORIES.map(c=>'<option>'+esc(c)+'</option>').join('')+'</select></label></div>' +
-    '<label class="fld"><span>Title</span><input class="input" id="f_title" placeholder="Preloved kids bicycle (16-inch)"></label>' +
+        [['Sell','Sell something'],['Service','Offer a service'],['Wanted','Find something or someone (wanted)']].map(([v,l]) =>
+          '<option value="'+v+'"'+(k===v?' selected':'')+'>'+l+'</option>').join('') + '</select></label>' +
+      '<label class="fld"><span>Category</span><select class="input" id="f_cat">'+mktCatOptions(k, m ? lhItemCat(m) : '')+'</select></label></div>' +
+    '<label class="fld"><span>Title</span><input class="input" id="f_title" value="'+esc(m?m.title:'')+'" placeholder="'+(k==='Service'?'Aircon cleaning and check-up':'Preloved kids bicycle (16-inch)')+'"></label>' +
     '<div class="grid g-2" style="gap:0 12px">' +
-      '<label class="fld"><span id="f_price_lbl">Price (₱)</span><input class="input" id="f_price" type="number" min="0" step="1" placeholder="1200"></label>' +
-      '<label class="fld"><span>Condition</span><select class="input" id="f_cond"><option value="" id="f_cond_any">Choose…</option>' +
-        MKT_CONDITIONS.map(c=>'<option>'+esc(c)+'</option>').join('')+'</select></label></div>' +
-    '<label class="fld"><span>Description</span><textarea class="input" id="f_desc" placeholder="Size, age, any flaws, pickup or delivery…"></textarea></label>' +
-    lhPhotoPicker() +
-    lhLinkField('', 'To save space on the portal, add one cover photo here and keep the rest on your Facebook post, album or business page.') +
+      '<label class="fld"><span id="f_price_lbl">'+(k==='Wanted'?'Budget (₱)':k==='Service'?'Starting rate (₱, optional)':'Price (₱)')+'</span><input class="input" id="f_price" type="number" min="0" step="1" value="'+(m && Number(m.price) ? Number(m.price) : '')+'" placeholder="1200"></label>' +
+      '<label class="fld'+(k==='Service'?' hide':'')+'" id="f_condwrap"><span>Condition</span><select class="input" id="f_cond"><option value="" id="f_cond_any">'+(k==='Wanted'?'Any condition':'Choose…')+'</option>' +
+        MKT_CONDITIONS.map(c=>'<option'+(m&&m.condition===c?' selected':'')+'>'+esc(c)+'</option>').join('')+'</select></label>' +
+      '<label class="fld'+(k==='Service'?'':' hide')+'" id="f_ratewrap"><span>Rate is</span><select class="input" id="f_rate">' +
+        SERVICE_RATES.map(r=>'<option'+(m&&m.rateUnit===r?' selected':'')+'>'+r+'</option>').join('')+'</select></label></div>';
+}
+/* read and check the type fields; returns the fields or null after telling the person what to fix */
+function mktTypeRead(){
+  const kind=$('#f_kind').value, title=$('#f_title').value.trim(), price=Number($('#f_price').value)||0, cond=$('#f_cond').value;
+  if(!title){ toast('info','Add a title','Give your listing a short title.'); return null; }
+  if(kind!=='Service' && price<=0){ toast('info', kind==='Wanted'?'Add a budget':'Add a price', kind==='Wanted'?'Enter the most you would pay.':'Enter a price greater than zero.'); return null; }
+  if(kind==='Sell' && !cond){ toast('info','Choose the condition','Let buyers know what shape it is in.'); return null; }
+  return { kind, title, price:Math.max(0, price), category:$('#f_cat').value,
+    condition: kind==='Service' ? '' : cond || 'Any condition', rateUnit: kind==='Service' ? $('#f_rate').value : '' };
+}
+function marketplaceForm(id){
+  const m = id ? store.marketplace.find(x => x.id===id && x.unit===myUnit()) : null;
+  const mine = lhMyBusinesses();
+  modal(m ? 'Edit listing' : 'Post a listing',
+    m ? 'Saved changes go back to the admin office for a quick review, then the listing runs '+LH_LISTING_DAYS+' days from approval.'
+      : 'Shown in Buy, sell & services for '+LH_LISTING_DAYS+' days once the admin office approves it. You can renew it when it runs out.',
+    mktTypeFields(m) +
+    '<label class="fld"><span>Description</span><textarea class="input" id="f_desc" placeholder="Size, age, any flaws, pickup or delivery — or for a service, what is included and your schedule…">'+esc(m?m.description:'')+'</textarea></label>' +
+    lhPhotoPicker(m ? lhPhotos(m) : []) +
+    lhLinkField(m ? m.photosLink : '', 'To save space on the portal, add one cover photo here and keep the rest on your Facebook post, album or business page.') +
     '<div class="grid g-2" style="gap:0 12px">' +
-      '<label class="fld"><span>Contact number</span><input class="input" id="f_contact" value="'+esc(store.session.phone||'')+'" placeholder="0917 555 0000"></label>' +
-      '<label class="fld"><span>Post as</span><select class="input" id="f_biz"><option value="">Myself (personal sale)</option>' +
-        mine.map(b=>'<option value="'+b.id+'">'+esc(b.title)+'</option>').join('')+'</select></label></div>' +
+      '<label class="fld"><span>Contact number</span><input class="input" id="f_contact" value="'+esc(m ? m.contact||'' : store.session.phone||'')+'" placeholder="0917 555 0000"></label>' +
+      '<label class="fld"><span>Post as</span><select class="input" id="f_biz"><option value="">Myself (personal)</option>' +
+        mine.map(b=>'<option value="'+b.id+'"'+(m&&m.businessId===b.id?' selected':'')+'>'+esc(b.title)+'</option>').join('')+'</select></label></div>' +
     (mine.length ? '' : '<p class="meta" style="display:block;margin:-6px 0 12px">Selling for your business? List it in the Business directory first, then pick it under Post as.</p>') +
-    '<label class="fld"><span>Facebook or Messenger link (optional)</span><input class="input" id="f_fb" autocomplete="off" value="'+esc(lhLastFbLink())+'" placeholder="facebook.com/yourname or m.me/yourname"></label>' +
-    '<p class="meta" style="display:block;margin:-6px 0 4px">Buyers get a “Message on Messenger” button so you can chat and arrange the deal.</p>',
-    'Submit for approval', () => {
-      const kind=$('#f_kind').value, title=$('#f_title').value.trim(), price=Number($('#f_price').value), cond=$('#f_cond').value;
-      if(!title){ toast('info','Add a title','Give your listing a short title.'); return false; }
-      if(!price || price<=0){ toast('info', kind==='Wanted'?'Add a budget':'Add a price', kind==='Wanted'?'Enter the most you would pay.':'Enter a price greater than zero.'); return false; }
-      if(kind==='Sell' && !cond){ toast('info','Choose the condition','Let buyers know what shape it is in.'); return false; }
+    '<label class="fld"><span>Facebook or Messenger link (optional)</span><input class="input" id="f_fb" autocomplete="off" value="'+esc(m ? m.fbLink||'' : lhLastFbLink())+'" placeholder="facebook.com/yourname or m.me/yourname"></label>' +
+    '<p class="meta" style="display:block;margin:-6px 0 4px">Neighbors get a “Message on Messenger” button so you can chat and arrange the deal.</p>',
+    m ? 'Save and send for review' : 'Submit for approval', () => {
+      const t = mktTypeRead(); if(!t) return false;
       const fbRaw = $('#f_fb').value.trim(), fb = lhFbLinks(fbRaw);
       if(fbRaw && !fb){ toast('info','Check the Facebook link','Use your Facebook profile link (facebook.com/yourname) or Messenger link (m.me/yourname), or leave it blank.'); return false; }
       const photosLink = lhReadLink(); if(photosLink===null) return false;
-      lhSubmitted({ id:uid(), section:'buysell', kind, photosLink, unit:myUnit(), by:store.session.name, title,
-        description:$('#f_desc').value.trim()||'No further details given.', price, category:$('#f_cat').value,
-        condition: cond || 'Any condition', contact:$('#f_contact').value.trim(), businessId:$('#f_biz').value||'',
-        fbLink: fb ? fb.fb || fb.msgr : '',
-        status:'Pending', rejectReason:'', submittedAt:new Date(), decidedAt:null, decidedBy:'' }, kind==='Wanted' ? 'Wanted listing' : 'Listing');
+      const fields = Object.assign(t, { photosLink, description:$('#f_desc').value.trim()||'No further details given.',
+        contact:$('#f_contact').value.trim(), businessId:$('#f_biz').value||'', fbLink: fb ? fb.fb || fb.msgr : '' });
+      const what = t.kind==='Wanted' ? 'Wanted listing' : t.kind==='Service' ? 'Service listing' : 'Listing';
+      if(m){
+        m.photos = pendingMktPhotos.slice(); m.photo = m.photos[0] || '';
+        Object.assign(m, fields, { status:'Pending', rejectReason:'', submittedAt:new Date(), decidedAt:null, decidedBy:'', editedAt:new Date() });
+        commit(what+' “'+t.title+'” updated and sent to the admin office for review.', {title:what+' updated', audience:'admin', go:'marketplace'});
+        return true;
+      }
+      lhSubmitted(Object.assign({ id:uid(), section:'buysell', unit:myUnit(), by:store.session.name,
+        status:'Pending', rejectReason:'', submittedAt:new Date(), decidedAt:null, decidedBy:'' }, fields), what);
       return true; });
 }
 let pendingLogo = '';
@@ -5876,22 +5972,25 @@ function toggleVerifyBiz(id){
   commit(m.title+(m.verified ? ' is now marked verified.' : ' is no longer marked verified.'),
     {title: m.verified ? 'Business verified' : 'Verification removed', forUnit:m.unit, go:'marketplace'});
 }
-function garageForm(){
+function garageForm(id){
   pendingMktPhotos = [];
-  modal('Host a garage sale','The sale and each item are checked by the admin office before neighbors see them. The sale disappears as soon as it ends.',
-    '<label class="fld"><span>Title</span><input class="input" id="f_title" placeholder="Moving-out garage sale"></label>' +
-    '<label class="fld"><span>Date</span><input class="input" id="f_gdate" type="date" min="'+lhToday()+'"></label>' +
+  const m = id ? store.marketplace.find(x => x.id===id && x.unit===myUnit()) : null;   /* edit: the sale's details; items have their own review */
+  modal(m ? 'Edit garage sale' : 'Host a garage sale',
+    m ? 'Changes to the date, time or notes go back to the admin office for a quick review. Your items stay as they are — use Add items for more.'
+      : 'The sale and each item are checked by the admin office before neighbors see them. The sale disappears as soon as it ends.',
+    '<label class="fld"><span>Title</span><input class="input" id="f_title" value="'+esc(m?m.title:'')+'" placeholder="Moving-out garage sale"></label>' +
+    '<label class="fld"><span>Date</span><input class="input" id="f_gdate" type="date" min="'+lhToday()+'" value="'+esc(m?m.date:'')+'"></label>' +
     '<div class="grid g-2" style="gap:0 12px">' +
-      '<label class="fld"><span>Starts</span><input class="input" id="f_gstart" type="time" value="08:00"></label>' +
-      '<label class="fld"><span>Ends</span><input class="input" id="f_gend" type="time" value="15:00"></label></div>' +
+      '<label class="fld"><span>Starts</span><input class="input" id="f_gstart" type="time" value="'+esc(m?m.start:'08:00')+'"></label>' +
+      '<label class="fld"><span>Ends</span><input class="input" id="f_gend" type="time" value="'+esc(m?m.end:'15:00')+'"></label></div>' +
     '<label class="fld"><span>Who sees your address ('+esc(myUnit())+')</span><select class="input" id="f_gvis">' +
-      Object.keys(GARAGE_VISIBILITY).map(k=>'<option value="'+k+'">'+esc(GARAGE_VISIBILITY[k])+'</option>').join('')+'</select></label>' +
-    '<label class="fld"><span>Notes for shoppers</span><textarea class="input" id="f_desc" placeholder="Parking, payment, what to bring…"></textarea></label>' +
-    '<span class="lh-lbl">Items for sale</span>' + lhRowsEditor('f_items', 'Dining table with 4 chairs', 3, '+ Add another item') +
-    lhLinkField('', 'Garage sales are listed by item. Put photos on a Facebook post or album and paste the link — the portal does not store garage sale photos.') +
-    '<label class="fld"><span>Contact number</span><input class="input" id="f_contact" value="'+esc(store.session.phone||'')+'" placeholder="0917 555 0000"></label>',
-    'Submit for approval', () => {
-      const title=$('#f_title').value.trim(), date=$('#f_gdate').value, start=$('#f_gstart').value, end=$('#f_gend').value, items=readLhRows('f_items');
+      Object.keys(GARAGE_VISIBILITY).map(k=>'<option value="'+k+'"'+(m&&(m.visibility||'unit')===k?' selected':'')+'>'+esc(GARAGE_VISIBILITY[k])+'</option>').join('')+'</select></label>' +
+    '<label class="fld"><span>Notes for shoppers</span><textarea class="input" id="f_desc" placeholder="Parking, payment, what to bring…">'+esc(m?m.description:'')+'</textarea></label>' +
+    (m ? '' : '<span class="lh-lbl">Items for sale</span>' + lhRowsEditor('f_items', 'Dining table with 4 chairs', 3, '+ Add another item')) +
+    lhLinkField(m ? m.photosLink : '', 'Garage sales are listed by item. Put photos on a Facebook post or album and paste the link — the portal does not store garage sale photos.') +
+    '<label class="fld"><span>Contact number</span><input class="input" id="f_contact" value="'+esc(m ? m.contact||'' : store.session.phone||'')+'" placeholder="0917 555 0000"></label>',
+    m ? 'Save and send for review' : 'Submit for approval', () => {
+      const title=$('#f_title').value.trim(), date=$('#f_gdate').value, start=$('#f_gstart').value, end=$('#f_gend').value, items= m ? lhItems(m) : readLhRows('f_items');
       if(!title){ toast('info','Add a title','Give your garage sale a short title.'); return false; }
       if(!date){ toast('info','Pick a date','Choose the day of your garage sale.'); return false; }
       if(!start || !end || end<=start){ toast('info','Check the times','The end time has to be after the start time.'); return false; }
@@ -5899,6 +5998,13 @@ function garageForm(){
       const vis=$('#f_gvis').value, contact=$('#f_contact').value.trim(), photosLink = lhReadLink();
       if(photosLink===null) return false;
       if(vis==='request' && !contact){ toast('info','Add a contact number','Shoppers need it to ask for your address.'); return false; }
+      if(m){
+        const next = Object.assign({}, m, { title, date, start, end, visibility:vis, contact, photosLink, description:$('#f_desc').value.trim()||'Assorted items.' });
+        if(!garageLive(next)){ toast('info','That time has passed','Pick a date and end time that are still ahead.'); return false; }
+        Object.assign(m, next, { status:'Pending', rejectReason:'', submittedAt:new Date(), decidedAt:null, decidedBy:'', editedAt:new Date() });
+        commit('Garage sale “'+title+'” updated and sent to the admin office for review.', {title:'Garage sale updated', audience:'admin', go:'marketplace'});
+        return true;
+      }
       const item = { id:uid(), section:'garage', unit:myUnit(), by:store.session.name, title, date, start, end, price:0, category:'Garage sale',
         visibility:vis, contact, photosLink, items:items.map(r=>({ id:uid(), name:r.name, price:r.price, status:'Pending', reason:'' })),
         description:$('#f_desc').value.trim()||'Assorted items.', status:'Pending', rejectReason:'',
@@ -5940,21 +6046,13 @@ function rejectGarageItemForm(saleId, itemId){
 /* admin edit for a Buy and sell listing: details, plus when it was posted and how many days it stays up */
 function adminListingForm(id){
   const m = store.marketplace.find(x=>x.id===id); if(!m) return;
-  const live = m.status==='Approved', wanted = mktKind(m)==='Wanted';
+  const live = m.status==='Approved';
   const posted = lhPosted(m), days = live ? lhListDays(m) : (m.listDays || LH_LISTING_DAYS);
   const ymd = d => { const x = new Date(d); x.setMinutes(x.getMinutes()-x.getTimezoneOffset()); return x.toISOString().slice(0,10); };
   modal('Edit listing', 'Saved straight away. The resident gets a notice that the office updated their listing.',
     '<div class="card card-pad" style="background:var(--paper);margin-bottom:14px"><div class="meta" style="margin:0"><span>Posted by</span><b style="color:var(--ink)">'+esc(m.by)+'</b>' +
       '<span class="mono">'+esc(m.unit)+'</span><span class="tag '+statusTag(lhStatus(m))+'">'+esc(lhStatus(m))+'</span></div></div>' +
-    '<div class="grid g-2" style="gap:0 12px">' +
-      '<label class="fld"><span>Type</span><select class="input" id="f_kind" onchange="mktKindChanged(this.value)">' +
-        '<option value="Sell"'+(wanted?'':' selected')+'>For sale</option><option value="Wanted"'+(wanted?' selected':'')+'>Wanted</option></select></label>' +
-      '<label class="fld"><span>Category</span><select class="input" id="f_cat">'+MKT_CATEGORIES.map(c=>'<option'+(lhItemCat(m)===c?' selected':'')+'>'+esc(c)+'</option>').join('')+'</select></label></div>' +
-    '<label class="fld"><span>Title</span><input class="input" id="f_title" value="'+esc(m.title)+'"></label>' +
-    '<div class="grid g-2" style="gap:0 12px">' +
-      '<label class="fld"><span id="f_price_lbl">'+(wanted?'Budget (₱)':'Price (₱)')+'</span><input class="input" id="f_price" type="number" min="0" step="1" value="'+(Number(m.price)||'')+'"></label>' +
-      '<label class="fld"><span>Condition</span><select class="input" id="f_cond"><option value="" id="f_cond_any">'+(wanted?'Any condition':'Choose…')+'</option>' +
-        MKT_CONDITIONS.map(c=>'<option'+(m.condition===c?' selected':'')+'>'+esc(c)+'</option>').join('')+'</select></label></div>' +
+    mktTypeFields(m) +
     '<label class="fld"><span>Description</span><textarea class="input" id="f_desc">'+esc(m.description)+'</textarea></label>' +
     '<div class="grid g-2" style="gap:0 12px">' +
       '<label class="fld"><span>Contact number</span><input class="input" id="f_contact" value="'+esc(m.contact||'')+'"></label>' +
@@ -5968,10 +6066,8 @@ function adminListingForm(id){
         '<label class="fld"><span>Days to stay posted</span><input class="input" id="f_days" type="number" min="1" max="90" step="1" value="'+days+'" oninput="lhPostPreview()"></label></div>' +
       '<div class="meta" id="f_postpreview" style="margin:0"></div></div>',
     'Save changes', () => {
-      const title=$('#f_title').value.trim(), price=Number($('#f_price').value), kind=$('#f_kind').value, cond=$('#f_cond').value;
-      const n = Math.floor(Number($('#f_days').value));
-      if(!title){ toast('info','Add a title','The listing needs a short title.'); return false; }
-      if(!price || price<=0){ toast('info', kind==='Wanted'?'Add a budget':'Add a price','Enter an amount greater than zero.'); return false; }
+      const t = mktTypeRead(); if(!t) return false;
+      const title = t.title, n = Math.floor(Number($('#f_days').value));
       if(!n || n<1 || n>90){ toast('info','Check the number of days','Use between 1 and 90 days.'); return false; }
       const fbRaw=$('#f_fb').value.trim(), fb=lhFbLinks(fbRaw);
       if(fbRaw && !fb){ toast('info','Check the Facebook link','Use a facebook.com profile or m.me link, or leave it blank.'); return false; }
@@ -5983,7 +6079,7 @@ function adminListingForm(id){
         start = new Date(d+'T'+String(posted.getHours()).padStart(2,'0')+':'+String(posted.getMinutes()).padStart(2,'0')+':00');
         if(start > new Date()){ toast('info','Posted date is in the future','Pick today or an earlier day.'); return false; }
       }
-      Object.assign(m, { kind, title, price, category:$('#f_cat').value, condition: cond || (kind==='Wanted'?'Any condition':''),
+      Object.assign(m, t, {
         description:$('#f_desc').value.trim()||'No further details given.', contact:$('#f_contact').value.trim(),
         fbLink: fb ? fb.fb || fb.msgr : '', photosLink, listDays:n });
       if(live){ m.postedAt = start; m.expiresAt = new Date(+start + n*864e5); }
@@ -6012,6 +6108,7 @@ function lhSoldWords(m){
   if(mktSection(m)==='jobs') return jobKind(m)==='Seeking'
     ? { done:'Hired', doBtn:'Mark as hired', undoBtn:'Still looking', undoWord:'still looking' }
     : { done:'Filled', doBtn:'Mark as filled', undoBtn:'Reopen', undoWord:'open again' };
+  if(mktKind(m)==='Service') return { done:'Unavailable', doBtn:'Mark as unavailable', undoBtn:'Mark as available', undoWord:'available again' };
   return mktKind(m)==='Wanted'
     ? { done:'Found', doBtn:'Mark as found', undoBtn:'Still looking', undoWord:'still looking' }
     : { done:'Sold', doBtn:'Mark as sold', undoBtn:'Mark as available', undoWord:'available again' };
@@ -6324,7 +6421,7 @@ const bkOnDate = (b, date) => b.date===date || (bkRange(b)[1] > 24*60 && bkAddDa
 /* reserved ranges in minutes from midnight of `date`: the day before and after are included, shifted by a day */
 function bkTaken(fac, date){
   const prev = bkAddDays(date,-1), next = bkAddDays(date,1);
-  return store.bookings.filter(b => b.facility===fac && b.status!=='Declined' && b.status!=='Cancelled' && [prev,date,next].includes(b.date))
+  return store.bookings.filter(b => b.facility===fac && b.status!=='Declined' && b.status!=='Cancelled' && [prev,date,next].includes(b.date) && !(BK && b.id===BK.skip))
     .map(b => { const [s,e] = bkRange(b), k = b.date===prev ? -24*60 : b.date===next ? 24*60 : 0; return [s+k, e+k]; });
 }
 const bkFree = (taken, a, b) => !taken.some(([s,e]) => a < e && b > s);
@@ -6332,11 +6429,11 @@ const bkIso = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-
 const bkEndText = end => bkClock(end) + (end > 24*60 ? ' next day' : '');
 
 let BK = null;   /* picker state while a booking form is open */
-function bkStart(preset, presetDate){
-  const fac = preset && store.settings.facilities.includes(preset) ? preset : store.settings.facilities[0];
-  const date = presetDate && presetDate >= bkIso(new Date()) ? presetDate : bkIso(new Date());
-  const d = new Date(date+'T00:00:00');
-  BK = { fac, date, start:null, end:null, month:new Date(d.getFullYear(), d.getMonth(), 1) };
+function bkStart(preset, presetDate, edit){
+  const fac = edit ? edit.facility : preset && store.settings.facilities.includes(preset) ? preset : store.settings.facilities[0];
+  const date = edit ? edit.date : presetDate && presetDate >= bkIso(new Date()) ? presetDate : bkIso(new Date());
+  const d = new Date(date+'T00:00:00'), [s, e] = edit ? bkRange(edit) : [null, null];
+  BK = { fac, date, start:s, end:e, skip:edit ? edit.id : null, month:new Date(d.getFullYear(), d.getMonth(), 1) };
 }
 function bkPickerHTML(){
   const r = facRule(BK.fac), step = Number(r.step), open = bkHM(r.open), close = bkCloseMin(r), max = Number(r.max);
@@ -6427,14 +6524,23 @@ function bkFacSelect(){
 }
 function bkWide(){ const m = $('#modalHost .modal'); if(m) m.classList.add('modal-wide'); }
 
-function bookForm(preset, presetDate){
-  bkStart(preset, presetDate);
-  modal('Request a time','The board reviews reservations, usually within a day.',
+function bookForm(preset, presetDate, editId){
+  const edit = editId ? store.bookings.find(b => b.id===editId) : null;
+  if(editId && !bkEditable(edit)){ toast('info','Cannot change this booking','Only a pending booking can be changed. Once the board reviews it, send a new request.'); return; }
+  bkStart(preset, presetDate, edit);
+  modal(edit ? 'Change booking' : 'Request a time', edit ? 'Pick a new date or time. The board still reviews it before it is confirmed.' : 'The board reviews reservations, usually within a day.',
     bkFacSelect() + '<div class="bk-pick" id="bkPick">'+bkPickerHTML()+'</div>' +
-    '<label class="fld"><span>What is it for</span><input class="input" id="f_purpose" placeholder="Birthday lunch, practice, meeting…"></label>',
-    'Send booking request', () => {
+    '<label class="fld"><span>What is it for</span><input class="input" id="f_purpose" value="'+esc(edit ? edit.purpose : '')+'" placeholder="Birthday lunch, practice, meeting…"></label>',
+    edit ? 'Save changes' : 'Send booking request', () => {
       const pick = bkChosen(); if(!pick) return false;
       const purpose = $('#f_purpose').value.trim()||'Private use';
+      if(edit){
+        if(!bkEditable(edit)){ toast('info','Already reviewed','The board acted on this booking while you were editing.'); return true; }
+        Object.assign(edit, pick, { purpose, editedAt:new Date() });
+        commit('Booking changed by unit '+edit.unit+' — '+pick.facility+' on '+fmtDate(pick.date)+', '+pick.slot+'.',
+          {title:'Booking changed', audience:['admin'], go:gotoBookings});
+        return true;
+      }
       const auto = store.settings.autoApproveBookings;
       store.bookings.unshift(Object.assign({ id:uid(), unit:myUnit(), by:store.session.name }, pick, { purpose, status: auto?'Approved':'Pending' }));
       commit(pick.facility+(auto?' confirmed for unit ':' requested by unit ')+myUnit()+' on '+fmtDate(pick.date)+', '+pick.slot+'.',
@@ -7556,6 +7662,39 @@ function runReport(key){
 }
 
 /* support */
+/* residents can correct what they filed (issue, complaint, concern, support ticket) until it is resolved;
+   the thread and reference number stay, and the office sees it flagged as edited */
+const SUB_EDIT = {
+  request:  { store:'requests',   noun:'Issue',     ttl:'title',   staff:['admin'], fields:[['type','What kind of issue',()=>REQ_TYPES],['title','Short title'],['detail','Details','area']] },
+  complaint:{ store:'complaints', noun:'Complaint', ttl:'title',   staff:['admin','board'], fields:[['category','Category',()=>CMP_TYPES],['against','Unit involved'],['title','Summary'],['detail','What happened','area']] },
+  concern:  { store:'concerns',   noun:'Concern',   ttl:'subject', staff:['admin','board'], fields:[['topic','Topic',()=>CON_TOPICS],['subject','Subject'],['message','Your message','area']] },
+  ticket:   { store:'tickets',    noun:'Ticket',    ttl:'subject', staff:['admin'], fields:[['subject','Subject'],['priority','Priority',()=>['Normal','High']],['detail','What went wrong','area']] }
+};
+const subEditable = x => x && x.unit===myUnit() && x.status!=='Resolved' && x.status!=='Closed';
+function subEditBtn(kind, x){
+  return subEditable(x) ? '<button class="btn btn-ghost btn-sm" style="margin-top:11px" onclick="subEditForm(\''+kind+'\',\''+x.id+'\')">Edit</button>' : '';
+}
+function subEditForm(kind, id){
+  const S = SUB_EDIT[kind], x = S && store[S.store].find(i => i.id===id);
+  if(!subEditable(x)){ toast('info','Cannot edit this','Only your own items that are not yet resolved can be changed.'); return; }
+  modal('Edit '+S.noun.toLowerCase(), 'The admin office sees that you changed it. Your messages and reference number stay the same.',
+    S.fields.map(([k, label, opts], i) => {
+      const v = x[k]==null ? '' : String(x[k]), fid = 'f_se'+i;
+      return '<label class="fld"><span>'+esc(label)+'</span>' + (typeof opts==='function'
+        ? '<select class="input" id="'+fid+'">'+opts().concat(opts().includes(v) || !v ? [] : [v]).map(o => '<option'+(o===v?' selected':'')+'>'+esc(o)+'</option>').join('')+'</select>'
+        : opts==='area' ? '<textarea class="input" id="'+fid+'">'+esc(v)+'</textarea>'
+        : '<input class="input" id="'+fid+'" value="'+esc(v)+'">') + '</label>';
+    }).join(''),
+    'Save changes', () => {
+      const vals = {}; S.fields.forEach(([k], i) => { vals[k] = $('#f_se'+i).value.trim(); });
+      if(!vals[S.ttl]){ toast('info','Add a '+S.fields.find(f => f[0]===S.ttl)[1].toLowerCase(),'It cannot be left blank.'); return false; }
+      if(!subEditable(x)){ toast('info','Already resolved','The office closed this while you were editing.'); return true; }
+      S.fields.forEach(([k, , opts]) => { x[k] = vals[k] || (opts==='area' ? 'No further details given.' : k==='against' ? 'Not specified' : vals[k]); });
+      x.editedAt = new Date(); x.staffUnread = true;
+      commit(S.noun+' from unit '+x.unit+' edited — '+vals[S.ttl]+'.', {title:S.noun+' updated', audience:S.staff, chat:{kind, id:x.id}});
+      return true; });
+}
+const editedTag = x => x.editedAt ? '<span>· Edited '+ago(x.editedAt)+'</span>' : '';
 function ticketForm(){
   modal('Raise a support ticket','For portal problems — payments, logins, wrong records.',
     '<label class="fld"><span>Subject</span><input class="input" id="f_s" placeholder="Payment posted twice"></label>' +
