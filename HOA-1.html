@@ -846,12 +846,12 @@ const store = {
     officeHours:'Mon–Sat, 8:00 AM – 5:00 PM',
     quietHours:'10:00 PM – 6:00 AM',
     autoApproveBookings:false, publishTallyLive:true, allowProxyVoting:true,
-    /* booking time slots per facility: step in minutes, open/close (24h), longest booking in minutes */
+    /* booking time slots per facility: step in minutes, open/close (24h, close 00:00 = midnight), longest booking in minutes */
     facilityRules:{
-      'Function hall':   { step:60, open:'08:00', close:'22:00', max:480 },
-      'Clubhouse':       { step:60, open:'08:00', close:'21:00', max:360 },
-      'Basketball court':{ step:30, open:'06:00', close:'22:00', max:240 },
-      'Swimming pool':   { step:30, open:'06:00', close:'20:00', max:180 }
+      'Function hall':   { step:60, open:'00:00', close:'00:00', max:1440 },
+      'Clubhouse':       { step:60, open:'00:00', close:'00:00', max:1440 },
+      'Basketball court':{ step:30, open:'00:00', close:'00:00', max:1440 },
+      'Swimming pool':   { step:30, open:'00:00', close:'00:00', max:1440 }
     }
   },
   prefs:{ email:true, sms:true, push:false, digest:'Weekly', language:'English' },
@@ -2869,8 +2869,8 @@ const ADMIN = {
               return '<div class="bk-rule"><div class="ttl" style="padding-bottom:12px;grid-column:1/-1">'+esc(f)+'</div>' +
                 '<label class="fld"><span>Slot length</span><select class="input" onchange="setFacRule('+fx+',\'step\',this.value)">'+opt([15,30,60,90,120,180],r.step,v=>v<60?v+' minutes':(v/60)+' hour'+(v===60?'':'s'))+'</select></label>' +
                 '<label class="fld"><span>Opens</span><input class="input" type="time" step="1800" value="'+r.open+'" onchange="setFacRule('+fx+',\'open\',this.value)"></label>' +
-                '<label class="fld"><span>Closes</span><input class="input" type="time" step="1800" value="'+r.close+'" onchange="setFacRule('+fx+',\'close\',this.value)"></label>' +
-                '<label class="fld"><span>Longest booking</span><select class="input" onchange="setFacRule('+fx+',\'max\',this.value)">'+opt([30,60,90,120,180,240,360,480,720],r.max,v=>bkLen(v))+'</select></label></div>';
+                '<label class="fld"><span>Closes (12:00 AM = midnight)</span><input class="input" type="time" step="1800" value="'+r.close+'" onchange="setFacRule('+fx+',\'close\',this.value)"></label>' +
+                '<label class="fld"><span>Longest booking</span><select class="input" onchange="setFacRule('+fx+',\'max\',this.value)">'+opt([30,60,90,120,180,240,360,480,720,1440],r.max,v=>bkLen(v))+'</select></label></div>';
             }).join('') + '</div>') + '</div>' +
           sectionCard('Booth event venues','<div class="card-pad">' + (s.boothVenues||[]).map(v =>
             '<div class="row" style="align-items:center;padding:7px 0"><div class="grow">'+esc(v)+'</div>' +
@@ -6159,9 +6159,10 @@ function saveBilling(){
 
 /* bookings — each facility has its own slot length, opening hours and longest booking (Settings → Lists).
    Residents pick a date on the calendar, tap a start time, then tap the last slot they need. */
-const BK_DEFAULT_RULE = { step:60, open:'08:00', close:'22:00', max:480 };
+const BK_DEFAULT_RULE = { step:60, open:'00:00', close:'00:00', max:1440 };
 function facRule(f){ return Object.assign({}, BK_DEFAULT_RULE, (store.settings.facilityRules||{})[f] || {}); }
 const bkHM = t => { const [h,m] = String(t).split(':').map(Number); return h*60 + (m||0); };
+const bkCloseMin = r => bkHM(r.close) || 24*60;   /* closing at 00:00 means midnight, so a facility can be open the full 24 hours */
 function bkClock(min){
   const h = Math.floor(min/60) % 24, m = min % 60;
   return ((h+11)%12+1)+':'+String(m).padStart(2,'0')+' '+(h<12?'AM':'PM');
@@ -6171,8 +6172,8 @@ function bkLen(min){
   return (h ? h+' hour'+(h===1?'':'s') : '') + (h && m ? ' ' : '') + (m ? m+' min' : '');
 }
 function bkRuleText(f){
-  const r = facRule(f);
-  return (r.step<60 ? r.step+'-min' : bkLen(r.step))+' slots · '+bkClock(bkHM(r.open))+' – '+bkClock(bkHM(r.close));
+  const r = facRule(f), open = bkHM(r.open), close = bkCloseMin(r);
+  return (r.step<60 ? r.step+'-min' : bkLen(r.step))+' slots · '+(close-open===24*60 ? 'open 24 hours' : bkClock(open)+' – '+bkClock(close));
 }
 /* a booking's time range in minutes; older bookings only have the "6:00 AM – 9:00 AM" text */
 function bkRange(b){
@@ -6180,7 +6181,8 @@ function bkRange(b){
   const m = String(b.slot||'').match(/(\d{1,2}):(\d{2})\s*(AM|PM)\s*[–-]\s*(\d{1,2}):(\d{2})\s*(AM|PM)/i);
   if(!m) return [0, 24*60];                                  /* unreadable: treat as the whole day */
   const t = (h,mi,ap) => (Number(h)%12 + (ap.toUpperCase()==='PM'?12:0))*60 + Number(mi);
-  return [t(m[1],m[2],m[3]), t(m[4],m[5],m[6])];
+  const s = t(m[1],m[2],m[3]), e = t(m[4],m[5],m[6]);
+  return [s, e > s ? e : e + 24*60];                         /* "… – 12:00 AM" ends at midnight */
 }
 function bkTaken(fac, date){
   return store.bookings.filter(b => b.facility===fac && b.date===date && b.status!=='Declined' && b.status!=='Cancelled').map(bkRange);
@@ -6196,7 +6198,7 @@ function bkStart(preset, presetDate){
   BK = { fac, date, start:null, end:null, month:new Date(d.getFullYear(), d.getMonth(), 1) };
 }
 function bkPickerHTML(){
-  const r = facRule(BK.fac), step = Number(r.step), open = bkHM(r.open), close = bkHM(r.close), max = Number(r.max);
+  const r = facRule(BK.fac), step = Number(r.step), open = bkHM(r.open), close = bkCloseMin(r), max = Number(r.max);
   const today = new Date(); today.setHours(0,0,0,0);
   const m = BK.month, first = new Date(m.getFullYear(), m.getMonth(), 1);
   const days = new Date(m.getFullYear(), m.getMonth()+1, 0).getDate();
@@ -6222,6 +6224,11 @@ function bkPickerHTML(){
       ' title="'+bkClock(t)+' – '+bkClock(t+step)+(reserved?' · reserved':past?' · already passed':'')+'">'+bkClock(t)+'</button>';
   }
   const d = new Date(BK.date+'T00:00:00');
+  /* whole-day shortcut: only when the facility's full hours fit in one booking and none of it is taken or past */
+  const wholeOk = slots && close - open <= max && bkFree(taken, open, close) && open >= nowMin;
+  const whole = slots && close - open <= max
+    ? '<button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin:0 0 10px" onclick="bkPickWhole()"'+(wholeOk?'':' disabled')+'>' +
+      'Book the whole day ('+bkLen(close-open)+')</button>' : '';
   const sum = BK.start!==null
     ? '<div class="bk-sum">'+esc(BK.fac)+' · '+d.toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric'})+' · '+bkClock(BK.start)+' – '+bkClock(BK.end)+' ('+bkLen(BK.end-BK.start)+')</div>'
     : '<div class="bk-sum none">No time selected yet.</div>';
@@ -6234,12 +6241,13 @@ function bkPickerHTML(){
     '<div><div class="bk-step"><span class="n">2</span>'+d.toLocaleDateString('en-PH',{weekday:'long',day:'numeric',month:'long'}) +
       '<span class="bk-legend"><span><i></i>Open</span><span><i class="rs"></i>Reserved</span></span></div>' +
       '<p class="bk-hint">Times are in Philippine time. Bookings run in '+(step<60?step+'-minute':bkLen(step))+' steps, up to '+bkLen(max)+'. Tap a start time, then tap the last slot you need.</p>' +
-      (slots ? '<div class="bk-slots">'+slots+'</div>' : empty('No slots','This facility has no opening hours set.')) + sum + '</div>';
+      whole + (slots ? '<div class="bk-slots">'+slots+'</div>' : empty('No slots','This facility has no opening hours set.')) + sum + '</div>';
 }
 function bkPaint(){ const el = $('#bkPick'); if(el && BK) el.innerHTML = bkPickerHTML(); }
 function bkPickDate(iso){ BK.date = iso; BK.start = BK.end = null; bkPaint(); }
 function bkMonth(n){ BK.month = new Date(BK.month.getFullYear(), BK.month.getMonth()+n, 1); bkPaint(); }
 function bkPickFac(f){ BK.fac = f; BK.start = BK.end = null; bkPaint(); }
+function bkPickWhole(){ const r = facRule(BK.fac); BK.start = bkHM(r.open); BK.end = bkCloseMin(r); bkPaint(); }
 function bkPickSlot(t){
   const r = facRule(BK.fac), step = Number(r.step), max = Number(r.max), taken = bkTaken(BK.fac, BK.date);
   if(BK.start===null || t < BK.start){ BK.start = t; BK.end = t+step; }
@@ -6310,7 +6318,7 @@ function adminBookForm(preset, presetDate){
 function setFacRule(f, key, val){
   const r = facRule(f);
   r[key] = key==='open' || key==='close' ? val : Number(val);
-  if(bkHM(r.close) - bkHM(r.open) < r.step){ toast('info','Check the hours','Closing time must be at least one slot after opening.'); render(); return; }
+  if(bkCloseMin(r) - bkHM(r.open) < r.step){ toast('info','Check the hours','Closing time must be at least one slot after opening.'); render(); return; }
   store.settings.facilityRules = Object.assign({}, store.settings.facilityRules, { [f]:r });
   commit(f+' bookings: '+bkRuleText(f)+', up to '+bkLen(r.max)+'.',{title:'Booking slots updated'});
 }
