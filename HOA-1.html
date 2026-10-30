@@ -1500,8 +1500,9 @@ const isAdmin = () => store.session.role === 'admin';
 const realSession = () => store.adminSession || store.session;   /* the person actually signed in */
 const myUnit = () => store.session.unit;
 const unitDues = u => {
-  if(store.settings.duesMode==='flat') return Math.round(store.settings.duesFlatAmount);
   const rec = store.units.find(x=>x.unit===(u&&u.unit!==undefined?u.unit:u));
+  if(rec && typeof rec.rate==='number') return Math.round(rec.rate);    /* its own rate, from the lot register */
+  if(store.settings.duesMode==='flat') return Math.round(store.settings.duesFlatAmount);
   const lot = rec ? rec.lot : 0;
   return Math.round(lot * store.settings.duesRatePerSqm);
 };
@@ -2517,21 +2518,24 @@ const ADMIN = {
         '</div>' +
         tabs('mdph',[{id:'all',label:'All phases'},{id:'1',label:'Phase 1',n:count('1')},{id:'2',label:'Phase 2',n:count('2')},{id:'3',label:'Phase 3',n:count('3')}],'all') +
         sectionCard('Units and lots', rows.length ?
-          '<div class="tablewrap"><table><thead><tr><th>Unit</th><th>Address</th><th>Owner of record</th><th class="hide-sm">Lot (sqm)</th>' +
-          '<th class="hide-sm">Type</th><th>Occupancy</th><th class="hide-sm">Portal users</th><th></th></tr></thead><tbody>' +
+          '<div class="card-pad" style="padding-bottom:0"><input class="input" type="search" placeholder="Search unit, owner, status or remarks" aria-label="Search units" oninput="mdFilterUnits(this.value)"></div>' +
+          '<div class="tablewrap"><table id="mdUnits"><thead><tr><th>Unit</th><th>Address</th><th>Owner of record</th><th>Status</th>' +
+          '<th class="hide-sm">Monthly dues</th><th class="hide-sm">Portal users</th><th></th></tr></thead><tbody>' +
           rows.map(u => { const users = store.accounts.filter(a => a.unit===u.unit).length;
-            return '<tr><td class="mono" data-label="Unit"><strong>'+esc(u.unit)+'</strong></td>' +
-            '<td data-label="Address">'+esc(mdAddress(u))+(u.street?'<div class="meta">'+esc(u.street)+'</div>':'')+'</td>' +
-            '<td data-label="Owner of record">'+esc(u.owner)+(u.since?'<div class="meta">Since '+esc(u.since)+'</div>':'')+'</td>' +
-            '<td class="hide-sm mono" data-label="Lot (sqm)">'+(u.lot||'—')+'</td>' +
-            '<td class="hide-sm" data-label="Type">'+esc(u.type||'—')+'</td>' +
-            '<td data-label="Occupancy"><span class="tag '+(u.occupancy==='Vacant'?'t-grey':u.occupancy==='Leased'?'t-amber':'t-emerald')+'">'+esc(u.occupancy||'—')+'</span></td>' +
+            return '<tr data-q="'+esc([u.unit, u.adminId, u.owner, u.status, u.remarks, u.street, u.role].filter(Boolean).join(' ').toLowerCase())+'">' +
+            '<td class="mono" data-label="Unit"><strong>'+esc(u.unit)+'</strong>'+(u.adminId?'<div class="meta">'+esc(u.adminId)+'</div>':'')+'</td>' +
+            '<td data-label="Address">'+esc(mdAddress(u))+'<div class="meta">'+esc([u.street, /^yes$/i.test(u.linearPark||'') ? 'Linear park' : ''].filter(Boolean).join(' · '))+'</div></td>' +
+            '<td data-label="Owner of record">'+(u.owner ? esc(u.owner) : '<span class="meta">No owner on file</span>')+(u.role?' <span class="tag t-emerald">'+esc(u.role)+'</span>':'') +
+              '<div class="meta">'+esc([u.type, u.since ? 'since '+u.since : ''].filter(Boolean).join(' · '))+'</div></td>' +
+            '<td data-label="Status"><span class="tag '+(u.occupancy==='Vacant'?'t-grey':u.occupancy==='Leased'?'t-amber':'t-emerald')+'">'+esc(u.occupancy||'—')+'</span>' +
+              '<div class="meta">'+esc([u.status, u.remarks].filter(Boolean).join(' · '))+'</div></td>' +
+            '<td class="hide-sm mono" data-label="Monthly dues">'+peso(unitDues(u))+'</td>' +
             '<td class="hide-sm" data-label="Portal users">'+users+(users>=2?' <span class="meta">(limit)</span>':'')+'</td>' +
             '<td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="unitForm(\''+esc(u.unit)+'\')">Edit</button></td></tr>';
-          }).join('') + '</tbody></table></div>'
-          : empty('No units in this phase','Add a unit to start the registry.'),
-          '<button class="btn btn-primary btn-sm" onclick="unitForm()">Add unit</button>') +
-        '<p class="meta" style="margin-top:10px">Each unit allows up to two homeowner users. Unit codes follow Phase-Block-Lot, e.g. P1-B5-L12. Monthly dues are billed from the lot area on file.</p>';
+          }).join('') + '</tbody></table></div><p class="meta" id="mdNoMatch" style="display:none;padding:12px 16px">No units match that search.</p>'
+          : empty(store.units.length ? 'No units in this phase' : 'No units yet', 'Upload the lot register from Excel, or add units one at a time.'),
+          '<div class="btn-row"><button class="btn btn-ghost btn-sm" onclick="unitImportForm()">Upload from Excel</button><button class="btn btn-primary btn-sm" onclick="unitForm()">Add unit</button></div>') +
+        '<p class="meta" style="margin-top:10px">Each unit allows up to two homeowner users. Unit codes follow Phase-Block-Lot, e.g. P1-B5-L12. A unit with its own monthly rate (from the lot register) is billed at that rate; the others follow the billing rule in Financial → Billing.</p>';
       },
       facilities(){
         return '<div class="grid g-2">' +
@@ -6420,8 +6424,8 @@ function billingRun(){
     'Generate', () => {
       const per=$('#f_per').value.trim();
       if(store.dues.some(d=>d.period===per)){ toast('info','Already billed','That period already exists in the ledger.'); return false; }
-      store.units.forEach(u => store.dues.push({ id:uid(), unit:u.unit, owner:u.owner, period:per, amount:unitDues(u), status:'Unpaid', method:'', paidAt:null }));
-      commit(per+' billing generated for '+store.units.length+' households'+(sqm ? ' at '+peso(store.settings.duesRatePerSqm)+' per sqm.' : ' at a flat '+peso(store.settings.duesFlatAmount)+' each.'),{title:'Billing generated'}); return true; });
+      store.units.filter(u => u.rate!==0).forEach(u => store.dues.push({ id:uid(), unit:u.unit, owner:u.owner, period:per, amount:unitDues(u), status:'Unpaid', method:'', paidAt:null }));
+      commit(per+' billing generated for '+store.units.filter(u => u.rate!==0).length+' households'+(sqm ? ' at '+peso(store.settings.duesRatePerSqm)+' per sqm.' : ' at a flat '+peso(store.settings.duesFlatAmount)+' each.'),{title:'Billing generated'}); return true; });
 }
 function saveBilling(){
   if(store.settings.duesMode==='sqm') store.settings.duesRatePerSqm = Number($('#cs_rate').value)||store.settings.duesRatePerSqm;
@@ -7185,9 +7189,12 @@ function unitForm(code){
     '<label class="fld"><span>Owner of record</span><input class="input" id="f_ow" value="'+esc(u?u.owner:'')+'" placeholder="Full name"></label>' +
     '<div class="grid g-2" style="gap:0 12px">' +
       '<label class="fld"><span>Lot area (sqm)</span><input class="input" id="f_lot" type="number" min="0" value="'+(u?u.lot:150)+'"></label>' +
-      '<label class="fld"><span>Type</span><select class="input" id="f_ty">'+opts(UNIT_TYPES, u?u.type:'Single detached')+'</select></label>' +
+      '<label class="fld"><span>Type</span><select class="input" id="f_ty">'+(u && !u.type ? '<option value="" selected>Not set</option>' : '')+opts(UNIT_TYPES, u?u.type:'Single detached')+'</select></label>' +
       '<label class="fld"><span>Occupancy</span><select class="input" id="f_oc">'+opts(OCCUPANCY, u?u.occupancy:'Owner-occupied')+'</select></label>' +
-      '<label class="fld"><span>Owner since (year)</span><input class="input" id="f_since" inputmode="numeric" value="'+esc(u?u.since||'':String(new Date().getFullYear()))+'"></label></div>' +
+      '<label class="fld"><span>Owner since (year)</span><input class="input" id="f_since" inputmode="numeric" value="'+esc(u?u.since||'':String(new Date().getFullYear()))+'"></label>' +
+      '<label class="fld"><span>Status</span><input class="input" id="f_ust" value="'+esc(u&&u.status||'')+'" placeholder="BEHOA member (moved-in)"></label>' +
+      '<label class="fld"><span>Monthly dues (₱)</span><input class="input" id="f_rate" type="number" min="0" value="'+(u && typeof u.rate==='number' ? u.rate : '')+'" placeholder="Blank = billing rule"></label></div>' +
+    '<label class="fld"><span>Remarks</span><input class="input" id="f_rem" value="'+esc(u&&u.remarks||'')+'" placeholder="BAMI, LOT ONLY…"></label>' +
     (u ? '<div class="row" style="align-items:center;margin-top:4px"><p class="meta grow" style="margin:0">'+(linked
           ? 'This unit has portal users or dues on file, so it cannot be removed.'
           : 'Nothing is linked to this unit yet.')+'</p>' +
@@ -7196,12 +7203,14 @@ function unitForm(code){
       const ow = $('#f_ow').value.trim();
       const unit = u ? u.unit : readUnitField('homeowner', null);
       if(unit===null) return false;
-      if(!ow){ toast('info','Missing details','Add the owner of record.'); return false; }
+      if(!ow && !(u && u.status)){ toast('info','Missing details','Add the owner of record.'); return false; }
       if(!u && store.units.some(x => x.unit===unit)){ toast('info','Already on file','Unit '+unit+' is already in the registry.'); return false; }
       const rec = u || {};
-      const p = unitParts(unit);
+      const p = unitParts(unit), rate = $('#f_rate').value.trim();
       Object.assign(rec, { unit, owner:ow, street:$('#f_st').value.trim(), lot:Number($('#f_lot').value)||0,
-        type:$('#f_ty').value, occupancy:$('#f_oc').value, since:$('#f_since').value.trim() });
+        type:$('#f_ty').value, occupancy:$('#f_oc').value, since:$('#f_since').value.trim(),
+        status:$('#f_ust').value.trim(), remarks:$('#f_rem').value.trim() });
+      if(rate==='') delete rec.rate; else rec.rate = Math.max(0, Number(rate)||0);
       if(!u){ Object.assign(rec, { phase:'Phase '+p.phase, block:p.block, lotNo:p.lot }); store.units.push(rec); }
       commit(u ? 'Unit '+unit+' updated.' : 'Unit '+unit+' added to the registry under '+ow+'.',{title: u ? 'Unit updated' : 'Unit added'}); return true; });
 }
@@ -7210,6 +7219,112 @@ function removeUnit(code){
   modal('Remove unit '+code+'?','It leaves the registry. Nothing else is linked to it.','', 'Remove unit', () => {
     store.units = store.units.filter(x => x.unit!==code);
     commit('Unit '+code+' removed from the registry.',{title:'Unit removed'}); return true; }, true);
+}
+function mdFilterUnits(q){
+  q = q.trim().toLowerCase(); let shown = 0;
+  document.querySelectorAll('#mdUnits tbody tr').forEach(tr => { const on = !q || tr.dataset.q.includes(q); tr.style.display = on ? '' : 'none'; if(on) shown++; });
+  const nm = $('#mdNoMatch'); if(nm) nm.style.display = shown ? 'none' : '';
+}
+/* the lot register from Excel: one row per lot, matched to the registry by Phase-Block-Lot.
+   Reads the BFE Lot Register layout as it is, and simpler sheets with Phase / Block / Lot columns. */
+const UNIT_COLS = { lotId:/^(physical lot id|lot id|lot code)/, phase:/^phase/, block:/^(block|blk)/, lot:/^(lot|lot no\.?|lot number|lot #)$/,
+  adminId:/unit id|account (no|series)/, owner:/owner|homeowner|^name/, status:/status/, remarks:/remark/, since:/start|since|move.?in/,
+  park:/linear park/, rate:/rate|monthly dues/, role:/gov.*role|^role|position/, street:/street/, area:/area|sqm/,
+  type:/^(type|unit type|house type)/, occupancy:/occupancy/ };
+let UNIT_IMPORT = null;
+function unitImportForm(){
+  UNIT_IMPORT = null;
+  modal('Upload units from Excel','New lots are added and lots already on file are updated, matched by Phase, Block and Lot. Nothing is deleted.',
+    '<div class="card card-pad" style="background:var(--paper);margin-bottom:12px"><div class="meta" style="display:block">Upload the <b>BFE Lot Register</b> as it is, or any sheet whose first row has <b>Phase</b>, <b>Block</b> and <b>Lot</b>. ' +
+      'The portal also reads, if present, the homeowner name, status, remarks, HOA start, monthly rate, gov role, street, lot area, type and occupancy. Other columns and sheets are ignored.</div>' +
+      '<button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-top:10px" onclick="unitTemplate()">Download template</button></div>' +
+    '<label class="fld"><span>Excel or CSV file</span><input class="input" id="f_xf" type="file" accept=".xlsx,.xls,.csv" onchange="unitReadFile(this.files[0])"></label>' +
+    '<div id="xPrev"></div>',
+    'Save to master data', () => {
+      if(!UNIT_IMPORT || !(UNIT_IMPORT.add.length + UNIT_IMPORT.upd.length)){ toast('info','Choose a file','Pick the lot register file first, or there is nothing new in it.'); return false; }
+      const { add, upd, file } = UNIT_IMPORT;
+      upd.forEach(([rec, x]) => Object.assign(rec, x));
+      add.forEach(x => store.units.push(x));
+      commit(add.length+' unit'+(add.length===1?'':'s')+' added and '+upd.length+' updated from '+file+'.',{title:'Master data uploaded'});
+      UNIT_IMPORT = null; return true; });
+}
+async function unitReadFile(f){
+  const box = $('#xPrev'); if(!f || !box) return;
+  box.innerHTML = '<p class="meta">Reading '+esc(f.name)+'…</p>';
+  try{ await loadXlsx(); }catch(e){ box.innerHTML = '<p class="meta">The Excel reader could not load. Check your connection and try again.</p>'; return; }
+  let wb;
+  try{ wb = XLSX.read(await f.arrayBuffer()); }
+  catch(e){ box.innerHTML = '<p class="meta">That file could not be read. Save it as .xlsx or .csv and try again.</p>'; return; }
+  /* the first sheet with Phase / Block / Lot (or a lot ID) in one of its first rows */
+  const low = c => String(c).trim().toLowerCase();
+  let raw = null, hi = -1;
+  for(const name of wb.SheetNames){
+    const r = XLSX.utils.sheet_to_json(wb.Sheets[name], { header:1, raw:true, defval:'' });
+    const i = r.slice(0,10).findIndex(row => { const h = row.map(low);
+      return h.some(c => UNIT_COLS.lotId.test(c)) || (h.some(c => UNIT_COLS.phase.test(c)) && h.some(c => UNIT_COLS.block.test(c)) && h.some(c => UNIT_COLS.lot.test(c))); });
+    if(i >= 0){ raw = r; hi = i; break; }
+  }
+  if(!raw){ box.innerHTML = '<p class="meta">No <b>Phase</b>, <b>Block</b> and <b>Lot</b> columns were found. Use the template, or rename the columns in your sheet.</p>'; return; }
+  const head = raw[hi].map(low), col = {};
+  Object.keys(UNIT_COLS).forEach(k => { col[k] = head.findIndex(h => UNIT_COLS[k].test(h)); });
+  if(col.owner === col.adminId) col.owner = head.findIndex((h,i) => i!==col.adminId && UNIT_COLS.owner.test(h));
+  const cell = (r,k) => col[k] < 0 ? '' : String(r[col[k]]==null ? '' : r[col[k]]).trim();
+  const num = v => { const m = /(\d+)/.exec(v); return m ? String(Number(m[1])) : ''; };
+  const year = v => { if(!v) return ''; if(/^\d{5}(\.\d+)?$/.test(v)) return String(new Date(Math.round((Math.floor(v) - 25569) * 864e5)).getUTCFullYear());
+    const m = /(19|20)\d\d/.exec(v); return m ? m[0] : ''; };
+  const byCode = new Map(store.units.map(u => [u.unit, u]));
+  const add = [], upd = [], bad = [], seen = new Set();
+  let same = 0, owners = 0;
+  raw.slice(hi+1).forEach((r, i) => {
+    if(!r.some(c => String(c).trim())) return;                                         /* blank row */
+    const idp = cell(r,'lotId').split(/[-\s]+/);
+    const ph = num(cell(r,'phase')) || num(idp[0]||''), bl = num(cell(r,'block')) || num(idp[1]||''), lt = num(cell(r,'lot')) || num(idp[2]||'');
+    const L = PHASE_LAYOUT[ph];
+    if(!L || !(bl >= 1 && bl <= L.blocks) || !(lt >= 1 && lt <= L.lots)){ bad.push(hi+2+i); return; }
+    const code = unitCode(ph, bl, lt);
+    if(seen.has(code)){ bad.push(hi+2+i); return; }
+    seen.add(code);
+    const status = cell(r,'status'), remarks = cell(r,'remarks'), rate = cell(r,'rate').replace(/[₱,\s]/g,''), area = cell(r,'area');
+    const x = { unit:code, phase:'Phase '+ph, block:bl, lotNo:lt };
+    if(col.adminId >= 0) x.adminId = cell(r,'adminId');
+    if(col.owner >= 0) x.owner = cell(r,'owner');
+    if(col.status >= 0) x.status = status;
+    if(col.remarks >= 0) x.remarks = remarks;
+    if(col.since >= 0) x.since = year(cell(r,'since'));
+    if(col.park >= 0) x.linearPark = cell(r,'park');
+    if(col.role >= 0) x.role = cell(r,'role');
+    if(col.street >= 0) x.street = cell(r,'street');
+    if(col.rate >= 0 && rate !== '' && !isNaN(Number(rate))) x.rate = Number(rate);
+    if(col.area >= 0 && Number(area) > 0) x.lot = Number(area);
+    if(col.type >= 0 && cell(r,'type')) x.type = cell(r,'type');
+    else if(/lot only|road lot|open space|not yet for sale|water tank/i.test(remarks)) x.type = 'Vacant lot';
+    if(col.occupancy >= 0 && cell(r,'occupancy')) x.occupancy = cell(r,'occupancy');
+    else if(col.status >= 0) x.occupancy = /moved.?in/i.test(status) ? 'Owner-occupied' : /leas|tenant|rent/i.test(status) ? 'Leased' : 'Vacant';
+    if(x.owner) owners++;
+    const rec = byCode.get(code);
+    if(rec){
+      if(Object.keys(x).some(k => String(rec[k]==null ? '' : rec[k]) !== String(x[k]))) upd.push([rec, x]); else same++;
+    } else add.push(Object.assign({ owner:'', lot:0, type:'', occupancy:'Vacant', since:'' }, x));
+  });
+  UNIT_IMPORT = { file:f.name, add, upd };
+  box.innerHTML = '<div class="card card-pad" style="margin-bottom:10px">' +
+      '<div class="kv"><span>New units to add</span><b>'+add.length+'</b></div>' +
+      '<div class="kv"><span>Units already on file to update</span><b>'+upd.length+'</b></div>' +
+      (same ? '<div class="kv"><span>Already up to date</span><b>'+same+'</b></div>' : '') +
+      '<div class="kv"><span>Lots in the file with a homeowner name</span><b>'+owners+'</b></div>' +
+      (bad.length ? '<div class="kv"><span>Rows skipped — Phase/Block/Lot missing, out of range or repeated</span><b>'+(bad.length>8 ? 'Rows '+bad.slice(0,8).join(', ')+'…' : 'Row '+bad.join(', '))+'</b></div>' : '') + '</div>' +
+    (add.length + upd.length ? '<div class="tablewrap" style="max-height:220px;overflow:auto"><table><thead><tr><th>Unit</th><th>Owner</th><th class="hide-sm">Status</th><th>Dues</th></tr></thead><tbody>' +
+      add.concat(upd.map(p => Object.assign({}, p[0], p[1]))).slice(0,50).map(x => '<tr><td class="mono" data-label="Unit"><strong>'+esc(x.unit)+'</strong></td>' +
+        '<td data-label="Owner">'+(x.owner ? esc(x.owner) : '<span class="meta">—</span>')+'</td>' +
+        '<td class="hide-sm" data-label="Status">'+esc([x.status, x.remarks].filter(Boolean).join(' · ')||'—')+'</td>' +
+        '<td class="mono" data-label="Dues">'+(typeof x.rate==='number' ? peso(x.rate) : '<span class="meta">Billing rule</span>')+'</td></tr>').join('') +
+      '</tbody></table></div>' + (add.length + upd.length > 50 ? '<p class="meta">…and '+(add.length + upd.length - 50)+' more.</p>' : '') : '');
+}
+async function unitTemplate(){
+  const rows = [['Phase','Block','Lot','Street','Homeowner Name','Status','Remarks','HOA Start','Monthly Rate PHP','Lot Area (sqm)','Type','Occupancy'],
+    [1, 5, 12, 'Orchid St.', 'DELA CRUZ JUAN', 'BEHOA member (moved-in)', 'BAMI', '2020-01-01', 900, 150, 'Single detached', 'Owner-occupied']];
+  try{ await loadXlsx(); saveSheets('Lot-register-template.xlsx', [{ name:'LOT Register', rows, widths:[7,7,6,16,26,24,14,12,16,14,16,16] }]); }
+  catch(e){ saveCsv('Lot-register-template.csv', rows); }
 }
 /* expense categories are the lines of the budget, so a category in use stays */
 function expenseCategoryForm(){
