@@ -998,7 +998,7 @@ const store = {
   /* support */
   tickets:[],
   faqs:[
-    { q:'How do I pay my dues?', a:'Open My dues, tap Pay, then pick GCash, Maya, bank transfer or card. A receipt posts to your ledger straight away.' },
+    { q:'How do I pay my dues?', a:'Open HOA payments, tap Pay, then pick GCash, Maya, bank transfer or card. A receipt posts to your ledger straight away.' },
     { q:'When are dues considered late?', a:'Payments made after the 30th of the month carry a 2% late fee, applied on the 1st.' },
     { q:'How do I add a second household member?', a:'Go to Settings and add them under household members. The admin office confirms within one working day.' },
     { q:'Can I vote on someone else\u2019s behalf?', a:'Only with a signed proxy form filed at the office before the ballot closes. One vote per household either way.' }
@@ -1915,7 +1915,7 @@ const NAV = {
     { g:'My household', items:[
       { id:'hotlines',   label:'Emergency hotlines', icon:'phone' },
       { id:'feed',       label:'Community feed', icon:'megaphone', badge:()=>store.announcements.filter(a=>!store.seen.has(a.id)).length },
-      { id:'mydues',     label:'My dues',        icon:'peso' },
+      { id:'mydues',     label:'HOA payments',   icon:'peso' },
       { id:'finances',   label:'Financial reports', icon:'chart' },
       { id:'events',     label:'Events',         icon:'calendar' },
       { id:'book',       label:'Book a facility',icon:'grid' },
@@ -4278,9 +4278,12 @@ const HOME = {
   mydues(){
     const mine = store.dues.filter(d=>d.unit===myUnit());
     const open = mine.find(d=>d.status!=='Paid');
-    return head('My dues','Unit '+myUnit()+' · '+peso(unitDues(myUnit()))+' a month'+(store.settings.duesMode==='sqm' ? ' ('+peso(store.settings.duesRatePerSqm)+'/sqm)' : ' (flat rate)')+', due on the '+store.settings.dueDay+'th',
+    const own = store.units.find(u=>u.unit===myUnit());
+    return head('HOA payments','Unit '+myUnit()+' · '+peso(unitDues(myUnit()))+' a month'+(own && typeof own.rate==='number' ? '' : store.settings.duesMode==='sqm' ? ' ('+peso(store.settings.duesRatePerSqm)+'/sqm)' : ' (flat rate)')+', due on the '+store.settings.dueDay+'th',
       '<div class="btn-row">' + (open ? '<button class="btn btn-emerald" style="width:auto" onclick="payForm()">Pay '+esc(open.period)+'</button>' : '') +
       '<button class="btn btn-ghost" style="width:auto" onclick="downloadStatement()">Download statement</button></div>') +
+    '<div class="card card-pad" style="margin-bottom:14px;display:flex;align-items:center;gap:10px">'+svg('building')+'<div><strong>Payment source records:</strong> Cambria (3rd Party Provider)' +
+      '<div class="meta">Payment status here follows Cambria’s records and is not real time.</div></div></div>' +
     (mine.length ? '' : '<div class="card" style="margin-bottom:14px">'+empty('No dues on record yet','Your billing appears here once the admin office generates it. The statement will list every period.')+'</div>') +
     '<div class="card tablewrap"><table><thead><tr><th>Period</th><th>Amount</th><th class="hide-sm">Method</th><th>Status</th><th style="text-align:right">Date paid</th></tr></thead><tbody>' +
     mine.map(d => '<tr><td data-label="Period"><strong>'+esc(d.period)+'</strong></td><td class="mono" data-label="Amount">'+peso(d.amount)+'</td>' +
