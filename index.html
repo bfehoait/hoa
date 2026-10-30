@@ -5028,14 +5028,14 @@ const MONTHS = ['January','February','March','April','May','June','July','August
 function dayItems(dateStr){
   const evs = store.events.filter(e=>e.date===dateStr)
     .map(e=>({ kind:'event', label:e.title, sub:e.time+' · '+e.where, note:e.note }));
-  const bks = store.bookings.filter(b=>b.date===dateStr && b.status!=='Declined')
+  const bks = store.bookings.filter(b=>bkOnDate(b, dateStr) && b.status!=='Declined')
     .map(b=>({ kind:b.status==='Approved'?'booked':'pending', label:b.facility, sub:b.slot,
                note:(b.unit===myUnit()?'Your booking':isStaffSide()?b.by+' · Unit '+b.unit:'Reserved by another household')+' · '+b.purpose,
                mine:b.unit===myUnit() }));
   return evs.concat(bks);
 }
 function freeFacilities(dateStr){
-  const taken = store.bookings.filter(b=>b.date===dateStr && b.status==='Approved').map(b=>b.facility);
+  const taken = store.bookings.filter(b=>bkOnDate(b, dateStr) && b.status==='Approved').map(b=>b.facility);
   return store.settings.facilities.filter(f=>!taken.includes(f));
 }
 function calShift(n){
@@ -6184,11 +6184,18 @@ function bkRange(b){
   const s = t(m[1],m[2],m[3]), e = t(m[4],m[5],m[6]);
   return [s, e > s ? e : e + 24*60];                         /* "… – 12:00 AM" ends at midnight */
 }
+/* a booking can run past midnight (up to 24 hours), so it can also cover the next date */
+const bkAddDays = (date, n) => { const d = new Date(date+'T00:00:00'); d.setDate(d.getDate()+n); return bkIso(d); };
+const bkOnDate = (b, date) => b.date===date || (bkRange(b)[1] > 24*60 && bkAddDays(b.date,1)===date);
+/* reserved ranges in minutes from midnight of `date`: the day before and after are included, shifted by a day */
 function bkTaken(fac, date){
-  return store.bookings.filter(b => b.facility===fac && b.date===date && b.status!=='Declined' && b.status!=='Cancelled').map(bkRange);
+  const prev = bkAddDays(date,-1), next = bkAddDays(date,1);
+  return store.bookings.filter(b => b.facility===fac && b.status!=='Declined' && b.status!=='Cancelled' && [prev,date,next].includes(b.date))
+    .map(b => { const [s,e] = bkRange(b), k = b.date===prev ? -24*60 : b.date===next ? 24*60 : 0; return [s+k, e+k]; });
 }
 const bkFree = (taken, a, b) => !taken.some(([s,e]) => a < e && b > s);
 const bkIso = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const bkEndText = end => bkClock(end) + (end > 24*60 ? ' next day' : '');
 
 let BK = null;   /* picker state while a booking form is open */
 function bkStart(preset, presetDate){
@@ -6202,7 +6209,8 @@ function bkPickerHTML(){
   const today = new Date(); today.setHours(0,0,0,0);
   const m = BK.month, first = new Date(m.getFullYear(), m.getMonth(), 1);
   const days = new Date(m.getFullYear(), m.getMonth()+1, 0).getDate();
-  const busyDays = new Set(store.bookings.filter(b => b.facility===BK.fac && b.status!=='Declined' && b.status!=='Cancelled').map(b => b.date));
+  const busyDays = new Set(store.bookings.filter(b => b.facility===BK.fac && b.status!=='Declined' && b.status!=='Cancelled')
+    .flatMap(b => bkRange(b)[1] > 24*60 ? [b.date, bkAddDays(b.date,1)] : [b.date]));
   const atFirstMonth = m.getFullYear()===today.getFullYear() && m.getMonth()===today.getMonth();
   let cal = ['M','T','W','T','F','S','S'].map(d => '<span class="dow">'+d+'</span>').join('') +
     '<span></span>'.repeat((first.getDay()+6)%7);
@@ -6214,23 +6222,29 @@ function bkPickerHTML(){
   }
   const taken = bkTaken(BK.fac, BK.date);
   const nowMin = BK.date===bkIso(new Date()) ? new Date().getHours()*60 + new Date().getMinutes() : -1;
-  let slots = '';
-  for(let t = open; t + step <= close; t += step){
+  const slotBtn = t => {
     const reserved = !bkFree(taken, t, t+step), past = t < nowMin;
     const inSel = BK.start!==null && t >= BK.start && t < BK.end;
     const edge = inSel && (t===BK.start || t+step===BK.end);
-    slots += '<button type="button" onclick="bkPickSlot('+t+')"'+(reserved||past?' disabled':'') +
+    return '<button type="button" onclick="bkPickSlot('+t+')"'+(reserved||past?' disabled':'') +
       ' class="'+(reserved?'rs':past?'past':edge?'edge':inSel?'in':'')+'"' +
       ' title="'+bkClock(t)+' – '+bkClock(t+step)+(reserved?' · reserved':past?' · already passed':'')+'">'+bkClock(t)+'</button>';
-  }
+  };
+  let slots = '';
+  for(let t = open; t + step <= close; t += step) slots += slotBtn(t);
+  /* open 24 hours: once a start is picked, the next day's times appear so a booking can run past midnight */
+  const allDay = open===0 && close===24*60;
+  let nextSlots = '';
+  if(allDay && BK.start!==null) for(let t = 24*60; t + step <= BK.start + max; t += step) nextSlots += slotBtn(t);
   const d = new Date(BK.date+'T00:00:00');
+  const nd = new Date(bkAddDays(BK.date,1)+'T00:00:00');
   /* whole-day shortcut: only when the facility's full hours fit in one booking and none of it is taken or past */
   const wholeOk = slots && close - open <= max && bkFree(taken, open, close) && open >= nowMin;
   const whole = slots && close - open <= max
     ? '<button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin:0 0 10px" onclick="bkPickWhole()"'+(wholeOk?'':' disabled')+'>' +
       'Book the whole day ('+bkLen(close-open)+')</button>' : '';
   const sum = BK.start!==null
-    ? '<div class="bk-sum">'+esc(BK.fac)+' · '+d.toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric'})+' · '+bkClock(BK.start)+' – '+bkClock(BK.end)+' ('+bkLen(BK.end-BK.start)+')</div>'
+    ? '<div class="bk-sum">'+esc(BK.fac)+' · '+d.toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric'})+' · '+bkClock(BK.start)+' – '+bkEndText(BK.end)+' ('+bkLen(BK.end-BK.start)+')</div>'
     : '<div class="bk-sum none">No time selected yet.</div>';
   return '<div><div class="bk-step"><span class="n">1</span>Choose a date</div>' +
       '<div class="bk-mhead"><button type="button" onclick="bkMonth(-1)"'+(atFirstMonth?' disabled':'')+' aria-label="Previous month">‹</button>' +
@@ -6240,8 +6254,11 @@ function bkPickerHTML(){
       '<p class="bk-hint" style="margin-top:8px">A dot means the '+esc(BK.fac.toLowerCase())+' already has a booking that day.</p></div>' +
     '<div><div class="bk-step"><span class="n">2</span>'+d.toLocaleDateString('en-PH',{weekday:'long',day:'numeric',month:'long'}) +
       '<span class="bk-legend"><span><i></i>Open</span><span><i class="rs"></i>Reserved</span></span></div>' +
-      '<p class="bk-hint">Times are in Philippine time. Bookings run in '+(step<60?step+'-minute':bkLen(step))+' steps, up to '+bkLen(max)+'. Tap a start time, then tap the last slot you need.</p>' +
-      whole + (slots ? '<div class="bk-slots">'+slots+'</div>' : empty('No slots','This facility has no opening hours set.')) + sum + '</div>';
+      '<p class="bk-hint">Times are in Philippine time. Bookings run in '+(step<60?step+'-minute':bkLen(step))+' steps, up to '+bkLen(max)+'. Tap a start time, then tap the last slot you need.' +
+        (allDay ? ' To book past midnight, pick a start time and the next day’s times appear below.' : '')+'</p>' +
+      whole + (slots ? '<div class="bk-slots">'+slots+'</div>' : empty('No slots','This facility has no opening hours set.')) +
+      (nextSlots ? '<div class="bk-step" style="margin-top:14px">Next day · '+nd.toLocaleDateString('en-PH',{weekday:'long',day:'numeric',month:'long'})+'</div>' +
+        '<div class="bk-slots">'+nextSlots+'</div>' : '') + sum + '</div>';
 }
 function bkPaint(){ const el = $('#bkPick'); if(el && BK) el.innerHTML = bkPickerHTML(); }
 function bkPickDate(iso){ BK.date = iso; BK.start = BK.end = null; bkPaint(); }
@@ -6255,7 +6272,10 @@ function bkPickSlot(t){
   else {
     const end = t + step;
     if(end - BK.start > max){ toast('info','That is too long', BK.fac+' can be booked for up to '+bkLen(max)+' at a time.'); return; }
-    if(!bkFree(taken, BK.start, end)){ toast('info','Someone is booked in between','Pick a range with no reserved slots, or start after the reservation.'); BK.start = t; BK.end = end; }
+    if(!bkFree(taken, BK.start, end)){
+      toast('info','Someone is booked in between','Pick a range with no reserved slots, or start after the reservation.');
+      if(t >= 24*60) return;                                                       /* a booking has to start on the chosen date */
+      BK.start = t; BK.end = end; }
     else BK.end = end;
   }
   bkPaint();
@@ -6265,7 +6285,7 @@ function bkChosen(){
   if(BK.start===null){ toast('info','Pick a time','Tap a start time on the right, then the last slot you need.'); return null; }
   if(!bkFree(bkTaken(BK.fac, BK.date), BK.start, BK.end)){
     toast('info','That time is taken', BK.fac+' was just reserved for part of that time. Pick another slot.'); bkPaint(); return null; }
-  return { facility:BK.fac, date:BK.date, start:BK.start, end:BK.end, slot:bkClock(BK.start)+' – '+bkClock(BK.end) };
+  return { facility:BK.fac, date:BK.date, start:BK.start, end:BK.end, slot:bkClock(BK.start)+' – '+bkEndText(BK.end) };
 }
 function bkFacSelect(){
   return '<label class="fld"><span>Facility</span><select class="input" id="f_fac" onchange="bkPickFac(this.value)">' +
