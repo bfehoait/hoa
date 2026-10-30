@@ -2784,7 +2784,8 @@ const ADMIN = {
                 '<button class="btn btn-ghost btn-sm" onclick="recordPaymentForm(\''+d.id+'\')">Edit</button></div>'
               : '<div class="btn-row" style="justify-content:flex-end"><button class="btn btn-ghost btn-sm" onclick="recordPaymentForm(\''+d.id+'\')">Record payment</button>' +
                 '<button class="btn btn-ghost btn-sm" onclick="remind(\''+d.id+'\')">Send reminder</button></div>')+'</td></tr>').join('') +
-          '</tbody></table></div>') +
+          '</tbody></table></div>',
+          '<button class="btn btn-primary btn-sm" style="width:auto" onclick="exportCollectionsForm()">Export to Excel</button>') +
         '<div class="grid g-4" style="margin:14px 0">' + aging.map(a =>
           stat(a.b, a.n, a.n===1?'household':'households')).join('') + '</div>' +
         sectionCard('Accounts past due', '<ul class="list">' +
@@ -2807,13 +2808,15 @@ const ADMIN = {
               ? '<button class="btn btn-emerald btn-sm" onclick="approveExpense(\''+x.id+'\')">Approve</button>'
               : '<span class="meta">Cleared</span>')+'</td></tr>').join('') +
           '</tbody></table></div>',
-          '<button class="btn btn-ghost btn-sm" onclick="expenseForm()">Record expense</button>');
+          '<div class="btn-row"><button class="btn btn-ghost btn-sm" onclick="expenseImportForm()">Upload Excel</button>' +
+          '<button class="btn btn-ghost btn-sm" onclick="monthlyExpenseForm()">Enter monthly total</button>' +
+          '<button class="btn btn-ghost btn-sm" onclick="expenseForm()">Record expense</button></div>');
       },
       reports(){ return disclosureAdmin(); }
     }[t]();
     return head('Financial','Billing, collections and disbursements — the association’s money in one place.') +
     '<div class="grid g-4" style="margin-bottom:14px">' +
-      stat('Opening balance', peso(store.ledger.opening), store.ledger.opening ? 'Starting balance on file' : 'Not set yet') +
+      projectedStat() +
       stat('Collected to date', peso(collected()), collectionPct()+'% of '+curPeriod()+' billing') +
       stat('Disbursed', peso(totalExpense()), store.expenses.filter(x=>x.status==='Paid').length+' payments released') +
       stat('Working balance', peso(net), 'Reserve fund: '+peso(store.ledger.reserve)) +
@@ -4995,7 +4998,7 @@ const BOARD = {
     const net = store.ledger.opening + collected() - totalExpense();
     return head('Approved summaries','Aggregate figures for governance. The per-household ledger is not part of the Board view.') +
     '<div class="grid g-4" style="margin-bottom:14px">' +
-      stat('Opening balance', peso(store.ledger.opening), store.ledger.opening ? 'Starting balance on file' : 'Not set yet') +
+      projectedStat() +
       stat('Income to date', peso(collected()), 'Dues received') +
       stat('Expenses released', peso(totalExpense()), 'Approved disbursements') +
       stat('Working balance', peso(net), 'Excludes reserve') +
@@ -7049,6 +7052,156 @@ function approveExpense(id){
   const x = store.expenses.find(e=>e.id===id); x.status='Paid';
   const line = store.budget.find(b=>b.category===x.category); if(line) line.actual += x.amount;
   commit(peso(x.amount)+' to '+x.payee+' approved and released.',{title:'Expense approved'});
+}
+/* what the current billing run should bring in, if every household pays */
+function projectedStat(){
+  const billed = augDues().reduce((a,b)=>a+b.amount,0), left = billed - collected();
+  return stat('Projected collections', peso(billed), augDues().length
+    ? curPeriod()+' billing · '+(left>0 ? peso(left)+' still to collect' : 'fully collected')
+    : 'No billing run yet');
+}
+
+/* ---- Excel in and out (SheetJS, loaded only when needed) ---- */
+function loadXlsx(){
+  if(window.XLSX) return Promise.resolve();
+  return new Promise((ok, no) => { const sc = document.createElement('script');
+    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); });
+}
+function saveSheets(file, sheets){              /* sheets: [{ name, rows:[[...header], ...], widths:[...], fmt:{ col:'#,##0.00' } }] */
+  const wb = XLSX.utils.book_new();
+  sheets.forEach(s => { const ws = XLSX.utils.aoa_to_sheet(s.rows, { dateNF:'yyyy-mm-dd' });
+    if(s.widths) ws['!cols'] = s.widths.map(w => ({ wch:w }));
+    Object.keys(s.fmt||{}).forEach(c => { for(let r = 1; r < s.rows.length; r++){
+      const cell = ws[XLSX.utils.encode_cell({ r, c:Number(c) })]; if(cell && cell.t==='n') cell.z = s.fmt[c]; } });
+    XLSX.utils.book_append_sheet(wb, ws, s.name); });
+  XLSX.writeFile(wb, file);
+}
+function saveCsv(file, rows){
+  const q = v => '"'+String(v==null?'':v instanceof Date ? bkIso(v) : v).replace(/"/g,'""')+'"';
+  const blob = new Blob(['﻿'+rows.map(r => r.map(q).join(',')).join('\r\n')], { type:'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+/* collections export for accounting: one row per household per billing period, ready to post to the books */
+function exportCollectionsForm(){
+  const ps = [...new Set(store.dues.map(d => d.period))].sort((a,b) => periodDate(b) - periodDate(a));
+  if(!ps.length){ toast('info','Nothing to export','Generate a billing run first.'); return; }
+  modal('Export collections to Excel','One row per household per billing period, with the date paid, mode of payment and OR / reference no.',
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Billing period</span><select class="input" id="f_xp"><option value="">All periods</option>'+ps.map(p => '<option>'+esc(p)+'</option>').join('')+'</select></label>' +
+      '<label class="fld"><span>Include</span><select class="input" id="f_xs"><option value="all">Paid and unpaid</option><option value="Paid">Paid only</option><option value="open">Unpaid / overdue only</option></select></label></div>',
+    'Download Excel file', () => { exportCollections($('#f_xp').value, $('#f_xs').value); return true; });
+}
+async function exportCollections(period, which){
+  const list = store.dues.filter(d => (!period || d.period===period) &&
+      (which==='all' || (which==='Paid' ? d.status==='Paid' : d.status!=='Paid')))
+    .sort((a,b) => periodDate(a.period) - periodDate(b.period) || String(a.unit).localeCompare(String(b.unit), undefined, { numeric:true }));
+  const unitOf = u => store.units.find(x => x.unit===u) || {};
+  const rows = [['Unit','Homeowner','Phase','Billing period','Amount billed (PHP)','Status','Date paid','Mode of payment','OR / reference no.','Recorded by']]
+    .concat(list.map(d => [d.unit, d.owner, unitOf(d.unit).phase||'', d.period, d.amount, d.status,
+      d.paidAt ? new Date(d.paidAt) : '', d.method||'', d.ref||'', d.recordedBy||(d.status==='Paid' ? 'Paid in portal' : '')]));
+  const sum = periodCollections(999).filter(r => !period || r.period===period).reverse();
+  const summary = [['Billing period','Households','Paid','Amount billed (PHP)','Collected (PHP)','Outstanding (PHP)','% of households paid']]
+    .concat(sum.map(r => [r.period, r.households, r.paid, r.billed, r.collected, r.billed - r.collected, r.pct/100]));
+  const file = 'Collections-'+(period ? period.replace(/\s+/g,'-') : 'all-periods')+'-'+bkIso(new Date());
+  try{ await loadXlsx(); }
+  catch(e){ saveCsv(file+'.csv', rows); toast('info','Saved as CSV','The Excel tool could not load, so the collections were saved as a CSV file, which Excel also opens.'); return; }
+  const money = '#,##0.00';
+  saveSheets(file+'.xlsx', [{ name:'Collections', rows, widths:[8,24,10,16,14,10,12,16,18,18], fmt:{ 4:money } },
+                            { name:'Summary', rows:summary, widths:[16,11,8,18,16,17,18], fmt:{ 3:money, 4:money, 5:money, 6:'0%' } }]);
+  toast('ok','Collections exported', list.length+' row'+(list.length===1?'':'s')+' saved to '+file+'.xlsx.');
+}
+
+/* disbursements from the official books: upload the Excel sheet instead of typing each line again */
+const EXP_COLS = { date:/^(date|txn date|transaction date|date paid|check date)/, payee:/^(payee|paid to|supplier|vendor|name)/,
+  amount:/^(amount|total|debit|amount paid|net amount)/, category:/^(category|account|expense account|classification|type)/,
+  memo:/^(memo|description|particulars|remarks|details|purpose)/, ref:/^(ref|reference|voucher|cv|check|cheque|or no)/ };
+let EXP_IMPORT = null;
+function expenseImportForm(){
+  EXP_IMPORT = null;
+  modal('Upload disbursements from Excel','Use the sheet your accounting staff already keep. Lines are added as released — they are already in the official books.',
+    '<div class="card card-pad" style="background:var(--paper);margin-bottom:12px"><div class="meta" style="display:block">The first row should be the column names. The portal reads <b>Date</b>, <b>Payee</b>, <b>Amount</b>, and if present <b>Category</b>, <b>Description</b> and <b>Voucher / Ref no.</b> Other columns are ignored.</div>' +
+      '<button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-top:10px" onclick="expenseTemplate()">Download template</button></div>' +
+    '<label class="fld"><span>Excel or CSV file</span><input class="input" id="f_xf" type="file" accept=".xlsx,.xls,.csv" onchange="expenseReadFile(this.files[0])"></label>' +
+    '<div id="xPrev"></div>',
+    'Add disbursements', () => {
+      if(!EXP_IMPORT || !EXP_IMPORT.good.length){ toast('info','Choose a file','Pick the Excel file with this month’s disbursements first.'); return false; }
+      const add = EXP_IMPORT.good.filter(x => !EXP_IMPORT.dupes.includes(x));
+      add.forEach(x => { store.expenses.unshift(Object.assign({ id:uid(), status:'Paid', source:'Excel upload' }, x));
+        const line = store.budget.find(b => b.category===x.category); if(line) line.actual += x.amount; });
+      const total = add.reduce((a,b)=>a+b.amount,0);
+      commit(add.length+' disbursement'+(add.length===1?'':'s')+' totalling '+peso(total)+' added from '+EXP_IMPORT.file+'.',{title:'Disbursements uploaded', audience:['admin','board']});
+      EXP_IMPORT = null; return true; });
+}
+async function expenseReadFile(f){
+  const box = $('#xPrev'); if(!f || !box) return;
+  box.innerHTML = '<p class="meta">Reading '+esc(f.name)+'…</p>';
+  try{ await loadXlsx(); }catch(e){ box.innerHTML = '<p class="meta">The Excel reader could not load. Check your connection and try again.</p>'; return; }
+  let raw;
+  try{ const wb = XLSX.read(await f.arrayBuffer()); raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header:1, raw:true, defval:'' }); }
+  catch(e){ box.innerHTML = '<p class="meta">That file could not be read. Save it as .xlsx or .csv and try again.</p>'; return; }
+  const hi = raw.findIndex(r => r.some(c => EXP_COLS.payee.test(String(c).trim().toLowerCase())) && r.some(c => EXP_COLS.amount.test(String(c).trim().toLowerCase())));
+  if(hi < 0){ box.innerHTML = '<p class="meta">No <b>Payee</b> and <b>Amount</b> columns were found. Use the template, or rename the columns in your sheet.</p>'; return; }
+  const head = raw[hi].map(c => String(c).trim().toLowerCase()), col = {};
+  Object.keys(EXP_COLS).forEach(k => { col[k] = head.findIndex(h => EXP_COLS[k].test(h)); });
+  const cell = (r,k) => col[k] < 0 ? '' : r[col[k]];
+  const toDate = v => {
+    if(typeof v==='number' && v > 20000){                                             /* Excel date serial — read as a calendar day, no timezone */
+      const d = new Date(Math.round((Math.floor(v) - 25569) * 864e5));
+      return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0'); }
+    const d = new Date(String(v).trim()); return String(v).trim() && !isNaN(d) ? bkIso(d) : null;
+  };
+  const good = [], bad = [];
+  raw.slice(hi+1).forEach((r, i) => {
+    if(!r.some(c => String(c).trim())) return;                                         /* blank row */
+    const payee = String(cell(r,'payee')).trim(), amount = Number(String(cell(r,'amount')).replace(/[₱,\s]/g,''));
+    if(/^total/i.test(payee) || (!payee && /^total/i.test(String(r[0]).trim()))) return;  /* a totals row */
+    const date = toDate(cell(r,'date')) || bkIso(new Date());
+    if(!payee || !(amount > 0)){ bad.push(hi+2+i); return; }
+    good.push({ date, payee, amount:Math.round(amount*100)/100, category:String(cell(r,'category')).trim()||'Uncategorised',
+      memo:String(cell(r,'memo')).trim()||'—', ref:String(cell(r,'ref')).trim() });
+  });
+  /* the same line uploaded twice (same date, payee, amount and reference) is skipped */
+  const key = x => [x.date, x.payee.toLowerCase(), x.amount, x.ref||''].join('|');
+  const have = new Set(store.expenses.map(key));
+  const dupes = good.filter(x => have.has(key(x)));
+  EXP_IMPORT = { file:f.name, good, dupes };
+  const fresh = good.filter(x => !dupes.includes(x)), total = fresh.reduce((a,b)=>a+b.amount,0);
+  box.innerHTML = '<div class="card card-pad" style="margin-bottom:10px">' +
+      '<div class="kv"><span>Lines to add</span><b>'+fresh.length+'</b></div>' +
+      '<div class="kv"><span>Total</span><b class="mono">'+peso(total)+'</b></div>' +
+      (dupes.length ? '<div class="kv"><span>Already in the portal (skipped)</span><b>'+dupes.length+'</b></div>' : '') +
+      (bad.length ? '<div class="kv"><span>Rows skipped — no payee or amount</span><b>'+(bad.length>8 ? bad.slice(0,8).join(', ')+'…' : 'Row '+bad.join(', '))+'</b></div>' : '') + '</div>' +
+    (fresh.length ? '<div class="tablewrap" style="max-height:220px;overflow:auto"><table><thead><tr><th>Date</th><th>Payee</th><th class="hide-sm">Category</th><th>Amount</th></tr></thead><tbody>' +
+      fresh.slice(0,50).map(x => '<tr><td class="meta" data-label="Date">'+fmtDate(x.date)+'</td><td data-label="Payee"><strong>'+esc(x.payee)+'</strong><div class="meta">'+esc(x.memo)+'</div></td>' +
+        '<td class="hide-sm" data-label="Category">'+esc(x.category)+'</td><td class="mono" data-label="Amount">'+peso(x.amount)+'</td></tr>').join('') +
+      '</tbody></table></div>' + (fresh.length>50 ? '<p class="meta">…and '+(fresh.length-50)+' more.</p>' : '') : '');
+}
+async function expenseTemplate(){
+  const rows = [['Date','Payee','Amount','Category','Description','Voucher / Ref no.'],
+    [new Date(), 'GreenScape Services', 12500, store.budget[0] ? store.budget[0].category : 'Grounds', 'October grounds maintenance', 'CV-0001']];
+  try{ await loadXlsx(); saveSheets('Disbursements-template.xlsx', [{ name:'Disbursements', rows, widths:[12,26,12,14,32,16] }]); }
+  catch(e){ saveCsv('Disbursements-template.csv', rows); }
+}
+/* or skip the lines entirely: one total per month, for the dashboard */
+function monthlyExpenseForm(){
+  const now = new Date(), ym = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  modal('Enter monthly total','One figure from the official books for the month — no line-by-line entry. Entering a month again replaces its total.',
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Month</span><input class="input" id="f_mm" type="month" max="'+ym+'" value="'+ym+'"></label>' +
+      '<label class="fld"><span>Total disbursements (₱)</span><input class="input" id="f_mt" type="number" min="0" step="0.01" placeholder="185000"></label></div>' +
+    '<label class="fld"><span>Note (optional)</span><input class="input" id="f_mn" placeholder="Per general ledger, closed Nov 5"></label>',
+    'Save total', () => {
+      const m = $('#f_mm').value, amt = Math.round(Number($('#f_mt').value)*100)/100;
+      if(!m || !(amt > 0)){ toast('info','Missing details','Pick the month and enter the total.'); return false; }
+      const label = new Date(m+'-01T00:00:00').toLocaleDateString('en-US',{ month:'long', year:'numeric' });
+      const old = store.expenses.find(x => x.monthTotal===m);
+      if(old) store.expenses = store.expenses.filter(x => x !== old);
+      store.expenses.unshift({ id:uid(), date:m+'-01', payee:'Total disbursements — '+label, category:'Monthly total',
+        memo:$('#f_mn').value.trim()||'From the official books', amount:amt, status:'Paid', monthTotal:m });
+      commit((old ? label+' total updated to ' : label+' disbursements recorded: ')+peso(amt)+'.',{title:'Monthly total saved', audience:['admin','board']});
+      return true; });
 }
 
 /* security */
