@@ -1835,6 +1835,7 @@ const NAV = {
       { id:'homeowners', label:'Homeowners',              icon:'users', badge:()=>store.accounts.filter(a=>a.status==='Invited').length + regPending().length },
       { id:'profiles',   label:'Homeowner Profiles',      icon:'users', badge:()=>hhPending().length },
       { id:'property',   label:'Property',                icon:'building' },
+      { id:'masterdata', label:'Master data',             icon:'database' },
       { id:'operations', label:'Operations & Maintenance',icon:'wrench', badge:()=>store.requests.filter(r=>r.status!=='Resolved').length + (store.gatePasses||[]).filter(p=>p.status==='Pending'||p.status==='Held').length },
       { id:'marketplace',label:'Livelihood and Marketplace', icon:'tag', badge:()=>lhPendingCount() },
       { id:'calendar',   label:'Calendar',                icon:'calendar' },
@@ -1947,6 +1948,7 @@ const ICONS = {
   peso:'<path d="M7 20V4h5a4 4 0 0 1 0 8H7M5 9h9M5 13h9"/>',
   calendar:'<path d="M4 6h16v14H4zM4 10h16M9 3v4M15 3v4"/>',
   building:'<path d="M4 21V5l8-2v18M12 21V9l8 2v10M4 21h16M7 8h2M7 12h2M7 16h2M16 13h1M16 17h1"/>',
+  database:'<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
   shield:'<path d="M12 3l8 3v6c0 5-3.4 8.2-8 9-4.6-.8-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
   chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
   life:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9"/>',
@@ -2501,6 +2503,78 @@ const ADMIN = {
       tabs('prop',[{id:'units',label:'Unit registry'},{id:'budget',label:'Budget'}],'units') + inner;
   },
 
+  /* ---------- MASTER DATA: the reference records the rest of the portal draws from ---------- */
+  masterdata(){
+    const s = store.settings;
+    const t = tabOf('md','units');
+    const listCard = (title, key, items, label, removeFn) => sectionCard(title,'<div class="card-pad">' + (items.length ? items.map(v =>
+        '<div class="row" style="align-items:center;padding:7px 0"><div class="grow">'+esc(v)+'</div>' +
+        '<button class="btn btn-danger btn-sm" onclick="'+removeFn(v)+'">Remove</button></div>').join('') : '<p class="meta" style="margin:0">None yet.</p>') +
+      '<button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="addItem(\''+key+'\',\''+label+'\')">Add '+label+'</button></div>');
+    const inner = {
+      units(){
+        const ph = tabOf('mdph','all');
+        const rows = store.units.filter(u => ph==='all' || mdPhaseOf(u)===ph)
+          .slice().sort((a,b) => String(a.unit).localeCompare(String(b.unit), undefined, { numeric:true }));
+        const count = p => store.units.filter(u => mdPhaseOf(u)===p).length;
+        return '<div class="grid g-4" style="margin-bottom:14px">' +
+          stat('Units on file', store.units.length, 'Every house or lot in the registry') +
+          ['1','2','3'].map(p => stat('Phase '+p, count(p), PHASE_LAYOUT[p].blocks===1 ? 'Block 1, Lots 1–'+PHASE_LAYOUT[p].lots : 'Blocks 1–'+PHASE_LAYOUT[p].blocks+', Lots 1–'+PHASE_LAYOUT[p].lots)).join('') +
+        '</div>' +
+        tabs('mdph',[{id:'all',label:'All phases'},{id:'1',label:'Phase 1',n:count('1')},{id:'2',label:'Phase 2',n:count('2')},{id:'3',label:'Phase 3',n:count('3')}],'all') +
+        sectionCard('Units and lots', rows.length ?
+          '<div class="tablewrap"><table><thead><tr><th>Unit</th><th>Address</th><th>Owner of record</th><th class="hide-sm">Lot (sqm)</th>' +
+          '<th class="hide-sm">Type</th><th>Occupancy</th><th class="hide-sm">Portal users</th><th></th></tr></thead><tbody>' +
+          rows.map(u => { const users = store.accounts.filter(a => a.unit===u.unit).length;
+            return '<tr><td class="mono" data-label="Unit"><strong>'+esc(u.unit)+'</strong></td>' +
+            '<td data-label="Address">'+esc(mdAddress(u))+(u.street?'<div class="meta">'+esc(u.street)+'</div>':'')+'</td>' +
+            '<td data-label="Owner of record">'+esc(u.owner)+(u.since?'<div class="meta">Since '+esc(u.since)+'</div>':'')+'</td>' +
+            '<td class="hide-sm mono" data-label="Lot (sqm)">'+(u.lot||'—')+'</td>' +
+            '<td class="hide-sm" data-label="Type">'+esc(u.type||'—')+'</td>' +
+            '<td data-label="Occupancy"><span class="tag '+(u.occupancy==='Vacant'?'t-grey':u.occupancy==='Leased'?'t-amber':'t-emerald')+'">'+esc(u.occupancy||'—')+'</span></td>' +
+            '<td class="hide-sm" data-label="Portal users">'+users+(users>=2?' <span class="meta">(limit)</span>':'')+'</td>' +
+            '<td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="unitForm(\''+esc(u.unit)+'\')">Edit</button></td></tr>';
+          }).join('') + '</tbody></table></div>'
+          : empty('No units in this phase','Add a unit to start the registry.'),
+          '<button class="btn btn-primary btn-sm" onclick="unitForm()">Add unit</button>') +
+        '<p class="meta" style="margin-top:10px">Each unit allows up to two homeowner users. Unit codes follow Phase-Block-Lot, e.g. P1-B5-L12. Monthly dues are billed from the lot area on file.</p>';
+      },
+      facilities(){
+        return '<div class="grid g-2">' +
+          listCard('Facilities','facilities', s.facilities, 'facility', f => 'removeItem(\'facilities\',\''+esc(f)+'\')') +
+          listCard('Booth event venues','boothVenues', s.boothVenues||[], 'venue', v => 'removeItem(\'boothVenues\',\''+esc(v)+'\')') +
+          '<div class="span-2">' + sectionCard('Booking time slots','<div class="card-pad">' +
+            '<p class="meta" style="margin:0 0 6px">Set how each facility can be booked. Residents pick consecutive slots on a calendar, so a 30-minute step lets them book 30 minutes, 1 hour, 1½ hours and so on up to the limit.</p>' +
+            s.facilities.map((f,i) => { const r = facRule(f), fx = 'store.settings.facilities['+i+']';
+              const opt = (vals, cur, lab) => vals.map(v => '<option value="'+v+'"'+(String(v)===String(cur)?' selected':'')+'>'+lab(v)+'</option>').join('');
+              return '<div class="bk-rule"><div class="ttl" style="padding-bottom:12px;grid-column:1/-1">'+esc(f)+'</div>' +
+                '<label class="fld"><span>Slot length</span><select class="input" onchange="setFacRule('+fx+',\'step\',this.value)">'+opt([15,30,60,90,120,180],r.step,v=>v<60?v+' minutes':(v/60)+' hour'+(v===60?'':'s'))+'</select></label>' +
+                '<label class="fld"><span>Opens</span><input class="input" type="time" step="1800" value="'+r.open+'" onchange="setFacRule('+fx+',\'open\',this.value)"></label>' +
+                '<label class="fld"><span>Closes (12:00 AM = midnight)</span><input class="input" type="time" step="1800" value="'+r.close+'" onchange="setFacRule('+fx+',\'close\',this.value)"></label>' +
+                '<label class="fld"><span>Longest booking</span><select class="input" onchange="setFacRule('+fx+',\'max\',this.value)">'+opt([30,60,90,120,180,240,360,480,720,1440],r.max,v=>bkLen(v))+'</select></label></div>';
+            }).join('') + '</div>') + '</div>' +
+        '</div>';
+      },
+      categories(){
+        const ro = (title, items, note) => sectionCard(title,'<div class="card-pad"><p class="meta" style="margin:0 0 8px">'+esc(note)+'</p>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:6px">'+items.map(v => '<span class="tag t-grey">'+esc(v)+'</span>').join('')+'</div></div>');
+        return '<div class="grid g-2">' +
+          listCard('Announcement categories','categories', s.categories, 'category', c => 'removeItem(\'categories\',\''+esc(c)+'\')') +
+          sectionCard('Expense categories','<div class="card-pad">' + store.budget.map(b =>
+            '<div class="row" style="align-items:center;padding:7px 0"><div class="grow">'+esc(b.category)+'</div>' +
+            '<button class="btn btn-danger btn-sm" onclick="removeExpenseCategory(\''+esc(b.category)+'\')">Remove</button></div>').join('') +
+            '<button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="expenseCategoryForm()">Add category</button></div>') +
+          ro('Marketplace categories', MKT_CATEGORIES, 'What residents can list under Buy & Sell.') +
+          ro('Service categories', SERVICE_CATEGORIES, 'What residents can offer as a service.') +
+          ro('Gate pass purposes', GP_PURPOSES, 'The reasons a homeowner can request a gate pass for.') +
+          ro('Payment methods', PAY_METHODS, 'How a dues payment can be recorded.') +
+        '</div>';
+      }
+    }[t]();
+    return head('Master data','The reference records the whole portal draws from: units and lots, facilities and the categories people pick from.') +
+      tabs('md',[{id:'units',label:'Units & lots',n:store.units.length},{id:'facilities',label:'Facilities'},{id:'categories',label:'Categories'}],'units') + inner;
+  },
+
   /* ---------- OPERATIONS ---------- */
   operations(){
     const t = tabOf('ops','requests');
@@ -2874,6 +2948,7 @@ const ADMIN = {
   /* ---------- SETTINGS ---------- */
   settings(){
     const s = store.settings;
+    if(!['association','portal','account'].includes(tabOf('set','association'))) store.tab.set = 'association';   /* lists moved to Master data */
     const t = tabOf('set','association');
     const inner = {
       association(){
@@ -2892,36 +2967,10 @@ const ADMIN = {
           toggle('Allow proxy voting','Households may file a signed proxy at the office.','allowProxyVoting') +
           '</div>');
       },
-      lists(){
-        return '<div class="grid g-2">' +
-          sectionCard('Facilities','<div class="card-pad">' + s.facilities.map(f =>
-            '<div class="row" style="align-items:center;padding:7px 0"><div class="grow">'+esc(f)+'</div>' +
-            '<button class="btn btn-danger btn-sm" onclick="removeItem(\'facilities\',\''+esc(f)+'\')">Remove</button></div>').join('') +
-            '<button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="addItem(\'facilities\',\'facility\')">Add facility</button></div>') +
-          '<div class="span-2">' + sectionCard('Booking time slots','<div class="card-pad">' +
-            '<p class="meta" style="margin:0 0 6px">Set how each facility can be booked. Residents pick consecutive slots on a calendar, so a 30-minute step lets them book 30 minutes, 1 hour, 1½ hours and so on up to the limit.</p>' +
-            s.facilities.map((f,i) => { const r = facRule(f), fx = 'store.settings.facilities['+i+']';
-              const opt = (vals, cur, lab) => vals.map(v => '<option value="'+v+'"'+(String(v)===String(cur)?' selected':'')+'>'+lab(v)+'</option>').join('');
-              return '<div class="bk-rule"><div class="ttl" style="padding-bottom:12px;grid-column:1/-1">'+esc(f)+'</div>' +
-                '<label class="fld"><span>Slot length</span><select class="input" onchange="setFacRule('+fx+',\'step\',this.value)">'+opt([15,30,60,90,120,180],r.step,v=>v<60?v+' minutes':(v/60)+' hour'+(v===60?'':'s'))+'</select></label>' +
-                '<label class="fld"><span>Opens</span><input class="input" type="time" step="1800" value="'+r.open+'" onchange="setFacRule('+fx+',\'open\',this.value)"></label>' +
-                '<label class="fld"><span>Closes (12:00 AM = midnight)</span><input class="input" type="time" step="1800" value="'+r.close+'" onchange="setFacRule('+fx+',\'close\',this.value)"></label>' +
-                '<label class="fld"><span>Longest booking</span><select class="input" onchange="setFacRule('+fx+',\'max\',this.value)">'+opt([30,60,90,120,180,240,360,480,720,1440],r.max,v=>bkLen(v))+'</select></label></div>';
-            }).join('') + '</div>') + '</div>' +
-          sectionCard('Booth event venues','<div class="card-pad">' + (s.boothVenues||[]).map(v =>
-            '<div class="row" style="align-items:center;padding:7px 0"><div class="grow">'+esc(v)+'</div>' +
-            '<button class="btn btn-danger btn-sm" onclick="removeItem(\'boothVenues\',\''+esc(v)+'\')">Remove</button></div>').join('') +
-            '<button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="addItem(\'boothVenues\',\'venue\')">Add venue</button></div>') +
-          sectionCard('Announcement categories','<div class="card-pad">' + s.categories.map(c =>
-            '<div class="row" style="align-items:center;padding:7px 0"><div class="grow">'+esc(c)+'</div>' +
-            '<button class="btn btn-danger btn-sm" onclick="removeItem(\'categories\',\''+esc(c)+'\')">Remove</button></div>').join('') +
-            '<button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="addItem(\'categories\',\'category\')">Add category</button></div>') +
-        '</div>';
-      },
       account(){ return accountSettings(); }
     }[t]();
-    return head('Settings','Association details, portal rules and your own admin account.') +
-      tabs('set',[{id:'association',label:'Association'},{id:'portal',label:'Portal rules'},{id:'lists',label:'Facilities & categories'},{id:'account',label:'My account'}],'association') + inner;
+    return head('Settings','Association details, portal rules and your own admin account. Units, facilities and categories are kept in Master data.') +
+      tabs('set',[{id:'association',label:'Association'},{id:'portal',label:'Portal rules'},{id:'account',label:'My account'}],'association') + inner;
   }
 };
 
@@ -6153,7 +6202,7 @@ function boothApplyForm(eventId){
 }
 function boothEventForm(){
   const venues = store.settings.boothVenues || [];
-  if(!venues.length){ toast('info','No approved venues','Add one under Settings → Lists → Booth event venues first.'); return; }
+  if(!venues.length){ toast('info','No approved venues','Add one under Master data → Facilities → Booth event venues first.'); return; }
   modal('New booth event','Pick an approved venue. Residents can apply until '+BOOTH_CLOSE_DAYS+' days before setup; once every booth is taken, later applicants go on a waitlist.',
     '<label class="fld"><span>Event name</span><input class="input" id="f_etitle" placeholder="Christmas Bazaar 2026"></label>' +
     '<label class="fld"><span>Theme and vendor rules</span><textarea class="input" id="f_etheme" placeholder="Food, gifts and holiday décor. One table and two chairs per booth."></textarea></label>' +
@@ -6388,7 +6437,7 @@ function saveBilling(){
   commit('Billing rules updated — '+(store.settings.duesMode==='sqm' ? peso(store.settings.duesRatePerSqm)+' per sqm' : peso(store.settings.duesFlatAmount)+' flat')+', due on the '+store.settings.dueDay+'th.',{title:'Billing rules saved'});
 }
 
-/* bookings — each facility has its own slot length, opening hours and longest booking (Settings → Lists).
+/* bookings — each facility has its own slot length, opening hours and longest booking (Master data → Facilities).
    Residents pick a date on the calendar, tap a start time, then tap the last slot they need. */
 const BK_DEFAULT_RULE = { step:60, open:'00:00', close:'00:00', max:1440 };
 function facRule(f){ return Object.assign({}, BK_DEFAULT_RULE, (store.settings.facilityRules||{})[f] || {}); }
@@ -7122,21 +7171,67 @@ function homeownerProfile(unit){
 }
 
 /* property */
-function unitForm(){
-  modal('Add a unit to the registry','New units appear in the ledger on the next billing run.',
+/* master data: a unit's phase ('1'–'3') and its address in words, from the unit code or the older phase/block fields */
+function mdPhaseOf(u){ const p = unitParts(u.unit); return p ? p.phase : (/(\d)/.exec(String(u.phase||'')) || [])[1] || ''; }
+function mdAddress(u){
+  if(unitParts(u.unit)) return unitPretty(u.unit);
+  return [u.phase, u.block ? 'Block '+u.block : '', u.lotNo ? 'Lot '+u.lotNo : ''].filter(Boolean).join(', ') || '—';
+}
+const UNIT_TYPES = ['Single detached','Duplex','Townhouse','Vacant lot'];
+const OCCUPANCY = ['Owner-occupied','Leased','Vacant'];
+/* add a unit (Phase / Block / Lot), or edit one already in the registry; the unit code itself never changes once dues are billed to it */
+function unitForm(code){
+  const u = code ? store.units.find(x => x.unit===code) : null;
+  const opts = (list, cur) => list.map(o => '<option'+(o===cur?' selected':'')+'>'+esc(o)+'</option>').join('');
+  const linked = u ? store.accounts.filter(a => a.unit===u.unit).length + store.dues.filter(d => d.unit===u.unit).length : 0;
+  modal(u ? 'Edit unit '+u.unit : 'Add a unit to the registry',
+    u ? mdAddress(u) : 'New units appear in the ledger on the next billing run.',
+    (u ? '' : addrFields('')) +
+    '<label class="fld"><span>Street</span><input class="input" id="f_st" value="'+esc(u&&u.street||'')+'" placeholder="Orchid St."></label>' +
+    '<label class="fld"><span>Owner of record</span><input class="input" id="f_ow" value="'+esc(u?u.owner:'')+'" placeholder="Full name"></label>' +
     '<div class="grid g-2" style="gap:0 12px">' +
-      '<label class="fld"><span>Unit number</span><input class="input" id="f_u" placeholder="E-02"></label>' +
-      '<label class="fld"><span>Phase</span><input class="input" id="f_ph" value="Phase 3"></label></div>' +
-    '<label class="fld"><span>Owner of record</span><input class="input" id="f_ow" placeholder="Full name"></label>' +
-    '<div class="grid g-2" style="gap:0 12px">' +
-      '<label class="fld"><span>Lot area (sqm)</span><input class="input" id="f_lot" type="number" value="150"></label>' +
-      '<label class="fld"><span>Occupancy</span><select class="input" id="f_oc">'+['Owner-occupied','Leased','Vacant'].map(o=>'<option>'+o+'</option>').join('')+'</select></label></div>',
-    'Add unit', () => {
-      const u=$('#f_u').value.trim(), ow=$('#f_ow').value.trim();
-      if(!u||!ow){ toast('info','Missing details','Unit number and owner are both required.'); return false; }
-      store.units.push({ unit:u, owner:ow, phase:$('#f_ph').value, lot:Number($('#f_lot').value)||0,
-        type:'Single detached', occupancy:$('#f_oc').value, since:String(new Date().getFullYear()) });
-      commit('Unit '+u+' added to the registry under '+ow+'.',{title:'Unit added'}); return true; });
+      '<label class="fld"><span>Lot area (sqm)</span><input class="input" id="f_lot" type="number" min="0" value="'+(u?u.lot:150)+'"></label>' +
+      '<label class="fld"><span>Type</span><select class="input" id="f_ty">'+opts(UNIT_TYPES, u?u.type:'Single detached')+'</select></label>' +
+      '<label class="fld"><span>Occupancy</span><select class="input" id="f_oc">'+opts(OCCUPANCY, u?u.occupancy:'Owner-occupied')+'</select></label>' +
+      '<label class="fld"><span>Owner since (year)</span><input class="input" id="f_since" inputmode="numeric" value="'+esc(u?u.since||'':String(new Date().getFullYear()))+'"></label></div>' +
+    (u ? '<div class="row" style="align-items:center;margin-top:4px"><p class="meta grow" style="margin:0">'+(linked
+          ? 'This unit has portal users or dues on file, so it cannot be removed.'
+          : 'Nothing is linked to this unit yet.')+'</p>' +
+        (linked ? '' : '<button type="button" class="btn btn-danger btn-sm" onclick="removeUnit(\''+esc(u.unit)+'\')">Remove unit</button>')+'</div>' : ''),
+    u ? 'Save changes' : 'Add unit', () => {
+      const ow = $('#f_ow').value.trim();
+      const unit = u ? u.unit : readUnitField('homeowner', null);
+      if(unit===null) return false;
+      if(!ow){ toast('info','Missing details','Add the owner of record.'); return false; }
+      if(!u && store.units.some(x => x.unit===unit)){ toast('info','Already on file','Unit '+unit+' is already in the registry.'); return false; }
+      const rec = u || {};
+      const p = unitParts(unit);
+      Object.assign(rec, { unit, owner:ow, street:$('#f_st').value.trim(), lot:Number($('#f_lot').value)||0,
+        type:$('#f_ty').value, occupancy:$('#f_oc').value, since:$('#f_since').value.trim() });
+      if(!u){ Object.assign(rec, { phase:'Phase '+p.phase, block:p.block, lotNo:p.lot }); store.units.push(rec); }
+      commit(u ? 'Unit '+unit+' updated.' : 'Unit '+unit+' added to the registry under '+ow+'.',{title: u ? 'Unit updated' : 'Unit added'}); return true; });
+}
+function removeUnit(code){
+  closeModal();
+  modal('Remove unit '+code+'?','It leaves the registry. Nothing else is linked to it.','', 'Remove unit', () => {
+    store.units = store.units.filter(x => x.unit!==code);
+    commit('Unit '+code+' removed from the registry.',{title:'Unit removed'}); return true; }, true);
+}
+/* expense categories are the lines of the budget, so a category in use stays */
+function expenseCategoryForm(){
+  modal('Add an expense category','It appears when recording disbursements and on the budget.',
+    '<label class="fld"><span>Name</span><input class="input" id="f_i" placeholder="Insurance"></label>',
+    'Add', () => {
+      const v = $('#f_i').value.trim(); if(!v) return false;
+      if(store.budget.some(b => b.category.toLowerCase()===v.toLowerCase())){ toast('info','Already listed','“'+v+'” is already a category.'); return false; }
+      store.budget.push({ category:v, planned:0, actual:0 });
+      commit('Expense category “'+v+'” added.',{title:'List updated'}); return true; });
+}
+function removeExpenseCategory(cat){
+  const used = store.expenses.filter(x => x.category===cat).length, b = store.budget.find(x => x.category===cat);
+  if(used || (b && (b.planned || b.actual))){ toast('info','In use', used ? used+' disbursement'+(used===1?' is':'s are')+' recorded under “'+cat+'”.' : '“'+cat+'” has a budget set.'); return; }
+  store.budget = store.budget.filter(x => x.category!==cat);
+  commit('Expense category “'+cat+'” removed.',{title:'List updated'});
 }
 function expenseForm(){
   modal('Record an expense','Disbursements above ₱25,000 need a second signature.',
