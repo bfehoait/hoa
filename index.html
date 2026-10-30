@@ -2519,22 +2519,23 @@ const ADMIN = {
         tabs('mdph',[{id:'all',label:'All phases'},{id:'1',label:'Phase 1',n:count('1')},{id:'2',label:'Phase 2',n:count('2')},{id:'3',label:'Phase 3',n:count('3')}],'all') +
         sectionCard('Units and lots', rows.length ?
           '<div class="card-pad" style="padding-bottom:0"><input class="input" type="search" placeholder="Search unit, owner, status or remarks" aria-label="Search units" oninput="mdFilterUnits(this.value)"></div>' +
-          '<div class="tablewrap"><table id="mdUnits"><thead><tr><th>Unit</th><th>Address</th><th>Owner of record</th><th>Status</th>' +
-          '<th class="hide-sm">Monthly dues</th><th class="hide-sm">Portal users</th><th></th></tr></thead><tbody>' +
-          rows.map(u => { const users = store.accounts.filter(a => a.unit===u.unit).length;
-            return '<tr data-q="'+esc([u.unit, u.adminId, u.owner, u.status, u.remarks, u.street, u.role].filter(Boolean).join(' ').toLowerCase())+'">' +
-            '<td class="mono" data-label="Unit"><strong>'+esc(u.unit)+'</strong>'+(u.adminId?'<div class="meta">'+esc(u.adminId)+'</div>':'')+'</td>' +
-            '<td data-label="Address">'+esc(mdAddress(u))+'<div class="meta">'+esc([u.street, /^yes$/i.test(u.linearPark||'') ? 'Linear park' : ''].filter(Boolean).join(' · '))+'</div></td>' +
-            '<td data-label="Owner of record">'+(u.owner ? esc(u.owner) : '<span class="meta">No owner on file</span>')+(u.role?' <span class="tag t-emerald">'+esc(u.role)+'</span>':'') +
-              '<div class="meta">'+esc([u.type, u.since ? 'since '+u.since : ''].filter(Boolean).join(' · '))+'</div></td>' +
-            '<td data-label="Status"><span class="tag '+(u.occupancy==='Vacant'?'t-grey':u.occupancy==='Leased'?'t-amber':'t-emerald')+'">'+esc(u.occupancy||'—')+'</span>' +
-              '<div class="meta">'+esc([u.status, u.remarks].filter(Boolean).join(' · '))+'</div></td>' +
-            '<td class="hide-sm mono" data-label="Monthly dues">'+peso(unitDues(u))+'</td>' +
-            '<td class="hide-sm" data-label="Portal users">'+users+(users>=2?' <span class="meta">(limit)</span>':'')+'</td>' +
+          '<div class="tablewrap"><table id="mdUnits"><thead><tr>'+LOT_REGISTER_COLS.map(c => '<th>'+esc(c)+'</th>').join('')+'<th></th></tr></thead><tbody>' +
+          rows.map(u => { const v = mdRegisterRow(u);
+            return '<tr data-q="'+esc([u.unit].concat(v).filter(x => x!=='').join(' ').toLowerCase())+'">' +
+            '<td class="mono" data-label="Physical Lot ID"><strong>'+esc(v[0]||'—')+'</strong></td>' +
+            '<td data-label="Phase">'+esc(v[1])+'</td><td data-label="Block">'+esc(v[2])+'</td><td data-label="Lot">'+esc(v[3])+'</td>' +
+            '<td class="mono" data-label="Admin Unit ID(s)">'+esc(v[4]||'—')+'</td>' +
+            '<td data-label="Admin Homeowner Name(s)">'+(v[5] ? esc(v[5]) : '<span class="meta">—</span>')+'</td>' +
+            '<td data-label="Admin Status(es)">'+esc(v[6]||'—')+'</td>' +
+            '<td data-label="Admin Remarks">'+esc(v[7]||'—')+'</td>' +
+            '<td data-label="Admin HOA Start" style="white-space:nowrap">'+(/^\d{4}-\d\d-\d\d$/.test(v[8]) ? fmtDate(v[8]) : esc(v[8]||'—'))+'</td>' +
+            '<td data-label="Linear Park">'+esc(v[9]||'—')+'</td>' +
+            '<td class="mono" data-label="Admin Proposed Rate PHP">'+(v[10]==='' ? '<span class="meta">—</span>' : peso(v[10]))+'</td>' +
+            '<td data-label="Gov Role">'+(v[11] ? '<span class="tag t-emerald">'+esc(v[11])+'</span>' : '')+'</td>' +
             '<td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="unitForm(\''+esc(u.unit)+'\')">Edit</button></td></tr>';
           }).join('') + '</tbody></table></div><p class="meta" id="mdNoMatch" style="display:none;padding:12px 16px">No units match that search.</p>'
           : empty(store.units.length ? 'No units in this phase' : 'No units yet', 'Upload the lot register from Excel, or add units one at a time.'),
-          '<div class="btn-row"><button class="btn btn-ghost btn-sm" onclick="unitImportForm()">Upload from Excel</button><button class="btn btn-primary btn-sm" onclick="unitForm()">Add unit</button></div>') +
+          '<div class="btn-row">'+(store.units.length ? '<button class="btn btn-ghost btn-sm" onclick="unitExport()">Download Excel</button>' : '')+'<button class="btn btn-ghost btn-sm" onclick="unitImportForm()">Upload from Excel</button><button class="btn btn-primary btn-sm" onclick="unitForm()">Add unit</button></div>') +
         '<p class="meta" style="margin-top:10px">Each unit allows up to two homeowner users. Unit codes follow Phase-Block-Lot, e.g. P1-B5-L12. A unit with its own monthly rate (from the lot register) is billed at that rate; the others follow the billing rule in Financial → Billing.</p>';
       },
       facilities(){
@@ -7182,19 +7183,23 @@ function unitForm(code){
   const u = code ? store.units.find(x => x.unit===code) : null;
   const opts = (list, cur) => list.map(o => '<option'+(o===cur?' selected':'')+'>'+esc(o)+'</option>').join('');
   const linked = u ? store.accounts.filter(a => a.unit===u.unit).length + store.dues.filter(d => d.unit===u.unit).length : 0;
-  modal(u ? 'Edit unit '+u.unit : 'Add a unit to the registry',
+  modal(u ? 'Edit lot '+(mdLotId(u)||u.unit) : 'Add a lot to the registry',
     u ? mdAddress(u) : 'New units appear in the ledger on the next billing run.',
     (u ? '' : addrFields('')) +
-    '<label class="fld"><span>Street</span><input class="input" id="f_st" value="'+esc(u&&u.street||'')+'" placeholder="Orchid St."></label>' +
-    '<label class="fld"><span>Owner of record</span><input class="input" id="f_ow" value="'+esc(u?u.owner:'')+'" placeholder="Full name"></label>' +
     '<div class="grid g-2" style="gap:0 12px">' +
-      '<label class="fld"><span>Lot area (sqm)</span><input class="input" id="f_lot" type="number" min="0" value="'+(u?u.lot:150)+'"></label>' +
-      '<label class="fld"><span>Type</span><select class="input" id="f_ty">'+(u && !u.type ? '<option value="" selected>Not set</option>' : '')+opts(UNIT_TYPES, u?u.type:'Single detached')+'</select></label>' +
+      '<label class="fld"><span>Admin Unit ID(s)</span><input class="input" id="f_aid" value="'+esc(u&&u.adminId||'')+'" placeholder="BF1-0512"></label>' +
+      '<label class="fld"><span>Admin HOA Start</span><input class="input" id="f_hs" type="date" value="'+esc(u ? (u.hoaStart||'') : '')+'"></label></div>' +
+    '<label class="fld"><span>Admin Homeowner Name(s)</span><input class="input" id="f_ow" value="'+esc(u?u.owner:'')+'" placeholder="DELA CRUZ JUAN / MARIA"></label>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Admin Status(es)</span><input class="input" id="f_ust" value="'+esc(u&&u.status||'')+'" placeholder="BEHOA member (moved-in)"></label>' +
+      '<label class="fld"><span>Admin Remarks</span><input class="input" id="f_rem" value="'+esc(u&&u.remarks||'')+'" placeholder="BAMI, LOT ONLY…"></label>' +
+      '<label class="fld"><span>Linear Park</span><select class="input" id="f_park">'+['','YES','NO','N/A'].map(o => '<option value="'+o+'"'+((u&&u.linearPark||'').toUpperCase()===o?' selected':'')+'>'+(o||'Not set')+'</option>').join('')+'</select></label>' +
+      '<label class="fld"><span>Admin Proposed Rate PHP</span><input class="input" id="f_rate" type="number" min="0" value="'+(u && typeof u.rate==='number' ? u.rate : '')+'" placeholder="Blank = billing rule"></label>' +
+      '<label class="fld"><span>Gov Role</span><select class="input" id="f_role">'+['','BOD','Officer'].concat(u && u.role && !['BOD','Officer'].includes(u.role) ? [u.role] : []).map(o => '<option value="'+esc(o)+'"'+((u&&u.role||'')===o?' selected':'')+'>'+esc(o||'None')+'</option>').join('')+'</select></label>' +
       '<label class="fld"><span>Occupancy</span><select class="input" id="f_oc">'+opts(OCCUPANCY, u?u.occupancy:'Owner-occupied')+'</select></label>' +
-      '<label class="fld"><span>Owner since (year)</span><input class="input" id="f_since" inputmode="numeric" value="'+esc(u?u.since||'':String(new Date().getFullYear()))+'"></label>' +
-      '<label class="fld"><span>Status</span><input class="input" id="f_ust" value="'+esc(u&&u.status||'')+'" placeholder="BEHOA member (moved-in)"></label>' +
-      '<label class="fld"><span>Monthly dues (₱)</span><input class="input" id="f_rate" type="number" min="0" value="'+(u && typeof u.rate==='number' ? u.rate : '')+'" placeholder="Blank = billing rule"></label></div>' +
-    '<label class="fld"><span>Remarks</span><input class="input" id="f_rem" value="'+esc(u&&u.remarks||'')+'" placeholder="BAMI, LOT ONLY…"></label>' +
+      '<label class="fld"><span>Street</span><input class="input" id="f_st" value="'+esc(u&&u.street||'')+'" placeholder="Orchid St."></label>' +
+      '<label class="fld"><span>Type</span><select class="input" id="f_ty">'+(u && !u.type ? '<option value="" selected>Not set</option>' : '')+opts(UNIT_TYPES, u?u.type:'Single detached')+'</select></label>' +
+      '<label class="fld"><span>Lot area (sqm)</span><input class="input" id="f_lot" type="number" min="0" value="'+(u?u.lot:150)+'"></label></div>' +
     (u ? '<div class="row" style="align-items:center;margin-top:4px"><p class="meta grow" style="margin:0">'+(linked
           ? 'This unit has portal users or dues on file, so it cannot be removed.'
           : 'Nothing is linked to this unit yet.')+'</p>' +
@@ -7203,13 +7208,14 @@ function unitForm(code){
       const ow = $('#f_ow').value.trim();
       const unit = u ? u.unit : readUnitField('homeowner', null);
       if(unit===null) return false;
-      if(!ow && !(u && u.status)){ toast('info','Missing details','Add the owner of record.'); return false; }
+      if(!ow && !$('#f_ust').value.trim()){ toast('info','Missing details','Add the homeowner name, or a status such as Breighton for an unsold lot.'); return false; }
       if(!u && store.units.some(x => x.unit===unit)){ toast('info','Already on file','Unit '+unit+' is already in the registry.'); return false; }
       const rec = u || {};
       const p = unitParts(unit), rate = $('#f_rate').value.trim();
       Object.assign(rec, { unit, owner:ow, street:$('#f_st').value.trim(), lot:Number($('#f_lot').value)||0,
-        type:$('#f_ty').value, occupancy:$('#f_oc').value, since:$('#f_since').value.trim(),
-        status:$('#f_ust').value.trim(), remarks:$('#f_rem').value.trim() });
+        type:$('#f_ty').value, occupancy:$('#f_oc').value, adminId:$('#f_aid').value.trim(), hoaStart:$('#f_hs').value,
+        since:$('#f_hs').value ? $('#f_hs').value.slice(0,4) : (u && !u.hoaStart ? u.since||'' : ''),
+        linearPark:$('#f_park').value, role:$('#f_role').value, status:$('#f_ust').value.trim(), remarks:$('#f_rem').value.trim() });
       if(rate==='') delete rec.rate; else rec.rate = Math.max(0, Number(rate)||0);
       if(!u){ Object.assign(rec, { phase:'Phase '+p.phase, block:p.block, lotNo:p.lot }); store.units.push(rec); }
       commit(u ? 'Unit '+unit+' updated.' : 'Unit '+unit+' added to the registry under '+ow+'.',{title: u ? 'Unit updated' : 'Unit added'}); return true; });
@@ -7270,8 +7276,14 @@ async function unitReadFile(f){
   if(col.owner === col.adminId) col.owner = head.findIndex((h,i) => i!==col.adminId && UNIT_COLS.owner.test(h));
   const cell = (r,k) => col[k] < 0 ? '' : String(r[col[k]]==null ? '' : r[col[k]]).trim();
   const num = v => { const m = /(\d+)/.exec(v); return m ? String(Number(m[1])) : ''; };
-  const year = v => { if(!v) return ''; if(/^\d{5}(\.\d+)?$/.test(v)) return String(new Date(Math.round((Math.floor(v) - 25569) * 864e5)).getUTCFullYear());
-    const m = /(19|20)\d\d/.exec(v); return m ? m[0] : ''; };
+  const isoDay = v => {                                                                  /* Excel date serial or a written date → yyyy-mm-dd */
+    if(!v) return '';
+    if(/^\d{5}(\.\d+)?$/.test(v)){ const d = new Date(Math.round((Math.floor(v) - 25569) * 864e5));
+      return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0'); }
+    if(/^\d{4}-\d\d-\d\d/.test(v)) return v.slice(0,10);
+    const d = new Date(v); return isNaN(d) ? v : bkIso(d);
+  };
+  const year = v => { const m = /(19|20)\d\d/.exec(v); return m ? m[0] : ''; };
   const byCode = new Map(store.units.map(u => [u.unit, u]));
   const add = [], upd = [], bad = [], seen = new Set();
   let same = 0, owners = 0;
@@ -7290,7 +7302,8 @@ async function unitReadFile(f){
     if(col.owner >= 0) x.owner = cell(r,'owner');
     if(col.status >= 0) x.status = status;
     if(col.remarks >= 0) x.remarks = remarks;
-    if(col.since >= 0) x.since = year(cell(r,'since'));
+    if(col.lotId >= 0 && cell(r,'lotId')) x.lotId = cell(r,'lotId');
+    if(col.since >= 0){ x.hoaStart = isoDay(cell(r,'since')); x.since = year(x.hoaStart); }
     if(col.park >= 0) x.linearPark = cell(r,'park');
     if(col.role >= 0) x.role = cell(r,'role');
     if(col.street >= 0) x.street = cell(r,'street');
@@ -7321,10 +7334,29 @@ async function unitReadFile(f){
       '</tbody></table></div>' + (add.length + upd.length > 50 ? '<p class="meta">…and '+(add.length + upd.length - 50)+' more.</p>' : '') : '');
 }
 async function unitTemplate(){
-  const rows = [['Phase','Block','Lot','Street','Homeowner Name','Status','Remarks','HOA Start','Monthly Rate PHP','Lot Area (sqm)','Type','Occupancy'],
-    [1, 5, 12, 'Orchid St.', 'DELA CRUZ JUAN', 'BEHOA member (moved-in)', 'BAMI', '2020-01-01', 900, 150, 'Single detached', 'Owner-occupied']];
-  try{ await loadXlsx(); saveSheets('Lot-register-template.xlsx', [{ name:'LOT Register', rows, widths:[7,7,6,16,26,24,14,12,16,14,16,16] }]); }
+  const rows = [LOT_REGISTER_COLS, ['1-05-012', 1, 5, 12, 'BF1-0512', 'DELA CRUZ JUAN', 'BEHOA member (moved-in)', 'BAMI', '2020-01-01', 'NO', 900, '']];
+  try{ await loadXlsx(); saveSheets('Lot-register-template.xlsx', [{ name:'LOT Register', rows, widths:LOT_REGISTER_WIDTHS }]); }
   catch(e){ saveCsv('Lot-register-template.csv', rows); }
+}
+/* the registry in the same layout as the BFE Lot Register */
+const LOT_REGISTER_COLS = ['Physical Lot ID','Phase','Block','Lot','Admin Unit ID(s)','Admin Homeowner Name(s)','Admin Status(es)','Admin Remarks','Admin HOA Start','Linear Park','Admin Proposed Rate PHP','Gov Role'];
+const LOT_REGISTER_WIDTHS = [14,7,7,6,15,34,24,18,15,11,22,10];
+function mdLotId(u){
+  if(u.lotId) return u.lotId;
+  const p = unitParts(u.unit); return p ? p.phase+'-'+p.block.padStart(2,'0')+'-'+p.lot.padStart(3,'0') : '';
+}
+function mdRegisterRow(u){
+  const p = unitParts(u.unit) || { phase:mdPhaseOf(u), block:u.block||'', lot:u.lotNo||'' };
+  return [mdLotId(u), p.phase, p.block, p.lot, u.adminId||'', u.owner||'', u.status||'', u.remarks||'', u.hoaStart||u.since||'', u.linearPark||'',
+    typeof u.rate==='number' ? u.rate : '', u.role||''];
+}
+async function unitExport(){
+  const list = store.units.slice().sort((a,b) => mdLotId(a).localeCompare(mdLotId(b), undefined, { numeric:true }));
+  const rows = [LOT_REGISTER_COLS].concat(list.map(u => mdRegisterRow(u).map((v,i) => i>=1 && i<=3 && v!=='' ? Number(v) : v)));
+  const file = 'Lot-register-'+bkIso(new Date());
+  try{ await loadXlsx(); saveSheets(file+'.xlsx', [{ name:'LOT Register', rows, widths:LOT_REGISTER_WIDTHS, fmt:{ 10:'#,##0' } }]); }
+  catch(e){ saveCsv(file+'.csv', rows); }
+  toast('ok','Lot register exported', list.length+' units saved to '+file+'.');
 }
 /* expense categories are the lines of the budget, so a category in use stays */
 function expenseCategoryForm(){
