@@ -6722,8 +6722,8 @@ function userForm(id, presetRole){
     '<label class="fld"><span>Full name</span><input class="input" id="f_n" value="'+esc(a?a.name:'')+'" placeholder="Estrella Ocampo"></label>' +
     '<label class="fld"><span>Email for sign-in</span><input class="input" id="f_e" type="email" value="'+esc(a?a.email:'')+'"'+(a?' disabled':'')+' placeholder="name@hoa-community.ph"></label>' +
     '<div class="grid g-2" style="gap:0 12px">' +
-      '<div id="f_addr_wrap" style="grid-column:1/-1"'+(ADDR_ROLES.includes(role)?'':' class="hide"')+'>'+addrFields(a?a.unit:'')+'</div>' +
-      '<label class="fld'+(ADDR_ROLES.includes(role)?' hide':'')+'" id="f_u_wrap"><span>Unit or post</span><input class="input" id="f_u" value="'+esc(a?a.unit:'')+'" placeholder="Main gate or Admin office"></label>' +
+      '<div id="f_addr_wrap" style="grid-column:1/-1"'+(addrAny(a ? acctRoles(a) : [role])?'':' class="hide"')+'>'+addrFields(a?a.unit:'')+'</div>' +
+      '<label class="fld'+(addrAny(a ? acctRoles(a) : [role])?' hide':'')+'" id="f_u_wrap"><span>Unit or post</span><input class="input" id="f_u" value="'+esc(a?a.unit:'')+'" placeholder="Main gate or Admin office"></label>' +
       '<label class="fld"><span>Mobile number</span><input class="input" id="f_p" value="'+esc(a?a.phone:'')+'" placeholder="0917 555 0000"></label></div>' +
     '<div id="f_t_wrap"'+(hasRole(a||{role},'admin')?' class="hide"':'')+'><label class="fld"><span>Title</span><input class="input" id="f_t" value="'+esc(a?a.title:'Owner of record')+'"></label></div>' +
     '<div id="f_pos_wrap"'+(hasRole(a||{role},'admin')?'':' class="hide"')+'>'+adminPositionField(a&&hasRole(a,'admin')?a.title:'')+'</div>' +
@@ -6744,15 +6744,15 @@ function userForm(id, presetRole){
     a ? 'Save changes' : 'Add account',
     () => {
       const chosen = $('#f_r') ? $('#f_r').value : a.role;
-      const owner = chosen==='homeowner', res = owner || chosen==='renter';
-      const name=$('#f_n').value.trim(), email=$('#f_e').value.trim().toLowerCase(), unit=readUnitField(chosen, a);
+      const extras = $('#f_xr') ? readExtraRoles(chosen) : (a ? acctRoles(a).slice(1) : []);
+      const owner = chosen==='homeowner' || extras.includes('homeowner'), res = owner || chosen==='renter' || extras.includes('renter');
+      const name=$('#f_n').value.trim(), email=$('#f_e').value.trim().toLowerCase(), unit=readUnitField(chosen, a, extras);
       if(unit===null) return false;
       if(!name || !email){ toast('info','Missing details','A name and a sign-in email are both required.'); return false; }
       if(!email.includes('@')){ toast('info','Check the email','That address is missing an @.'); return false; }
       const clash = store.accounts.find(x => x.email.toLowerCase()===email && x.id!==(a&&a.id));
       if(clash){ toast('info','Email already in use',ROLE_LABEL(clash.role)+' account '+clash.unit+' already signs in with that address.'); return false; }
       if(res && !unit){ toast('info','Add a unit','Resident accounts are tied to a unit number.'); return false; }
-      const extras = $('#f_xr') ? readExtraRoles(chosen) : (a ? acctRoles(a).slice(1) : []);
       const adminAny = chosen==='admin' || extras.includes('admin');
       const title = adminAny ? adminPositionValue() : $('#f_t').value.trim();
       if(adminAny && !title){ toast('info','Add a position','Pick the administrator\u2019s position, such as HOA President or Treasurer.'); return false; }
@@ -6860,13 +6860,16 @@ function addrPhaseChanged(){
   b.disabled = l.disabled = !L;
   $('#f_alayout').textContent = addrHint(ph);
 }
-/* the unit for the form: Phase/Block/Lot for residents and the Board, free text for staff; null after showing a message */
-function readUnitField(role, a){
-  if(!ADDR_ROLES.includes(role)) return ($('#f_u') ? $('#f_u').value.trim() : (a ? a.unit : ''));
+/* the unit for the form: Phase/Block/Lot when any of their roles is a resident or the Board (main or extra),
+   free text for staff only; null after showing a message */
+const addrAny = roles => roles.some(r => ADDR_ROLES.includes(r));
+function readUnitField(role, a, extras){
+  const roles = [role].concat(extras||[]);
+  if(!addrAny(roles)) return ($('#f_u') ? $('#f_u').value.trim() : (a ? a.unit : ''));
   const ph = $('#f_aph').value, blk = $('#f_ablk').value, lot = $('#f_alot').value;
   if(!ph && !blk && !lot){
-    if(a && a.unit && (a.role===role || ADDR_ROLES.includes(a.role))) return a.unit;          /* editing: keep what is on file */
-    if(role==='board') return '';
+    if(a && a.unit && (unitParts(a.unit) || ADDR_ROLES.includes(a.role))) return a.unit;      /* editing: keep the address on file */
+    if(!roles.some(r => r==='homeowner' || r==='renter')) return role==='board' ? '' : ($('#f_u') ? $('#f_u').value.trim() : '');
     toast('info','Add the address','Choose the Phase, Block and Lot.'); return null;
   }
   if(!ph || !blk || !lot){ toast('info','Finish the address','Choose the Phase, Block and Lot.'); return null; }
@@ -6996,6 +6999,15 @@ function xrChanged(){
   const tw = $('#f_t_wrap'), pw = $('#f_pos_wrap');
   if(tw) tw.classList.toggle('hide', adminAny);
   if(pw) pw.classList.toggle('hide', !adminAny);
+  addrToggle();
+}
+/* Phase / Block / Lot replaces the free-text unit when the main role or a ticked extra role is a resident or the Board */
+function addrToggle(){
+  const r = $('#f_r') ? $('#f_r').value : null, aw = $('#f_addr_wrap'), uw = $('#f_u_wrap');
+  if(!r || !aw) return;
+  const on = addrAny([r].concat(readExtraRoles(r)));
+  aw.classList.toggle('hide', !on);
+  if(uw) uw.classList.toggle('hide', on);
 }
 function rolePreview(r){
   const m = ROLE_MATRIX.find(x=>x.role===r); if(!m) return;
@@ -7004,9 +7016,7 @@ function rolePreview(r){
   if(d) d.textContent = m.deny;
   const tw = $('#f_t_wrap'), pw = $('#f_pos_wrap');
   const xr = $('#f_xr'); if(xr) xr.innerHTML = extraRolesHTML(r, readExtraRoles(r));
-  const aw = $('#f_addr_wrap'), uw = $('#f_u_wrap');
-  if(aw) aw.classList.toggle('hide', !ADDR_ROLES.includes(r));
-  if(uw) uw.classList.toggle('hide', ADDR_ROLES.includes(r));
+  addrToggle();
   const adminAny = r==='admin' || readExtraRoles(r).includes('admin');
   if(tw) tw.classList.toggle('hide', adminAny);
   if(pw) pw.classList.toggle('hide', !adminAny);
