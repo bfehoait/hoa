@@ -845,7 +845,7 @@ const store = {
     categories:['Advisory','Billing','Event','Security','Maintenance'],
     officeHours:'Mon–Sat, 8:00 AM – 5:00 PM',
     quietHours:'10:00 PM – 6:00 AM',
-    autoApproveBookings:false, publishTallyLive:true, allowProxyVoting:true,
+    autoApproveBookings:false, publishTallyLive:true, allowProxyVoting:true, showCollectionTracker:true,
     /* booking time slots per facility: step in minutes, open/close (24h, close 00:00 = midnight), longest booking in minutes */
     facilityRules:{
       'Function hall':   { step:60, open:'00:00', close:'00:00', max:1440 },
@@ -926,6 +926,8 @@ const store = {
   ],
   requests:[],
   dues:[],
+  /* financial reports the board publishes to homeowners: AFS, event liquidations, budgets, other disclosures */
+  disclosures:[],
   bookings:[],
   marketplace:[],
   boothEvents:[],
@@ -1475,7 +1477,7 @@ function aboutLink(key){
 const $ = s => document.querySelector(s);
 const uid = () => Math.random().toString(36).slice(2,9);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const peso = n => '₱' + Number(n).toLocaleString('en-PH');
+const peso = n => '₱' + Number(n).toLocaleString('en-PH', Number.isInteger(Number(n)) ? {} : { minimumFractionDigits:2, maximumFractionDigits:2 });
 const fmtDate = d => new Date(d).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});
 const clock = d => new Date(d).toLocaleTimeString('en-PH',{hour:'numeric',minute:'2-digit'});
 function ago(d){ const s=(Date.now()-new Date(d))/1000;
@@ -1900,6 +1902,7 @@ const NAV = {
       { id:'hotlines',   label:'Emergency hotlines', icon:'phone' },
       { id:'feed',       label:'Community feed', icon:'megaphone', badge:()=>store.announcements.filter(a=>!store.seen.has(a.id)).length },
       { id:'mydues',     label:'My dues',        icon:'peso' },
+      { id:'finances',   label:'Financial reports', icon:'chart' },
       { id:'events',     label:'Events',         icon:'calendar' },
       { id:'book',       label:'Book a facility',icon:'grid' },
       { id:'gatepass',   label:'Gate pass',      icon:'shield', badge:()=>(store.gatePasses||[]).filter(p=>p.unit===myUnit()&&(p.status==='Held'||p.status==='Declined'&&p.notedAt&&Date.now()-new Date(p.notedAt)<864e5*3)).length + store.passes.filter(p=>p.walkIn&&p.unit===myUnit()&&p.status==='At the gate').length },
@@ -2112,6 +2115,15 @@ const augDues = () => store.dues.filter(d=>d.period===curPeriod());
 const collected = () => augDues().filter(d=>d.status==='Paid').reduce((a,b)=>a+b.amount,0);
 const collectionPct = () => augDues().length ? Math.round(augDues().filter(d=>d.status==='Paid').length / augDues().length * 100) : 0;
 const totalExpense = () => store.expenses.filter(x=>x.status==='Paid').reduce((a,b)=>a+b.amount,0);
+/* collection rate per billing period, newest first — aggregate only, no household is named */
+function periodCollections(n){
+  const ps = [...new Set(store.dues.map(d => d.period))].sort((a,b) => periodDate(b) - periodDate(a)).slice(0, n);
+  return ps.map(p => {
+    const ds = store.dues.filter(d => d.period===p), paid = ds.filter(d => d.status==='Paid');
+    return { period:p, households:ds.length, paid:paid.length, billed:ds.reduce((a,b)=>a+b.amount,0),
+             collected:paid.reduce((a,b)=>a+b.amount,0), pct:ds.length ? Math.round(paid.length/ds.length*100) : 0 };
+  });
+}
 function myBallot(){ const e = store.election, id = store.session.accountId; e.ballots = e.ballots || {}; return e.ballots[id] || (e.ballots[id] = {}); }
 const hasVoted = () => Object.keys(myBallot()).length === store.election.positions.length;
 const phaseCollections = () => {
@@ -2768,8 +2780,9 @@ const ADMIN = {
             '<td class="hide-sm" data-label="Period">'+esc(d.period)+'</td><td class="mono" data-label="Amount">'+peso(d.amount)+'</td>' +
             '<td class="hide-sm" data-label="Method">'+esc(d.method||'—')+'</td><td data-label="Status"><span class="tag '+statusTag(d.status)+'">'+esc(d.status)+'</span></td>' +
             '<td style="text-align:right">'+(d.status==='Paid'
-              ? '<span class="meta">'+fmtDate(d.paidAt)+'</span>'
-              : '<div class="btn-row" style="justify-content:flex-end"><button class="btn btn-ghost btn-sm" onclick="markPaid(\''+d.id+'\',\'Office cash\')">Record payment</button>' +
+              ? '<div class="btn-row" style="justify-content:flex-end;align-items:center"><span class="meta">Paid '+(d.paidAt?fmtDate(d.paidAt):'—')+(d.ref?' · '+esc(d.ref):'')+'</span>' +
+                '<button class="btn btn-ghost btn-sm" onclick="recordPaymentForm(\''+d.id+'\')">Edit</button></div>'
+              : '<div class="btn-row" style="justify-content:flex-end"><button class="btn btn-ghost btn-sm" onclick="recordPaymentForm(\''+d.id+'\')">Record payment</button>' +
                 '<button class="btn btn-ghost btn-sm" onclick="remind(\''+d.id+'\')">Send reminder</button></div>')+'</td></tr>').join('') +
           '</tbody></table></div>') +
         '<div class="grid g-4" style="margin:14px 0">' + aging.map(a =>
@@ -2795,7 +2808,8 @@ const ADMIN = {
               : '<span class="meta">Cleared</span>')+'</td></tr>').join('') +
           '</tbody></table></div>',
           '<button class="btn btn-ghost btn-sm" onclick="expenseForm()">Record expense</button>');
-      }
+      },
+      reports(){ return disclosureAdmin(); }
     }[t]();
     return head('Financial','Billing, collections and disbursements — the association’s money in one place.') +
     '<div class="grid g-4" style="margin-bottom:14px">' +
@@ -2807,7 +2821,8 @@ const ADMIN = {
       tabs('fin',[
         {id:'billing',label:'Billing'},
         {id:'collections',label:'Collections',n:store.dues.filter(d=>d.status!=='Paid').length},
-        {id:'disbursement',label:'Disbursement',n:store.expenses.filter(x=>x.status==='For approval').length}],'billing') + inner;
+        {id:'disbursement',label:'Disbursement',n:store.expenses.filter(x=>x.status==='For approval').length},
+        {id:'reports',label:'Published reports'}],'billing') + inner;
   },
 
   /* ---------- REPORTS ---------- */
@@ -4177,10 +4192,30 @@ const HOME = {
       '<div class="btn-row">' + (open ? '<button class="btn btn-emerald" style="width:auto" onclick="payForm()">Pay '+esc(open.period)+'</button>' : '') +
       '<button class="btn btn-ghost" style="width:auto" onclick="downloadStatement()">Download statement</button></div>') +
     (mine.length ? '' : '<div class="card" style="margin-bottom:14px">'+empty('No dues on record yet','Your billing appears here once the admin office generates it. The statement will list every period.')+'</div>') +
-    '<div class="card tablewrap"><table><thead><tr><th>Period</th><th>Amount</th><th class="hide-sm">Method</th><th>Status</th><th style="text-align:right">Paid on</th></tr></thead><tbody>' +
+    '<div class="card tablewrap"><table><thead><tr><th>Period</th><th>Amount</th><th class="hide-sm">Method</th><th>Status</th><th style="text-align:right">Date paid</th></tr></thead><tbody>' +
     mine.map(d => '<tr><td data-label="Period"><strong>'+esc(d.period)+'</strong></td><td class="mono" data-label="Amount">'+peso(d.amount)+'</td>' +
-      '<td class="hide-sm" data-label="Method">'+esc(d.method||'—')+'</td><td data-label="Status"><span class="tag '+statusTag(d.status)+'">'+esc(d.status)+'</span></td>' +
-      '<td style="text-align:right" class="meta" data-label="Paid on">'+(d.paidAt?fmtDate(d.paidAt):'—')+'</td></tr>').join('') + '</tbody></table></div>';
+      '<td class="hide-sm" data-label="Method">'+esc(d.method||'—')+(d.ref?'<div class="meta">'+esc(d.ref)+'</div>':'')+'</td><td data-label="Status"><span class="tag '+statusTag(d.status)+'">'+esc(d.status)+'</span></td>' +
+      '<td style="text-align:right" class="meta" data-label="Date paid">'+(d.paidAt?fmtDate(d.paidAt):'—')+'</td></tr>').join('') + '</tbody></table></div>';
+  },
+
+  finances(){
+    const rows = periodCollections(6), pub = (store.disclosures||[]).slice().sort((a,b) => String(b.date).localeCompare(String(a.date)));
+    const tracker = !store.settings.showCollectionTracker ? '' : sectionCard('Monthly collection',
+      rows.length ? '<div class="card-pad"><p class="meta" style="display:block;margin:0 0 14px">Share of households that have paid their dues for each billing period. Totals only — no household is named.</p>' +
+        rows.map(r => '<div style="margin-bottom:16px"><div class="row" style="align-items:center;margin-bottom:6px">' +
+          '<div class="grow"><strong>'+esc(r.period)+'</strong> <span class="meta">'+r.paid+' of '+r.households+' households</span></div>' +
+          '<span class="mono" style="font-size:12.5px;color:var(--ink-2)">'+peso(r.collected)+' / '+peso(r.billed)+' · '+r.pct+'%</span></div>' +
+          '<div class="progress '+(r.pct<60?'amber':'slate')+'"><i style="width:'+r.pct+'%"></i></div></div>').join('') + '</div>'
+      : empty('No billing yet','Collection figures appear here once the admin office runs the first billing.'));
+    const groups = DISCLOSURE_KINDS.map(k => ({ k, list:pub.filter(d => d.kind===k) })).filter(g => g.list.length);
+    return head('Financial reports','How the association’s money is collected and spent — published by the Board of Trustees.') +
+      (rows.length && store.settings.showCollectionTracker ? '<div class="grid g-3" style="margin-bottom:14px">' +
+        stat('Collected · '+rows[0].period, peso(rows[0].collected), rows[0].pct+'% of households paid') +
+        stat('Billed · '+rows[0].period, peso(rows[0].billed), rows[0].households+' households') +
+        stat('Reports published', pub.length, pub.length ? 'Latest '+fmtDate(pub[0].date) : 'None yet') + '</div>' : '') +
+      tracker +
+      (groups.length ? groups.map(g => sectionCard(g.k+(g.list.length>1?'s':''), disclosureList(g.list, false))).join('')
+        : '<div class="card">'+empty('No reports published yet','Audited financial statements, event liquidations and the annual budget appear here once the board publishes them.')+'</div>');
   },
 
   myrequests(){
@@ -4980,7 +5015,7 @@ const BOARD = {
         '<span class="mono">'+peso(x.amount)+'</span>' +
         '<button class="btn btn-emerald btn-sm" onclick="approveExpense(\''+x.id+'\')">Approve</button></div></li>').join('') + '</ul>'
         : empty('Nothing pending','All disbursements this period have been released.');
-    })());
+    })()) + disclosureAdmin();
   },
   documents(){
     return head('Board documents','Minutes, resolutions and contracts. Not published to residents.',
@@ -6124,14 +6159,110 @@ function payForm(){
     '<div class="grow"><div class="meta">Amount due</div>' +
     '<div style="font-family:var(--display);font-size:28px;font-weight:800;letter-spacing:-.03em">'+peso(due.amount)+'</div></div>' +
     '<span class="tag '+statusTag(due.status)+'">'+esc(due.status)+'</span></div></div>' +
-    '<label class="fld"><span>Pay with</span><select class="input" id="f_method">'+['GCash','Maya','Bank transfer','Credit card'].map(m=>'<option>'+m+'</option>').join('')+'</select></label>' +
-    '<label class="fld"><span>Reference note (optional)</span><input class="input" id="f_ref" placeholder="e.g. paid on behalf of B-12"></label>',
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Pay with</span><select class="input" id="f_method">'+['GCash','Maya','Bank transfer','Credit card'].map(m=>'<option>'+m+'</option>').join('')+'</select></label>' +
+      payDateField(null) + '</div>' +
+    '<label class="fld"><span>Reference note (optional)</span><input class="input" id="f_ref" placeholder="e.g. GCash ref. no., or paid on behalf of B-12"></label>',
     'Pay '+peso(due.amount), () => {
-      due.status='Paid'; due.method=$('#f_method').value; due.paidAt=new Date();
-      commit('Unit '+due.unit+' settled '+due.period+' dues via '+due.method+' · '+peso(due.amount),{title:'Payment recorded'}); return true; });
+      const paidAt = payDateValue(); if(!paidAt) return false;
+      due.status='Paid'; due.method=$('#f_method').value; due.paidAt=paidAt; due.ref=$('#f_ref').value.trim();
+      commit('Unit '+due.unit+' settled '+due.period+' dues via '+due.method+' · '+peso(due.amount)+', paid '+fmtDate(paidAt)+'.',{title:'Payment recorded'}); return true; });
 }
-function markPaid(id,method){ const d=store.dues.find(x=>x.id===id); d.status='Paid'; d.method=method; d.paidAt=new Date();
-  commit('Office recorded '+peso(d.amount)+' from unit '+d.unit+' ('+d.period+').',{title:'Payment recorded'}); }
+/* "Date paid" is typed in by hand until a payment gateway records it, so the books show when the money actually came in */
+function payDateField(cur){
+  const today = bkIso(new Date());
+  return '<label class="fld"><span>Date paid</span><input class="input" id="f_paid" type="date" max="'+today+'" value="'+(cur ? bkIso(new Date(cur)) : today)+'"></label>';
+}
+function payDateValue(){
+  const v = $('#f_paid').value;
+  if(!v){ toast('info','Add the date paid','Enter the date the payment was made.'); return null; }
+  if(v > bkIso(new Date())){ toast('info','Check the date','The date paid cannot be in the future.'); return null; }
+  return new Date(v+'T12:00:00');
+}
+const PAY_METHODS = ['Office cash','Check','Bank transfer','GCash','Maya','Credit card'];
+/* admin: record a payment received at the office (or by transfer), or correct one already recorded */
+function recordPaymentForm(id){
+  const d = store.dues.find(x => x.id===id); if(!d) return;
+  const edit = d.status==='Paid';
+  modal(edit ? 'Edit payment' : 'Record payment', d.owner+' · '+d.unit+' · '+d.period+' dues of '+peso(d.amount),
+    '<div class="grid g-2" style="gap:0 12px">' + payDateField(edit ? d.paidAt : null) +
+      '<label class="fld"><span>Method</span><select class="input" id="f_method">' +
+        PAY_METHODS.concat(d.method && !PAY_METHODS.includes(d.method) ? [d.method] : []).map(m => '<option'+(m===(d.method||'Office cash')?' selected':'')+'>'+esc(m)+'</option>').join('') +
+      '</select></label></div>' +
+    '<label class="fld"><span>OR / reference no. (optional)</span><input class="input" id="f_ref" value="'+esc(d.ref||'')+'" placeholder="OR 01234, check no., or transfer reference"></label>',
+    edit ? 'Save changes' : 'Record payment', () => {
+      const paidAt = payDateValue(); if(!paidAt) return false;
+      d.status='Paid'; d.method=$('#f_method').value; d.paidAt=paidAt; d.ref=$('#f_ref').value.trim();
+      d.recordedBy=store.session.name; d.recordedAt=new Date();
+      commit((edit ? 'Payment updated — ' : 'Office recorded ')+peso(d.amount)+' from unit '+d.unit+' ('+d.period+'), paid '+fmtDate(paidAt)+' via '+d.method+'.',
+        {title:edit ? 'Payment updated' : 'Payment recorded', forUnit:d.unit, audience:['admin']});
+      return true; });
+}
+
+/* financial reports published to homeowners (Financial reports page); admin and board publish them */
+const DISCLOSURE_KINDS = ['Audited financial statement','Event liquidation report','Annual budget','Other disclosure'];
+function disclosureList(list, manage){
+  return '<ul class="list">' + list.map(d => {
+    const w = d.link ? lhWebLink(d.link) : null, hasAmt = typeof d.income==='number' || typeof d.expense==='number';
+    const inc = d.income||0, exp = d.expense||0;
+    return '<li><div class="row"><div class="grow"><div class="ttl">'+esc(d.title)+'</div>' +
+      '<div class="meta">'+(manage?'<span class="tag t-slate">'+esc(d.kind)+'</span>':'')+(d.period?'<span>'+esc(d.period)+'</span>':'')+'<span>Published '+fmtDate(d.date)+'</span>'+(d.by?'<span>'+esc(d.by)+'</span>':'')+'</div>' +
+      (d.summary?'<div class="body">'+esc(d.summary)+'</div>':'') +
+      (hasAmt ? '<div class="card card-pad" style="background:var(--paper);margin-top:10px;max-width:420px">' +
+        '<div class="kv"><span>'+(d.kind==='Annual budget'?'Projected income':'Total collected')+'</span><b class="mono">'+peso(inc)+'</b></div>' +
+        '<div class="kv"><span>'+(d.kind==='Annual budget'?'Projected expenses':'Total spent')+'</span><b class="mono">'+peso(exp)+'</b></div>' +
+        '<div class="kv"><span>'+(inc-exp<0?'Shortfall':'Balance')+'</span><b class="mono">'+peso(Math.abs(inc-exp))+'</b></div></div>' : '') +
+      '<div class="btn-row" style="margin-top:10px">' +
+        (w ? '<a class="btn btn-ghost btn-sm" style="width:auto" href="'+esc(w.url)+'" target="_blank" rel="noopener noreferrer">Open report ↗</a>' : '') +
+        (manage ? '<button class="btn btn-ghost btn-sm" onclick="disclosureForm(\''+d.id+'\')">Edit</button>' +
+          '<button class="btn btn-danger btn-sm" onclick="removeDisclosure(\''+d.id+'\')">Remove</button>' : '') +
+      '</div></div></div></li>';
+  }).join('') + '</ul>';
+}
+function disclosureAdmin(){
+  const list = (store.disclosures||[]).slice().sort((a,b) => String(b.date).localeCompare(String(a.date)));
+  return sectionCard('Published to homeowners',
+    '<div class="card-pad" style="padding-bottom:0"><p class="meta" style="display:block;margin:0">Everything here shows on every homeowner’s Financial reports page. Upload the PDF to Google Drive (or similar), set it to “Anyone with the link”, and paste the link.</p></div>' +
+    (store.session.role==='admin' ? '<div class="card-pad" style="padding-top:8px;padding-bottom:0">'+toggle('Show monthly collection to homeowners','The % of households paid for each billing period, with totals. No household is named.','showCollectionTracker')+'</div>' : '') +
+    (list.length ? disclosureList(list, true) : empty('Nothing published yet','Add the audited financial statements, an event liquidation or the annual budget.')),
+    '<button class="btn btn-primary btn-sm" style="width:auto" onclick="disclosureForm()">Publish a report</button>');
+}
+function disclosureForm(id){
+  const d = id ? (store.disclosures||[]).find(x => x.id===id) : null;
+  const num = v => typeof v==='number' ? v : '';
+  modal(d ? 'Edit report' : 'Publish a financial report','Homeowners see this on their Financial reports page.',
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Type</span><select class="input" id="f_dk">'+DISCLOSURE_KINDS.map(k => '<option'+(d&&d.kind===k?' selected':'')+'>'+esc(k)+'</option>').join('')+'</select></label>' +
+      '<label class="fld"><span>Covers</span><input class="input" id="f_dp" value="'+esc(d?d.period||'':'')+'" placeholder="FY2025, October 2026, Trick-or-Treat 2026"></label></div>' +
+    '<label class="fld"><span>Title</span><input class="input" id="f_dt" value="'+esc(d?d.title:'')+'" placeholder="Trick-or-Treat 2026 — liquidation report"></label>' +
+    '<label class="fld"><span>Summary for homeowners</span><textarea class="input" id="f_ds" placeholder="What it shows, in a sentence or two.">'+esc(d?d.summary||'':'')+'</textarea></label>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Total collected / income, ₱ (optional)</span><input class="input" id="f_di" type="number" min="0" step="0.01" value="'+num(d&&d.income)+'"></label>' +
+      '<label class="fld"><span>Total spent / expenses, ₱ (optional)</span><input class="input" id="f_de" type="number" min="0" step="0.01" value="'+num(d&&d.expense)+'"></label></div>' +
+    '<div class="grid g-2" style="gap:0 12px">' +
+      '<label class="fld"><span>Link to the full report (PDF, Drive, etc.)</span><input class="input" id="f_dl" value="'+esc(d?d.link||'':'')+'" placeholder="drive.google.com/…"></label>' +
+      '<label class="fld"><span>Date published</span><input class="input" id="f_dd" type="date" value="'+esc(d?d.date:bkIso(new Date()))+'"></label></div>',
+    d ? 'Save changes' : 'Publish', () => {
+      const title = $('#f_dt').value.trim();
+      if(!title){ toast('info','Add a title','Give the report a title homeowners will recognise.'); return false; }
+      const linkRaw = $('#f_dl').value.trim(), w = linkRaw ? lhWebLink(linkRaw) : null;
+      if(linkRaw && !w){ toast('info','Check the link','Use a full web address, like drive.google.com/file/…, or leave it blank.'); return false; }
+      const amt = sel => { const v = $(sel).value.trim(); return v==='' ? null : Math.max(0, Number(v)||0); };
+      const fields = { kind:$('#f_dk').value, title, period:$('#f_dp').value.trim(), summary:$('#f_ds').value.trim(),
+        income:amt('#f_di'), expense:amt('#f_de'), link:w ? w.url : '', date:$('#f_dd').value || bkIso(new Date()) };
+      if(d) Object.assign(d, fields);
+      else (store.disclosures = store.disclosures||[]).unshift(Object.assign({ id:uid(), by:store.session.name, at:new Date() }, fields));
+      commit(d ? title+' updated.' : fields.kind+' published to homeowners — '+title+'.',
+        { title:d ? 'Report updated' : 'Financial report published', audience:d ? ['admin','board'] : ['homeowner','admin','board'], go:d ? null : 'finances' });
+      return true; });
+}
+function removeDisclosure(id){
+  const d = (store.disclosures||[]).find(x => x.id===id); if(!d) return;
+  modal('Remove this report?','Homeowners will no longer see “'+d.title+'”.','', 'Remove', () => {
+    store.disclosures = store.disclosures.filter(x => x.id!==id);
+    commit(d.title+' removed from Financial reports.',{ title:'Report removed', audience:['admin','board'] });
+    return true; }, true);
+}
 function remind(id){ const d=store.dues.find(x=>x.id===id);
   commit('Reminder sent to unit '+d.unit+' for '+d.period+'.',{title:'Reminder sent'}); }
 function billingRun(){
