@@ -939,13 +939,7 @@ const store = {
   ],
 
   /* property & financials */
-  units:[
-    { unit:'A-04', owner:'Marco Villanueva', phase:'Phase 1', lot:180, type:'Single detached', occupancy:'Owner-occupied', since:'2019' },
-    { unit:'B-12', owner:'Rina Dela Cruz', phase:'Phase 2', lot:150, type:'Townhouse', occupancy:'Owner-occupied', since:'2021' },
-    { unit:'C-21', owner:'Jonna Reyes', phase:'Phase 2', lot:150, type:'Townhouse', occupancy:'Leased', since:'2018' },
-    { unit:'D-07', owner:'Ferdie Lim', phase:'Phase 3', lot:220, type:'Single detached', occupancy:'Owner-occupied', since:'2016' },
-    { unit:'D-15', owner:'Estrella Ocampo', phase:'Phase 3', lot:200, type:'Single detached', occupancy:'Vacant', since:'2022' }
-  ],
+  units:[],   /* the unit registry starts empty; units are added in Master data */
   ledger:{ opening:0, reserve:0 },
   expenses:[],
   budget:[   /* categories for recording expenses; amounts are set by the treasurer */
@@ -2467,17 +2461,17 @@ const ADMIN = {
       units(){
         const occ = k => store.units.filter(u=>u.occupancy===k).length;
         return '<div class="grid g-4" style="margin-bottom:14px">' +
-          stat('Registered units', 412, 'Across three phases') +
-          stat('Owner-occupied', occ('Owner-occupied')+' shown', 'In this sample registry') +
-          stat('Leased', occ('Leased')+' shown', 'Lease contracts on file') +
-          stat('Vacant', occ('Vacant')+' shown', 'No active resident') +
+          stat('Registered units', store.units.length, 'Across three phases') +
+          stat('Owner-occupied', occ('Owner-occupied'), 'Living in their own unit') +
+          stat('Leased', occ('Leased'), 'Lease contracts on file') +
+          stat('Vacant', occ('Vacant'), 'No active resident') +
         '</div>' +
         sectionCard('Dues billing mode', '<div class="card-pad">' + duesModeToggle() +
           '<p class="meta">' + (store.settings.duesMode==='sqm'
             ? 'Monthly dues below are each unit’s lot area × '+peso(store.settings.duesRatePerSqm)+' per sqm.'
             : 'Monthly dues below are a flat '+peso(store.settings.duesFlatAmount)+' for every unit, regardless of lot area.') +
           ' Change the rate itself in Financial → Billing.</p></div>') +
-        sectionCard('Unit registry',
+        sectionCard('Unit registry', !store.units.length ? empty('No units yet','Add units here or in Master data.') :
           '<div class="tablewrap"><table><thead><tr><th>Unit</th><th>Owner of record</th><th class="hide-sm">Phase</th>' +
           '<th class="hide-sm">Lot (sqm)</th><th>Monthly dues</th><th>Occupancy</th></tr></thead><tbody>' +
           store.units.map(u => '<tr><td class="mono" data-label="Unit"><strong>'+esc(u.unit)+'</strong></td>' +
@@ -8173,6 +8167,9 @@ function openDb(){
   });
 }
 function isPlain(v){ return v && typeof v === 'object' && !Array.isArray(v) && !(v instanceof Date) && !(v instanceof Set); }
+/* the sample units that shipped with the demo; dropped wherever they are still saved */
+const DEMO_UNITS = [['A-04','Marco Villanueva'],['B-12','Rina Dela Cruz'],['C-21','Jonna Reyes'],['D-07','Ferdie Lim'],['D-15','Estrella Ocampo']];
+const dropDemoUnits = list => Array.isArray(list) ? list.filter(u => !(u && DEMO_UNITS.some(([c,o]) => u.unit===c && u.owner===o))) : list;
 function mergeSaved(saved){
   const known = saved.__seedIds || {};
   Object.keys(SEED).forEach(k => {
@@ -8187,6 +8184,7 @@ function mergeSaved(saved){
       store[k] = mine;
     }
   });
+  store.units = dropDemoUnits(store.units);
 }
 function saveNow(){
   clearTimeout(saveTimer); saveTimer = null;
@@ -8305,7 +8303,7 @@ function applyMembers(rows){
 function applyRow(row){
   if(!SHARED_KEYS.includes(row.key)) return false;
   const v = dec(row.value), seed = SEED[row.key];
-  store[row.key] = isPlain(seed) && isPlain(v) ? Object.assign(structuredClone(seed), v) : v;
+  store[row.key] = isPlain(seed) && isPlain(v) ? Object.assign(structuredClone(seed), v) : row.key==='units' ? dropDemoUnits(v) : v;
   synced[row.key] = sig(row.key);
   return true;
 }
