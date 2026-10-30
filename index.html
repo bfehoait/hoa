@@ -6891,7 +6891,9 @@ function secForget(id){
 }
 /* ---- audit trail: every critical account action needs a supporting reference and a reason ---- */
 const AUDIT_ACTIONS = { 'account.created':'Account added', 'account.edited':'Account edited', 'account.roles_changed':'Roles changed',
-  'account.suspended':'Suspended', 'account.restored':'Restored', 'account.deleted':'Deleted' };
+  'account.suspended':'Suspended', 'account.restored':'Restored', 'account.deleted':'Deleted',
+  'access.group_changed':'Group page access changed', 'access.group_reset':'Group access reset', 'access.person_changed':'Personal access changed',
+  'access.person_reset':'Back to group settings', 'access.manager_added':'Can manage User Access', 'access.manager_removed':'No longer manages User Access' };
 let auditRows = null, auditLocal = [], auditErr = '', auditLoading = false, auditFilter = '';
 function auditRefNo(){ const d = new Date(); return 'AUD-'+String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'-'+Math.random().toString(36).slice(2,6).toUpperCase(); }
 function auditFieldsHTML(docRequired){
@@ -6948,7 +6950,7 @@ function auditView(){
   const rows = (auditRows||[]).filter(r => (src==='all' || r.source===src) &&
     (!q || [r.target_name, r.target_id, r.ref_no, r.document, r.reason, r.actor_email, who(r.actor_email), AUDIT_ACTIONS[r.action]||r.action].join(' ').toLowerCase().includes(q)));
   const all = auditRows||[];
-  return head('Audit trail','Every change to portal accounts — who did it, when, and why. Entries cannot be edited or deleted.',
+  return head('Audit trail','Every change to portal accounts and user access — who did it, when, and why. Entries cannot be edited or deleted.',
       '<button class="btn btn-ghost" style="width:auto" onclick="auditRows=null;loadAudit();render()">Refresh</button>') +
     (auditErr ? '<div class="viewonly-bar" role="alert"><b>Not set up</b><span>'+esc(auditErr)+'</span></div>' : '') +
     (!cloudOn ? '<div class="viewonly-bar"><b>Offline</b><span>Showing only entries made on this device in this session.</span></div>' : '') +
@@ -7963,12 +7965,19 @@ function resolveTicket(id){ const t=store.tickets.find(x=>x.id===id); t.status='
 /* settings */
 function setGroupMode(role, id, mode){
   if(!isAccessManager(realSession().accountId)){ toast('info','Not allowed','Only the admins who manage User Access can change this.'); return; }
-  if(groupMode(role, id)===mode) return;
+  const was = groupMode(role, id); if(was===mode) return;
   const item = NAV[role].flatMap(g=>g.items).find(x=>x.id===id);
-  store.hiddenPages[role] = (store.hiddenPages[role] || []).filter(x => x!==id && x!=='view:'+id)
-    .concat(mode==='hidden' ? [id] : mode==='view' ? ['view:'+id] : []);
-  commit(item.label+' is now '+MODE_LABEL[mode].toLowerCase()+' for '+ROLE_LABEL(role)+' accounts.',{title:'User access updated',audience:'admin'});
+  modal(item.label+': '+MODE_LABEL[mode]+' for '+ROLE_LABEL(role)+' accounts', 'From '+MODE_LABEL[was]+' to '+MODE_LABEL[mode]+'. It applies to every '+ROLE_LABEL(role).toLowerCase()+' account.',
+    auditFieldsHTML(false), 'Save change', () => {
+      const au = readAudit(false); if(!au) return false;
+      store.hiddenPages[role] = (store.hiddenPages[role] || []).filter(x => x!==id && x!=='view:'+id)
+        .concat(mode==='hidden' ? [id] : mode==='view' ? ['view:'+id] : []);
+      commit(item.label+' is now '+MODE_LABEL[mode].toLowerCase()+' for '+ROLE_LABEL(role)+' accounts.',{title:'User access updated',audience:'admin'});
+      auditWrite('access.group_changed', accessGroupTarget(role), au, { page:item.label, access:{ from:MODE_LABEL[was], to:MODE_LABEL[mode] } });
+      return true; });
 }
+/* a group of accounts as the "account" an audit entry is about */
+const accessGroupTarget = role => ({ id:'group:'+role, name:'All '+ROLE_LABEL(role)+' accounts' });
 function accessTabs(){
   const limited = store.accounts.filter(a => hasRole(a,'admin') && !isAccessManager(a.id) && customCount(a.id)).length;
   return tabs('access', [{ id:'admin', label:ROLE_LABEL('admin'), n: limited ? limited+' limited' : '' }]
@@ -7997,10 +8006,17 @@ function adminAccessView(){
 function flipAccessManager(id){
   if(!isAccessManager(realSession().accountId)){ toast('info','Not allowed','Only the admins who manage User Access can change this.'); return; }
   const a = store.accounts.find(x => x.id===id); if(!a || id===realSession().accountId) return;
-  const cur = accessManagers(), on = cur.includes(id);
-  store.accessAdmins = on ? cur.filter(x => x!==id) : cur.concat(id);
-  if(!on && store.userAccess[id]){ const u = Object.assign({}, store.userAccess); delete u[id]; store.userAccess = u; }   /* managers see everything */
-  commit(a.name+(on ? ' no longer manages User Access.' : ' can now manage User Access and limit other admins.'),{title:'User access updated',audience:'admin'});
+  const on = accessManagers().includes(id);
+  modal(on ? 'Stop '+a.name+' managing User Access?' : 'Let '+a.name+' manage User Access?',
+    on ? 'They lose User Access and the audit trail, and other managers can then limit their pages.' : 'They get every page, open User Access and the audit trail, and can limit other admins.',
+    auditFieldsHTML(false), on ? 'Remove' : 'Allow', () => {
+      const au = readAudit(false); if(!au) return false;
+      const cur = accessManagers();
+      store.accessAdmins = on ? cur.filter(x => x!==id) : cur.concat(id);
+      if(!on && store.userAccess[id]){ const u = Object.assign({}, store.userAccess); delete u[id]; store.userAccess = u; }   /* managers see everything */
+      commit(a.name+(on ? ' no longer manages User Access.' : ' can now manage User Access and limit other admins.'),{title:'User access updated',audience:'admin'});
+      auditWrite(on ? 'access.manager_removed' : 'access.manager_added', a, au, { manages_user_access:{ from:on ? 'Yes' : 'No', to:on ? 'No' : 'Yes' } });
+      return true; }, on);
 }
 function customCount(accountId){ return Object.keys(store.userAccess[accountId] || {}).length; }
 function personAccess(accountId){
@@ -8016,8 +8032,13 @@ function personAccess(accountId){
       return '<div class="access-row"><div><div class="sl">'+esc(it.label)+'</div><div class="sd" id="pa_'+it.id+'">'+personHint(a, it.id)+'</div></div>' +
         '<span id="ps_'+it.id+'">'+modeSeg(draft[it.id], m => 'setDraft(\''+a.id+'\',\''+it.id+'\',\''+m+'\')', locked)+'</span></div>';
     }).join('')).join('') + '</div>' +
-    (customCount(a.id) ? '<button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="clearPersonAccess(\''+a.id+'\')">Use group settings again</button>' : '');
+    (customCount(a.id) ? '<button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="clearPersonAccess(\''+a.id+'\')">Use group settings again</button>' : '') +
+    '<div style="margin-top:12px">'+auditFieldsHTML(false)+'</div>';
+  const before = Object.assign({}, draft), label = id => (NAV[a.role].flatMap(g=>g.items).find(x=>x.id===id)||{}).label || id;
   modal('Limit access for '+a.name, ROLE_LABEL(a.role)+' · '+a.unit+'. For each page choose Can edit, View only, or Hidden.', body, 'Save', () => {
+    const changed = Object.keys(draft).filter(id => draft[id] !== before[id]);
+    if(!changed.length) return true;                                               /* nothing changed, nothing to log */
+    const au = readAudit(false); if(!au) return false;
     const over = {};
     Object.keys(draft).forEach(id => {
       if(ACCESS_LOCKED.includes(id) || (a.role==='admin' && id==='access')) return;
@@ -8025,6 +8046,8 @@ function personAccess(accountId){
     });
     if(Object.keys(over).length) store.userAccess[a.id] = over; else delete store.userAccess[a.id];
     commit('Access updated for '+a.name+'.',{title:'User access updated',audience:'admin'});
+    const details = {}; changed.forEach(id => { details[label(id)] = { from:MODE_LABEL[before[id]], to:MODE_LABEL[draft[id]] }; });
+    auditWrite('access.person_changed', a, au, details);
   });
   bkWide();
 }
@@ -8043,13 +8066,30 @@ function setDraft(accountId, id, mode){
 }
 function clearPersonAccess(accountId){
   const a = store.accounts.find(x => x.id === accountId);
-  delete store.userAccess[accountId]; closeModal();
-  commit(a.name+' now follows the '+ROLE_LABEL(a.role)+' group settings.',{title:'User access updated',audience:'admin'});
+  modal('Use group settings for '+a.name+'?', 'Their '+customCount(accountId)+' custom page setting'+(customCount(accountId)===1?'':'s')+' are removed and they follow the '+ROLE_LABEL(a.role)+' group again.',
+    auditFieldsHTML(false), 'Use group settings', () => {
+      const au = readAudit(false); if(!au) return false;
+      const was = store.userAccess[accountId] || {}, details = {};
+      Object.keys(was).forEach(id => { const it = NAV[a.role].flatMap(g=>g.items).find(x=>x.id===id);
+        details[it ? it.label : id] = { from:MODE_LABEL[modeOf(was[id])], to:MODE_LABEL[groupMode(a.role, id)] }; });
+      delete store.userAccess[accountId];
+      commit(a.name+' now follows the '+ROLE_LABEL(a.role)+' group settings.',{title:'User access updated',audience:'admin'});
+      auditWrite('access.person_reset', a, au, details);
+      return true; });
 }
 function resetAccess(role){
   if(!isAccessManager(realSession().accountId)){ toast('info','Not allowed','Only the admins who manage User Access can change this.'); return; }
-  store.hiddenPages[role] = [];
-  commit('Every page is usable again for '+ROLE_LABEL(role)+' accounts.',{title:'User access updated',audience:'admin'});
+  const was = (store.hiddenPages[role] || []).slice();
+  modal('Set every page to Can edit for '+ROLE_LABEL(role)+' accounts?', was.length+' limited page'+(was.length===1?'':'s')+' become usable again for every '+ROLE_LABEL(role).toLowerCase()+' account.',
+    auditFieldsHTML(false), 'Set all to Can edit', () => {
+      const au = readAudit(false); if(!au) return false;
+      const details = {};
+      was.forEach(x => { const id = x.replace(/^view:/,''), it = NAV[role].flatMap(g=>g.items).find(i=>i.id===id);
+        details[it ? it.label : id] = { from:x.startsWith('view:') ? MODE_LABEL.view : MODE_LABEL.hidden, to:MODE_LABEL.edit }; });
+      store.hiddenPages[role] = [];
+      commit('Every page is usable again for '+ROLE_LABEL(role)+' accounts.',{title:'User access updated',audience:'admin'});
+      auditWrite('access.group_reset', accessGroupTarget(role), au, details);
+      return true; });
 }
 function flipSetting(key){ store.settings[key] = !store.settings[key];
   commit('Portal rule updated — '+key.replace(/([A-Z])/g,' $1').toLowerCase()+' is now '+(store.settings[key]?'on':'off')+'.',{title:'Setting saved'}); }
