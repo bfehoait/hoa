@@ -1968,6 +1968,11 @@ function accessManagers(){
   return admins.filter(a => ACCESS_DEFAULT_EMAILS.includes(String(a.email).toLowerCase()) || /^ralph\b/i.test(a.name)).map(a => a.id);
 }
 function isAccessManager(id){ return accessManagers().includes(id); }
+/* Master data is open only to Phoebe and Ralph — not to other admins, even ones who manage User Access */
+function isMasterDataUser(id){
+  const a = store.accounts.find(x => x.id===id);
+  return !!a && hasRole(a,'admin') && a.status!=='Suspended' && (ACCESS_DEFAULT_EMAILS.includes(String(a.email).toLowerCase()) || /^ralph\b/i.test(a.name));
+}
 /* each page is 'edit', 'view' (read-only) or 'hidden' for a person.
    userAccess[account][page]: false = hidden, 'view' = view only, true = can edit.
    hiddenPages[role]: 'page' = hidden for the group, 'view:page' = view only for the group. */
@@ -1982,6 +1987,7 @@ function groupMode(role, id){
 function pageMode(role, id, accountId){
   if(ACCESS_LOCKED.includes(id)) return 'edit';
   if(role === 'admin'){
+    if(id === 'masterdata' && accountId && !isMasterDataUser(accountId)) return 'hidden';
     if(!accountId || isAccessManager(accountId)) return 'edit';
     if(id === 'access' || id === 'audit') return 'hidden';          /* only managers open User Access and the audit trail */
   }
@@ -8028,7 +8034,7 @@ function personAccess(accountId){
   window._accessDraft = draft;
   const body = '<div style="max-height:56vh;overflow:auto;margin:6px 0 4px">' + NAV[a.role].map(g =>
     '<p class="navlabel" style="margin:12px 0 2px">'+esc(g.g)+'</p>' + g.items.map(it => {
-      const locked = ACCESS_LOCKED.includes(it.id) || (a.role==='admin' && it.id==='access');
+      const locked = ACCESS_LOCKED.includes(it.id) || (a.role==='admin' && (it.id==='access' || it.id==='masterdata'));
       return '<div class="access-row"><div><div class="sl">'+esc(it.label)+'</div><div class="sd" id="pa_'+it.id+'">'+personHint(a, it.id)+'</div></div>' +
         '<span id="ps_'+it.id+'">'+modeSeg(draft[it.id], m => 'setDraft(\''+a.id+'\',\''+it.id+'\',\''+m+'\')', locked)+'</span></div>';
     }).join('')).join('') + '</div>' +
@@ -8041,7 +8047,7 @@ function personAccess(accountId){
     const au = readAudit(false); if(!au) return false;
     const over = {};
     Object.keys(draft).forEach(id => {
-      if(ACCESS_LOCKED.includes(id) || (a.role==='admin' && id==='access')) return;
+      if(ACCESS_LOCKED.includes(id) || (a.role==='admin' && (id==='access' || id==='masterdata'))) return;
       if(draft[id] !== groupMode(a.role, id)) over[id] = modeVal(draft[id]);   /* keep only what differs from the group */
     });
     if(Object.keys(over).length) store.userAccess[a.id] = over; else delete store.userAccess[a.id];
@@ -8054,6 +8060,7 @@ function personAccess(accountId){
 function personHint(a, id){
   if(ACCESS_LOCKED.includes(id)) return 'Always on.';
   if(a.role==='admin' && id==='access') return 'Only the admins who manage User Access can open this.';
+  if(a.role==='admin' && id==='masterdata') return isMasterDataUser(a.id) ? 'Always on for Phoebe and Ralph.' : 'Only Phoebe and Ralph can open this.';
   const d = window._accessDraft[id], grp = groupMode(a.role, id);
   return ({ edit:'Can see and change this page', view:'Can see this page, but not change anything', hidden:'Hidden from this person' })[d] +
     (d === grp ? ' · same as group' : ' · custom');
