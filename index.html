@@ -304,6 +304,18 @@ main{padding:18px 14px 90px;max-width:1180px;width:100%;min-width:0}
   .mh-back{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:17px;font-weight:700;padding:12px 18px;margin-bottom:14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;box-shadow:var(--shadow)}
   .mh-back svg{width:22px;height:22px}
   .navitem.mh-only{display:flex;font-size:16px;font-weight:700}
+  /* homeowner menu on phones: two columns of big icon tiles instead of a text list */
+  .sidebar:has(#nav.nav-tiles){width:min(350px,90vw)}
+  #nav.nav-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  #nav.nav-tiles .navlabel{grid-column:1/-1;font-family:inherit;font-size:14px;font-weight:700;letter-spacing:0;text-transform:none;color:var(--ink-2);padding:12px 2px 0}
+  #nav.nav-tiles .navitem{position:relative;flex-direction:column;justify-content:center;gap:8px;min-height:104px;padding:12px 6px;border:1px solid var(--line);border-radius:14px;background:var(--surface);text-align:center;font-size:15px;font-weight:700;color:var(--ink);line-height:1.2}
+  #nav.nav-tiles .navitem[aria-current="page"]{background:var(--slate-tint);border-color:var(--slate);color:var(--slate-dk)}
+  #nav.nav-tiles .navitem .ico{width:50px;height:50px;border-radius:50%;background:var(--slate-tint);color:var(--slate)}
+  #nav.nav-tiles .navitem[aria-current="page"] .ico{background:var(--surface)}
+  #nav.nav-tiles .navitem .ico svg{width:27px;height:27px}
+  #nav.nav-tiles .navitem .count{position:absolute;top:8px;right:8px;margin:0;font-family:inherit;font-size:13px;font-weight:700;background:var(--rose);min-width:24px;padding:3px 7px}
+  #nav.nav-tiles .navitem.mh-only{grid-column:1/-1;flex-direction:row;min-height:64px;gap:12px;font-size:17px}
+  #nav.nav-tiles .navitem.mh-only .ico{width:40px;height:40px}
   .topbar{flex-wrap:nowrap;gap:6px;padding:8px 12px}
   .topbar .tb-wide{display:none}
   .topbar .icon-btn{width:36px;height:36px;flex:none}
@@ -2138,6 +2150,7 @@ function render(){
   const mh = s.role==='homeowner' && isPhone();
   if(mh && mhLanded !== s.accountId){ mhLanded = s.accountId; store.view = 'home'; }
   if(!pageOn(s.role, store.view, s.accountId) || !(VIEWS[s.role]||HOME)[store.view]) store.view = nav[0].items[0].id;
+  $('#nav').classList.toggle('nav-tiles', s.role==='homeowner');
   $('#nav').innerHTML = (s.role==='homeowner' ? '<button class="navitem mh-only" '+(store.view==='home'?'aria-current="page"':'')+' onclick="go(\'home\')"><span class="ico">'+svg('home')+'</span>Home</button>' : '') +
     nav.map(group =>
     '<p class="navlabel">'+esc(group.g)+'</p>' + group.items.map(it => {
