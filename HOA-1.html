@@ -281,6 +281,28 @@ main{padding:18px 14px 90px;max-width:1180px;width:100%;min-width:0}
 /* tabs */
 .tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
+/* phones: the top bar stays on one row (dark mode and sign out move into the menu), tabs wrap instead of running off the screen */
+.side-actions{display:none}
+@media(max-width:640px){
+  .topbar{flex-wrap:nowrap;gap:6px;padding:8px 12px}
+  .topbar .tb-wide{display:none}
+  .topbar .icon-btn{width:36px;height:36px;flex:none}
+  #viewAsSel,#roleSwitch{min-width:0;flex:0 1 118px;max-width:118px !important;font-size:12px !important;padding:7px 6px !important}
+  .tabs{flex-wrap:wrap;overflow-x:visible}
+  .tabs button{padding:7px 11px;font-size:13px}
+  .side-actions{display:flex;gap:8px;margin-top:10px}
+  .side-actions .btn{flex:1;width:auto;padding:8px 10px;font-size:13px}
+  /* master data: one compact card per lot instead of a 13-row list */
+  .tablewrap table.md-register tr{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px 10px;padding:12px}
+  .tablewrap table.md-register td{padding:0;border-bottom:0;min-width:0;overflow-wrap:anywhere}
+  .tablewrap table.md-register td:nth-child(1){grid-column:span 3}
+  .tablewrap table.md-register td:nth-child(5),.tablewrap table.md-register td:nth-child(6),
+  .tablewrap table.md-register td:nth-child(7),.tablewrap table.md-register td:nth-child(8),
+  .tablewrap table.md-register td:nth-child(12){grid-column:span 3}
+  .tablewrap table.md-register td:nth-child(9),.tablewrap table.md-register td:nth-child(10),.tablewrap table.md-register td:nth-child(11){grid-column:span 2}
+  .tablewrap table.md-register td:nth-child(12):empty{display:none}
+  .tablewrap table.md-register td:last-child{grid-column:-4/-1;padding-top:0;text-align:right;align-self:end}
+}
 .tabs button{white-space:nowrap;border:1px solid var(--line);background:#fff;padding:8px 13px;border-radius:20px;font-size:13.5px;font-weight:600;color:var(--ink-2);cursor:pointer;transition:.14s}
 .tabs button:hover{border-color:#CFD5E4}
 .tabs button[aria-selected="true"]{background:var(--slate);color:#fff;border-color:var(--slate)}
@@ -736,7 +758,7 @@ html[data-theme="dark"] .bubble.mine{color:#0E121C}
     <span class="rolebadge" id="roleBadge"></span>
     <select class="input rolesw hide" id="roleSwitch" onchange="switchRole(this.value)" aria-label="Switch which portal you are viewing" title="You have more than one role — switch portal"></select>
     <select class="input hide" id="viewAsSel" onchange="viewAs(this.value)" aria-label="View the portal as" title="View the portal as someone else" style="width:auto;max-width:190px;padding:7px 10px;font-size:13px;font-weight:600"></select>
-    <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" aria-label="Switch to dark mode" title="Dark mode"></button>
+    <button class="icon-btn tb-wide" id="themeBtn" onclick="toggleTheme()" aria-label="Switch to dark mode" title="Dark mode"></button>
     <div class="bellwrap hide" id="availWrap">
       <button class="icon-btn" id="availBtn" onclick="toggleAvailMenu(event)" aria-label="Set your availability" aria-expanded="false" title="Availability">
         <span class="avail-dot" id="availDot"></span>
@@ -755,7 +777,7 @@ html[data-theme="dark"] .bubble.mine{color:#0E121C}
       <span class="notif-dot hide" id="notifDot">0</span>
     </div>
     <button type="button" class="avatar" id="avatar" title="" onclick="go('settings')" aria-label="Your profile and settings"></button>
-    <button class="icon-btn" onclick="signOut()" aria-label="Sign out" title="Sign out">
+    <button class="icon-btn tb-wide" onclick="signOut()" aria-label="Sign out" title="Sign out">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
     </button>
   </header>
@@ -1563,8 +1585,9 @@ function commit(msg, opts={}){
 /* ---- theme ---- */
 function applyTheme(){
   document.documentElement.setAttribute('data-theme', store.theme);
-  const b = $('#themeBtn'); if(!b) return;
   const dark = store.theme === 'dark';
+  const sf = $('#sfTheme'); if(sf) sf.textContent = dark ? 'Light mode' : 'Dark mode';
+  const b = $('#themeBtn'); if(!b) return;
   b.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
   b.title = dark ? 'Light mode' : 'Dark mode';
   b.innerHTML = dark
@@ -2100,7 +2123,9 @@ function render(){
   $('#sideFoot').innerHTML =
     '<div style="font-weight:650;color:var(--ink);font-size:13.5px">'+esc(s.name)+'</div>' +
     '<div>'+esc(isAdmin() ? (adminPosition(s.accountId) || 'HOA Admin') : (s.role==='homeowner'||s.role==='renter') ? 'Unit '+s.unit : s.unit)+'</div>' +
-    '<div style="margin-top:5px;font-size:11.5px">Signed in with '+esc(s.method==='password'?'email':s.method)+'</div>';
+    '<div style="margin-top:5px;font-size:11.5px">Signed in with '+esc(s.method==='password'?'email':s.method)+'</div>' +
+    '<div class="side-actions"><button class="btn btn-ghost" id="sfTheme" onclick="toggleTheme()">'+(store.theme==='dark' ? 'Light mode' : 'Dark mode')+'</button>' +
+      '<button class="btn btn-ghost" onclick="signOut()">Sign out</button></div>';
 
   const V = VIEWS[s.role] || HOME;
   const vo = curMode()==='view';
@@ -2525,7 +2550,7 @@ const ADMIN = {
         tabs('mdph',[{id:'all',label:'All phases'},{id:'1',label:'Phase 1',n:count('1')},{id:'2',label:'Phase 2',n:count('2')},{id:'3',label:'Phase 3',n:count('3')}],'all') +
         sectionCard('Units and lots', rows.length ?
           '<div class="card-pad" style="padding-bottom:0"><input class="input" type="search" placeholder="Search unit, owner, status or remarks" aria-label="Search units" oninput="mdFilterUnits(this.value)"></div>' +
-          '<div class="tablewrap"><table id="mdUnits"><thead><tr>'+LOT_REGISTER_COLS.map(c => '<th>'+esc(c)+'</th>').join('')+'<th></th></tr></thead><tbody>' +
+          '<div class="tablewrap"><table id="mdUnits" class="md-register"><thead><tr>'+LOT_REGISTER_COLS.map(c => '<th>'+esc(c)+'</th>').join('')+'<th></th></tr></thead><tbody>' +
           rows.map(u => { const v = mdRegisterRow(u);
             return '<tr data-q="'+esc([u.unit].concat(v).filter(x => x!=='').join(' ').toLowerCase())+'">' +
             '<td class="mono" data-label="Physical Lot ID"><strong>'+esc(v[0]||'—')+'</strong></td>' +
@@ -4291,10 +4316,10 @@ const HOME = {
     '<div class="card card-pad" style="margin-bottom:14px;display:flex;align-items:center;gap:10px">'+svg('building')+'<div><strong>Payment source records:</strong> Cambria (3rd Party Provider)' +
       '<div class="meta">Payment status here follows Cambria’s records and is not real time.</div></div></div>' +
     (mine.length ? '' : '<div class="card" style="margin-bottom:14px">'+empty('No dues on record yet','Your billing appears here once the admin office generates it. The statement will list every period.')+'</div>') +
-    '<div class="card tablewrap"><table><thead><tr><th>Period</th><th>Amount</th><th class="hide-sm">Method</th><th>Status</th><th style="text-align:right">Date paid</th></tr></thead><tbody>' +
+    (!mine.length ? '' : '<div class="card tablewrap"><table><thead><tr><th>Period</th><th>Amount</th><th class="hide-sm">Method</th><th>Status</th><th style="text-align:right">Date paid</th></tr></thead><tbody>' +
     mine.map(d => '<tr><td data-label="Period"><strong>'+esc(d.period)+'</strong></td><td class="mono" data-label="Amount">'+peso(d.amount)+'</td>' +
       '<td class="hide-sm" data-label="Method">'+esc(d.method||'—')+(d.ref?'<div class="meta">'+esc(d.ref)+'</div>':'')+'</td><td data-label="Status"><span class="tag '+statusTag(d.status)+'">'+esc(d.status)+'</span></td>' +
-      '<td style="text-align:right" class="meta" data-label="Date paid">'+(d.paidAt?fmtDate(d.paidAt):'—')+'</td></tr>').join('') + '</tbody></table></div>';
+      '<td style="text-align:right" class="meta" data-label="Date paid">'+(d.paidAt?fmtDate(d.paidAt):'—')+'</td></tr>').join('') + '</tbody></table></div>');
   },
 
   finances(){
