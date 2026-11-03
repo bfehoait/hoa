@@ -2147,11 +2147,11 @@ function render(){
   const availWrap = $('#availWrap'); if(availWrap) availWrap.classList.toggle('hide', s.role !== 'admin');
 
   const nav = navFor(s.role, s.accountId);
-  const mh = s.role==='homeowner' && isPhone();
+  const tiles = MH_ROLES.includes(s.role), mh = tiles && isPhone();
   if(mh && mhLanded !== s.accountId){ mhLanded = s.accountId; store.view = 'home'; }
   if(!pageOn(s.role, store.view, s.accountId) || !(VIEWS[s.role]||HOME)[store.view]) store.view = nav[0].items[0].id;
-  $('#nav').classList.toggle('nav-tiles', s.role==='homeowner');
-  $('#nav').innerHTML = (s.role==='homeowner' ? '<button class="navitem mh-only" '+(store.view==='home'?'aria-current="page"':'')+' onclick="go(\'home\')"><span class="ico">'+svg('home')+'</span>Home</button>' : '') +
+  $('#nav').classList.toggle('nav-tiles', tiles);
+  $('#nav').innerHTML = (tiles ? '<button class="navitem mh-only" '+(store.view==='home'?'aria-current="page"':'')+' onclick="go(\'home\')"><span class="ico">'+svg('home')+'</span>Home</button>' : '') +
     nav.map(group =>
     '<p class="navlabel">'+esc(group.g)+'</p>' + group.items.map(it => {
       const n = it.badge ? it.badge() : 0;
@@ -2169,7 +2169,7 @@ function render(){
   const V = VIEWS[s.role] || HOME;
   const vo = curMode()==='view';
   $('#main').innerHTML = viewAsBar() + syncRail() + (vo ? viewOnlyBar() : '') +
-    (s.role==='homeowner' && store.view!=='home' ? '<button class="mh-back" onclick="go(\'home\')">'+svg('home')+'Back to Home</button>' : '') + (secRevokedMe() && store.view!=='settings' ? secBlockedView() : (V[store.view] || V[Object.keys(V)[0]])());
+    (tiles && store.view!=='home' ? '<button class="mh-back" onclick="go(\'home\')">'+svg('home')+'Back to Home</button>' : '') + (secRevokedMe() && store.view!=='settings' ? secBlockedView() : (V[store.view] || V[Object.keys(V)[0]])());
   $('#main').classList.toggle('view-only', vo);
   if(vo){ lockViewOnly(); takeViewSnapshot(); } else viewSnap = null;
   saveSoon();
@@ -2325,6 +2325,7 @@ function onGateSearch(v){
    ADMIN VIEWS
 ============================================================ */
 const ADMIN = {
+  home(){ if(isPhone()) return mhNavHome(); store.view = 'overview'; return ADMIN.overview(); },
   rides(){
     const t = tabOf('rides','open');
     const groups = {
@@ -4307,6 +4308,7 @@ function rosterManageHTML(){
 /* ---- phones: big-icon home screen for homeowners ---- */
 const isPhone = () => window.matchMedia('(max-width:640px)').matches;
 let mhLanded = null;   /* the account that already landed on the home screen this visit */
+const MH_ROLES = ['homeowner','admin'];   /* roles that get the big-icon home screen and tile menu on phones */
 const M_HOME = [
   { g:'Payments & finances', items:[
     { icon:'peso',  label:'HOA payments',      page:'mydues', tone:'green', n:()=>store.dues.filter(d=>d.unit===myUnit()&&d.status!=='Paid').length },
@@ -4357,6 +4359,19 @@ function mhHome(){
           (n ? '<span class="mh-n" aria-label="'+n+' new">'+n+'</span>' : '') + '</button>';
       }).join('') + '</div>';
     }).join('');
+}
+
+/* admins: the home screen is their own sidebar as big tiles, so pages turned off in User Access stay hidden */
+function mhNavHome(){
+  const s = store.session;
+  return '<div class="mh-hello">Hello, '+esc(s.name.split(' ')[0])+'</div>' +
+    '<div class="mh-sub">'+esc(adminPosition(s.accountId) || 'HOA Admin')+' · Tap a picture to open it.</div>' +
+    navFor(s.role, s.accountId).map(grp => '<p class="mh-label">'+esc(grp.g)+'</p><div class="mh-grid">' + grp.items.map(it => {
+      const n = it.badge ? it.badge() : 0;
+      return '<button class="mh-tile'+(it.id==='hotlines' ? ' mh-rose' : '')+'" onclick="go(\''+it.id+'\')">' +
+        '<span class="mh-ico">'+svg(it.icon)+'</span><span class="mh-txt">'+esc(it.label)+'</span>' +
+        (n ? '<span class="mh-n" aria-label="'+n+' new">'+n+'</span>' : '') + '</button>';
+    }).join('') + '</div>').join('');
 }
 
 const HOME = {
