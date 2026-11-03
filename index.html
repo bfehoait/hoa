@@ -283,7 +283,27 @@ main{padding:18px 14px 90px;max-width:1180px;width:100%;min-width:0}
 .tabs::-webkit-scrollbar{display:none}
 /* phones: the top bar stays on one row (dark mode and sign out move into the menu), tabs wrap instead of running off the screen */
 .side-actions{display:none}
+/* phones: homeowners land on a big-icon home screen (large tiles and text for older residents); desktop keeps the sidebar */
+.mh-back,.navitem.mh-only{display:none}
+.mh-hello{font-size:25px;font-weight:750;letter-spacing:-.02em;color:var(--ink)}
+.mh-sub{font-size:16px;color:var(--ink-2);margin-top:4px}
+.mh-label{font-size:16px;font-weight:700;color:var(--ink-2);margin:22px 0 10px}
+.mh-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mh-tile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:132px;padding:16px 10px;border-radius:16px;border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow);cursor:pointer;color:var(--ink);font:inherit}
+.mh-tile:active{transform:scale(.97)}
+.mh-ico{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;background:var(--slate-tint);color:var(--slate)}
+.mh-ico svg{width:34px;height:34px}
+.mh-txt{font-size:17px;font-weight:700;line-height:1.25;text-align:center}
+.mh-rose .mh-ico{background:var(--rose-tint);color:var(--rose)}
+.mh-green .mh-ico{background:var(--emerald-tint);color:var(--emerald)}
+.mh-amber .mh-ico{background:var(--amber-tint);color:var(--amber)}
+.mh-n{position:absolute;top:10px;right:10px;min-width:28px;height:28px;padding:0 8px;border-radius:14px;background:var(--rose);color:#fff;font-size:15px;font-weight:700;display:grid;place-items:center}
+.mh-pay{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px;border-left:3px solid var(--amber)}
+.mh-pay .ttl{font-size:17px}
 @media(max-width:640px){
+  .mh-back{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:17px;font-weight:700;padding:12px 18px;margin-bottom:14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;box-shadow:var(--shadow)}
+  .mh-back svg{width:22px;height:22px}
+  .navitem.mh-only{display:flex;font-size:16px;font-weight:700}
   .topbar{flex-wrap:nowrap;gap:6px;padding:8px 12px}
   .topbar .tb-wide{display:none}
   .topbar .icon-btn{width:36px;height:36px;flex:none}
@@ -864,7 +884,7 @@ const store = {
     duesMode:'sqm', duesRatePerSqm:12.5, duesFlatAmount:1850, lateFeePct:2, dueDay:30,
     facilities:['Function hall','Clubhouse','Basketball court','Swimming pool'],
     boothVenues:['Covered court','Clubhouse','Function hall','Phase 2 open lot'],   /* venues approved for booth events */
-    categories:['Advisory','Billing','Event','Security','Maintenance'],
+    categories:['Advisory','Billing','Event','Security','Maintenance','Sustainability'],
     officeHours:'Mon–Sat, 8:00 AM – 5:00 PM',
     quietHours:'10:00 PM – 6:00 AM',
     autoApproveBookings:false, publishTallyLive:true, allowProxyVoting:true, showCollectionTracker:true,
@@ -1975,7 +1995,10 @@ const ICONS = {
   ballot:'<path d="M4 9h16v11H4zM8 9V4h8v5M9 13h6"/>',
   chat:'<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-5.2A8 8 0 1 1 21 12z"/>',
   users:'<circle cx="9" cy="8" r="3.4"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16.5 5.2a3.4 3.4 0 0 1 0 6.6M18 14.4a6.5 6.5 0 0 1 3.5 5.6"/>',
-  tag:'<path d="M11.5 3H5a2 2 0 0 0-2 2v6.5a2 2 0 0 0 .59 1.41l9.5 9.5a2 2 0 0 0 2.82 0l6.5-6.5a2 2 0 0 0 0-2.82l-9.5-9.5A2 2 0 0 0 11.5 3z"/><circle cx="8.5" cy="8.5" r="1.3"/>'
+  tag:'<path d="M11.5 3H5a2 2 0 0 0-2 2v6.5a2 2 0 0 0 .59 1.41l9.5 9.5a2 2 0 0 0 2.82 0l6.5-6.5a2 2 0 0 0 0-2.82l-9.5-9.5A2 2 0 0 0 11.5 3z"/><circle cx="8.5" cy="8.5" r="1.3"/>',
+  leaf:'<path d="M5 21c0-9.5 6-15.5 16-16-.5 10-6.5 16-16 16zM5 21l8.5-8.5"/>',
+  inbox:'<path d="M3 13h5l2 3h4l2-3h5M5.5 5h13L21 13v6H3v-6z"/>',
+  home:'<path d="M3 11l9-7 9 7M5 9.5V20h5v-6h4v6h5V9.5"/>'
 };
 const svg = k => '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">'+ICONS[k]+'</svg>';
 
@@ -2112,8 +2135,11 @@ function render(){
   const availWrap = $('#availWrap'); if(availWrap) availWrap.classList.toggle('hide', s.role !== 'admin');
 
   const nav = navFor(s.role, s.accountId);
+  const mh = s.role==='homeowner' && isPhone();
+  if(mh && mhLanded !== s.accountId){ mhLanded = s.accountId; store.view = 'home'; }
   if(!pageOn(s.role, store.view, s.accountId) || !(VIEWS[s.role]||HOME)[store.view]) store.view = nav[0].items[0].id;
-  $('#nav').innerHTML = nav.map(group =>
+  $('#nav').innerHTML = (s.role==='homeowner' ? '<button class="navitem mh-only" '+(store.view==='home'?'aria-current="page"':'')+' onclick="go(\'home\')"><span class="ico">'+svg('home')+'</span>Home</button>' : '') +
+    nav.map(group =>
     '<p class="navlabel">'+esc(group.g)+'</p>' + group.items.map(it => {
       const n = it.badge ? it.badge() : 0;
       return '<button class="navitem" '+(store.view===it.id?'aria-current="page"':'')+' onclick="go(\''+it.id+'\')">' +
@@ -2129,7 +2155,8 @@ function render(){
 
   const V = VIEWS[s.role] || HOME;
   const vo = curMode()==='view';
-  $('#main').innerHTML = viewAsBar() + syncRail() + (vo ? viewOnlyBar() : '') + (secRevokedMe() && store.view!=='settings' ? secBlockedView() : (V[store.view] || V[Object.keys(V)[0]])());
+  $('#main').innerHTML = viewAsBar() + syncRail() + (vo ? viewOnlyBar() : '') +
+    (s.role==='homeowner' && store.view!=='home' ? '<button class="mh-back" onclick="go(\'home\')">'+svg('home')+'Back to Home</button>' : '') + (secRevokedMe() && store.view!=='settings' ? secBlockedView() : (V[store.view] || V[Object.keys(V)[0]])());
   $('#main').classList.toggle('view-only', vo);
   if(vo){ lockViewOnly(); takeViewSnapshot(); } else viewSnap = null;
   saveSoon();
@@ -4264,7 +4291,63 @@ function rosterManageHTML(){
     '</tbody></table></div>', manage ? '<button class="btn btn-ghost btn-sm" onclick="guardForm()">Add guard</button>' : '');
 }
 
+/* ---- phones: big-icon home screen for homeowners ---- */
+const isPhone = () => window.matchMedia('(max-width:640px)').matches;
+let mhLanded = null;   /* the account that already landed on the home screen this visit */
+const M_HOME = [
+  { g:'Payments & finances', items:[
+    { icon:'peso',  label:'HOA payments',      page:'mydues', tone:'green', n:()=>store.dues.filter(d=>d.unit===myUnit()&&d.status!=='Paid').length },
+    { icon:'chart', label:'Financial reports', page:'finances' } ]},
+  { g:'Help & safety', items:[
+    { icon:'phone', label:'Emergency hotlines', page:'hotlines', tone:'rose' },
+    { icon:'life',  label:'Help desk',          page:'support', tab:['sup','help'] },
+    { icon:'chat',  label:'New ticket',         page:'support', act:()=>ticketForm() },
+    { icon:'inbox', label:'My open tickets',    page:'support', tab:['sup','tickets'], n:()=>store.tickets.filter(t=>t.unit===myUnit()&&t.status!=='Resolved').length } ]},
+  { g:'Report a problem', items:[
+    { icon:'wrench', label:'Report an issue',  page:'issues', tone:'amber', act:()=>requestForm() },
+    { icon:'flag',   label:'File a complaint', page:'issues', tone:'amber', act:()=>complaintForm() },
+    { icon:'inbox',  label:'My reports',       page:'issues', tab:['hic','all'], n:()=>icRows().filter(r=>r.x.unit===myUnit()&&r.stage!=='Resolved').length } ]},
+  { g:'Community', items:[
+    { icon:'megaphone', label:'Announcements',          page:'feed', tab:['feedcat','All'], n:()=>store.announcements.filter(a=>!store.seen.has(a.id)).length },
+    { icon:'leaf',      label:'Sustainability updates', page:'feed', tab:['feedcat','Sustainability'], tone:'green' },
+    { icon:'calendar',  label:'Events',                 page:'events' },
+    { icon:'ballot',    label:'Elections',              page:'elections', n:()=>store.election.status==='Open' && !hasVoted() ? 1 : 0 } ]},
+  { g:'More', items:[
+    { icon:'grid',   label:'Book a facility', page:'book' },
+    { icon:'shield', label:'Gate pass',       page:'gatepass' },
+    { icon:'tag',    label:'Marketplace',     page:'marketplace' },
+    { icon:'car',    label:'Shuttle service', page:'rides' },
+    { icon:'gear',   label:'Settings',        page:'settings' } ]}
+];
+function mhTap(g, i){
+  const t = M_HOME[g].items[i];
+  if(t.act) return t.act();
+  if(t.tab) store.tab[t.tab[0]] = t.tab[1];
+  go(t.page);
+}
+function mhHome(){
+  const s = store.session;
+  const due = store.dues.find(d => d.unit===myUnit() && d.period===curPeriod() && d.status!=='Paid');
+  return walkInAlerts() +
+    '<div class="mh-hello">Hello, '+esc(s.name.split(' ')[0])+'</div>' +
+    '<div class="mh-sub">Unit '+esc(s.unit)+' · Tap a picture to open it.</div>' +
+    (due ? '<div class="card card-pad mh-pay"><div class="grow"><div class="ttl">'+esc(due.period)+' dues · '+peso(due.amount)+'</div>' +
+      '<div class="meta">Due on the '+store.settings.dueDay+'th</div></div>' +
+      '<button class="btn btn-emerald" style="width:auto" onclick="payForm()">Pay now</button></div>' : '') +
+    M_HOME.map((grp, gi) => {
+      const items = grp.items.map((t, ii) => ({ t, ii })).filter(x => pageOn(s.role, x.t.page, s.accountId));
+      if(!items.length) return '';
+      return '<p class="mh-label">'+esc(grp.g)+'</p><div class="mh-grid">' + items.map(({ t, ii }) => {
+        const n = t.n ? t.n() : 0;
+        return '<button class="mh-tile'+(t.tone ? ' mh-'+t.tone : '')+'" onclick="mhTap('+gi+','+ii+')">' +
+          '<span class="mh-ico">'+svg(t.icon)+'</span><span class="mh-txt">'+esc(t.label)+'</span>' +
+          (n ? '<span class="mh-n" aria-label="'+n+' new">'+n+'</span>' : '') + '</button>';
+      }).join('') + '</div>';
+    }).join('');
+}
+
 const HOME = {
+  home(){ if(isPhone()) return mhHome(); store.view = 'feed'; return HOME.feed(); },
   issues(){ return icHomeView(); },
   announcements(){ store.view = 'feed'; return HOME.feed(); },
   gatepass(){ return gpHomeView(); },
@@ -4616,8 +4699,11 @@ function feedAnnouncements(){
   const cat = tabOf('feedcat','All'), all = visibleAnnouncements();
   return cat==='All' ? all : all.filter(a => a.category===cat);
 }
+/* announcement categories; Sustainability is always offered so the home screen's Sustainability tile has posts to show */
+const annCats = () => store.settings.categories.includes('Sustainability') ? store.settings.categories : store.settings.categories.concat('Sustainability');
 function feedCatChips(){
-  const all = visibleAnnouncements(), cats = [...new Set(all.map(a => a.category).filter(Boolean))], cur = tabOf('feedcat','All');
+  const all = visibleAnnouncements(), cur = tabOf('feedcat','All');
+  const cats = [...new Set(all.map(a => a.category).filter(Boolean).concat(cur==='All' ? [] : [cur]))];
   if(cats.length < 2) return '';
   return '<div class="chiprow" role="group" aria-label="Filter announcements by category" style="padding:12px 16px 0">' +
     ['All'].concat(cats).map(c => { const n = c==='All' ? all.length : all.filter(a => a.category===c).length;
@@ -5280,7 +5366,7 @@ function announceForm(id){
     '<label class="fld"><span>Title</span><input class="input" id="f_title" value="'+esc(a?a.title:'')+'" placeholder="Water interruption — Friday"></label>' +
     '<div class="grid g-2" style="gap:0 12px">' +
       '<label class="fld"><span>Date</span><input class="input" id="f_date" type="date" value="'+(a?a.date:new Date().toISOString().slice(0,10))+'"></label>' +
-      '<label class="fld"><span>Category</span><select class="input" id="f_cat">'+store.settings.categories.map(c=>'<option '+(a&&a.category===c?'selected':'')+'>'+esc(c)+'</option>').join('')+'</select></label></div>' +
+      '<label class="fld"><span>Category</span><select class="input" id="f_cat">'+annCats().map(c=>'<option '+(a&&a.category===c?'selected':'')+'>'+esc(c)+'</option>').join('')+'</select></label></div>' +
     '<label class="fld"><span>Body</span><textarea class="input" id="f_body" placeholder="What do homeowners need to know, and what should they do about it?">'+esc(a?a.body:'')+'</textarea></label>' +
     annPhotoPicker(a ? a.images : []) +
     '<span class="lh-lbl">Links and QR codes</span>' +
