@@ -4313,13 +4313,13 @@ const M_HOME = [
     { icon:'chart', label:'Financial reports', page:'finances' } ]},
   { g:'Help & safety', items:[
     { icon:'phone', label:'Emergency hotlines', page:'hotlines', tone:'rose' },
-    { icon:'life',  label:'Help desk',          page:'support', tab:['sup','help'] },
     { icon:'chat',  label:'New ticket',         page:'support', act:()=>ticketForm() },
     { icon:'inbox', label:'My open tickets',    page:'support', tab:['sup','tickets'], n:()=>store.tickets.filter(t=>t.unit===myUnit()&&t.status!=='Resolved').length } ]},
   { g:'Report a problem', items:[
     { icon:'wrench', label:'Report an issue',  page:'issues', tone:'amber', act:()=>requestForm() },
     { icon:'flag',   label:'File a complaint', page:'issues', tone:'amber', act:()=>complaintForm() },
-    { icon:'inbox',  label:'My reports',       page:'issues', tab:['hic','all'], n:()=>icRows().filter(r=>r.x.unit===myUnit()&&r.stage!=='Resolved').length } ]},
+    { icon:'inbox',  label:'My reports',       page:'issues', tab:['hic','all'], n:()=>icRows().filter(r=>r.x.unit===myUnit()&&r.stage!=='Resolved').length },
+    { icon:'life',   label:'Get help',         page:'support', tab:['sup','help'] } ]},
   { g:'Community', items:[
     { icon:'megaphone', label:'Announcements',          page:'feed', tab:['feedcat','All'], n:()=>store.announcements.filter(a=>!store.seen.has(a.id)).length },
     { icon:'leaf',      label:'Sustainability updates', page:'feed', tab:['feedcat','Sustainability'], tone:'green' },
