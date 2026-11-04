@@ -986,6 +986,7 @@ const store = {
   ],
   requests:[],
   dues:[],
+  lotPayments:[],   /* receipts from the Payments sheet of the lot register (Master data upload), shown to each lot's homeowner */
   /* financial reports the board publishes to homeowners: AFS, event liquidations, budgets, other disclosures */
   disclosures:[],
   bookings:[],
@@ -2615,7 +2616,8 @@ const ADMIN = {
           }).join('') + '</tbody></table></div><p class="meta" id="mdNoMatch" style="display:none;padding:12px 16px">No units match that search.</p>'
           : empty(store.units.length ? 'No units in this phase' : 'No units yet', 'Upload the lot register from Excel, or add units one at a time.'),
           '<div class="btn-row">'+(store.units.length ? '<button class="btn btn-ghost btn-sm" onclick="unitExport()">Download Excel</button>' : '')+'<button class="btn btn-ghost btn-sm" onclick="unitImportForm()">Upload from Excel</button><button class="btn btn-primary btn-sm" onclick="unitForm()">Add unit</button></div>') +
-        '<p class="meta" style="margin-top:10px">Each unit allows up to two homeowner users. Unit codes follow Phase-Block-Lot, e.g. P1-B5-L12. A unit with its own monthly rate (from the lot register) is billed at that rate; the others follow the billing rule in Financial → Billing.</p>';
+        '<p class="meta" style="margin-top:10px">Each unit allows up to two homeowner users. Unit codes follow Phase-Block-Lot, e.g. P1-B5-L12. A unit with its own monthly rate (from the lot register) is billed at that rate; the others follow the billing rule in Financial → Billing.' +
+          ((store.lotPayments||[]).length ? ' <b>'+store.lotPayments.length+'</b> payment receipts are on file from the Payments sheet; each homeowner sees their own lot’s receipts under HOA payments.' : ' Upload the lot register with its Payments sheet so homeowners see their receipts under HOA payments.')+'</p>';
       },
       facilities(){
         return '<div class="grid g-2">' +
@@ -4433,7 +4435,8 @@ const HOME = {
       '<button class="btn btn-ghost" style="width:auto" onclick="downloadStatement()">Download statement</button></div>') +
     '<div class="card card-pad" style="margin-bottom:14px;display:flex;align-items:center;gap:10px">'+svg('building')+'<div><strong>Payment source records:</strong> Cambria (3rd Party Provider)' +
       '<div class="meta">Payment status here follows Cambria’s records and is not real time.</div></div></div>' +
-    (mine.length ? '' : '<div class="card" style="margin-bottom:14px">'+empty('No dues on record yet','Your billing appears here once the admin office generates it. The statement will list every period.')+'</div>') +
+    myLotPaymentsCard() +
+    (mine.length || lotPaymentsOf(myUnit()).length ? '' : '<div class="card" style="margin-bottom:14px">'+empty('No dues on record yet','Your billing appears here once the admin office generates it. The statement will list every period.')+'</div>') +
     (!mine.length ? '' : '<div class="card tablewrap"><table><thead><tr><th>Period</th><th>Amount</th><th class="hide-sm">Method</th><th>Status</th><th style="text-align:right">Date paid</th></tr></thead><tbody>' +
     mine.map(d => '<tr><td data-label="Period"><strong>'+esc(d.period)+'</strong></td><td class="mono" data-label="Amount">'+peso(d.amount)+'</td>' +
       '<td class="hide-sm" data-label="Method">'+esc(d.method||'—')+(d.ref?'<div class="meta">'+esc(d.ref)+'</div>':'')+'</td><td data-label="Status"><span class="tag '+statusTag(d.status)+'">'+esc(d.status)+'</span></td>' +
@@ -7409,16 +7412,18 @@ function unitImportForm(){
   UNIT_IMPORT = null;
   modal('Upload units from Excel','New lots are added and lots already on file are updated, matched by Phase, Block and Lot. Nothing is deleted.',
     '<div class="card card-pad" style="background:var(--paper);margin-bottom:12px"><div class="meta" style="display:block">Upload the <b>BFE Lot Register</b> as it is, or any sheet whose first row has <b>Phase</b>, <b>Block</b> and <b>Lot</b>. ' +
-      'The portal also reads, if present, the homeowner name, status, remarks, HOA start, monthly rate, gov role, street, lot area, type and occupancy. Other columns and sheets are ignored.</div>' +
+      'The portal also reads, if present, the homeowner name, status, remarks, HOA start, monthly rate, gov role, street, lot area, type and occupancy. A <b>Payments</b> sheet (OR No., OR Date, Amount and the physical lot) is saved too, so each homeowner sees their own receipts under HOA payments. Other columns and sheets are ignored.</div>' +
       '<button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-top:10px" onclick="unitTemplate()">Download template</button></div>' +
     '<label class="fld"><span>Excel or CSV file</span><input class="input" id="f_xf" type="file" accept=".xlsx,.xls,.csv" onchange="unitReadFile(this.files[0])"></label>' +
     '<div id="xPrev"></div>',
     'Save to master data', () => {
-      if(!UNIT_IMPORT || !(UNIT_IMPORT.add.length + UNIT_IMPORT.upd.length)){ toast('info','Choose a file','Pick the lot register file first, or there is nothing new in it.'); return false; }
-      const { add, upd, file } = UNIT_IMPORT;
+      const pn = UNIT_IMPORT && UNIT_IMPORT.pay ? UNIT_IMPORT.pay.add + UNIT_IMPORT.pay.upd : 0;
+      if(!UNIT_IMPORT || !(UNIT_IMPORT.add.length + UNIT_IMPORT.upd.length + pn)){ toast('info','Choose a file','Pick the lot register file first, or there is nothing new in it.'); return false; }
+      const { add, upd, file, pay } = UNIT_IMPORT;
       upd.forEach(([rec, x]) => Object.assign(rec, x));
       add.forEach(x => store.units.push(x));
-      commit(add.length+' unit'+(add.length===1?'':'s')+' added and '+upd.length+' updated from '+file+'.',{title:'Master data uploaded'});
+      if(pn){ const all = new Map((store.lotPayments||[]).map(p => [lpKey(p), p])); pay.list.forEach(p => all.set(lpKey(p), p)); store.lotPayments = [...all.values()]; }
+      commit(add.length+' unit'+(add.length===1?'':'s')+' added and '+upd.length+' updated'+(pn ? ', '+pn+' payment receipt'+(pn===1?'':'s')+' saved' : '')+' from '+file+'.',{title:'Master data uploaded'});
       UNIT_IMPORT = null; return true; });
 }
 async function unitReadFile(f){
@@ -7428,21 +7433,7 @@ async function unitReadFile(f){
   let wb;
   try{ wb = XLSX.read(await f.arrayBuffer()); }
   catch(e){ box.innerHTML = '<p class="meta">That file could not be read. Save it as .xlsx or .csv and try again.</p>'; return; }
-  /* the first sheet with Phase / Block / Lot (or a lot ID) in one of its first rows */
   const low = c => String(c).trim().toLowerCase();
-  let raw = null, hi = -1;
-  for(const name of wb.SheetNames){
-    const r = XLSX.utils.sheet_to_json(wb.Sheets[name], { header:1, raw:true, defval:'' });
-    const i = r.slice(0,10).findIndex(row => { const h = row.map(low);
-      return h.some(c => UNIT_COLS.lotId.test(c)) || (h.some(c => UNIT_COLS.phase.test(c)) && h.some(c => UNIT_COLS.block.test(c)) && h.some(c => UNIT_COLS.lot.test(c))); });
-    if(i >= 0){ raw = r; hi = i; break; }
-  }
-  if(!raw){ box.innerHTML = '<p class="meta">No <b>Phase</b>, <b>Block</b> and <b>Lot</b> columns were found. Use the template, or rename the columns in your sheet.</p>'; return; }
-  const head = raw[hi].map(low), col = {};
-  Object.keys(UNIT_COLS).forEach(k => { col[k] = head.findIndex(h => UNIT_COLS[k].test(h)); });
-  if(col.owner === col.adminId) col.owner = head.findIndex((h,i) => i!==col.adminId && UNIT_COLS.owner.test(h));
-  const cell = (r,k) => col[k] < 0 ? '' : String(r[col[k]]==null ? '' : r[col[k]]).trim();
-  const num = v => { const m = /(\d+)/.exec(v); return m ? String(Number(m[1])) : ''; };
   const isoDay = v => {                                                                  /* Excel date serial or a written date → yyyy-mm-dd */
     if(!v) return '';
     if(/^\d{5}(\.\d+)?$/.test(v)){ const d = new Date(Math.round((Math.floor(v) - 25569) * 864e5));
@@ -7450,6 +7441,27 @@ async function unitReadFile(f){
     if(/^\d{4}-\d\d-\d\d/.test(v)) return v.slice(0,10);
     const d = new Date(v); return isNaN(d) ? v : bkIso(d);
   };
+  const pay = lotPaymentsFrom(wb, low, isoDay);
+  /* the first sheet with Phase / Block / Lot (or a lot ID) in one of its first rows */
+  let raw = null, hi = -1;
+  for(const name of wb.SheetNames){
+    const r = XLSX.utils.sheet_to_json(wb.Sheets[name], { header:1, raw:true, defval:'' });
+    const i = r.slice(0,10).findIndex(row => { const h = row.map(low);
+      return h.some(c => UNIT_COLS.lotId.test(c)) || (h.some(c => UNIT_COLS.phase.test(c)) && h.some(c => UNIT_COLS.block.test(c)) && h.some(c => UNIT_COLS.lot.test(c))); });
+    if(i >= 0){ raw = r; hi = i; break; }
+  }
+  const payBox = !pay ? '' : '<div class="card card-pad" style="margin-bottom:10px">' +
+      '<div class="kv"><span>Payment receipts — new ('+esc(pay.sheet)+' sheet)</span><b>'+pay.add+'</b></div>' +
+      '<div class="kv"><span>Payment receipts — changed</span><b>'+pay.upd+'</b></div>' +
+      (pay.same ? '<div class="kv"><span>Payment receipts already up to date</span><b>'+pay.same+'</b></div>' : '') +
+      (pay.bad ? '<div class="kv"><span>Receipts skipped — lot missing or out of range</span><b>'+pay.bad+'</b></div>' : '') + '</div>';
+  if(!raw && pay){ UNIT_IMPORT = { file:f.name, add:[], upd:[], pay }; box.innerHTML = payBox; return; }
+  if(!raw){ box.innerHTML = '<p class="meta">No <b>Phase</b>, <b>Block</b> and <b>Lot</b> columns were found. Use the template, or rename the columns in your sheet.</p>'; return; }
+  const head = raw[hi].map(low), col = {};
+  Object.keys(UNIT_COLS).forEach(k => { col[k] = head.findIndex(h => UNIT_COLS[k].test(h)); });
+  if(col.owner === col.adminId) col.owner = head.findIndex((h,i) => i!==col.adminId && UNIT_COLS.owner.test(h));
+  const cell = (r,k) => col[k] < 0 ? '' : String(r[col[k]]==null ? '' : r[col[k]]).trim();
+  const num = v => { const m = /(\d+)/.exec(v); return m ? String(Number(m[1])) : ''; };
   const year = v => { const m = /(19|20)\d\d/.exec(v); return m ? m[0] : ''; };
   const byCode = new Map(store.units.map(u => [u.unit, u]));
   const add = [], upd = [], bad = [], seen = new Set();
@@ -7486,8 +7498,8 @@ async function unitReadFile(f){
       if(Object.keys(x).some(k => String(rec[k]==null ? '' : rec[k]) !== String(x[k]))) upd.push([rec, x]); else same++;
     } else add.push(Object.assign({ owner:'', lot:0, type:'', occupancy:'Vacant', since:'' }, x));
   });
-  UNIT_IMPORT = { file:f.name, add, upd };
-  box.innerHTML = '<div class="card card-pad" style="margin-bottom:10px">' +
+  UNIT_IMPORT = { file:f.name, add, upd, pay };
+  box.innerHTML = payBox + '<div class="card card-pad" style="margin-bottom:10px">' +
       '<div class="kv"><span>New units to add</span><b>'+add.length+'</b></div>' +
       '<div class="kv"><span>Units already on file to update</span><b>'+upd.length+'</b></div>' +
       (same ? '<div class="kv"><span>Already up to date</span><b>'+same+'</b></div>' : '') +
@@ -7499,6 +7511,54 @@ async function unitReadFile(f){
         '<td class="hide-sm" data-label="Status">'+esc([x.status, x.remarks].filter(Boolean).join(' · ')||'—')+'</td>' +
         '<td class="mono" data-label="Dues">'+(typeof x.rate==='number' ? peso(x.rate) : '<span class="meta">Billing rule</span>')+'</td></tr>').join('') +
       '</tbody></table></div>' + (add.length + upd.length > 50 ? '<p class="meta">…and '+(add.length + upd.length - 50)+' more.</p>' : '') : '');
+}
+const lotPaymentsOf = unit => (store.lotPayments||[]).filter(p => p.unit===unit)
+  .sort((a,b) => String(b.date).localeCompare(String(a.date)) || String(b.or).localeCompare(String(a.or), undefined, { numeric:true }));
+/* HOA payments: the receipts on file in Master data for the homeowner's own lot */
+function myLotPaymentsCard(){
+  const list = lotPaymentsOf(myUnit());
+  if(!list.length) return '';
+  const yr = String(new Date().getFullYear()), thisYear = list.filter(p => String(p.date).startsWith(yr));
+  return '<div class="grid g-3" style="margin-bottom:14px">' +
+      stat('Paid in '+yr, peso(thisYear.reduce((a,p) => a+p.amt, 0)), thisYear.length+' receipt'+(thisYear.length===1?'':'s')) +
+      stat('Last payment', mdShortDate(list[0].date)||'—', peso(list[0].amt)+(list[0].or ? ' · OR '+list[0].or : '')) +
+      stat('Receipts on record', list.length, 'From the HOA lot register') + '</div>' +
+    sectionCard('Payments on record', '<div class="tablewrap"><table><thead><tr><th>OR date</th><th>OR No.</th><th>Month</th><th>Amount</th><th class="hide-sm">Paid by</th></tr></thead><tbody>' +
+      list.map(p => '<tr><td class="mono" data-label="OR date">'+esc(mdShortDate(p.date)||'—')+'</td><td class="mono" data-label="OR No."><strong>'+esc(p.or||'—')+'</strong></td>' +
+        '<td data-label="Month">'+esc(p.month||'—')+'</td><td class="mono" data-label="Amount">'+peso(p.amt)+'</td>' +
+        '<td class="hide-sm" data-label="Paid by">'+esc(p.payer||'—')+(p.acct ? '<div class="meta mono">'+esc(p.acct)+'</div>' : '')+'</td></tr>').join('') +
+      '</tbody></table></div>') + '<div style="height:14px"></div>';
+}
+/* the Payments sheet of the lot register: one official receipt per row, tied to a lot by its physical lot ID (1-04-046).
+   Homeowners see the receipts for their own lot under HOA payments. */
+const PAY_COLS = { month:/receipt month|^month/, acct:/account (series|no)/, payer:/payer|paid by/, date:/^or date|^date/,
+  or:/^or no|receipt no/, amt:/amount/, lot:/physical lot|lot id|lot code/ };
+const lpKey = p => p.unit+'|'+(p.or || p.date+'|'+p.amt+'|'+p.payer);
+function lotPaymentsFrom(wb, low, isoDay){
+  for(const name of wb.SheetNames){
+    const r = XLSX.utils.sheet_to_json(wb.Sheets[name], { header:1, raw:true, defval:'' });
+    const hi = r.slice(0,10).findIndex(row => { const h = row.map(low); return h.some(c => PAY_COLS.or.test(c)) && h.some(c => PAY_COLS.lot.test(c)) && h.some(c => PAY_COLS.amt.test(c)); });
+    if(hi < 0) continue;
+    const head = r[hi].map(low), col = {};
+    Object.keys(PAY_COLS).forEach(k => { col[k] = head.findIndex(h => PAY_COLS[k].test(h)); });
+    const cell = (row,k) => col[k] < 0 ? '' : String(row[col[k]]==null ? '' : row[col[k]]).trim();
+    const have = new Map((store.lotPayments||[]).map(p => [lpKey(p), canon(p)]));
+    const list = [], seen = new Set();
+    let bad = 0, add = 0, upd = 0, same = 0;
+    r.slice(hi+1).forEach(row => {
+      if(!row.some(c => String(c).trim())) return;
+      const [ph, bl, lt] = cell(row,'lot').split(/[-\s]+/).map(v => String(Number(v)||''));
+      const L = PHASE_LAYOUT[ph];
+      if(!L || !(bl >= 1 && bl <= L.blocks) || !(lt >= 1 && lt <= L.lots)){ bad++; return; }
+      const p = { unit:unitCode(ph, bl, lt), month:cell(row,'month'), acct:cell(row,'acct'), payer:cell(row,'payer'),
+        date:isoDay(cell(row,'date')), or:cell(row,'or'), amt:Number(cell(row,'amt').replace(/[₱,\s]/g,''))||0 };
+      const k = lpKey(p); if(seen.has(k)) return; seen.add(k);
+      list.push(p);
+      if(!have.has(k)) add++; else if(have.get(k) !== canon(p)) upd++; else same++;
+    });
+    return { sheet:name, list, add, upd, same, bad };
+  }
+  return null;
 }
 async function unitTemplate(){
   const rows = [LOT_REGISTER_COLS, ['1-05-012', 1, 5, 12, 'BF1-0512', 'DELA CRUZ JUAN', 'BEHOA member (moved-in)', 'BAMI', '2020-01-01', 'NO', 900, '']];
@@ -8590,7 +8650,7 @@ const sbMail = sbLib ? sbLib.createClient(SUPABASE_URL, SUPABASE_KEY,
   { auth:{ flowType:'implicit', persistSession:false, autoRefreshToken:false, detectSessionInUrl:false, storageKey:'hoa-mailer' } }) : null;
 
 const LOCAL_ONLY = ['theme','prefs','linked','seen'];               /* personal to this device */
-const ADMIN_ONLY = ['settings','hiddenPages','userAccess','hotlines','accessAdmins'];         /* only admins may change these */
+const ADMIN_ONLY = ['settings','hiddenPages','userAccess','hotlines','accessAdmins','lotPayments'];         /* only admins may change these */
 const SHARED_KEYS = Object.keys(SEED).filter(k => k !== 'accounts' && !LOCAL_ONLY.includes(k));
 let cloudOn = false, synced = {}, syncedAccts = {}, live = null, pushTimer = null, heartbeat = null,
     membersTimer = null, renderPending = false, lastFailToast = 0;
