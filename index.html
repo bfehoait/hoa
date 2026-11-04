@@ -4317,7 +4317,7 @@ function rosterManageHTML(){
 /* ---- phones: big-icon home screen for homeowners ---- */
 const isPhone = () => window.matchMedia('(max-width:640px)').matches;
 let mhLanded = null;   /* the account that already landed on the home screen this visit */
-const MH_ROLES = ['homeowner','admin'];   /* roles that get the big-icon home screen and tile menu on phones */
+const MH_ROLES = ['homeowner','admin','driver'];   /* roles that get the big-icon home screen and tile menu on phones */
 const M_HOME = [
   { g:'Payments & finances', items:[
     { icon:'peso',  label:'HOA payments',      page:'mydues', tone:'green', n:()=>store.dues.filter(d=>d.unit===myUnit()&&d.status!=='Paid').length },
@@ -4370,11 +4370,11 @@ function mhHome(){
     }).join('');
 }
 
-/* admins: the home screen is their own sidebar as big tiles, so pages turned off in User Access stay hidden */
+/* admins and drivers: the home screen is their own sidebar as big tiles, so pages turned off in User Access stay hidden */
 function mhNavHome(){
   const s = store.session;
   return '<div class="mh-hello">Hello, '+esc(s.name.split(' ')[0])+'</div>' +
-    '<div class="mh-sub">'+esc(adminPosition(s.accountId) || 'HOA Admin')+' · Tap a picture to open it.</div>' +
+    '<div class="mh-sub">'+esc(s.role==='admin' ? adminPosition(s.accountId) || 'HOA Admin' : ROLE_LABEL(s.role))+' · Tap a picture to open it.</div>' +
     navFor(s.role, s.accountId).map(grp => '<p class="mh-label">'+esc(grp.g)+'</p><div class="mh-grid">' + grp.items.map(it => {
       const n = it.badge ? it.badge() : 0;
       return '<button class="mh-tile'+(it.id==='hotlines' ? ' mh-rose' : '')+'" onclick="go(\''+it.id+'\')">' +
@@ -5091,6 +5091,7 @@ function stationsView(){
     (busy.length && quiet.length ? '<div class="card card-pad" style="margin-top:14px"><div class="meta" style="margin:0"><span>No one booked at</span>'+quiet.map(x=>'<span class="tag t-grey">'+esc(x)+'</span>').join('')+'</div></div>' : '');
 }
 const DRIVER = {
+  home(){ if(isPhone()) return mhNavHome(); store.view = 'trips'; return DRIVER.trips(); },
   announcements(){ return noticesView(); },
   stations(){ return stationsView(); },
   trips(){
