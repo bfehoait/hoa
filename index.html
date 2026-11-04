@@ -329,10 +329,11 @@ main{padding:18px 14px 90px;max-width:1180px;width:100%;min-width:0}
   .tablewrap table.md-register td{padding:0;border-bottom:0;min-width:0;overflow-wrap:anywhere}
   .tablewrap table.md-register td:nth-child(1){grid-column:span 3}
   .tablewrap table.md-register td:nth-child(5),.tablewrap table.md-register td:nth-child(6),
-  .tablewrap table.md-register td:nth-child(7),.tablewrap table.md-register td:nth-child(8),
-  .tablewrap table.md-register td:nth-child(12){grid-column:span 3}
-  .tablewrap table.md-register td:nth-child(9),.tablewrap table.md-register td:nth-child(10),.tablewrap table.md-register td:nth-child(11){grid-column:span 2}
-  .tablewrap table.md-register td:nth-child(12):empty{display:none}
+  .tablewrap table.md-register td:nth-child(8),.tablewrap table.md-register td:nth-child(9),
+  .tablewrap table.md-register td:nth-child(13){grid-column:span 3}
+  .tablewrap table.md-register td:nth-child(7){grid-column:1/-1}
+  .tablewrap table.md-register td:nth-child(10),.tablewrap table.md-register td:nth-child(11),.tablewrap table.md-register td:nth-child(12){grid-column:span 2}
+  .tablewrap table.md-register td:nth-child(13):empty{display:none}
   .tablewrap table.md-register td:last-child{grid-column:-4/-1;padding-top:0;text-align:right;align-self:end}
 }
 .tabs button{white-space:nowrap;border:1px solid var(--line);background:#fff;padding:8px 13px;border-radius:20px;font-size:13.5px;font-weight:600;color:var(--ink-2);cursor:pointer;transition:.14s}
@@ -387,6 +388,11 @@ table.mkt-listings td{vertical-align:top}
 table.mkt-listings td:last-child{padding-top:11px}
 tr:last-child td{border-bottom:0}
 .tablewrap{overflow-x:auto}
+/* master data on wider screens: the Edit button stays pinned at the right edge, so long rows never need scrolling to reach it */
+@media(min-width:641px){
+  table.md-register th:last-child,table.md-register td:last-child{position:sticky;right:0;z-index:1;background:var(--surface);box-shadow:-8px 0 8px -8px rgba(15,23,42,.25)}
+  table.md-register .md-users{min-width:190px}
+}
 @media(max-width:640px){.hide-sm{display:none}}
 @media(max-width:640px){
   .tablewrap table thead{display:none}
@@ -2591,16 +2597,17 @@ const ADMIN = {
         tabs('mdph',[{id:'all',label:'All phases'},{id:'1',label:'Phase 1',n:count('1')},{id:'2',label:'Phase 2',n:count('2')},{id:'3',label:'Phase 3',n:count('3')}],'all') +
         sectionCard('Units and lots', rows.length ?
           '<div class="card-pad" style="padding-bottom:0"><input class="input" type="search" placeholder="Search unit, owner, status or remarks" aria-label="Search units" oninput="mdFilterUnits(this.value)"></div>' +
-          '<div class="tablewrap"><table id="mdUnits" class="md-register"><thead><tr>'+LOT_REGISTER_COLS.map(c => '<th>'+esc(c)+'</th>').join('')+'<th></th></tr></thead><tbody>' +
-          rows.map(u => { const v = mdRegisterRow(u);
-            return '<tr data-q="'+esc([u.unit].concat(v).filter(x => x!=='').join(' ').toLowerCase())+'">' +
+          '<div class="tablewrap"><table id="mdUnits" class="md-register"><thead><tr>'+LOT_REGISTER_COLS.slice(0,6).concat('System User(s)', LOT_REGISTER_COLS.slice(6)).map(c => '<th>'+esc(c)+'</th>').join('')+'<th></th></tr></thead><tbody>' +
+          rows.map(u => { const v = mdRegisterRow(u), users = store.accounts.filter(a => a.unit===u.unit);
+            return '<tr data-q="'+esc([u.unit].concat(v, users.map(a => a.name)).filter(x => x!=='').join(' ').toLowerCase())+'">' +
             '<td class="mono" data-label="Physical Lot ID"><strong>'+esc(v[0]||'—')+'</strong></td>' +
             '<td data-label="Phase">'+esc(v[1])+'</td><td data-label="Block">'+esc(v[2])+'</td><td data-label="Lot">'+esc(v[3])+'</td>' +
             '<td class="mono" data-label="Admin Unit ID(s)">'+esc(v[4]||'—')+'</td>' +
             '<td data-label="Admin Homeowner Name(s)">'+(v[5] ? esc(v[5]) : '<span class="meta">—</span>')+'</td>' +
+            '<td class="md-users" data-label="System User(s)">'+(users.length ? users.map(a => '<div>'+esc(a.name)+' <span class="meta">· '+esc(ROLE_LABEL(a.role))+(a.status && a.status!=='Active' ? ', '+esc(a.status) : '')+'</span></div>').join('') : '<span class="meta">No portal account</span>')+'</td>' +
             '<td data-label="Admin Status(es)">'+esc(v[6]||'—')+'</td>' +
             '<td data-label="Admin Remarks">'+esc(v[7]||'—')+'</td>' +
-            '<td data-label="Admin HOA Start" style="white-space:nowrap">'+(/^\d{4}-\d\d-\d\d$/.test(v[8]) ? fmtDate(v[8]) : esc(v[8]||'—'))+'</td>' +
+            '<td class="mono" data-label="Admin HOA Start" style="white-space:nowrap">'+esc(mdShortDate(v[8])||'—')+'</td>' +
             '<td data-label="Linear Park">'+esc(v[9]||'—')+'</td>' +
             '<td class="mono" data-label="Admin Proposed Rate PHP">'+(v[10]==='' ? '<span class="meta">—</span>' : peso(v[10]))+'</td>' +
             '<td data-label="Gov Role">'+(v[11] ? '<span class="tag t-emerald">'+esc(v[11])+'</span>' : '')+'</td>' +
@@ -7504,6 +7511,15 @@ const LOT_REGISTER_WIDTHS = [14,7,7,6,15,34,24,18,15,11,22,10];
 function mdLotId(u){
   if(u.lotId) return u.lotId;
   const p = unitParts(u.unit); return p ? p.phase+'-'+p.block.padStart(2,'0')+'-'+p.lot.padStart(3,'0') : '';
+}
+/* Admin HOA Start as mm/dd/yy (2016-03-01 → 03/01/16); a value that is only a year or free text shows as it is */
+function mdShortDate(v){
+  v = String(v||'').trim();
+  const m = /^(\d{4})-(\d\d)-(\d\d)/.exec(v);
+  if(m) return m[2]+'/'+m[3]+'/'+m[1].slice(2);
+  if(/^\d{4}$/.test(v) || !/\d{1,2}.*\d{4}|[a-z]{3}.*\d{4}/i.test(v)) return v;
+  const d = new Date(v);
+  return isNaN(d) ? v : String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0')+'/'+String(d.getFullYear()).slice(2);
 }
 function mdRegisterRow(u){
   const p = unitParts(u.unit) || { phase:mdPhaseOf(u), block:u.block||'', lot:u.lotNo||'' };
