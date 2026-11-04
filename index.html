@@ -300,19 +300,6 @@ main{padding:18px 14px 90px;max-width:1180px;width:100%;min-width:0}
 .mh-n{position:absolute;top:10px;right:10px;min-width:28px;height:28px;padding:0 8px;border-radius:14px;background:var(--rose);color:#fff;font-size:15px;font-weight:700;display:grid;place-items:center}
 .mh-pay{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px;border-left:3px solid var(--amber)}
 .mh-pay .ttl{font-size:17px}
-/* admins on every screen size: the sidebar is icon tiles and Home is a page of big icons (phone sizes below take over on phones) */
-#nav.nav-tiles-desk{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-#nav.nav-tiles-desk .navlabel{grid-column:1/-1}
-#nav.nav-tiles-desk .navitem{position:relative;flex-direction:column;justify-content:center;gap:6px;min-height:84px;padding:10px 4px;border:1px solid var(--line);border-radius:12px;background:var(--surface);text-align:center;font-size:12.5px;font-weight:650;color:var(--ink);line-height:1.2}
-#nav.nav-tiles-desk .navitem:hover{border-color:var(--slate)}
-#nav.nav-tiles-desk .navitem[aria-current="page"]{background:var(--slate-tint);border-color:var(--slate);color:var(--slate-dk)}
-#nav.nav-tiles-desk .navitem .ico{width:38px;height:38px;border-radius:50%;background:var(--slate-tint);color:var(--slate)}
-#nav.nav-tiles-desk .navitem[aria-current="page"] .ico{background:var(--surface)}
-#nav.nav-tiles-desk .navitem .ico svg{width:21px;height:21px}
-#nav.nav-tiles-desk .navitem .count{position:absolute;top:6px;right:6px;margin:0;font-family:inherit;font-size:11.5px;font-weight:700;background:var(--rose)}
-#nav.nav-tiles-desk .navitem.mh-only{display:flex;grid-column:1/-1;flex-direction:row;min-height:50px;gap:10px;font-size:14.5px}
-#nav.nav-tiles-desk .navitem.mh-only .ico{width:32px;height:32px}
-@media(min-width:641px){.mh-grid.mh-wide{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}}
 @media(max-width:640px){
   .mh-back{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:17px;font-weight:700;padding:12px 18px;margin-bottom:14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;box-shadow:var(--shadow)}
   .mh-back svg{width:22px;height:22px}
@@ -2160,11 +2147,10 @@ function render(){
   const availWrap = $('#availWrap'); if(availWrap) availWrap.classList.toggle('hide', s.role !== 'admin');
 
   const nav = navFor(s.role, s.accountId);
-  const tiles = MH_ROLES.includes(s.role), mh = tiles && (isPhone() || s.role==='admin');
+  const tiles = MH_ROLES.includes(s.role), mh = tiles && isPhone();
   if(mh && mhLanded !== s.accountId){ mhLanded = s.accountId; store.view = 'home'; }
   if(!pageOn(s.role, store.view, s.accountId) || !(VIEWS[s.role]||HOME)[store.view]) store.view = nav[0].items[0].id;
   $('#nav').classList.toggle('nav-tiles', tiles);
-  $('#nav').classList.toggle('nav-tiles-desk', s.role==='admin');
   $('#nav').innerHTML = (tiles ? '<button class="navitem mh-only" '+(store.view==='home'?'aria-current="page"':'')+' onclick="go(\'home\')"><span class="ico">'+svg('home')+'</span>Home</button>' : '') +
     nav.map(group =>
     '<p class="navlabel">'+esc(group.g)+'</p>' + group.items.map(it => {
@@ -2339,7 +2325,7 @@ function onGateSearch(v){
    ADMIN VIEWS
 ============================================================ */
 const ADMIN = {
-  home(){ return mhNavHome(); },
+  home(){ if(isPhone()) return mhNavHome(); store.view = 'overview'; return ADMIN.overview(); },
   rides(){
     const t = tabOf('rides','open');
     const groups = {
@@ -4375,12 +4361,12 @@ function mhHome(){
     }).join('');
 }
 
-/* admins (phone and desktop): the home screen is their own sidebar as big tiles, so pages turned off in User Access stay hidden */
+/* admins: the home screen is their own sidebar as big tiles, so pages turned off in User Access stay hidden */
 function mhNavHome(){
   const s = store.session;
   return '<div class="mh-hello">Hello, '+esc(s.name.split(' ')[0])+'</div>' +
-    '<div class="mh-sub">'+esc(adminPosition(s.accountId) || 'HOA Admin')+' · '+(isPhone() ? 'Tap' : 'Click')+' a picture to open it.</div>' +
-    navFor(s.role, s.accountId).map(grp => '<p class="mh-label">'+esc(grp.g)+'</p><div class="mh-grid mh-wide">' + grp.items.map(it => {
+    '<div class="mh-sub">'+esc(adminPosition(s.accountId) || 'HOA Admin')+' · Tap a picture to open it.</div>' +
+    navFor(s.role, s.accountId).map(grp => '<p class="mh-label">'+esc(grp.g)+'</p><div class="mh-grid">' + grp.items.map(it => {
       const n = it.badge ? it.badge() : 0;
       return '<button class="mh-tile'+(it.id==='hotlines' ? ' mh-rose' : '')+'" onclick="go(\''+it.id+'\')">' +
         '<span class="mh-ico">'+svg(it.icon)+'</span><span class="mh-txt">'+esc(it.label)+'</span>' +
