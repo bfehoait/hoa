@@ -416,3 +416,8 @@ User explicitly authorized a local commit on main and retained control of the pu
 Completed commands: `npm.cmd run typecheck`, `npm.cmd run lint`, `npm.cmd test` (315 tests across 22 files passed), and `npm.cmd run build` all exited successfully. Build reports dependency annotation and chunk-size warnings. `npm.cmd run format:check` exited 1 with formatting issues in 11 files; these were not rewritten for this snapshot. `git diff --cached --check` reports existing trailing blank lines in docs/START-HERE.md and docs/UX-STANDARD.md. Browser tests were not rerun for this commit; existing stale-spec failures are not certified resolved.
 
 Staging excludes .obsidian, reference, docs/previews, ignored environments, private imports, build output, and test artifacts. A text-pattern scan of source, tests, migrations, scripts, and documentation found no non-example emails and one deliberately synthetic forbidden-key test literal. This is a limited pattern check, not a comprehensive security audit or authenticated production acceptance. Staged-path checks found zero excluded-path violations. Legacy root-site deletions are included as part of the user-requested rebuild replacement; existing Git history is retained.
+
+
+## 2026-11-07 - Carpooling shortcut
+
+Added a Carpooling destination beside Shuttle in the existing More hub, linking to the existing /directory/transport route. Existing role and server-permission filtering is reused. No new service or permission grant was introduced. Verified the route and reviewed the focused diff; git diff --check passed for MoreHub.tsx. Per user request, lint and end-to-end tests were not run. No commit or push for this change.

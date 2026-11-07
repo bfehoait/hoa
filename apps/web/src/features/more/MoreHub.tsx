@@ -19,6 +19,7 @@ import {
   Settings2,
   ShoppingBag,
   UserRound,
+  Users,
   Vote,
   Bell,
   Flag,
@@ -120,6 +121,12 @@ const groups: { title: string; category: string; items: Destination[] }[] = [
         title: "Shuttle",
         detail: "Authorized vehicles & today’s requests",
         icon: CarFront,
+      },
+      {
+        to: "/directory/transport",
+        title: "Carpooling",
+        detail: "Share a ride with neighbours",
+        icon: Users,
       },
       {
         to: "/more/elections",
