@@ -1,0 +1,366 @@
+.panel {
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  margin-block: 20px;
+  overflow-wrap: anywhere;
+}
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.sectionTitle svg {
+  color: var(--accent);
+  flex: none;
+}
+.navigation {
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.navigation button[aria-pressed="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent-line);
+  box-shadow: inset 0 -3px var(--accent);
+}
+.unavailable {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+  background: var(--amber-bg);
+  border: 1px solid var(--amber-line);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+.unavailable > svg {
+  color: var(--amber);
+  flex: none;
+}
+.unavailable p {
+  margin: 6px 0 0;
+}
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  text-align: center;
+  padding: 32px 16px;
+  background: var(--bg);
+  border: 1px dashed var(--line-strong);
+  border-radius: 12px;
+  margin-top: 20px;
+}
+.empty > svg {
+  color: var(--accent);
+}
+.empty h3,
+.empty p {
+  margin: 0;
+}
+.empty p {
+  color: var(--muted);
+  max-width: 48ch;
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-block: 16px;
+}
+.metrics,
+.grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+}
+.metrics > div,
+.grid article {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.metrics > div {
+  position: relative;
+  padding-right: 64px;
+}
+.metrics > div > svg {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  color: var(--accent);
+}
+.metrics strong {
+  display: block;
+  font-size: 28px;
+  margin-block: 8px;
+}
+.metrics span,
+.note {
+  font-size: 14px;
+  color: var(--muted);
+}
+.request {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-inline-start: 4px solid var(--accent);
+  border-radius: 12px;
+  margin-top: 16px;
+  background: var(--bg);
+}
+.request h3 {
+  font-size: 18px;
+}
+.form {
+  display: grid;
+  gap: 16px;
+}
+/* The grid gap already sets the rhythm here. Child margins do not
+   collapse inside a grid, so they stacked on top of it and opened
+   roughly 60px between a field and the note under it. */
+.form > * {
+  margin-block: 0;
+}
+.form label {
+  display: grid;
+  gap: 8px;
+}
+.form input,
+.form select,
+.historyFilter select {
+  min-height: 48px;
+  padding: 12px;
+  font: inherit;
+  font-size: 16px;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink);
+  background: var(--surface);
+}
+.historyFilter {
+  display: grid;
+  gap: 8px;
+  max-width: 360px;
+  margin-block: 16px;
+}
+.form input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  min-height: 24px;
+}
+.form label:has(input[type="checkbox"]) {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+}
+.serviceSummary {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding-block: 16px;
+  border-block: 1px solid var(--line);
+  margin-top: 24px;
+}
+.serviceMark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.serviceSummary p {
+  font-size: 14px;
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+.waitLimit {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 14px;
+  color: var(--muted);
+}
+.waitLimit svg {
+  flex: none;
+}
+.availability {
+  padding: 24px;
+}
+.vehicleChoices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
+  gap: 10px;
+}
+.vehicleChoices button {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  text-align: left;
+  min-height: 80px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.vehicleChoices button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.vehicleChoices button > svg {
+  flex: none;
+  color: var(--accent);
+}
+.vehicleChoices small {
+  display: block;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 400;
+  margin-top: 3px;
+}
+.vehicleDetail article {
+  padding: 20px 0 12px;
+}
+.vehicleDetail h3 {
+  font-size: 18px;
+  margin: 0;
+}
+.vehicleDetail p {
+  margin: 6px 0 12px;
+}
+.vehicleDetail a {
+  margin-left: 16px;
+}
+.serviceNotes {
+  border-top: 1px solid var(--line);
+  margin-top: 12px;
+}
+.serviceNotes > summary {
+  font-size: 14px;
+  font-weight: 600;
+}
+.routeSummary {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px 12px;
+  padding-block: 20px;
+}
+.routeSummary small {
+  font-size: 14px;
+  color: var(--muted);
+}
+.routeSummary h3 {
+  font-size: 18px;
+  line-height: 1.5;
+  margin: 0;
+}
+.routeSummary > svg {
+  color: var(--accent);
+}
+.destinationDot {
+  height: 12px;
+  width: 12px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  justify-self: center;
+}
+.tripTimeline {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 20px;
+}
+.tripTimeline li {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 40px;
+  position: relative;
+  color: var(--muted);
+  font-size: 14px;
+}
+.tripTimeline li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 27px;
+  bottom: -13px;
+  width: 1px;
+  left: 11px;
+  background: var(--line-strong);
+}
+.stepMarker {
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  background: var(--surface);
+  z-index: 1;
+}
+.tripTimeline .stepDone {
+  color: var(--ink);
+}
+.stepDone .stepMarker {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent-line);
+}
+.tripTimeline .stepCurrent {
+  color: var(--accent);
+  font-weight: 600;
+}
+.stepCurrent .stepMarker {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+.tripTimeline small {
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 400;
+}
+@media (max-width: 600px) {
+  .serviceSummary {
+    flex-wrap: wrap;
+  }
+  .waitLimit {
+    flex-basis: 100%;
+    margin: 0;
+  }
+  .availability {
+    padding: 16px;
+  }
+  .vehicleChoices {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
+  }
+  .tripTimeline li {
+    grid-template-columns: 24px minmax(0, 1fr);
+  }
+  .tripTimeline small {
+    grid-column: 2;
+    margin-top: -8px;
+  }
+  .vehicleDetail a {
+    display: flex;
+    margin-left: 0;
+  }
+}

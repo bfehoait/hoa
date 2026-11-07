@@ -1,0 +1,145 @@
+.amenities {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+.amenities > article {
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.amenityIcon {
+  color: var(--accent);
+  background: var(--accent-soft);
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+.amenities h2 {
+  font-family: var(--heading-font);
+  font-size: 20px;
+  font-weight: 700;
+}
+.amenities p {
+  color: var(--muted);
+  margin: 12px 0;
+  font-size: 14px;
+}
+.amenities article > span:not(.amenityIcon) {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: auto;
+}
+.amenities button {
+  margin-top: 16px;
+}
+.record {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  text-align: left;
+  gap: 16px;
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  margin-bottom: 12px;
+  padding: 20px;
+  color: var(--ink);
+}
+.recordIcon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  background: var(--wash);
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.record > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.record strong {
+  font-weight: 650;
+}
+.record small {
+  font-size: 14px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.record > svg {
+  color: var(--muted);
+}
+.record:active {
+  background: var(--wash);
+}
+@media (hover: hover) {
+  .record:hover {
+    background: var(--wash);
+  }
+}
+@media (max-width: 1000px) {
+  .amenities {
+    grid-template-columns: 1fr;
+  }
+  .amenities > article {
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    gap: 0 16px;
+  }
+  .amenityIcon {
+    grid-row: 1/5;
+    margin-top: 4px;
+  }
+  .amenities p,
+  .amenities article > span:not(.amenityIcon),
+  .amenities button {
+    grid-column: 2;
+  }
+  .amenities p {
+    margin: 8px 0;
+  }
+  .amenities button {
+    margin-top: 8px;
+  }
+}
+@media (max-width: 767px) {
+  .record {
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .record > span:nth-child(2) {
+    flex-basis: calc(100% - 72px);
+    padding-right: 12px;
+  }
+  .record > svg {
+    position: absolute;
+    top: 20px;
+    right: 12px;
+    width: 16px;
+  }
+  .record > span:last-of-type {
+    max-width: calc(100% - 60px);
+    margin-left: 60px;
+    white-space: normal;
+  }
+  .amenities {
+    gap: 16px;
+  }
+  .amenities > article {
+    padding: 24px;
+  }
+}

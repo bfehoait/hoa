@@ -1,0 +1,290 @@
+.destinations {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.destination {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  position: relative;
+  gap: 14px;
+  padding: 20px;
+  min-height: 148px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+}
+.tileIcon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.tileText {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.tileText strong {
+  font-size: 16px;
+  line-height: 1.4;
+  font-weight: 700;
+}
+.tileText > span {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.tileArrow {
+  position: absolute;
+  top: 24px;
+  right: 16px;
+  color: var(--muted);
+}
+.count {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-size: 14px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 700;
+  margin-top: auto;
+}
+.compact .destination {
+  min-height: 104px;
+  flex-direction: row;
+  align-items: center;
+  padding: 16px;
+  gap: 12px;
+  box-shadow: none;
+}
+.compact .tileIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+.compact .tileArrow {
+  display: none;
+}
+.compact .tileText strong {
+  font-size: 14px;
+}
+.actionLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  max-width: 100%;
+  padding: 10px 16px;
+  border: 1px solid var(--line-strong);
+  /* Was a hardcoded 12px, which gave this corner a different curve from every
+     other bordered action on the same screen. */
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+  background: var(--surface);
+  font-size: 14px;
+  font-weight: 650;
+  text-decoration: none;
+}
+.navigation {
+  margin: 0 0 24px;
+}
+.routeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(208px, 1fr));
+  gap: 10px;
+}
+.routeGrid > a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 64px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 14px;
+  text-decoration: none;
+  font-weight: 600;
+}
+.routeIcon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--wash);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.routeLabel {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.routeGrid > a > svg:last-child {
+  color: var(--muted);
+}
+.routeGrid > a[aria-current="page"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.routeGrid > a[aria-current="page"] .routeIcon {
+  background: var(--surface);
+}
+.more {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  margin-top: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--wash);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 650;
+}
+.more > svg:last-child {
+  margin-left: auto;
+}
+.rotate {
+  transform: rotate(180deg);
+}
+.disclosure {
+  margin: 24px 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.disclosure summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 650;
+  list-style: none;
+}
+.disclosure summary::-webkit-details-marker {
+  display: none;
+}
+.disclosure summary > span {
+  flex: 1;
+}
+.disclosure summary > svg {
+  color: var(--accent);
+}
+.disclosure[open] summary > svg:last-child {
+  transform: rotate(180deg);
+}
+.disclosure > div {
+  padding: 0 20px 20px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.disclosure p + p {
+  margin-top: 12px;
+}
+@media (hover: hover) {
+  .destination:hover,
+  .actionLink:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .routeGrid > a:not([aria-current="page"]):hover {
+    border-color: var(--line-strong);
+    background: var(--wash);
+  }
+  .more:hover {
+    border-color: var(--accent);
+  }
+}
+@media (min-width: 900px) {
+  .destinations {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 480px) {
+  .destination {
+    padding: 16px;
+    min-height: 144px;
+    gap: 12px;
+  }
+  .tileIcon {
+    width: 48px;
+    height: 48px;
+  }
+  .tileArrow {
+    top: 20px;
+    right: 12px;
+  }
+  .routeGrid {
+    grid-template-columns: 1fr;
+  }
+  .compact {
+    grid-template-columns: 1fr;
+  }
+  .compact .destination {
+    min-height: 80px;
+  }
+}
+
+/* Desktop fits more choices per row and trims the tile height, so a hub
+   reads as a menu of a dozen options rather than a column of posters. */
+@media (min-width: 1024px) {
+  .destinations {
+    grid-template-columns: repeat(auto-fill, minmax(236px, 1fr));
+    gap: 16px;
+  }
+  .destination {
+    min-height: 0;
+    gap: 12px;
+    padding: 18px;
+  }
+  .tileIcon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+  .tileIcon > svg {
+    width: 22px;
+    height: 22px;
+  }
+  .tileArrow {
+    top: 20px;
+    right: 14px;
+  }
+  .count {
+    margin-top: 4px;
+  }
+  .compact {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+  .compact .destination {
+    min-height: 0;
+    padding: 14px 16px;
+  }
+}

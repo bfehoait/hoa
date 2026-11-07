@@ -1,0 +1,75 @@
+.media {
+  margin-top: 16px;
+}
+.cover {
+  width: 100%;
+  max-height: 280px;
+  object-fit: contain;
+  background: var(--wash);
+  border-radius: 12px;
+  display: block;
+}
+.links,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+}
+.note {
+  color: var(--muted);
+  font-size: 14px;
+}
+.upload {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  min-height: 48px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  padding: 12px;
+  cursor: pointer;
+}
+.upload:focus-within {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+.upload input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  cursor: pointer;
+}
+.editor {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+}
+.linkRow {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0;
+}
+.linkRow label {
+  display: grid;
+  gap: 6px;
+}
+.linkRow input {
+  min-height: 48px;
+  width: 100%;
+  font: inherit;
+  padding: 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+}
+@media (min-width: 900px) {
+  .linkRow {
+    grid-template-columns: 1fr 2fr auto;
+    align-items: end;
+  }
+}

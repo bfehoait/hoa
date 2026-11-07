@@ -1,0 +1,194 @@
+.page {
+  max-width: 960px;
+  margin: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 24px;
+}
+.centre {
+  min-width: 0;
+}
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.toolbar > div {
+  display: flex;
+  gap: 6px;
+}
+.toolbar button {
+  min-height: 48px;
+  font-size: 14px;
+}
+.toolbar > div button {
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 24px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+.toolbar > div button[aria-pressed="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.group h2 {
+  font-size: 18px;
+  font-weight: 750;
+  margin: 24px 0 12px;
+}
+.group ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+.row {
+  position: relative;
+  display: flex;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  min-width: 0;
+}
+.row.unread {
+  background: var(--accent-soft);
+}
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--accent);
+  border-radius: 16px;
+}
+.row > div {
+  flex: 1;
+  min-width: 0;
+  padding-right: 8px;
+}
+.row strong {
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+.row p {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 6px 0 0;
+  overflow-wrap: anywhere;
+}
+.rowActions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.rowActions a {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 48px;
+  color: var(--accent);
+  font-size: 14px;
+  text-decoration: none;
+  font-weight: 650;
+}
+.rowActions time {
+  font-size: 14px;
+  color: var(--muted);
+}
+.rowActions button {
+  min-height: 48px;
+  padding: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 8px;
+}
+.empty {
+  text-align: center;
+  padding: 40px 16px;
+  color: var(--muted);
+}
+.empty > svg {
+  color: var(--accent);
+}
+.empty h2 {
+  font-size: 20px;
+  color: var(--ink);
+  margin: 16px 0 8px;
+}
+.empty p,
+.deliveryNote {
+  font-size: 14px;
+  color: var(--muted);
+}
+.deliveryNote {
+  text-align: center;
+  margin-top: 20px;
+}
+.seeAll {
+  min-height: 48px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  margin-top: 20px;
+  font-size: 14px;
+  color: var(--accent);
+  text-decoration: none;
+}
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  font-size: 14px;
+}
+@media (max-width: 600px) {
+  .page {
+    padding: 16px 12px;
+  }
+  .toolbar > button {
+    padding: 8px 12px;
+  }
+  .row {
+    padding: 12px 8px;
+    gap: 10px;
+  }
+  .avatar {
+    width: 44px;
+    height: 44px;
+  }
+  .rowActions {
+    gap: 8px;
+  }
+  .pagination {
+    flex-wrap: wrap;
+  }
+}

@@ -1,0 +1,468 @@
+/* Shared shell for every action, whether it renders as a button or a link.
+   Tone carries the meaning; this block only carries the shape. */
+.button {
+  min-height: 48px;
+  padding: 12px 24px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  line-height: 1.4;
+  transition:
+    background 160ms,
+    border-color 160ms,
+    transform 160ms;
+}
+.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+.secondary {
+  background: transparent;
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+/* Ends a session or destroys a record. Tinted rather than filled so the same
+   token pair reads correctly in light and dark without a second text colour. */
+.danger {
+  background: var(--red-bg);
+  border-color: var(--red-line);
+  color: var(--red);
+}
+/* An inline, low-stakes step. Keeps the 48px target a text link would lose. */
+.quiet {
+  background: transparent;
+  border-color: transparent;
+  color: var(--accent);
+}
+/* Visually lighter, never physically smaller: the working rules require a
+   48px target, so only padding and type scale down. */
+.small {
+  min-height: 48px;
+  padding: 10px 16px;
+  font-size: 14px;
+}
+.block {
+  width: 100%;
+}
+.button:disabled,
+.button[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.primary:active:not(:disabled) {
+  background: var(--accent-pressed);
+  border-color: var(--accent-pressed);
+}
+.secondary:active:not(:disabled),
+.quiet:active:not(:disabled) {
+  background: var(--wash);
+}
+.danger:active:not(:disabled) {
+  background: var(--red);
+  color: var(--red-bg);
+}
+@media (hover: hover) {
+  .primary:hover:not(:disabled) {
+    background: var(--accent-pressed);
+    border-color: var(--accent-pressed);
+  }
+  .secondary:hover:not(:disabled),
+  .quiet:hover:not(:disabled) {
+    background: var(--wash);
+  }
+  .danger:hover:not(:disabled) {
+    background: var(--red);
+    color: var(--red-bg);
+    border-color: var(--red);
+  }
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  background: var(--wash);
+  color: var(--muted);
+}
+.green {
+  background: var(--green-bg);
+  color: var(--green);
+}
+.amber {
+  background: var(--amber-bg);
+  color: var(--amber);
+}
+.red {
+  background: var(--red-bg);
+  color: var(--red);
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 80px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  color: var(--ink);
+}
+a.row {
+  transition:
+    background 160ms,
+    transform 160ms;
+}
+a.row:active {
+  transform: translateX(2px);
+  background: var(--wash);
+}
+@media (hover: hover) {
+  a.row:hover {
+    background: var(--wash);
+  }
+}
+.rowIcon {
+  height: 48px;
+  width: 48px;
+  display: grid;
+  place-items: center;
+  background: var(--wash);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  color: var(--accent);
+}
+.rowText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.rowText strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+.rowText > span {
+  font-size: 14px;
+  color: var(--muted);
+}
+.rowEnd {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.empty {
+  text-align: center;
+  padding: 48px 24px;
+}
+.emptyMark {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 20px;
+  border-radius: var(--radius-lg);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.emptyAction {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.empty > p {
+  max-width: 44ch;
+  margin: 12px auto 0;
+  color: var(--muted);
+}
+.empty p {
+  color: var(--muted);
+  max-width: 48ch;
+  margin: 12px auto;
+}
+.empty h2 {
+  font-size: 24px;
+}
+.feedback {
+  padding: 16px;
+  background: var(--green-bg);
+  color: var(--green);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border-radius: var(--radius-sm);
+  margin: 16px 0;
+}
+.feedback svg {
+  flex-shrink: 0;
+}
+.error {
+  background: var(--red-bg);
+  color: var(--red);
+}
+.dialog {
+  padding: 0;
+  /* The body is the single scroll container. Without this the dialog scrolls
+     too and the viewer gets two scrollbars side by side. */
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--ink);
+  max-width: 720px;
+  width: calc(100% - 32px);
+  max-height: min(88dvh, calc(var(--dialog-viewport-height, 100dvh) - 24px));
+  box-shadow: var(--shadow-lg);
+}
+.dialog::backdrop {
+  background: var(--scrim);
+}
+/* A short rise tells people where the sheet came from. Distance is small so it
+   never reads as a delay, and it is removed entirely under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .dialog[open] {
+    animation: dialogIn 180ms cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+  .dialog[open]::backdrop {
+    animation: scrimIn 180ms ease;
+  }
+}
+@keyframes dialogIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+@keyframes scrimIn {
+  from {
+    opacity: 0;
+  }
+}
+.dialogInner {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: inherit;
+}
+/* The dialog takes focus on open so the title is announced first; it is a
+   container, not a control, so it shows no ring of its own. */
+.dialogInner:focus {
+  outline: none;
+}
+/* Drag affordance on the phone sheet. Decorative only. */
+.dialogGrabber {
+  display: none;
+}
+.dialogHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.dialogClose {
+  margin: -8px -8px 0 0;
+}
+/* Actions sit outside the scroll area, so the confirm step is always reachable
+   without scrolling a long form to its end. */
+.dialogFooter {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  flex-shrink: 0;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+.dialogFooter > * {
+  flex: 1 1 auto;
+}
+@media (min-width: 560px) {
+  .dialogFooter > * {
+    flex: 0 0 auto;
+  }
+}
+.dialogSM {
+  max-width: 460px;
+}
+.dialogMD {
+  max-width: 640px;
+}
+.dialogLG {
+  max-width: 920px;
+}
+.dialogHeader h2 {
+  font-family: var(--heading-font);
+  font-weight: 750;
+  font-size: 22px;
+  line-height: 1.35;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.dialogHeader button {
+  flex-shrink: 0;
+}
+.dialogBody {
+  --dialog-body-pad: 24px;
+  padding: var(--dialog-body-pad);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  min-height: 0;
+  flex: 1;
+  scrollbar-width: thin;
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+}
+/* Body padding already sets the gap under the header. Without this, a first
+   child carrying its own top margin stacked on top of it and opened a dead
+   band across every dialog that leads with a list or a heading. */
+.dialogBody > :first-child {
+  margin-top: 0;
+}
+.dialogBody > :last-child:not(:global(.form-actions)) {
+  margin-bottom: 0;
+}
+/* Most dialogs declare their actions as a .form-actions row inside the body.
+   Pinning that row to the bottom edge gives those screens the same reachable
+   footer as a dialog that passes `footer`, without restating it in each one. */
+.dialogBody :global(.form-actions) {
+  position: sticky;
+  bottom: calc(-1 * var(--dialog-body-pad));
+  margin: 24px calc(-1 * var(--dialog-body-pad))
+    calc(-1 * var(--dialog-body-pad));
+  padding: 16px var(--dialog-body-pad)
+    max(16px, env(safe-area-inset-bottom), var(--dialog-body-pad));
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  z-index: 1;
+}
+/* Sits under the title in the header now, so it stays visible while the body
+   scrolls instead of being the first thing pushed out of view. */
+.dialogDescription {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 4px 0 0;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0;
+}
+.field label {
+  font-weight: 600;
+  font-size: 14px;
+}
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 12px 16px;
+  font: inherit;
+}
+.field textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+.field [aria-invalid="true"] {
+  border-color: var(--red);
+}
+@media (max-width: 480px) {
+  .dialog {
+    margin: auto 0 var(--dialog-keyboard-inset, 0px);
+    width: 100%;
+    max-width: none;
+    max-height: min(90dvh, calc(var(--dialog-viewport-height, 100dvh) - 16px));
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+  /* The phone sheet rises from the bottom edge, so it gets the handle people
+     expect there. */
+  .dialogGrabber {
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--line-strong);
+    opacity: 0.5;
+    margin: 8px auto 0;
+    flex-shrink: 0;
+  }
+  .dialogHeader {
+    padding: 12px 20px 16px;
+  }
+  .dialogHeader h2 {
+    font-size: 20px;
+  }
+  .dialogBody {
+    --dialog-body-pad: 20px;
+    padding: var(--dialog-body-pad);
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+  }
+  .dialogFooter {
+    padding: 12px 20px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  /* Stacked on a phone: the confirming action sits on top, under the thumb. */
+  .dialogFooter > * {
+    flex: 1 1 100%;
+  }
+  .row {
+    gap: 12px;
+  }
+  .rowEnd {
+    flex-shrink: 1;
+  }
+  .rowEnd .badge {
+    white-space: normal;
+  }
+}
+@media (max-width: 767px) {
+  /* Anchors act as actions here too, so these target every child rather than
+     buttons alone. */
+  .dialogBody :global(.form-actions) > button,
+  .dialogBody :global(.form-actions) > a {
+    flex: 1 1 140px;
+    min-height: 52px;
+  }
+  /* The row is authored with the supporting action first; on a phone it drops
+     below the confirming one so the thumb lands on the main step. */
+  .dialogBody :global(.form-actions) > button:first-child,
+  .dialogBody :global(.form-actions) > a:first-child {
+    flex-basis: 100%;
+    order: 2;
+  }
+  .dialogBody input,
+  .dialogBody select,
+  .dialogBody textarea {
+    font-size: 16px;
+    scroll-margin-block: 24px 120px;
+  }
+}

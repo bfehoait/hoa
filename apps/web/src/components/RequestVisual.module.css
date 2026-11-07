@@ -1,0 +1,120 @@
+.visual {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  padding: 24px;
+  margin: 24px 0;
+}
+.visual header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.visual header > div {
+  flex: 1;
+  min-width: 180px;
+}
+.visual h2 {
+  font-size: 18px;
+  margin: 0 0 4px;
+}
+.visual header p {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0;
+}
+.icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.visual a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  text-decoration: none;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 650;
+}
+.total {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 24px 0 16px;
+}
+.total strong {
+  font-size: 32px;
+  line-height: 1;
+  font-weight: 750;
+}
+.total span {
+  font-size: 14px;
+  color: var(--muted);
+}
+.bar {
+  display: flex;
+  gap: 3px;
+  height: 20px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--wash);
+}
+.bar > span {
+  height: 100%;
+}
+.segment0 {
+  background: var(--accent);
+}
+.segment1 {
+  background: var(--amber);
+}
+.segment2 {
+  background: var(--green);
+}
+.legend {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  list-style: none;
+  padding: 0;
+  margin: 20px 0 0;
+}
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+.legend strong {
+  color: var(--ink);
+}
+.empty {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-top: 20px;
+}
+@media (max-width: 600px) {
+  .visual {
+    padding: 20px;
+  }
+  .legend {
+    gap: 12px;
+  }
+  .visual header > div {
+    min-width: 150px;
+  }
+}

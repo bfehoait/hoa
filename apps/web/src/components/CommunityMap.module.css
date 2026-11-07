@@ -1,0 +1,72 @@
+.map {
+  display: grid;
+  gap: 0;
+  margin-block: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+.head {
+  display: grid;
+  gap: 4px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+.head > * {
+  margin-block: 0;
+}
+.head h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-lg);
+}
+.address {
+  font-weight: 600;
+}
+.note {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+.frame {
+  width: 100%;
+  min-height: 320px;
+  border: 0;
+  display: block;
+  /* The embed renders its own light tiles; a dark page should not invert them,
+     only soften the glare. */
+  background: var(--wash);
+}
+:root[data-theme="dark"] .frame {
+  filter: brightness(0.88) contrast(1.04);
+}
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 20px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+.foot a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  color: var(--accent);
+  font-weight: 600;
+}
+@media (max-width: 480px) {
+  .frame {
+    min-height: 260px;
+  }
+  .foot {
+    justify-content: flex-start;
+  }
+}

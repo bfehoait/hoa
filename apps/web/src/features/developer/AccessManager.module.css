@@ -1,0 +1,182 @@
+.manager {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 24px 0;
+}
+.manager > p {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  padding: 0 14px;
+  margin: 20px 0;
+  color: var(--muted);
+}
+.search input {
+  min-height: 48px;
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  background: transparent;
+  color: var(--ink);
+  border: 0;
+}
+.members {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.members button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 72px;
+  padding: 12px 16px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  border-radius: 10px;
+  font: inherit;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+.members button > span:first-of-type {
+  flex: 1;
+  min-width: 0;
+}
+.members strong,
+.members small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.members small {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.members button > svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.members button:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.accountDetails {
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+  margin-top: 28px;
+}
+.accountDetails > summary {
+  color: var(--ink);
+  font-weight: 600;
+}
+.pager {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  margin-top: 20px;
+}
+.forms {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 20px 0;
+}
+.forms form {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px;
+}
+.forms h3 {
+  font-size: 18px;
+  margin: 0 0 18px;
+}
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.roles {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+.roles legend {
+  font-size: 14px;
+  color: var(--muted);
+}
+.roles label {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+.roles input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+.assignments {
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+.assignments li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--line);
+  padding: 16px 0;
+}
+.assignments small {
+  display: block;
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 6px;
+}
+@media (max-width: 1000px) {
+  .forms {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .manager {
+    padding: 16px;
+  }
+  .forms form {
+    padding: 16px;
+  }
+  .assignments li {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .members button {
+    flex-wrap: wrap;
+  }
+  .members button > span:first-of-type {
+    flex-basis: calc(100% - 48px);
+  }
+  .pair {
+    grid-template-columns: 1fr;
+  }
+}

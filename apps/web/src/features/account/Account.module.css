@@ -1,0 +1,421 @@
+.summary {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 48px;
+  padding: 32px;
+  background: var(--brand);
+  color: var(--on-brand);
+  border: 1px solid var(--brand);
+  border-radius: var(--radius-lg);
+  margin-bottom: 24px;
+}
+.amount {
+  font-family: var(--heading-font);
+  font-size: 48px;
+  font-weight: 750;
+  letter-spacing: -1px;
+  margin: 16px 0;
+  font-variant-numeric: tabular-nums;
+}
+.summary :global(.muted),
+.summary :global(.eyebrow) {
+  color: var(--on-brand);
+}
+.summaryDetails span {
+  color: var(--on-brand) !important;
+}
+.summaryDetails > div {
+  border-bottom-color: var(--on-brand-divider) !important;
+}
+.paymentOptions {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+  background: var(--on-brand);
+  color: var(--brand-strong);
+  border: 0;
+  border-radius: var(--radius-sm);
+  padding: 12px 24px;
+  font-weight: 700;
+  font-size: 14px;
+}
+.paymentOptions:focus-visible {
+  outline-color: var(--on-brand);
+}
+.paymentOptions:active {
+  background: var(--on-brand-hover);
+  transform: scale(0.98);
+}
+.accountTabs {
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 24px;
+}
+.accountTabs > a {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  border-bottom: 2px solid transparent;
+  padding: 8px 0;
+  color: var(--muted);
+}
+.accountTabs .selectedTab {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.paymentNotice {
+  padding: 24px 0;
+}
+.paymentNotice > svg {
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+.paymentNotice h3 {
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+.paymentNotice p {
+  color: var(--muted);
+}
+.summaryDetails {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.summaryDetails > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+.summaryDetails span {
+  color: var(--muted);
+}
+.summaryDetails strong {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.invoiceList {
+  border-top: 1px solid var(--line);
+}
+.invoice {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  text-align: left;
+  color: var(--ink);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  padding: 24px 0;
+  min-height: 80px;
+}
+.fileIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  display: grid;
+  place-items: center;
+  background: var(--wash);
+  color: var(--muted);
+}
+.invoiceTitle {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+.invoiceTitle > span {
+  font-size: 14px;
+  color: var(--muted);
+}
+.invoiceTitle strong {
+  font-weight: 500;
+}
+.invoiceAmount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.invoiceAmount strong {
+  font-weight: 600;
+}
+.invoice > svg {
+  color: var(--muted);
+}
+.question {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 32px;
+  padding: 24px;
+  background: var(--wash);
+  border-radius: var(--radius-sm);
+}
+.question h2 {
+  font-size: 16px;
+}
+.question p {
+  font-size: 14px;
+  margin-top: 4px;
+}
+.question > a {
+  margin-left: auto;
+}
+.invoice:active {
+  background: var(--wash);
+  transform: translateX(2px);
+}
+@media (hover: hover) {
+  .invoice:hover {
+    background: var(--wash);
+  }
+}
+@media (max-width: 767px) {
+  .summary {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 24px;
+  }
+  .question {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .question > div {
+    flex: 1;
+  }
+  .question > a {
+    margin-left: 32px;
+  }
+  .invoice {
+    gap: 12px;
+  }
+  .fileIcon {
+    display: none;
+  }
+  .invoiceTitle > span {
+    font-size: 14px;
+    max-width: 18ch;
+  }
+  .invoice > svg {
+    width: 16px;
+  }
+  .amount {
+    font-size: 48px;
+  }
+}
+
+@media (max-width: 767px) {
+  .accountPage :global(.page-intro) {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+  .accountPage :global(.page-intro) h1 {
+    font-size: 24px;
+  }
+  .accountPage :global(.page-intro) :global(.eyebrow) {
+    letter-spacing: 0;
+  }
+  .accountPage :global(.page-description) {
+    display: none;
+  }
+  .accountPage :global(.page-intro) > button {
+    width: 48px;
+    height: 48px;
+    padding: 12px;
+  }
+  .downloadLabel {
+    display: none;
+  }
+  .summary {
+    gap: 0;
+  }
+  .summaryDetails {
+    display: none;
+  }
+  .amount {
+    font-size: 32px;
+  }
+  .paymentOptions {
+    margin-top: 16px;
+    width: 100%;
+  }
+}
+
+.statementLink {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  margin: 0 0 20px;
+  min-height: 80px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  text-decoration: none;
+}
+.statementIcon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.statementLink > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.statementLink strong,
+.statementLink > span > span {
+  display: block;
+}
+.statementLink > span > span {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+@media (hover: hover) {
+  .statementLink:hover {
+    border-color: var(--accent);
+    background: var(--wash);
+  }
+}
+
+/* The rail and ledger wrappers are invisible below 1024px, so the mobile
+   document order and spacing stay exactly as they were. */
+.rail,
+.ledger {
+  display: contents;
+}
+
+/* Desktop is a bill-working surface: the ledger is the main column and the
+   account summary sits in a rail that stays in view while invoices scroll.
+   1200px is the point where the ledger still holds a readable invoice table
+   next to a 336px rail; below it the single column stays. */
+@media (min-width: 1200px) {
+  .accountPage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 336px;
+    column-gap: 32px;
+    align-items: start;
+  }
+  .accountPage > :global(.page-intro) {
+    grid-column: 1 / -1;
+    margin-bottom: 24px;
+  }
+  .accountPage > nav {
+    grid-column: 1 / -1;
+    margin-bottom: 24px;
+  }
+  .rail {
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 24px;
+    grid-column: 2;
+    grid-row: 3;
+  }
+  .ledger {
+    display: block;
+    grid-column: 1;
+    grid-row: 3;
+    min-width: 0;
+  }
+
+  /* The balance stacks instead of splitting, because the rail is narrow. */
+  .summary {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .amount {
+    font-size: 40px;
+    margin: 12px 0 8px;
+  }
+  .paymentOptions {
+    margin-top: 20px;
+    width: 100%;
+  }
+  .summaryDetails > div {
+    padding: 10px 0;
+  }
+  .statementLink {
+    margin-bottom: 16px;
+    padding: 16px;
+    min-height: 72px;
+  }
+  .ledger :global(.notice-note),
+  .rail :global(.notice-note) {
+    margin-bottom: 0;
+  }
+
+  /* Invoices read as a table: aligned period, reference, amount and status. */
+  .invoiceList {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .invoice {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) auto auto 20px;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    min-height: 68px;
+  }
+  .invoiceList > .invoice:last-child {
+    border-bottom: 0;
+  }
+  .invoiceTitle {
+    display: block;
+  }
+  .invoiceTitle strong {
+    font-weight: 600;
+  }
+  .invoiceTitle > span {
+    display: block;
+    margin-top: 2px;
+  }
+  /* Unwrapping the amount cell gives the figure and the status their own
+     aligned columns, so the eye can scan straight down each. */
+  .invoiceAmount {
+    display: contents;
+  }
+  .invoiceAmount > strong {
+    font-size: 18px;
+    text-align: right;
+    min-width: 108px;
+  }
+  .invoiceAmount > :global(.badge) {
+    justify-self: start;
+    min-width: 72px;
+    justify-content: center;
+  }
+  .question {
+    margin-top: 24px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .question > a {
+    white-space: nowrap;
+  }
+}

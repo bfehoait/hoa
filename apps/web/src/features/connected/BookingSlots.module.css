@@ -1,0 +1,68 @@
+.picker {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  margin: 16px 0;
+}
+.picker h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  margin: 0;
+}
+.picker h3 svg {
+  color: var(--accent);
+}
+.legend {
+  font-size: 14px;
+  color: var(--muted);
+}
+.slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 8px;
+}
+.slots button {
+  min-height: 56px;
+  padding: 8px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.slots button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+.slots button:disabled {
+  background: var(--wash);
+  color: var(--muted);
+  border-style: dashed;
+  cursor: not-allowed;
+}
+.slots small {
+  font-size: 14px;
+}
+.summary {
+  padding: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 9px;
+  font-weight: 700;
+}
+.clear {
+  min-height: 48px;
+  padding: 10px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}

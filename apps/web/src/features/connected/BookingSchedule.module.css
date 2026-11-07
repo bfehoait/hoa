@@ -1,0 +1,162 @@
+.bookingDialog {
+  max-width: 960px;
+}
+.layout {
+  display: grid;
+  gap: 24px;
+  align-items: start;
+  margin: 20px 0;
+}
+.calendar {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--bg);
+}
+.calendar > label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.calendar input {
+  width: 100%;
+  min-height: 48px;
+}
+.calendar p {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 12px;
+}
+.month {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 16px 0 8px;
+}
+.month button {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+  text-align: center;
+}
+.days > span {
+  font-size: 14px;
+  color: var(--muted);
+  padding: 6px 0;
+}
+.days button {
+  min-height: 48px;
+  min-width: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.days button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+.days button:disabled,
+.month button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.placeholder {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  padding: 32px 20px;
+  background: var(--bg);
+  border: 1px dashed var(--line-strong);
+  border-radius: 14px;
+  text-align: center;
+  color: var(--muted);
+}
+.placeholder svg {
+  color: var(--accent);
+}
+.summary {
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  margin: 16px 0;
+}
+.manual {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  margin-top: 16px;
+}
+.manual summary {
+  cursor: pointer;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+}
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.panel {
+  padding: 24px;
+  margin: 20px 0;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.panel h2 {
+  font-size: 20px;
+  margin: 0 0 12px;
+}
+.panel p {
+  color: var(--muted);
+}
+.panel a {
+  margin-top: 16px;
+}
+.footer {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+@media (min-width: 800px) {
+  .layout {
+    grid-template-columns: 400px minmax(0, 1fr);
+  }
+}
+@media (max-width: 799px) {
+  .days,
+  .month {
+    display: none;
+  }
+}
+@media (max-width: 420px) {
+  .calendar {
+    padding: 8px;
+  }
+  .days {
+    gap: 1px;
+  }
+  .pair {
+    grid-template-columns: 1fr;
+  }
+}

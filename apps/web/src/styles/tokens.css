@@ -1,0 +1,95 @@
+:root {
+  font-family: "Manrope Variable", "Segoe UI", Arial, sans-serif;
+  color-scheme: light;
+  --heading-font: "Manrope Variable", "Segoe UI", Arial, sans-serif;
+  --brand: #8b002b;
+  --brand-strong: #6b0021;
+  --on-brand: #ffffff;
+  --on-brand-hover: #f7e7ed;
+  --on-brand-divider: #ffffff55;
+  --badge-solid: #8b002b;
+  --on-badge: #ffffff;
+  --accent-soft: #f7edf0;
+  --accent-line: #ecd3dd;
+  --bg: #faf9fa;
+  --surface: #ffffff;
+  --ink: #211c20;
+  --muted: #625960;
+  --line: #e8e1e5;
+  --line-strong: #9c8c95;
+  --accent: #8b002b;
+  --accent-pressed: #6b0021;
+  --on-accent: #ffffff;
+  --wash: #f2eef0;
+  --green: #147457;
+  --green-bg: #e7f4ee;
+  --amber: #80551a;
+  --amber-bg: #fbf1de;
+  --amber-line: #ead7b2;
+  --red: #a3333b;
+  --red-bg: #fbe9ec;
+  /* Boundary of the danger action. Chosen to clear WCAG 1.4.11 at 3.75:1
+     against the surface; the softer tint it replaced sat at 1.57:1, which left
+     the control with no perceivable edge. */
+  --red-line: #c06b74;
+  --chart-aging-current: #deb4c3;
+  --chart-aging-mid: #be7d96;
+  --chart-aging-late: #984664;
+  --chart-aging-oldest: #6b002b;
+  --scrim: rgb(28 14 22 / 0.5);
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 4px 16px #3913210a;
+  --shadow-lg: 0 16px 48px #39132126;
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 24px;
+  --text-2xl: 32px;
+  --text-display: 48px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  /* Dark surfaces are near-neutral. The previous set sat at hue ~325 with
+     11-13% saturation, which read as purple across a whole screen rather than
+     as a dark theme. These keep 3-5% saturation at the same hue so the theme
+     still feels related to the brand, and let the accent carry the colour.
+     Checked against the new surface: ink 15.6:1, muted 8.6:1, line-strong
+     5.2:1, accent 9.0:1 — all clear of AA. */
+  --bg: #151314;
+  --surface: #1e1b1d;
+  --ink: #f7f4f6;
+  --muted: #bdb6ba;
+  --line: #3a3539;
+  --line-strong: #938c90;
+  --accent: #f0a8c1;
+  --accent-pressed: #fac7d9;
+  --on-accent: #3b1021;
+  --wash: #292527;
+  --accent-soft: #33242c;
+  --accent-line: #5c4350;
+  --amber-line: #665033;
+  --green: #a6dcc4;
+  --green-bg: #213c32;
+  --amber: #edcc8d;
+  --amber-bg: #403323;
+  --red: #ffb0b9;
+  --red-bg: #482830;
+  /* 3.65:1 against the dark surface, matching the light mode's intent. */
+  --red-line: #a9626e;
+  --chart-aging-current: #f1cfde;
+  --chart-aging-mid: #d99db6;
+  --chart-aging-late: #b9688d;
+  --chart-aging-oldest: #91365e;
+}

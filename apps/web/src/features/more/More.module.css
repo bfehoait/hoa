@@ -1,0 +1,201 @@
+.personal {
+  background: var(--wash);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  align-self: start;
+}
+.personal > :global(.eyebrow) {
+  margin-bottom: 8px;
+}
+.stateGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+.stateGrid > a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 64px;
+  text-decoration: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  background: var(--bg);
+}
+.reset {
+  padding: 32px 0;
+}
+.reset p {
+  margin: 12px 0 24px;
+  max-width: 64ch;
+}
+.faq {
+  margin-bottom: 24px;
+  border-top: 1px solid var(--line);
+}
+.faq details {
+  border-bottom: 1px solid var(--line);
+  padding: 8px 0;
+}
+.faq summary {
+  cursor: pointer;
+  min-height: 48px;
+  padding: 12px 0;
+  font-weight: 500;
+}
+.faq details p {
+  padding: 8px 0 24px;
+  color: var(--muted);
+  max-width: 68ch;
+}
+.electionTitle {
+  font-family: var(--heading-font);
+  font-size: 32px;
+  font-weight: 400;
+  margin: 24px 0 16px;
+}
+.market {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+.market article {
+  border-top: 1px solid var(--line);
+  padding-top: 24px;
+}
+.listingNumber {
+  font-family: var(--heading-font);
+  font-size: 48px;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 24px;
+}
+.market :global(.eyebrow) {
+  font-size: 14px;
+  letter-spacing: 0.5px;
+}
+.market h2 {
+  font-family: var(--heading-font);
+  font-size: 24px;
+  font-weight: 400;
+  margin: 12px 0;
+}
+.market article > p:not(:global(.eyebrow)) {
+  color: var(--muted);
+  font-size: 14px;
+}
+.market button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin-top: 16px;
+  text-align: left;
+}
+@media (max-width: 1000px) {
+  .stateGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .market {
+    grid-template-columns: 1fr;
+  }
+  .listingNumber {
+    margin-bottom: 12px;
+  }
+  .market article {
+    display: block;
+  }
+}
+@media (max-width: 480px) {
+  .stateGrid {
+    grid-template-columns: 1fr;
+  }
+  .electionTitle {
+    font-size: 24px;
+  }
+}
+
+.profileHero {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius-lg);
+  background: var(--accent-soft);
+  margin-bottom: 24px;
+}
+.profileHero > div {
+  min-width: 0;
+}
+.profileHero h2 {
+  font-size: 24px;
+  overflow-wrap: anywhere;
+}
+.profileHero p {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+.profileAvatar {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--accent);
+  font-weight: 750;
+  font-size: 24px;
+}
+.profileRoles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.profileWorkspaceList,
+.profileActions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  margin-top: 20px;
+}
+@media (max-width: 600px) {
+  .profileHero {
+    padding: 20px;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .profileHero h2 {
+    font-size: 22px;
+  }
+  .profileAvatar {
+    width: 48px;
+    height: 48px;
+    font-size: 18px;
+  }
+}
+
+.profileDetails :global(.detail-list) > div {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 16px;
+}
+.profileDetails dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .profileDetails :global(.detail-list) > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .profileDetails dd {
+    text-align: left;
+  }
+}

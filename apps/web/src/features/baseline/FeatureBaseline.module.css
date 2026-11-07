@@ -1,0 +1,248 @@
+.hero {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.hero h2 {
+  font-size: 24px;
+  letter-spacing: -0.5px;
+  margin: 12px 0;
+}
+.hero p {
+  max-width: 58ch;
+  color: var(--muted);
+}
+.heroIcon,
+.icon {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  background: var(--surface);
+  border-radius: 12px;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+}
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 24px;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  gap: 12px;
+  min-width: 0;
+}
+.card:hover {
+  border-color: var(--accent);
+}
+.card p {
+  color: var(--muted);
+  font-size: 14px;
+}
+.card .foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-top: auto;
+  font-size: 14px;
+  color: var(--accent);
+  padding-top: 12px;
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 24px 0;
+  align-items: center;
+}
+.toolbar > :first-child {
+  flex: 1;
+  min-width: 180px;
+  margin: 0;
+}
+.toolbar select {
+  min-height: 48px;
+  max-width: 100%;
+  padding: 8px 36px 8px 12px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+}
+.records {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.record {
+  display: flex;
+  align-items: center;
+  text-align: left;
+  gap: 16px;
+  padding: 20px;
+  min-height: 80px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  width: 100%;
+}
+.record:hover {
+  border-color: var(--accent);
+}
+.record > div {
+  flex: 1;
+  min-width: 0;
+}
+.record strong,
+.record small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.record small {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.steps {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.step > span {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.step p {
+  font-size: 14px;
+}
+.detail {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin: 24px 0;
+}
+.detail > div {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  min-width: 0;
+}
+.detail dt {
+  font-size: 14px;
+  color: var(--muted);
+}
+.detail dd {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.callout {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--wash);
+  border-radius: 12px;
+  padding: 16px;
+  color: var(--muted);
+  font-size: 14px;
+  margin: 16px 0;
+}
+.results {
+  overflow-x: auto;
+  margin: 24px 0;
+  max-width: 100%;
+}
+.results table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  background: var(--surface);
+}
+.results th,
+.results td {
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  padding: 12px;
+  min-width: 120px;
+  overflow-wrap: anywhere;
+}
+.results th {
+  background: var(--wash);
+}
+.amount {
+  font-size: 36px;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+@media (min-width: 700px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .detail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .hero {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+}
+@media (min-width: 1400px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 480px) {
+  .record {
+    flex-wrap: wrap;
+  }
+  .record > div {
+    flex-basis: 65%;
+  }
+  .record > svg:last-child {
+    margin-left: auto;
+  }
+  .hero {
+    padding: 20px;
+  }
+}

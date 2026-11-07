@@ -1,0 +1,4062 @@
+{
+  "repository": "https://github.com/bfehoait/hoa",
+  "commit": "07299ea0bcf814dda3e1e5e85533f82a248d7409",
+  "snapshotDate": "2026-11-04",
+  "lines": 8891,
+  "functionCount": 591,
+  "rootStoreFieldCount": 50,
+  "identicalAppCopies": true,
+  "parseDiagnostics": 0,
+  "sourceFiles": [
+    {
+      "name": "index.html",
+      "bytes": 726341,
+      "sha256": "a5830a1427437ded2114000a45efdaa9f7474df70677550bd0b0591175e97875"
+    },
+    {
+      "name": "HOA-1.html",
+      "bytes": 726341,
+      "sha256": "a5830a1427437ded2114000a45efdaa9f7474df70677550bd0b0591175e97875"
+    },
+    {
+      "name": "privacy.html",
+      "bytes": 27404,
+      "sha256": "0a006c3f4b0deb6e0950a538e0b852f1304026bec6bb0a4b4b7a50226b19a836"
+    },
+    {
+      "name": "supabase-registrations.sql",
+      "bytes": 2654,
+      "sha256": "27e9c2c0264847ae7af962482d5db17ab2e35ddd46143467f88ba6a5804cc35e"
+    },
+    {
+      "name": "vercel.json",
+      "bytes": 107,
+      "sha256": "36dd6a2bdcbebb97b8c3480f2865eebbd7b4e64bb2ed89e336859e1c34809b05"
+    }
+  ],
+  "areas": [
+    {
+      "name": "Accounts and registration",
+      "route": "/register",
+      "keys": ["accounts", "household", "linked"],
+      "evidence": [1097, 7146, 7262, 7313, 8324, 8432, 8474, 8522],
+      "features": [
+        "Registration and proof review",
+        "Invitations and manual login setup",
+        "Household profiles",
+        "Main and extra roles",
+        "Profile/privacy preferences"
+      ],
+      "gaps": [
+        "Real auth and invitations",
+        "Approved household verification",
+        "Server-owned account changes"
+      ]
+    },
+    {
+      "name": "Access and audit",
+      "route": "/office/access",
+      "keys": ["hiddenPages", "userAccess", "accessAdmins"],
+      "evidence": [2029, 6970, 7146, 7170, 8203, 8244, 8290],
+      "features": [
+        "Role and page access",
+        "Individual overrides",
+        "Access managers",
+        "View-only mode",
+        "Account-change supporting references",
+        "Audit search and history"
+      ],
+      "gaps": [
+        "Approved effective-permission rules",
+        "RLS/RPC enforcement",
+        "Protected server audit"
+      ]
+    },
+    {
+      "name": "Announcements and inbox",
+      "route": "/office/community",
+      "keys": ["announcements", "notifs"],
+      "evidence": [3427, 3500, 3579, 4736, 4750, 4851, 5402],
+      "features": [
+        "Audience-targeted and pinned notices",
+        "Notice attachments, images and QR content",
+        "Resident-office messaging",
+        "Unread/conversation state",
+        "Notifications"
+      ],
+      "gaps": [
+        "Approved publishing audiences",
+        "Protected files",
+        "Real message delivery and read state"
+      ]
+    },
+    {
+      "name": "Properties and master data",
+      "route": "/office/residents",
+      "keys": ["units", "settings"],
+      "evidence": [2538, 2581, 7412, 7585, 7590],
+      "features": [
+        "Lot and owner registry",
+        "Occupancy and rate metadata",
+        "Search and column mappings",
+        "Unit import and export",
+        "Approved master-data settings"
+      ],
+      "gaps": [
+        "Trusted registry and transfer rules",
+        "Validated import review",
+        "Versioned normalized tables"
+      ]
+    },
+    {
+      "name": "Operations and support",
+      "route": "/office/operations",
+      "keys": ["requests", "complaints", "concerns", "tickets", "faqs"],
+      "evidence": [2659, 3635, 7944, 7958, 7976, 8171, 8184],
+      "features": [
+        "Requests with assignment, priorities and replies",
+        "Complaints and named-party handling",
+        "Concerns and resident-office replies",
+        "Support tickets",
+        "FAQ/help and status dashboards"
+      ],
+      "gaps": [
+        "Distinct approved workflow definitions",
+        "Confidentiality boundaries",
+        "Escalation and delivery"
+      ]
+    },
+    {
+      "name": "Amenities and calendar",
+      "route": "/services/calendar",
+      "keys": ["bookings", "amenityRules", "events", "calMonth"],
+      "evidence": [2760, 3069, 5335, 6728, 6798, 6803],
+      "features": [
+        "Community events and combined calendar",
+        "Amenity rules and facility selection",
+        "Requests and booking decisions",
+        "Booking status tables",
+        "Fees/capacity and conflicts"
+      ],
+      "gaps": [
+        "Actual availability/conflict prevention",
+        "Approved capacity, fees and cancellation",
+        "Server confirmation"
+      ]
+    },
+    {
+      "name": "Gate, visitors and vehicles",
+      "route": "/security",
+      "keys": ["passes", "stickers", "gatePasses", "guards", "secAdmin"],
+      "evidence": [2258, 4133, 4269, 5118, 5119, 5160, 5163, 5741, 7912],
+      "features": [
+        "Visitor lookup and walk-ins",
+        "Visitor and vehicle passes",
+        "Separate gate-pass purposes/items",
+        "Guard roster and security assignments",
+        "Vehicle stickers and access history"
+      ],
+      "gaps": [
+        "Approved guard capabilities",
+        "Pass validity and device events",
+        "No real QR or gate authority in preview"
+      ]
+    },
+    {
+      "name": "Incidents",
+      "route": "/security/incidents",
+      "keys": ["incidents"],
+      "evidence": [5182, 7926, 7940],
+      "features": [
+        "Incident reporting and closure",
+        "Location, evidence and responsible staff",
+        "Restricted security review"
+      ],
+      "gaps": [
+        "Confidentiality and escalation",
+        "Approved operational response",
+        "Verified emergency contacts"
+      ]
+    },
+    {
+      "name": "Billing and receipts",
+      "route": "/office/finance",
+      "keys": ["dues", "lotPayments", "ledger"],
+      "evidence": [1570, 6575, 6590, 7519, 7538, 7844, 7859],
+      "features": [
+        "Billing modes and runs",
+        "Dues and lot-payment histories",
+        "Official-receipt/reference fields",
+        "Statements and outstanding balances",
+        "Payment entry/import mappings"
+      ],
+      "gaps": [
+        "Approved accounting definitions",
+        "Server-owned receipts and allocations",
+        "No payment gateway connected"
+      ]
+    },
+    {
+      "name": "Expenses and reporting",
+      "route": "/office/finance/expenses",
+      "keys": ["expenses", "budget", "collectionsHistory", "reportLog"],
+      "evidence": [3004, 7599, 7614, 7630, 7666, 7700, 7767],
+      "features": [
+        "Expense categories and approval",
+        "Expense imports/templates",
+        "Monthly expenses and budget",
+        "Collection-history reports",
+        "Report exports"
+      ],
+      "gaps": [
+        "Approved review/reversal policy",
+        "Bank reconciliation",
+        "Authorized real exports and file evidence"
+      ]
+    },
+    {
+      "name": "Business and buy/sell",
+      "route": "/more/marketplace",
+      "keys": ["marketplace"],
+      "evidence": [1223, 1456, 3120, 5992, 6046],
+      "features": [
+        "Resident businesses and owner profiles",
+        "Business hours, contact and external links",
+        "Buy/sell categories and listing photos",
+        "Owner listing management",
+        "Listing visibility and moderation"
+      ],
+      "gaps": [
+        "Detailed category-specific forms",
+        "Provider verification/contact consent",
+        "Moderation and protected media"
+      ]
+    },
+    {
+      "name": "Jobs, garage sales and booths",
+      "route": "/more/marketplace",
+      "keys": ["marketplace", "boothEvents", "boothApps"],
+      "evidence": [
+        1195, 1280, 1293, 3152, 3310, 3355, 6116, 6182, 6234, 6337, 6361, 6390
+      ],
+      "features": [
+        "Hiring and service-seeking job listings",
+        "Job setup, deadline and application link",
+        "Garage sale schedules and item review",
+        "Booth events and applications",
+        "Vendor directory, numbered booth assignment and capacity"
+      ],
+      "gaps": [
+        "These detailed submodules are not fully implemented",
+        "Approved fees/capacity/moderation",
+        "Safe media/contact handling"
+      ]
+    },
+    {
+      "name": "Training",
+      "route": "/more/training",
+      "keys": ["marketplace"],
+      "evidence": [5781, 5797, 5809, 5823],
+      "features": [
+        "Training schedule and facilitator",
+        "Capacity, fee and attendee counts",
+        "Join/leave and enrollment states",
+        "Training listing review"
+      ],
+      "gaps": [
+        "Detailed enrollment/capacity workflow",
+        "Approved fees and personal-data scope",
+        "No real session enrollment"
+      ]
+    },
+    {
+      "name": "Rides and carpools",
+      "route": "/driver",
+      "keys": ["rides", "carpools"],
+      "evidence": [4969, 5012, 5071, 5547, 5603, 5636, 5660, 5683, 5703, 5713],
+      "features": [
+        "Stations and dispatch queues",
+        "Ride request/acceptance/progress",
+        "Driver/vehicle assignment and pickup",
+        "Trip histories",
+        "Resident carpools and join/leave/cancel"
+      ],
+      "gaps": [
+        "Full dispatch and carpool workflow",
+        "Verified driver/route/fare rules",
+        "No real trip or seat authority"
+      ]
+    },
+    {
+      "name": "Board documents and disclosures",
+      "route": "/board",
+      "keys": ["boardDocs", "boardDocs_note", "disclosures", "rules"],
+      "evidence": [5206, 5246, 5272, 6837],
+      "features": [
+        "Board oversight and financial summaries",
+        "Board document metadata and links",
+        "Disclosures and house rules",
+        "Governance reports"
+      ],
+      "gaps": [
+        "Approved official files and versions",
+        "Protected role-specific access",
+        "Trusted financial provenance"
+      ]
+    },
+    {
+      "name": "Elections",
+      "route": "/more/elections",
+      "keys": ["election"],
+      "evidence": [4627, 5281, 8031, 8037, 8047, 8083],
+      "features": [
+        "Candidate management and photos",
+        "Election opening/closing",
+        "Eligibility/participation presentation",
+        "Ballot and tally presentation"
+      ],
+      "gaps": [
+        "Approved eligibility/proxy/secrecy design",
+        "Server-owned ballot submission and tally",
+        "No ballots or totals migrated"
+      ]
+    }
+  ],
+  "datasets": [
+    {
+      "name": "session",
+      "line": 850,
+      "shape": "object",
+      "sourceEntryCount": null,
+      "fields": ["authed", "method", "name", "email", "phone", "unit", "role"]
+    },
+    {
+      "name": "view",
+      "line": 852,
+      "shape": "StringLiteral",
+      "sourceEntryCount": null,
+      "fields": []
+    },
+    {
+      "name": "tab",
+      "line": 852,
+      "shape": "object",
+      "sourceEntryCount": null,
+      "fields": []
+    },
+    {
+      "name": "seen",
+      "line": 852,
+      "shape": "NewExpression",
+      "sourceEntryCount": null,
+      "fields": []
+    },
+    {
+      "name": "theme",
+      "line": 853,
+      "shape": "ConditionalExpression",
+      "sourceEntryCount": null,
+      "fields": []
+    },
+    {
+      "name": "notifs",
+      "line": 854,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "calMonth",
+      "line": 855,
+      "shape": "NewExpression",
+      "sourceEntryCount": null,
+      "fields": []
+    },
+    {
+      "name": "lastSync",
+      "line": 856,
+      "shape": "object",
+      "sourceEntryCount": null,
+      "fields": ["msg", "at"]
+    },
+    {
+      "name": "accounts",
+      "line": 858,
+      "shape": "array",
+      "sourceEntryCount": 11,
+      "fields": [
+        "id",
+        "name",
+        "email",
+        "password",
+        "role",
+        "unit",
+        "title",
+        "phone",
+        "status",
+        "added",
+        "lastSeen"
+      ]
+    },
+    {
+      "name": "boardDocs",
+      "line": 882,
+      "shape": "array",
+      "sourceEntryCount": 4,
+      "fields": ["id", "title", "date", "kind", "by", "note"]
+    },
+    {
+      "name": "boardDocs_note",
+      "line": 892,
+      "shape": "StringLiteral",
+      "sourceEntryCount": null,
+      "fields": []
+    },
+    {
+      "name": "amenityRules",
+      "line": 893,
+      "shape": "array",
+      "sourceEntryCount": 4,
+      "fields": ["facility", "renters", "note"]
+    },
+    {
+      "name": "settings",
+      "line": 899,
+      "shape": "object",
+      "sourceEntryCount": null,
+      "fields": [
+        "assocName",
+        "address",
+        "duesMode",
+        "duesRatePerSqm",
+        "duesFlatAmount",
+        "lateFeePct",
+        "dueDay",
+        "facilities",
+        "boothVenues",
+        "categories",
+        "officeHours",
+        "quietHours",
+        "autoApproveBookings",
+        "publishTallyLive",
+        "allowProxyVoting",
+        "showCollectionTracker",
+        "facilityRules"
+      ]
+    },
+    {
+      "name": "settings.facilities",
+      "line": 903,
+      "shape": "array",
+      "sourceEntryCount": 4,
+      "fields": []
+    },
+    {
+      "name": "settings.boothVenues",
+      "line": 904,
+      "shape": "array",
+      "sourceEntryCount": 4,
+      "fields": []
+    },
+    {
+      "name": "settings.categories",
+      "line": 905,
+      "shape": "array",
+      "sourceEntryCount": 6,
+      "fields": []
+    },
+    {
+      "name": "settings.facilityRules",
+      "line": 910,
+      "shape": "object",
+      "sourceEntryCount": null,
+      "fields": ["Clubhouse"]
+    },
+    {
+      "name": "settings.facilityRules.Clubhouse",
+      "line": 912,
+      "shape": "object",
+      "sourceEntryCount": null,
+      "fields": ["step", "open", "close", "max"]
+    },
+    {
+      "name": "prefs",
+      "line": 917,
+      "shape": "object",
+      "sourceEntryCount": null,
+      "fields": ["email", "sms", "push", "digest", "language"]
+    },
+    {
+      "name": "linked",
+      "line": 918,
+      "shape": "object",
+      "sourceEntryCount": null,
+      "fields": ["google", "facebook"]
+    },
+    {
+      "name": "hiddenPages",
+      "line": 920,
+      "shape": "object",
+      "sourceEntryCount": null,
+      "fields": ["homeowner", "renter", "security", "board", "driver"]
+    },
+    {
+      "name": "hiddenPages.homeowner",
+      "line": 920,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "hiddenPages.renter",
+      "line": 920,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "hiddenPages.security",
+      "line": 920,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "hiddenPages.board",
+      "line": 920,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "hiddenPages.driver",
+      "line": 920,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "userAccess",
+      "line": 922,
+      "shape": "object",
+      "sourceEntryCount": null,
+      "fields": []
+    },
+    {
+      "name": "announcements",
+      "line": 924,
+      "shape": "array",
+      "sourceEntryCount": 6,
+      "fields": [
+        "id",
+        "title",
+        "date",
+        "category",
+        "pinned",
+        "hotlines",
+        "images",
+        "body",
+        "attach",
+        "vis",
+        "at",
+        "qrs"
+      ]
+    },
+    {
+      "name": "hotlines",
+      "line": 970,
+      "shape": "array",
+      "sourceEntryCount": 9,
+      "fields": ["id", "name", "tone", "lines"]
+    },
+    {
+      "name": "requests",
+      "line": 987,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "dues",
+      "line": 988,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "lotPayments",
+      "line": 989,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "disclosures",
+      "line": 991,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "bookings",
+      "line": 992,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "marketplace",
+      "line": 993,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "boothEvents",
+      "line": 994,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "boothApps",
+      "line": 995,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "events",
+      "line": 996,
+      "shape": "array",
+      "sourceEntryCount": 3,
+      "fields": ["id", "title", "date", "time", "where", "note"]
+    },
+    {
+      "name": "units",
+      "line": 1003,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "ledger",
+      "line": 1004,
+      "shape": "object",
+      "sourceEntryCount": null,
+      "fields": ["opening", "reserve"]
+    },
+    {
+      "name": "expenses",
+      "line": 1005,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "budget",
+      "line": 1006,
+      "shape": "array",
+      "sourceEntryCount": 5,
+      "fields": ["category", "planned", "actual"]
+    },
+    {
+      "name": "collectionsHistory",
+      "line": 1013,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "passes",
+      "line": 1016,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "stickers",
+      "line": 1017,
+      "shape": "array",
+      "sourceEntryCount": 3,
+      "fields": ["id", "unit", "plate", "vehicle", "tag", "expires", "status"]
+    },
+    {
+      "name": "incidents",
+      "line": 1022,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "gatePasses",
+      "line": 1023,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "secAdmin",
+      "line": 1024,
+      "shape": "object",
+      "sourceEntryCount": null,
+      "fields": ["oic", "secondary", "revoked"]
+    },
+    {
+      "name": "secAdmin.revoked",
+      "line": 1024,
+      "shape": "object",
+      "sourceEntryCount": null,
+      "fields": []
+    },
+    {
+      "name": "accessAdmins",
+      "line": 1025,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "household",
+      "line": 1026,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "guards",
+      "line": 1027,
+      "shape": "array",
+      "sourceEntryCount": 3,
+      "fields": ["post", "name", "shift", "contact"]
+    },
+    {
+      "name": "complaints",
+      "line": 1034,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "concerns",
+      "line": 1035,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "rules",
+      "line": 1036,
+      "shape": "array",
+      "sourceEntryCount": 4,
+      "fields": ["id", "title", "text"]
+    },
+    {
+      "name": "election",
+      "line": 1042,
+      "shape": "object",
+      "sourceEntryCount": null,
+      "fields": [
+        "id",
+        "title",
+        "opens",
+        "closes",
+        "status",
+        "eligible",
+        "positions",
+        "votes",
+        "ballotsCast",
+        "ballots"
+      ]
+    },
+    {
+      "name": "election.positions",
+      "line": 1045,
+      "shape": "array",
+      "sourceEntryCount": 2,
+      "fields": ["id", "label", "candidates"]
+    },
+    {
+      "name": "election.votes",
+      "line": 1055,
+      "shape": "object",
+      "sourceEntryCount": null,
+      "fields": []
+    },
+    {
+      "name": "election.ballots",
+      "line": 1056,
+      "shape": "object",
+      "sourceEntryCount": null,
+      "fields": []
+    },
+    {
+      "name": "tickets",
+      "line": 1060,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "faqs",
+      "line": 1061,
+      "shape": "array",
+      "sourceEntryCount": 4,
+      "fields": ["q", "a"]
+    },
+    {
+      "name": "reportLog",
+      "line": 1067,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "carpools",
+      "line": 1070,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    },
+    {
+      "name": "rides",
+      "line": 1071,
+      "shape": "array",
+      "sourceEntryCount": 0,
+      "fields": []
+    }
+  ],
+  "recordShapes": [
+    {
+      "name": "item",
+      "line": 3570,
+      "fields": [
+        "id",
+        "unit",
+        "by",
+        "topic",
+        "subject",
+        "message",
+        "status",
+        "at",
+        "replies",
+        "staffUnread"
+      ]
+    },
+    {
+      "name": "fields",
+      "line": 4075,
+      "fields": [
+        "type",
+        "purpose",
+        "date",
+        "time",
+        "bearer",
+        "address",
+        "plate",
+        "items"
+      ]
+    },
+    {
+      "name": "rec",
+      "line": 5425,
+      "fields": [
+        "title",
+        "body",
+        "date",
+        "category",
+        "attach",
+        "images",
+        "qrs",
+        "vis",
+        "pinned"
+      ]
+    },
+    {
+      "name": "item",
+      "line": 5504,
+      "fields": [
+        "id",
+        "unit",
+        "by",
+        "type",
+        "title",
+        "detail",
+        "priority",
+        "assignee",
+        "status",
+        "at",
+        "replies",
+        "staffUnread"
+      ]
+    },
+    {
+      "name": "r",
+      "line": 5674,
+      "fields": [
+        "id",
+        "unit",
+        "by",
+        "accountId",
+        "pickup",
+        "date",
+        "time",
+        "passengers",
+        "note",
+        "status",
+        "driver",
+        "vehicle",
+        "pickupAt",
+        "at",
+        "updates"
+      ]
+    },
+    {
+      "name": "item",
+      "line": 5768,
+      "fields": [
+        "id",
+        "unit",
+        "visitor",
+        "purpose",
+        "date",
+        "transport",
+        "plate",
+        "code",
+        "status"
+      ]
+    },
+    {
+      "name": "item",
+      "line": 5853,
+      "fields": [
+        "id",
+        "section",
+        "unit",
+        "by",
+        "title",
+        "category",
+        "facilitator",
+        "date",
+        "start",
+        "end",
+        "venue",
+        "fee",
+        "slots",
+        "description",
+        "photosLink",
+        "contact",
+        "attendees",
+        "price",
+        "photo",
+        "photos",
+        "status",
+        "rejectReason",
+        "submittedAt",
+        "decidedAt",
+        "decidedBy"
+      ]
+    },
+    {
+      "name": "fields",
+      "line": 6086,
+      "fields": [
+        "title",
+        "ownerName",
+        "description",
+        "category",
+        "hours",
+        "fbPage",
+        "website",
+        "contact",
+        "logo"
+      ]
+    },
+    {
+      "name": "fields",
+      "line": 6149,
+      "fields": [
+        "kind",
+        "title",
+        "company",
+        "jobType",
+        "setup",
+        "location",
+        "pay",
+        "deadline",
+        "description",
+        "contact",
+        "applyLink"
+      ]
+    },
+    {
+      "name": "item",
+      "line": 6215,
+      "fields": [
+        "id",
+        "section",
+        "unit",
+        "by",
+        "title",
+        "date",
+        "start",
+        "end",
+        "price",
+        "category",
+        "visibility",
+        "contact",
+        "photosLink",
+        "items",
+        "description",
+        "status",
+        "rejectReason",
+        "submittedAt",
+        "decidedAt",
+        "decidedBy"
+      ]
+    },
+    {
+      "name": "fields",
+      "line": 6558,
+      "fields": [
+        "kind",
+        "title",
+        "period",
+        "summary",
+        "income",
+        "expense",
+        "link",
+        "date"
+      ]
+    },
+    {
+      "name": "row",
+      "line": 7074,
+      "fields": [
+        "action",
+        "target_id",
+        "target_name",
+        "ref_no",
+        "document",
+        "reason",
+        "details"
+      ]
+    },
+    {
+      "name": "p",
+      "line": 7554,
+      "fields": ["unit", "month", "acct", "payer", "date", "or", "amt"]
+    },
+    {
+      "name": "p",
+      "line": 7815,
+      "fields": [
+        "id",
+        "walkIn",
+        "unit",
+        "visitor",
+        "purpose",
+        "people",
+        "date",
+        "transport",
+        "plate",
+        "code",
+        "note",
+        "status",
+        "loggedBy",
+        "loggedAt"
+      ]
+    },
+    {
+      "name": "item",
+      "line": 7969,
+      "fields": [
+        "id",
+        "unit",
+        "by",
+        "against",
+        "category",
+        "title",
+        "detail",
+        "status",
+        "ref",
+        "filedAt",
+        "resolution",
+        "replies",
+        "staffUnread"
+      ]
+    },
+    {
+      "name": "item",
+      "line": 7984,
+      "fields": [
+        "id",
+        "unit",
+        "by",
+        "topic",
+        "subject",
+        "message",
+        "status",
+        "at",
+        "replies",
+        "staffUnread"
+      ]
+    },
+    {
+      "name": "item",
+      "line": 8178,
+      "fields": [
+        "id",
+        "unit",
+        "by",
+        "subject",
+        "channel",
+        "priority",
+        "status",
+        "at",
+        "detail",
+        "replies",
+        "staffUnread"
+      ]
+    },
+    {
+      "name": "row",
+      "line": 8454,
+      "fields": [
+        "name",
+        "email",
+        "phone",
+        "unit",
+        "role",
+        "proof",
+        "proof_ref",
+        "owner_name",
+        "note"
+      ]
+    }
+  ],
+  "views": [
+    {
+      "workspace": "NAV",
+      "page": "admin",
+      "line": 1885
+    },
+    {
+      "workspace": "NAV",
+      "page": "renter",
+      "line": 1915
+    },
+    {
+      "workspace": "NAV",
+      "page": "driver",
+      "line": 1929
+    },
+    {
+      "workspace": "NAV",
+      "page": "security",
+      "line": 1941
+    },
+    {
+      "workspace": "NAV",
+      "page": "board",
+      "line": 1956
+    },
+    {
+      "workspace": "NAV",
+      "page": "homeowner",
+      "line": 1976
+    },
+    {
+      "workspace": "ADMIN",
+      "page": "home",
+      "line": 2335
+    },
+    {
+      "workspace": "ADMIN",
+      "page": "rides",
+      "line": 2336
+    },
+    {
+      "workspace": "ADMIN",
+      "page": "access",
+      "line": 2359
+    },
+    {
+      "workspace": "ADMIN",
+      "page": "overview",
+      "line": 2386
+    },
+    {
+      "workspace": "ADMIN",
+      "page": "homeowners",
+      "line": 2427
+    },
+    {
+      "workspace": "ADMIN",
+      "page": "profiles",
+      "line": 2501
+    },
+    {
+      "workspace": "ADMIN",
+      "page": "property",
+      "line": 2538
+    },
+    {
+      "workspace": "ADMIN",
+      "page": "masterdata",
+      "line": 2581
+    },
+    {
+      "workspace": "ADMIN",
+      "page": "operations",
+      "line": 2659
+    },
+    {
+      "workspace": "ADMIN",
+      "page": "marketplace",
+      "line": 2701
+    },
+    {
+      "workspace": "ADMIN",
+      "page": "messages",
+      "line": 2755
+    },
+    {
+      "workspace": "ADMIN",
+      "page": "audit",
+      "line": 2756
+    },
+    {
+      "workspace": "ADMIN",
+      "page": "issues",
+      "line": 2757
+    },
+    {
+      "workspace": "ADMIN",
+      "page": "calendar",
+      "line": 2760
+    },
+    {
+      "workspace": "ADMIN",
+      "page": "security",
+      "line": 2767
+    },
+    {
+      "workspace": "ADMIN",
+      "page": "governance",
+      "line": 2814
+    },
+    {
+      "workspace": "ADMIN",
+      "page": "financial",
+      "line": 2906
+    },
+    {
+      "workspace": "ADMIN",
+      "page": "reports",
+      "line": 3004
+    },
+    {
+      "workspace": "ADMIN",
+      "page": "support",
+      "line": 3026
+    },
+    {
+      "workspace": "ADMIN",
+      "page": "settings",
+      "line": 3029
+    },
+    {
+      "workspace": "HOME",
+      "page": "home",
+      "line": 4387
+    },
+    {
+      "workspace": "HOME",
+      "page": "issues",
+      "line": 4388
+    },
+    {
+      "workspace": "HOME",
+      "page": "announcements",
+      "line": 4389
+    },
+    {
+      "workspace": "HOME",
+      "page": "gatepass",
+      "line": 4390
+    },
+    {
+      "workspace": "HOME",
+      "page": "feed",
+      "line": 4391
+    },
+    {
+      "workspace": "HOME",
+      "page": "mydues",
+      "line": 4429
+    },
+    {
+      "workspace": "HOME",
+      "page": "finances",
+      "line": 4446
+    },
+    {
+      "workspace": "HOME",
+      "page": "myrequests",
+      "line": 4466
+    },
+    {
+      "workspace": "HOME",
+      "page": "events",
+      "line": 4481
+    },
+    {
+      "workspace": "HOME",
+      "page": "book",
+      "line": 4493
+    },
+    {
+      "workspace": "HOME",
+      "page": "rides",
+      "line": 4506
+    },
+    {
+      "workspace": "HOME",
+      "page": "visitors",
+      "line": 4521
+    },
+    {
+      "workspace": "HOME",
+      "page": "marketplace",
+      "line": 4534
+    },
+    {
+      "workspace": "HOME",
+      "page": "complaints",
+      "line": 4597
+    },
+    {
+      "workspace": "HOME",
+      "page": "elections",
+      "line": 4627
+    },
+    {
+      "workspace": "HOME",
+      "page": "concerns",
+      "line": 4661
+    },
+    {
+      "workspace": "HOME",
+      "page": "support",
+      "line": 4687
+    },
+    {
+      "workspace": "HOME",
+      "page": "settings",
+      "line": 4689
+    },
+    {
+      "workspace": "RENTER",
+      "page": "feed",
+      "line": 4904
+    },
+    {
+      "workspace": "RENTER",
+      "page": "events",
+      "line": 4927
+    },
+    {
+      "workspace": "RENTER",
+      "page": "myrequests",
+      "line": 4937
+    },
+    {
+      "workspace": "RENTER",
+      "page": "visitors",
+      "line": 4938
+    },
+    {
+      "workspace": "RENTER",
+      "page": "rides",
+      "line": 4939
+    },
+    {
+      "workspace": "RENTER",
+      "page": "concerns",
+      "line": 4940
+    },
+    {
+      "workspace": "RENTER",
+      "page": "support",
+      "line": 4952
+    },
+    {
+      "workspace": "RENTER",
+      "page": "settings",
+      "line": 4953
+    },
+    {
+      "workspace": "DRIVER",
+      "page": "home",
+      "line": 5094
+    },
+    {
+      "workspace": "DRIVER",
+      "page": "announcements",
+      "line": 5095
+    },
+    {
+      "workspace": "DRIVER",
+      "page": "stations",
+      "line": 5096
+    },
+    {
+      "workspace": "DRIVER",
+      "page": "trips",
+      "line": 5097
+    },
+    {
+      "workspace": "DRIVER",
+      "page": "mytrips",
+      "line": 5102
+    },
+    {
+      "workspace": "DRIVER",
+      "page": "support",
+      "line": 5112
+    },
+    {
+      "workspace": "DRIVER",
+      "page": "settings",
+      "line": 5113
+    },
+    {
+      "workspace": "SECURITY",
+      "page": "announcements",
+      "line": 5117
+    },
+    {
+      "workspace": "SECURITY",
+      "page": "gatepasses",
+      "line": 5118
+    },
+    {
+      "workspace": "SECURITY",
+      "page": "gate",
+      "line": 5119
+    },
+    {
+      "workspace": "SECURITY",
+      "page": "visitorlookup",
+      "line": 5160
+    },
+    {
+      "workspace": "SECURITY",
+      "page": "vehicles",
+      "line": 5163
+    },
+    {
+      "workspace": "SECURITY",
+      "page": "incidents",
+      "line": 5182
+    },
+    {
+      "workspace": "SECURITY",
+      "page": "roster",
+      "line": 5190
+    },
+    {
+      "workspace": "SECURITY",
+      "page": "support",
+      "line": 5199
+    },
+    {
+      "workspace": "SECURITY",
+      "page": "settings",
+      "line": 5200
+    },
+    {
+      "workspace": "BOARD",
+      "page": "announcements",
+      "line": 5205
+    },
+    {
+      "workspace": "BOARD",
+      "page": "oversight",
+      "line": 5206
+    },
+    {
+      "workspace": "BOARD",
+      "page": "messages",
+      "line": 5237
+    },
+    {
+      "workspace": "BOARD",
+      "page": "issues",
+      "line": 5238
+    },
+    {
+      "workspace": "BOARD",
+      "page": "calendar",
+      "line": 5241
+    },
+    {
+      "workspace": "BOARD",
+      "page": "financials",
+      "line": 5246
+    },
+    {
+      "workspace": "BOARD",
+      "page": "documents",
+      "line": 5272
+    },
+    {
+      "workspace": "BOARD",
+      "page": "election",
+      "line": 5281
+    },
+    {
+      "workspace": "BOARD",
+      "page": "reports",
+      "line": 5294
+    },
+    {
+      "workspace": "BOARD",
+      "page": "support",
+      "line": 5295
+    },
+    {
+      "workspace": "BOARD",
+      "page": "settings",
+      "line": 5296
+    }
+  ],
+  "functions": [
+    {
+      "name": "acctRoles",
+      "line": 1097
+    },
+    {
+      "name": "hasRole",
+      "line": 1098
+    },
+    {
+      "name": "roleTags",
+      "line": 1099
+    },
+    {
+      "name": "pickRole",
+      "line": 1101
+    },
+    {
+      "name": "switchRole",
+      "line": 1105
+    },
+    {
+      "name": "paintRoleSwitch",
+      "line": 1114
+    },
+    {
+      "name": "adminPosition",
+      "line": 1123
+    },
+    {
+      "name": "adminPositionField",
+      "line": 1128
+    },
+    {
+      "name": "adminPositionValue",
+      "line": 1137
+    },
+    {
+      "name": "staffRole",
+      "line": 1142
+    },
+    {
+      "name": "mktCat",
+      "line": 1155
+    },
+    {
+      "name": "mktCatOptions",
+      "line": 1160
+    },
+    {
+      "name": "mktKindTag",
+      "line": 1165
+    },
+    {
+      "name": "jobKind",
+      "line": 1195
+    },
+    {
+      "name": "jobKindTag",
+      "line": 1196
+    },
+    {
+      "name": "jobApplyLink",
+      "line": 1198
+    },
+    {
+      "name": "mktSection",
+      "line": 1214
+    },
+    {
+      "name": "mktKind",
+      "line": 1215
+    },
+    {
+      "name": "lhPhotos",
+      "line": 1216
+    },
+    {
+      "name": "lhOffers",
+      "line": 1217
+    },
+    {
+      "name": "lhItems",
+      "line": 1218
+    },
+    {
+      "name": "lhFromPrice",
+      "line": 1219
+    },
+    {
+      "name": "lhBusiness",
+      "line": 1223
+    },
+    {
+      "name": "lhMyBusinesses",
+      "line": 1224
+    },
+    {
+      "name": "lhItemCat",
+      "line": 1225
+    },
+    {
+      "name": "lhCats",
+      "line": 1233
+    },
+    {
+      "name": "lhTimed",
+      "line": 1234
+    },
+    {
+      "name": "mktCatFilter",
+      "line": 1235
+    },
+    {
+      "name": "mktCatChips",
+      "line": 1239
+    },
+    {
+      "name": "mktCatSelect",
+      "line": 1248
+    },
+    {
+      "name": "lhToday",
+      "line": 1257
+    },
+    {
+      "name": "fmtTime",
+      "line": 1258
+    },
+    {
+      "name": "lhExpiry",
+      "line": 1263
+    },
+    {
+      "name": "lhBaseExpiry",
+      "line": 1270
+    },
+    {
+      "name": "lhPosted",
+      "line": 1275
+    },
+    {
+      "name": "lhListDays",
+      "line": 1276
+    },
+    {
+      "name": "lhDaysLeft",
+      "line": 1277
+    },
+    {
+      "name": "lhLeftLabel",
+      "line": 1278
+    },
+    {
+      "name": "lhExpired",
+      "line": 1279
+    },
+    {
+      "name": "garageStart",
+      "line": 1280
+    },
+    {
+      "name": "garageEnd",
+      "line": 1281
+    },
+    {
+      "name": "garageLive",
+      "line": 1282
+    },
+    {
+      "name": "garageWhen",
+      "line": 1283
+    },
+    {
+      "name": "garageVenue",
+      "line": 1285
+    },
+    {
+      "name": "boothSetup",
+      "line": 1293
+    },
+    {
+      "name": "boothCloseAt",
+      "line": 1294
+    },
+    {
+      "name": "boothOpen",
+      "line": 1295
+    },
+    {
+      "name": "boothEnded",
+      "line": 1296
+    },
+    {
+      "name": "boothTaken",
+      "line": 1297
+    },
+    {
+      "name": "boothVendors",
+      "line": 1298
+    },
+    {
+      "name": "boothFreeNumbers",
+      "line": 1301
+    },
+    {
+      "name": "lhLiveItems",
+      "line": 1306
+    },
+    {
+      "name": "lhPendingIn",
+      "line": 1309
+    },
+    {
+      "name": "lhPendingCount",
+      "line": 1316
+    },
+    {
+      "name": "lhStatus",
+      "line": 1317
+    },
+    {
+      "name": "lhPriceLabel",
+      "line": 1324
+    },
+    {
+      "name": "lhMeta",
+      "line": 1333
+    },
+    {
+      "name": "lhDetail",
+      "line": 1352
+    },
+    {
+      "name": "lhFbLinks",
+      "line": 1355
+    },
+    {
+      "name": "lhLastFbLink",
+      "line": 1373
+    },
+    {
+      "name": "lhSocialButtons",
+      "line": 1377
+    },
+    {
+      "name": "onLhSearch",
+      "line": 1389
+    },
+    {
+      "name": "lhTerms",
+      "line": 1397
+    },
+    {
+      "name": "lhHit",
+      "line": 1398
+    },
+    {
+      "name": "lhMatch",
+      "line": 1399
+    },
+    {
+      "name": "boothMatch",
+      "line": 1405
+    },
+    {
+      "name": "lhSearchBar",
+      "line": 1410
+    },
+    {
+      "name": "lhWebLink",
+      "line": 1420
+    },
+    {
+      "name": "lhBizLinkFields",
+      "line": 1430
+    },
+    {
+      "name": "lhBizLinks",
+      "line": 1436
+    },
+    {
+      "name": "lhWebButton",
+      "line": 1440
+    },
+    {
+      "name": "lhOwnerName",
+      "line": 1444
+    },
+    {
+      "name": "lhLogo",
+      "line": 1445
+    },
+    {
+      "name": "lhLogoBox",
+      "line": 1446
+    },
+    {
+      "name": "lhVerified",
+      "line": 1450
+    },
+    {
+      "name": "lhAllMemberView",
+      "line": 1456
+    },
+    {
+      "name": "lhAllRow",
+      "line": 1468
+    },
+    {
+      "name": "lhAllAdminView",
+      "line": 1492
+    },
+    {
+      "name": "lhNoMatch",
+      "line": 1510
+    },
+    {
+      "name": "lhSearchCount",
+      "line": 1515
+    },
+    {
+      "name": "lhLiveCount",
+      "line": 1520
+    },
+    {
+      "name": "lhSectionSwitch",
+      "line": 1524
+    },
+    {
+      "name": "aboutLink",
+      "line": 1545
+    },
+    {
+      "name": "ago",
+      "line": 1556
+    },
+    {
+      "name": "duesModeToggle",
+      "line": 1570
+    },
+    {
+      "name": "setDuesMode",
+      "line": 1577
+    },
+    {
+      "name": "curMode",
+      "line": 1591
+    },
+    {
+      "name": "viewOnlyBar",
+      "line": 1592
+    },
+    {
+      "name": "lockViewOnly",
+      "line": 1595
+    },
+    {
+      "name": "takeViewSnapshot",
+      "line": 1602
+    },
+    {
+      "name": "commit",
+      "line": 1606
+    },
+    {
+      "name": "applyTheme",
+      "line": 1625
+    },
+    {
+      "name": "toggleTheme",
+      "line": 1636
+    },
+    {
+      "name": "togglePwdVis",
+      "line": 1642
+    },
+    {
+      "name": "notifMatchesMe",
+      "line": 1655
+    },
+    {
+      "name": "myNotifs",
+      "line": 1659
+    },
+    {
+      "name": "unreadCount",
+      "line": 1660
+    },
+    {
+      "name": "toggleNotifs",
+      "line": 1662
+    },
+    {
+      "name": "openNotifs",
+      "line": 1666
+    },
+    {
+      "name": "closeNotifs",
+      "line": 1691
+    },
+    {
+      "name": "toggleNotifRead",
+      "line": 1692
+    },
+    {
+      "name": "activateNotif",
+      "line": 1698
+    },
+    {
+      "name": "markAllNotifsRead",
+      "line": 1717
+    },
+    {
+      "name": "clearNotifs",
+      "line": 1718
+    },
+    {
+      "name": "paintBell",
+      "line": 1722
+    },
+    {
+      "name": "openMsgCount",
+      "line": 1729
+    },
+    {
+      "name": "paintMsgBtn",
+      "line": 1733
+    },
+    {
+      "name": "isStaffSide",
+      "line": 1745
+    },
+    {
+      "name": "msgBtnClick",
+      "line": 1746
+    },
+    {
+      "name": "paintAvail",
+      "line": 1756
+    },
+    {
+      "name": "toggleAvailMenu",
+      "line": 1762
+    },
+    {
+      "name": "openAvailMenu",
+      "line": 1763
+    },
+    {
+      "name": "closeAvailMenu",
+      "line": 1781
+    },
+    {
+      "name": "setAvailability",
+      "line": 1786
+    },
+    {
+      "name": "toast",
+      "line": 1794
+    },
+    {
+      "name": "authErr",
+      "line": 1805
+    },
+    {
+      "name": "findAccount",
+      "line": 1810
+    },
+    {
+      "name": "removeSampleFinance",
+      "line": 1832
+    },
+    {
+      "name": "removeSampleActivity",
+      "line": 1845
+    },
+    {
+      "name": "enter",
+      "line": 1857
+    },
+    {
+      "name": "signOut",
+      "line": 1872
+    },
+    {
+      "name": "accessManagers",
+      "line": 2029
+    },
+    {
+      "name": "isAccessManager",
+      "line": 2035
+    },
+    {
+      "name": "isMasterDataUser",
+      "line": 2037
+    },
+    {
+      "name": "groupMode",
+      "line": 2047
+    },
+    {
+      "name": "pageMode",
+      "line": 2052
+    },
+    {
+      "name": "pageOn",
+      "line": 2063
+    },
+    {
+      "name": "modeSeg",
+      "line": 2064
+    },
+    {
+      "name": "navFor",
+      "line": 2069
+    },
+    {
+      "name": "go",
+      "line": 2073
+    },
+    {
+      "name": "paintViewAs",
+      "line": 2078
+    },
+    {
+      "name": "viewAsBar",
+      "line": 2095
+    },
+    {
+      "name": "viewAs",
+      "line": 2102
+    },
+    {
+      "name": "goTab",
+      "line": 2124
+    },
+    {
+      "name": "tabOf",
+      "line": 2125
+    },
+    {
+      "name": "tabs",
+      "line": 2126
+    },
+    {
+      "name": "openDrawer",
+      "line": 2132
+    },
+    {
+      "name": "closeDrawer",
+      "line": 2133
+    },
+    {
+      "name": "render",
+      "line": 2140
+    },
+    {
+      "name": "syncRail",
+      "line": 2184
+    },
+    {
+      "name": "head",
+      "line": 2188
+    },
+    {
+      "name": "empty",
+      "line": 2191
+    },
+    {
+      "name": "stat",
+      "line": 2192
+    },
+    {
+      "name": "quick",
+      "line": 2193
+    },
+    {
+      "name": "sectionCard",
+      "line": 2194
+    },
+    {
+      "name": "curPeriod",
+      "line": 2201
+    },
+    {
+      "name": "nextPeriod",
+      "line": 2205
+    },
+    {
+      "name": "periodCollections",
+      "line": 2212
+    },
+    {
+      "name": "myBallot",
+      "line": 2220
+    },
+    {
+      "name": "onProfileSearch",
+      "line": 2234
+    },
+    {
+      "name": "lookupBar",
+      "line": 2245
+    },
+    {
+      "name": "onVehicleSearch",
+      "line": 2252
+    },
+    {
+      "name": "onVisitorLookup",
+      "line": 2258
+    },
+    {
+      "name": "visitorProfiles",
+      "line": 2268
+    },
+    {
+      "name": "visitorLookupBody",
+      "line": 2289
+    },
+    {
+      "name": "onGateSearch",
+      "line": 2322
+    },
+    {
+      "name": "toggle",
+      "line": 3057
+    },
+    {
+      "name": "prefToggle",
+      "line": 3062
+    },
+    {
+      "name": "bookingTable",
+      "line": 3069
+    },
+    {
+      "name": "lhPhotoBox",
+      "line": 3087
+    },
+    {
+      "name": "lhCardOpen",
+      "line": 3092
+    },
+    {
+      "name": "lhOfferList",
+      "line": 3095
+    },
+    {
+      "name": "mktCard",
+      "line": 3101
+    },
+    {
+      "name": "jobCard",
+      "line": 3120
+    },
+    {
+      "name": "bizCard",
+      "line": 3136
+    },
+    {
+      "name": "garageCard",
+      "line": 3152
+    },
+    {
+      "name": "mktMineRow",
+      "line": 3165
+    },
+    {
+      "name": "lhAdminPendingRow",
+      "line": 3212
+    },
+    {
+      "name": "garageItemQueue",
+      "line": 3233
+    },
+    {
+      "name": "openLh",
+      "line": 3247
+    },
+    {
+      "name": "boothVendorDirectory",
+      "line": 3310
+    },
+    {
+      "name": "boothUpcoming",
+      "line": 3321
+    },
+    {
+      "name": "boothMemberView",
+      "line": 3322
+    },
+    {
+      "name": "boothEventCard",
+      "line": 3341
+    },
+    {
+      "name": "boothAdminView",
+      "line": 3355
+    },
+    {
+      "name": "tallyBlock",
+      "line": 3391
+    },
+    {
+      "name": "threadHTML",
+      "line": 3408
+    },
+    {
+      "name": "findMsgItem",
+      "line": 3422
+    },
+    {
+      "name": "chatMessages",
+      "line": 3427
+    },
+    {
+      "name": "chatBubble",
+      "line": 3432
+    },
+    {
+      "name": "staffAccounts",
+      "line": 3438
+    },
+    {
+      "name": "staffOnline",
+      "line": 3439
+    },
+    {
+      "name": "staffAvailabilityLine",
+      "line": 3443
+    },
+    {
+      "name": "newReplyTag",
+      "line": 3451
+    },
+    {
+      "name": "newMsgTag",
+      "line": 3452
+    },
+    {
+      "name": "handledByTag",
+      "line": 3453
+    },
+    {
+      "name": "claimLine",
+      "line": 3456
+    },
+    {
+      "name": "openChat",
+      "line": 3467
+    },
+    {
+      "name": "chatModalHTML",
+      "line": 3483
+    },
+    {
+      "name": "sendChatMessage",
+      "line": 3500
+    },
+    {
+      "name": "openLoadOf",
+      "line": 3520
+    },
+    {
+      "name": "pickAvailableAdmin",
+      "line": 3528
+    },
+    {
+      "name": "autoAssign",
+      "line": 3533
+    },
+    {
+      "name": "claimChat",
+      "line": 3538
+    },
+    {
+      "name": "releaseChat",
+      "line": 3545
+    },
+    {
+      "name": "refreshChat",
+      "line": 3552
+    },
+    {
+      "name": "scrollChatToBottom",
+      "line": 3560
+    },
+    {
+      "name": "quickMessageAdmin",
+      "line": 3562
+    },
+    {
+      "name": "messagesInboxView",
+      "line": 3579
+    },
+    {
+      "name": "supportView",
+      "line": 3635
+    },
+    {
+      "name": "accountSettings",
+      "line": 3683
+    },
+    {
+      "name": "icStage",
+      "line": 3752
+    },
+    {
+      "name": "icResolvedAt",
+      "line": 3757
+    },
+    {
+      "name": "icPhase",
+      "line": 3763
+    },
+    {
+      "name": "icRows",
+      "line": 3768
+    },
+    {
+      "name": "icAvg",
+      "line": 3780
+    },
+    {
+      "name": "icDays",
+      "line": 3781
+    },
+    {
+      "name": "icSteps",
+      "line": 3782
+    },
+    {
+      "name": "icHomeView",
+      "line": 3789
+    },
+    {
+      "name": "icFilter",
+      "line": 3842
+    },
+    {
+      "name": "setIcf",
+      "line": 3843
+    },
+    {
+      "name": "icWeekStart",
+      "line": 3849
+    },
+    {
+      "name": "icBucketStart",
+      "line": 3850
+    },
+    {
+      "name": "icNextBucket",
+      "line": 3855
+    },
+    {
+      "name": "icBucketLabel",
+      "line": 3856
+    },
+    {
+      "name": "icBounds",
+      "line": 3861
+    },
+    {
+      "name": "icDashboard",
+      "line": 3876
+    },
+    {
+      "name": "gpFind",
+      "line": 3987
+    },
+    {
+      "name": "gpAddress",
+      "line": 3988
+    },
+    {
+      "name": "gpNextNo",
+      "line": 3992
+    },
+    {
+      "name": "gpSlipHTML",
+      "line": 3999
+    },
+    {
+      "name": "gpView",
+      "line": 4022
+    },
+    {
+      "name": "gpPrint",
+      "line": 4027
+    },
+    {
+      "name": "gpItemRow",
+      "line": 4037
+    },
+    {
+      "name": "gpAddRow",
+      "line": 4045
+    },
+    {
+      "name": "gpForm",
+      "line": 4046
+    },
+    {
+      "name": "gpCancel",
+      "line": 4090
+    },
+    {
+      "name": "gpHomeView",
+      "line": 4095
+    },
+    {
+      "name": "walkInAlerts",
+      "line": 4125
+    },
+    {
+      "name": "gpVisitorList",
+      "line": 4133
+    },
+    {
+      "name": "gpApprove",
+      "line": 4145
+    },
+    {
+      "name": "gpDecline",
+      "line": 4150
+    },
+    {
+      "name": "gpAdminTab",
+      "line": 4160
+    },
+    {
+      "name": "gpCheck",
+      "line": 4178
+    },
+    {
+      "name": "gpHold",
+      "line": 4188
+    },
+    {
+      "name": "gpSecurityView",
+      "line": 4198
+    },
+    {
+      "name": "secDesignation",
+      "line": 4230
+    },
+    {
+      "name": "canRunRoster",
+      "line": 4231
+    },
+    {
+      "name": "secRevokedMe",
+      "line": 4233
+    },
+    {
+      "name": "canRemoveSec",
+      "line": 4234
+    },
+    {
+      "name": "secBlockedView",
+      "line": 4240
+    },
+    {
+      "name": "setSecDesignation",
+      "line": 4246
+    },
+    {
+      "name": "secRemove",
+      "line": 4255
+    },
+    {
+      "name": "secRestore",
+      "line": 4264
+    },
+    {
+      "name": "guardForm",
+      "line": 4269
+    },
+    {
+      "name": "guardRemove",
+      "line": 4284
+    },
+    {
+      "name": "rosterManageHTML",
+      "line": 4289
+    },
+    {
+      "name": "mhTap",
+      "line": 4346
+    },
+    {
+      "name": "mhHome",
+      "line": 4352
+    },
+    {
+      "name": "mhNavHome",
+      "line": 4374
+    },
+    {
+      "name": "feedAnnouncements",
+      "line": 4736
+    },
+    {
+      "name": "feedCatChips",
+      "line": 4742
+    },
+    {
+      "name": "visibleAnnouncements",
+      "line": 4750
+    },
+    {
+      "name": "annSorted",
+      "line": 4754
+    },
+    {
+      "name": "annImages",
+      "line": 4755
+    },
+    {
+      "name": "hlLink",
+      "line": 4764
+    },
+    {
+      "name": "hotlineBoxes",
+      "line": 4770
+    },
+    {
+      "name": "hotlinesPanel",
+      "line": 4778
+    },
+    {
+      "name": "annBodyHtml",
+      "line": 4787
+    },
+    {
+      "name": "hotlinesForm",
+      "line": 4793
+    },
+    {
+      "name": "annQrData",
+      "line": 4822
+    },
+    {
+      "name": "annQrs",
+      "line": 4827
+    },
+    {
+      "name": "annTags",
+      "line": 4838
+    },
+    {
+      "name": "openAnnImage",
+      "line": 4841
+    },
+    {
+      "name": "noticesView",
+      "line": 4851
+    },
+    {
+      "name": "seedAnnouncementPack",
+      "line": 4869
+    },
+    {
+      "name": "matrixTable",
+      "line": 4889
+    },
+    {
+      "name": "matrixStack",
+      "line": 4895
+    },
+    {
+      "name": "fmtTime",
+      "line": 4964
+    },
+    {
+      "name": "rideCard",
+      "line": 4969
+    },
+    {
+      "name": "rideList",
+      "line": 4998
+    },
+    {
+      "name": "rideActive",
+      "line": 5007
+    },
+    {
+      "name": "stationRides",
+      "line": 5008
+    },
+    {
+      "name": "stationActions",
+      "line": 5012
+    },
+    {
+      "name": "stationBox",
+      "line": 5021
+    },
+    {
+      "name": "stationSummary",
+      "line": 5037
+    },
+    {
+      "name": "stationsView",
+      "line": 5071
+    },
+    {
+      "name": "hotlinesView",
+      "line": 5299
+    },
+    {
+      "name": "dayItems",
+      "line": 5315
+    },
+    {
+      "name": "freeFacilities",
+      "line": 5324
+    },
+    {
+      "name": "calShift",
+      "line": 5328
+    },
+    {
+      "name": "calToday",
+      "line": 5333
+    },
+    {
+      "name": "calendarCard",
+      "line": 5335
+    },
+    {
+      "name": "dayDetail",
+      "line": 5374
+    },
+    {
+      "name": "announceForm",
+      "line": 5402
+    },
+    {
+      "name": "annLinkRow",
+      "line": 5434
+    },
+    {
+      "name": "addAnnLink",
+      "line": 5441
+    },
+    {
+      "name": "readAnnLinks",
+      "line": 5443
+    },
+    {
+      "name": "annPhotoPicker",
+      "line": 5455
+    },
+    {
+      "name": "annThumbs",
+      "line": 5461
+    },
+    {
+      "name": "removeAnnPhoto",
+      "line": 5465
+    },
+    {
+      "name": "handleAnnPhotoFile",
+      "line": 5466
+    },
+    {
+      "name": "deleteAnnounce",
+      "line": 5474
+    },
+    {
+      "name": "markSeen",
+      "line": 5481
+    },
+    {
+      "name": "markAllSeen",
+      "line": 5482
+    },
+    {
+      "name": "setReq",
+      "line": 5485
+    },
+    {
+      "name": "assignForm",
+      "line": 5487
+    },
+    {
+      "name": "requestForm",
+      "line": 5496
+    },
+    {
+      "name": "gotoRides",
+      "line": 5512
+    },
+    {
+      "name": "cpStart",
+      "line": 5514
+    },
+    {
+      "name": "cpExpiresAt",
+      "line": 5517
+    },
+    {
+      "name": "cpExpired",
+      "line": 5518
+    },
+    {
+      "name": "cpArchivedAt",
+      "line": 5519
+    },
+    {
+      "name": "cpUpcoming",
+      "line": 5520
+    },
+    {
+      "name": "cpArchived",
+      "line": 5523
+    },
+    {
+      "name": "cpPrune",
+      "line": 5527
+    },
+    {
+      "name": "cpMine",
+      "line": 5532
+    },
+    {
+      "name": "cpJoined",
+      "line": 5533
+    },
+    {
+      "name": "cpSeatsLeft",
+      "line": 5534
+    },
+    {
+      "name": "cpArchivedCard",
+      "line": 5535
+    },
+    {
+      "name": "deleteCarpool",
+      "line": 5547
+    },
+    {
+      "name": "cpCard",
+      "line": 5551
+    },
+    {
+      "name": "carpoolView",
+      "line": 5576
+    },
+    {
+      "name": "gotoCarpool",
+      "line": 5602
+    },
+    {
+      "name": "carpoolForm",
+      "line": 5603
+    },
+    {
+      "name": "joinCarpool",
+      "line": 5636
+    },
+    {
+      "name": "leaveCarpool",
+      "line": 5645
+    },
+    {
+      "name": "cancelCarpool",
+      "line": 5650
+    },
+    {
+      "name": "rideForm",
+      "line": 5660
+    },
+    {
+      "name": "acceptRide",
+      "line": 5683
+    },
+    {
+      "name": "rideOnTheWay",
+      "line": 5703
+    },
+    {
+      "name": "rideStatus",
+      "line": 5713
+    },
+    {
+      "name": "cancelRide",
+      "line": 5723
+    },
+    {
+      "name": "passMode",
+      "line": 5737
+    },
+    {
+      "name": "genPassCode",
+      "line": 5738
+    },
+    {
+      "name": "visitorForm",
+      "line": 5741
+    },
+    {
+      "name": "trainStart",
+      "line": 5781
+    },
+    {
+      "name": "trainEnd",
+      "line": 5782
+    },
+    {
+      "name": "trainLive",
+      "line": 5783
+    },
+    {
+      "name": "trainWhen",
+      "line": 5784
+    },
+    {
+      "name": "trainPeople",
+      "line": 5785
+    },
+    {
+      "name": "trainSlots",
+      "line": 5786
+    },
+    {
+      "name": "trainLeft",
+      "line": 5787
+    },
+    {
+      "name": "trainJoined",
+      "line": 5788
+    },
+    {
+      "name": "trainFee",
+      "line": 5789
+    },
+    {
+      "name": "trainSpots",
+      "line": 5790
+    },
+    {
+      "name": "trainSignupBtn",
+      "line": 5791
+    },
+    {
+      "name": "toggleTraining",
+      "line": 5797
+    },
+    {
+      "name": "trainingCard",
+      "line": 5809
+    },
+    {
+      "name": "trainingForm",
+      "line": 5823
+    },
+    {
+      "name": "lhLinkButton",
+      "line": 5873
+    },
+    {
+      "name": "lhLinkField",
+      "line": 5879
+    },
+    {
+      "name": "lhReadLink",
+      "line": 5884
+    },
+    {
+      "name": "fileToFitDataUrl",
+      "line": 5893
+    },
+    {
+      "name": "lhThumbs",
+      "line": 5914
+    },
+    {
+      "name": "lhPhotoPicker",
+      "line": 5918
+    },
+    {
+      "name": "paintMktThumbs",
+      "line": 5924
+    },
+    {
+      "name": "removeMktPhoto",
+      "line": 5925
+    },
+    {
+      "name": "handleMktPhotoFile",
+      "line": 5926
+    },
+    {
+      "name": "lhRow",
+      "line": 5936
+    },
+    {
+      "name": "lhRowsEditor",
+      "line": 5942
+    },
+    {
+      "name": "addLhRow",
+      "line": 5947
+    },
+    {
+      "name": "readLhRows",
+      "line": 5948
+    },
+    {
+      "name": "lhSubmitted",
+      "line": 5952
+    },
+    {
+      "name": "mktKindChanged",
+      "line": 5959
+    },
+    {
+      "name": "mktTypeFields",
+      "line": 5968
+    },
+    {
+      "name": "mktTypeRead",
+      "line": 5984
+    },
+    {
+      "name": "marketplaceForm",
+      "line": 5992
+    },
+    {
+      "name": "lhLogoPicker",
+      "line": 6028
+    },
+    {
+      "name": "handleBizLogoFile",
+      "line": 6037
+    },
+    {
+      "name": "businessForm",
+      "line": 6046
+    },
+    {
+      "name": "jobForm",
+      "line": 6116
+    },
+    {
+      "name": "jobKindChanged",
+      "line": 6170
+    },
+    {
+      "name": "toggleVerifyBiz",
+      "line": 6176
+    },
+    {
+      "name": "garageForm",
+      "line": 6182
+    },
+    {
+      "name": "garageItemsForm",
+      "line": 6223
+    },
+    {
+      "name": "setGarageItem",
+      "line": 6234
+    },
+    {
+      "name": "approveGarageItems",
+      "line": 6240
+    },
+    {
+      "name": "rejectGarageItemForm",
+      "line": 6246
+    },
+    {
+      "name": "adminListingForm",
+      "line": 6254
+    },
+    {
+      "name": "lhPostPreview",
+      "line": 6298
+    },
+    {
+      "name": "renewMkt",
+      "line": 6306
+    },
+    {
+      "name": "lhSoldWords",
+      "line": 6314
+    },
+    {
+      "name": "markSoldMkt",
+      "line": 6323
+    },
+    {
+      "name": "lhSoldButton",
+      "line": 6332
+    },
+    {
+      "name": "boothApplyForm",
+      "line": 6337
+    },
+    {
+      "name": "boothEventForm",
+      "line": 6361
+    },
+    {
+      "name": "approveBoothApp",
+      "line": 6390
+    },
+    {
+      "name": "assignBooth",
+      "line": 6402
+    },
+    {
+      "name": "rejectBoothForm",
+      "line": 6407
+    },
+    {
+      "name": "deleteBoothEvent",
+      "line": 6419
+    },
+    {
+      "name": "gotoMarketplace",
+      "line": 6429
+    },
+    {
+      "name": "lhNoun",
+      "line": 6430
+    },
+    {
+      "name": "approveMkt",
+      "line": 6431
+    },
+    {
+      "name": "rejectMktForm",
+      "line": 6438
+    },
+    {
+      "name": "deleteMktForm",
+      "line": 6449
+    },
+    {
+      "name": "payForm",
+      "line": 6461
+    },
+    {
+      "name": "payDateField",
+      "line": 6479
+    },
+    {
+      "name": "payDateValue",
+      "line": 6483
+    },
+    {
+      "name": "recordPaymentForm",
+      "line": 6491
+    },
+    {
+      "name": "disclosureList",
+      "line": 6511
+    },
+    {
+      "name": "disclosureAdmin",
+      "line": 6529
+    },
+    {
+      "name": "disclosureForm",
+      "line": 6537
+    },
+    {
+      "name": "removeDisclosure",
+      "line": 6566
+    },
+    {
+      "name": "remind",
+      "line": 6573
+    },
+    {
+      "name": "billingRun",
+      "line": 6575
+    },
+    {
+      "name": "saveBilling",
+      "line": 6590
+    },
+    {
+      "name": "facRule",
+      "line": 6601
+    },
+    {
+      "name": "bkClock",
+      "line": 6604
+    },
+    {
+      "name": "bkLen",
+      "line": 6608
+    },
+    {
+      "name": "bkRuleText",
+      "line": 6612
+    },
+    {
+      "name": "bkRange",
+      "line": 6617
+    },
+    {
+      "name": "bkTaken",
+      "line": 6629
+    },
+    {
+      "name": "bkStart",
+      "line": 6639
+    },
+    {
+      "name": "bkPickerHTML",
+      "line": 6645
+    },
+    {
+      "name": "bkPaint",
+      "line": 6701
+    },
+    {
+      "name": "bkPickDate",
+      "line": 6702
+    },
+    {
+      "name": "bkMonth",
+      "line": 6703
+    },
+    {
+      "name": "bkPickFac",
+      "line": 6704
+    },
+    {
+      "name": "bkPickWhole",
+      "line": 6705
+    },
+    {
+      "name": "bkPickSlot",
+      "line": 6706
+    },
+    {
+      "name": "bkChosen",
+      "line": 6722
+    },
+    {
+      "name": "bkFacSelect",
+      "line": 6728
+    },
+    {
+      "name": "bkWide",
+      "line": 6732
+    },
+    {
+      "name": "bookForm",
+      "line": 6734
+    },
+    {
+      "name": "adminBookForm",
+      "line": 6759
+    },
+    {
+      "name": "setFacRule",
+      "line": 6785
+    },
+    {
+      "name": "gotoBookings",
+      "line": 6792
+    },
+    {
+      "name": "gotoFeed",
+      "line": 6793
+    },
+    {
+      "name": "setBooking",
+      "line": 6798
+    },
+    {
+      "name": "declineBookingForm",
+      "line": 6803
+    },
+    {
+      "name": "validateForm",
+      "line": 6824
+    },
+    {
+      "name": "boardDocForm",
+      "line": 6837
+    },
+    {
+      "name": "userForm",
+      "line": 6853
+    },
+    {
+      "name": "accessRosterHTML",
+      "line": 6970
+    },
+    {
+      "name": "unitParts",
+      "line": 6989
+    },
+    {
+      "name": "unitCode",
+      "line": 6990
+    },
+    {
+      "name": "unitPretty",
+      "line": 6991
+    },
+    {
+      "name": "addrOpts",
+      "line": 6994
+    },
+    {
+      "name": "addrFields",
+      "line": 6995
+    },
+    {
+      "name": "addrHint",
+      "line": 7004
+    },
+    {
+      "name": "addrPhaseChanged",
+      "line": 7010
+    },
+    {
+      "name": "readUnitField",
+      "line": 7022
+    },
+    {
+      "name": "acctDefaultTitle",
+      "line": 7038
+    },
+    {
+      "name": "secForget",
+      "line": 7042
+    },
+    {
+      "name": "auditRefNo",
+      "line": 7054
+    },
+    {
+      "name": "auditFieldsHTML",
+      "line": 7055
+    },
+    {
+      "name": "readAudit",
+      "line": 7061
+    },
+    {
+      "name": "auditDiff",
+      "line": 7068
+    },
+    {
+      "name": "auditWrite",
+      "line": 7073
+    },
+    {
+      "name": "loadAudit",
+      "line": 7082
+    },
+    {
+      "name": "onAuditSearch",
+      "line": 7092
+    },
+    {
+      "name": "auditChanges",
+      "line": 7096
+    },
+    {
+      "name": "auditView",
+      "line": 7102
+    },
+    {
+      "name": "deleteUserForm",
+      "line": 7126
+    },
+    {
+      "name": "extraRolesHTML",
+      "line": 7146
+    },
+    {
+      "name": "readExtraRoles",
+      "line": 7151
+    },
+    {
+      "name": "xrChanged",
+      "line": 7155
+    },
+    {
+      "name": "addrToggle",
+      "line": 7163
+    },
+    {
+      "name": "rolePreview",
+      "line": 7170
+    },
+    {
+      "name": "setUserStatus",
+      "line": 7189
+    },
+    {
+      "name": "activateUser",
+      "line": 7206
+    },
+    {
+      "name": "resendInvite",
+      "line": 7218
+    },
+    {
+      "name": "resetPassword",
+      "line": 7222
+    },
+    {
+      "name": "hhName",
+      "line": 7249
+    },
+    {
+      "name": "hhPending",
+      "line": 7250
+    },
+    {
+      "name": "hhOf",
+      "line": 7251
+    },
+    {
+      "name": "hhRow",
+      "line": 7252
+    },
+    {
+      "name": "hhProfileLine",
+      "line": 7262
+    },
+    {
+      "name": "hhCell",
+      "line": 7269
+    },
+    {
+      "name": "hhSummary",
+      "line": 7276
+    },
+    {
+      "name": "hhForm",
+      "line": 7282
+    },
+    {
+      "name": "hhConfirm",
+      "line": 7300
+    },
+    {
+      "name": "hhRemove",
+      "line": 7306
+    },
+    {
+      "name": "homeownerProfile",
+      "line": 7313
+    },
+    {
+      "name": "mdPhaseOf",
+      "line": 7345
+    },
+    {
+      "name": "mdAddress",
+      "line": 7346
+    },
+    {
+      "name": "unitForm",
+      "line": 7353
+    },
+    {
+      "name": "removeUnit",
+      "line": 7394
+    },
+    {
+      "name": "mdFilterUnits",
+      "line": 7400
+    },
+    {
+      "name": "unitImportForm",
+      "line": 7412
+    },
+    {
+      "name": "unitReadFile",
+      "line": 7430
+    },
+    {
+      "name": "myLotPaymentsCard",
+      "line": 7519
+    },
+    {
+      "name": "lotPaymentsFrom",
+      "line": 7538
+    },
+    {
+      "name": "unitTemplate",
+      "line": 7564
+    },
+    {
+      "name": "mdLotId",
+      "line": 7572
+    },
+    {
+      "name": "mdShortDate",
+      "line": 7577
+    },
+    {
+      "name": "mdRegisterRow",
+      "line": 7585
+    },
+    {
+      "name": "unitExport",
+      "line": 7590
+    },
+    {
+      "name": "expenseCategoryForm",
+      "line": 7599
+    },
+    {
+      "name": "removeExpenseCategory",
+      "line": 7608
+    },
+    {
+      "name": "expenseForm",
+      "line": 7614
+    },
+    {
+      "name": "approveExpense",
+      "line": 7630
+    },
+    {
+      "name": "projectedStat",
+      "line": 7636
+    },
+    {
+      "name": "loadXlsx",
+      "line": 7644
+    },
+    {
+      "name": "saveSheets",
+      "line": 7649
+    },
+    {
+      "name": "saveCsv",
+      "line": 7658
+    },
+    {
+      "name": "exportCollectionsForm",
+      "line": 7666
+    },
+    {
+      "name": "exportCollections",
+      "line": 7675
+    },
+    {
+      "name": "expenseImportForm",
+      "line": 7700
+    },
+    {
+      "name": "expenseReadFile",
+      "line": 7716
+    },
+    {
+      "name": "expenseTemplate",
+      "line": 7760
+    },
+    {
+      "name": "monthlyExpenseForm",
+      "line": 7767
+    },
+    {
+      "name": "setPass",
+      "line": 7787
+    },
+    {
+      "name": "walkInUnits",
+      "line": 7790
+    },
+    {
+      "name": "walkInUnitLabel",
+      "line": 7796
+    },
+    {
+      "name": "walkInForm",
+      "line": 7797
+    },
+    {
+      "name": "walkInReply",
+      "line": 7823
+    },
+    {
+      "name": "walkInEntered",
+      "line": 7831
+    },
+    {
+      "name": "walkInAway",
+      "line": 7838
+    },
+    {
+      "name": "duesRows",
+      "line": 7844
+    },
+    {
+      "name": "stmtFacts",
+      "line": 7846
+    },
+    {
+      "name": "loadJsPdf",
+      "line": 7854
+    },
+    {
+      "name": "downloadStatement",
+      "line": 7859
+    },
+    {
+      "name": "downloadStatementCsv",
+      "line": 7902
+    },
+    {
+      "name": "stickerForm",
+      "line": 7912
+    },
+    {
+      "name": "incidentForm",
+      "line": 7926
+    },
+    {
+      "name": "closeIncident",
+      "line": 7940
+    },
+    {
+      "name": "setComplaint",
+      "line": 7944
+    },
+    {
+      "name": "resolveComplaint",
+      "line": 7946
+    },
+    {
+      "name": "complaintForm",
+      "line": 7958
+    },
+    {
+      "name": "concernForm",
+      "line": 7976
+    },
+    {
+      "name": "closeConcern",
+      "line": 7990
+    },
+    {
+      "name": "ruleForm",
+      "line": 7992
+    },
+    {
+      "name": "deleteRule",
+      "line": 8001
+    },
+    {
+      "name": "pick",
+      "line": 8005
+    },
+    {
+      "name": "submitBallot",
+      "line": 8006
+    },
+    {
+      "name": "withdrawBallot",
+      "line": 8023
+    },
+    {
+      "name": "closeElection",
+      "line": 8031
+    },
+    {
+      "name": "reopenElection",
+      "line": 8032
+    },
+    {
+      "name": "toggleNewPositionField",
+      "line": 8034
+    },
+    {
+      "name": "handleCandidatePhotoFile",
+      "line": 8037
+    },
+    {
+      "name": "candidateForm",
+      "line": 8047
+    },
+    {
+      "name": "removeCandidate",
+      "line": 8083
+    },
+    {
+      "name": "runReport",
+      "line": 8096
+    },
+    {
+      "name": "subEditBtn",
+      "line": 8147
+    },
+    {
+      "name": "subEditForm",
+      "line": 8150
+    },
+    {
+      "name": "ticketForm",
+      "line": 8171
+    },
+    {
+      "name": "resolveTicket",
+      "line": 8184
+    },
+    {
+      "name": "setGroupMode",
+      "line": 8188
+    },
+    {
+      "name": "accessTabs",
+      "line": 8203
+    },
+    {
+      "name": "adminAccessView",
+      "line": 8208
+    },
+    {
+      "name": "flipAccessManager",
+      "line": 8228
+    },
+    {
+      "name": "customCount",
+      "line": 8243
+    },
+    {
+      "name": "personAccess",
+      "line": 8244
+    },
+    {
+      "name": "personHint",
+      "line": 8276
+    },
+    {
+      "name": "setDraft",
+      "line": 8284
+    },
+    {
+      "name": "clearPersonAccess",
+      "line": 8290
+    },
+    {
+      "name": "resetAccess",
+      "line": 8303
+    },
+    {
+      "name": "flipSetting",
+      "line": 8317
+    },
+    {
+      "name": "flipPref",
+      "line": 8319
+    },
+    {
+      "name": "setDigest",
+      "line": 8321
+    },
+    {
+      "name": "toggleLink",
+      "line": 8322
+    },
+    {
+      "name": "saveProfile",
+      "line": 8324
+    },
+    {
+      "name": "avatarKey",
+      "line": 8334
+    },
+    {
+      "name": "loadAvatar",
+      "line": 8335
+    },
+    {
+      "name": "saveAvatarToStorage",
+      "line": 8336
+    },
+    {
+      "name": "fileToSquareDataUrl",
+      "line": 8340
+    },
+    {
+      "name": "fileToDataUrl",
+      "line": 8362
+    },
+    {
+      "name": "handleAvatarFile",
+      "line": 8370
+    },
+    {
+      "name": "setAvatar",
+      "line": 8376
+    },
+    {
+      "name": "removeAvatar",
+      "line": 8383
+    },
+    {
+      "name": "saveAssoc",
+      "line": 8390
+    },
+    {
+      "name": "addItem",
+      "line": 8397
+    },
+    {
+      "name": "removeItem",
+      "line": 8405
+    },
+    {
+      "name": "passwordForm",
+      "line": 8409
+    },
+    {
+      "name": "setPasswordForm",
+      "line": 8410
+    },
+    {
+      "name": "registerForm",
+      "line": 8432
+    },
+    {
+      "name": "loadRegs",
+      "line": 8474
+    },
+    {
+      "name": "regCheck",
+      "line": 8481
+    },
+    {
+      "name": "registrationsTab",
+      "line": 8492
+    },
+    {
+      "name": "reviewReg",
+      "line": 8514
+    },
+    {
+      "name": "approveReg",
+      "line": 8522
+    },
+    {
+      "name": "rejectReg",
+      "line": 8541
+    },
+    {
+      "name": "modal",
+      "line": 8555
+    },
+    {
+      "name": "closeModal",
+      "line": 8567
+    },
+    {
+      "name": "openDb",
+      "line": 8584
+    },
+    {
+      "name": "isPlain",
+      "line": 8592
+    },
+    {
+      "name": "mergeSaved",
+      "line": 8596
+    },
+    {
+      "name": "saveNow",
+      "line": 8612
+    },
+    {
+      "name": "saveSoon",
+      "line": 8623
+    },
+    {
+      "name": "loadSaved",
+      "line": 8627
+    },
+    {
+      "name": "enc",
+      "line": 8660
+    },
+    {
+      "name": "dec",
+      "line": 8668
+    },
+    {
+      "name": "syncFail",
+      "line": 8690
+    },
+    {
+      "name": "mailError",
+      "line": 8695
+    },
+    {
+      "name": "pwFieldToggle",
+      "line": 8701
+    },
+    {
+      "name": "setLogin",
+      "line": 8705
+    },
+    {
+      "name": "sendInvite",
+      "line": 8713
+    },
+    {
+      "name": "applyMembers",
+      "line": 8720
+    },
+    {
+      "name": "applyRow",
+      "line": 8726
+    },
+    {
+      "name": "loadCloud",
+      "line": 8733
+    },
+    {
+      "name": "pushSoon",
+      "line": 8742
+    },
+    {
+      "name": "reloadKey",
+      "line": 8744
+    },
+    {
+      "name": "pushNow",
+      "line": 8748
+    },
+    {
+      "name": "liveRender",
+      "line": 8793
+    },
+    {
+      "name": "reloadMembers",
+      "line": 8801
+    },
+    {
+      "name": "startLive",
+      "line": 8813
+    },
+    {
+      "name": "stopLive",
+      "line": 8836
+    },
+    {
+      "name": "afterLogin",
+      "line": 8841
+    },
+    {
+      "name": "startCloud",
+      "line": 8860
+    }
+  ],
+  "tableReferences": [
+    {
+      "name": "audit_log",
+      "line": 7077
+    },
+    {
+      "name": "audit_log",
+      "line": 7085
+    },
+    {
+      "name": "registrations",
+      "line": 8461
+    },
+    {
+      "name": "registrations",
+      "line": 8476
+    },
+    {
+      "name": "registrations",
+      "line": 8516
+    },
+    {
+      "name": "members",
+      "line": 8734
+    },
+    {
+      "name": "portal_data",
+      "line": 8734
+    },
+    {
+      "name": "portal_data",
+      "line": 8745
+    },
+    {
+      "name": "portal_data",
+      "line": 8761
+    },
+    {
+      "name": "portal_data",
+      "line": 8764
+    },
+    {
+      "name": "members",
+      "line": 8781
+    },
+    {
+      "name": "members",
+      "line": 8782
+    },
+    {
+      "name": "members",
+      "line": 8787
+    },
+    {
+      "name": "members",
+      "line": 8804
+    },
+    {
+      "name": "members",
+      "line": 8833
+    }
+  ],
+  "rpcReferences": [
+    {
+      "name": "admin_set_login",
+      "line": 8707
+    },
+    {
+      "name": "claim_membership",
+      "line": 8843
+    }
+  ],
+  "sqlEvidence": {
+    "file": "supabase-registrations.sql",
+    "lines": 45,
+    "table": "registrations",
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "line": 7
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "line": 8
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "line": 9
+      },
+      {
+        "name": "email",
+        "type": "text",
+        "line": 10
+      },
+      {
+        "name": "phone",
+        "type": "text",
+        "line": 11
+      },
+      {
+        "name": "unit",
+        "type": "text",
+        "line": 12
+      },
+      {
+        "name": "role",
+        "type": "text",
+        "line": 13
+      },
+      {
+        "name": "proof",
+        "type": "text",
+        "line": 14
+      },
+      {
+        "name": "proof_ref",
+        "type": "text",
+        "line": 15
+      },
+      {
+        "name": "owner_name",
+        "type": "text",
+        "line": 16
+      },
+      {
+        "name": "note",
+        "type": "text",
+        "line": 17
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "line": 18
+      },
+      {
+        "name": "review_note",
+        "type": "text",
+        "line": 19
+      },
+      {
+        "name": "reviewed_by",
+        "type": "text",
+        "line": 20
+      },
+      {
+        "name": "reviewed_at",
+        "type": "timestamptz",
+        "line": 21
+      }
+    ],
+    "requiredFunctions": ["my_role"],
+    "missingReferencedFiles": [
+      "supabase-audit-trail.sql",
+      "supabase-manual-accounts.sql",
+      "supabase-setup.sql"
+    ]
+  },
+  "warning": "Static source metadata only. No data values, credentials, images, SQL execution or backend access. Preview coverage is partial; source defaults are not approved policy."
+}

@@ -1,0 +1,64 @@
+.prompt {
+  flex-wrap: wrap;
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 40;
+  max-width: 560px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 24px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+.prompt > div {
+  flex: 1 1 180px;
+}
+.prompt p {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.prompt strong {
+  font-weight: 600;
+}
+.steps {
+  padding-left: 24px;
+  display: grid;
+  gap: 16px;
+  margin: 24px 0;
+}
+.steps li {
+  line-height: 1.7;
+}
+.steps svg {
+  vertical-align: middle;
+  margin-right: 8px;
+  color: var(--accent);
+}
+@media (max-width: 767px) {
+  .prompt {
+    bottom: calc(96px + env(safe-area-inset-bottom));
+    left: 16px;
+    right: 16px;
+    flex-wrap: wrap;
+    padding: 16px;
+  }
+  .prompt > div {
+    flex: 1;
+    min-width: 160px;
+  }
+  .prompt > button:last-child {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+  }
+  .prompt strong {
+    padding-right: 32px;
+    display: block;
+  }
+}

@@ -1,0 +1,250 @@
+.hero {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  min-height: 240px;
+  padding: 32px 36px;
+  border-radius: 16px;
+  border-top: 4px solid var(--accent);
+  background: var(--brand-strong);
+  color: var(--on-brand);
+}
+.hero > div {
+  position: relative;
+  z-index: 1;
+  max-width: 72%;
+}
+.kicker {
+  font-size: 14px;
+  letter-spacing: 1.4px;
+  font-weight: 650;
+  margin: 0 0 14px;
+}
+.hero h1 {
+  font-family: Georgia, serif;
+  font-size: 42px;
+  line-height: 1.12;
+  letter-spacing: -1px;
+  font-weight: 400;
+  margin: 0 0 12px;
+}
+.hero p:not(.kicker) {
+  font-size: 14px;
+  max-width: 58ch;
+  line-height: 1.6;
+}
+.map {
+  position: absolute;
+  right: -32px;
+  top: 0;
+  width: 44%;
+  height: 100%;
+  color: var(--on-brand);
+  opacity: 0.12;
+  transform: rotate(-4deg);
+}
+.heroActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+.heroActions a {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-height: 48px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: var(--on-brand);
+  color: var(--brand-strong);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.heroActions a:last-child {
+  background: transparent;
+  border: 1px solid var(--on-brand);
+  color: var(--on-brand);
+}
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 24px 0 32px;
+}
+.metrics > a {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 22px 24px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+}
+.metrics small {
+  display: block;
+  font-size: 14px;
+  color: var(--muted);
+}
+.metrics strong {
+  display: block;
+  font-size: 30px;
+  margin: 10px 0 6px;
+  line-height: 1;
+  font-weight: 750;
+}
+.metrics em {
+  font-style: normal;
+  font-size: 14px;
+  color: var(--muted);
+}
+.metrics svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.sectionHeading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.sectionHeading h2 {
+  font-size: 20px;
+  margin: 0 0 6px;
+}
+.sectionHeading p {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0;
+}
+.sectionHeading a,
+.connection > a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 650;
+  min-height: 48px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.group {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.group header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  border-bottom: 1px solid var(--line);
+}
+.groupIcon {
+  display: grid;
+  place-items: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+.group h3 {
+  font-size: 16px;
+  margin: 0 0 4px;
+  font-weight: 700;
+}
+.group header p {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0;
+}
+.group > div {
+  padding: 8px 12px;
+}
+.group a {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-height: 48px;
+  padding: 10px 12px;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--ink);
+}
+.group a span {
+  flex: 1;
+}
+.group a > svg:first-child {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.group a small {
+  color: var(--muted);
+  font-size: 14px;
+  background: var(--wash);
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+.group a:hover,
+.metrics a:hover {
+  background: var(--accent-soft);
+}
+.connection {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px 24px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin: 24px 0;
+}
+.connection > div {
+  flex: 1;
+  min-width: 0;
+}
+.connection h2 {
+  font-size: 16px;
+  margin: 0 0 4px;
+}
+.connection p,
+.footnote {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.connection p {
+  margin: 0;
+}
+@media (min-width: 1024px) and (max-width: 1200px) {
+  .metrics > a {
+    padding: 18px 16px;
+  }
+  .hero {
+    padding: 28px;
+  }
+  .hero h1 {
+    font-size: 36px;
+  }
+  .connection {
+    flex-wrap: wrap;
+  }
+  .connection > a {
+    margin-left: 60px;
+  }
+}

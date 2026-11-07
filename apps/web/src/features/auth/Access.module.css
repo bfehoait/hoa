@@ -1,0 +1,334 @@
+.access {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--bg);
+  color: var(--ink);
+}
+.identity {
+  padding: 48px;
+  background: var(--accent-soft);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 48px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  min-height: 64px;
+}
+.brand > span {
+  font-size: 24px;
+  font-weight: 800;
+}
+.brand small {
+  display: block;
+  font-size: 14px;
+  letter-spacing: 1px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.identity .identityTitle {
+  font-size: 32px;
+  margin: 16px 0;
+}
+.identity > div > p:not(:global(.eyebrow)) {
+  color: var(--muted);
+  max-width: 48ch;
+}
+.identity > p {
+  color: var(--muted);
+}
+.panel {
+  padding: 32px;
+  display: grid;
+  place-items: center;
+}
+.card {
+  width: 100%;
+  max-width: 480px;
+}
+.card h1 {
+  font-size: 24px;
+  margin: 16px 0 12px;
+}
+.workspaces {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 24px 0;
+}
+.workspaces > button {
+  width: 100%;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: var(--radius-sm);
+  text-align: left;
+}
+.workspaces > button > span {
+  flex: 1;
+}
+.workspaces > button > svg {
+  color: var(--accent);
+}
+.workspaces > button:active {
+  background: var(--accent-soft);
+  transform: scale(0.99);
+}
+.links {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 16px 0;
+}
+.links > a {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.lock {
+  padding: 24px 0;
+}
+.lock > svg {
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+.lock p {
+  color: var(--muted);
+  margin-top: 12px;
+}
+@media (hover: hover) {
+  .workspaces > button:hover {
+    background: var(--accent-soft);
+  }
+}
+@media (max-width: 767px) {
+  .access {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+  .identity {
+    padding: 24px;
+    gap: 24px;
+  }
+  .identity > div,
+  .identity > p {
+    display: none;
+  }
+  .brand small {
+    letter-spacing: 0;
+  }
+  .panel {
+    padding: 24px 16px;
+    place-items: start center;
+  }
+  .card h1 {
+    margin-top: 12px;
+  }
+  .links {
+    flex-wrap: wrap;
+  }
+}
+
+.authIcon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 20px;
+  margin-bottom: 24px;
+}
+.highlights {
+  display: grid;
+  gap: 20px;
+  margin-top: 40px;
+}
+.highlights > span {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--ink);
+}
+.highlights svg {
+  color: var(--accent);
+}
+.authForm {
+  margin-top: 28px;
+}
+.passwordField {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.passwordField > input {
+  border: 0;
+  min-width: 0;
+  flex: 1;
+  width: 0;
+  background: transparent;
+}
+.passwordField > button {
+  flex-shrink: 0;
+}
+.passwordField:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.passwordField:has([aria-invalid="true"]) {
+  border-color: var(--red);
+}
+.passwordField input:focus-visible {
+  outline: none;
+}
+.submit {
+  width: 100%;
+  margin-top: 16px;
+}
+.forgot {
+  display: flex;
+  justify-content: flex-end;
+}
+.forgot a {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--accent);
+}
+.connectionNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px;
+  margin: 24px 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--wash);
+}
+.connectionNote > svg {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+.connectionNote p {
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 6px;
+}
+.authFootnote {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 28px;
+}
+.authFootnote svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.workspaceLink {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  min-height: 72px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  text-decoration: none;
+}
+.workspaceLink > span {
+  flex: 1;
+}
+.workspaceLink > svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+@media (hover: hover) {
+  .workspaceLink:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+}
+@media (max-width: 767px) {
+  .authIcon {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 20px;
+  }
+  .authForm {
+    margin-top: 24px;
+  }
+}
+
+.authIdentity {
+  background: var(--brand-strong);
+  color: var(--on-brand);
+}
+.authIdentity .officialLogo {
+  display: block;
+  width: 220px;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+.authIdentity .authLogoLight {
+  display: none;
+}
+.authIdentity .identityTitle {
+  color: var(--on-brand) !important;
+  font-size: 40px;
+  line-height: 1.25;
+  font-weight: 650;
+  max-width: 12ch;
+}
+.authIdentity > div > p,
+.authIdentity > p,
+.authIdentity .highlights > span,
+.authIdentity .highlights svg {
+  color: var(--on-brand) !important;
+}
+@media (max-width: 767px) {
+  .authIdentity {
+    padding: 24px 24px 0;
+    background: var(--bg);
+  }
+  .authIdentity .brand {
+    display: flex;
+    justify-content: center;
+    min-height: 0;
+  }
+  .authIdentity .officialLogo {
+    width: 136px;
+  }
+  .authIdentity .authLogoWhite {
+    display: none;
+  }
+  .authIdentity .authLogoLight {
+    display: block;
+  }
+  :global(html[data-theme="dark"]) .authIdentity .authLogoLight {
+    display: none;
+  }
+  :global(html[data-theme="dark"]) .authIdentity .authLogoWhite {
+    display: block;
+  }
+}

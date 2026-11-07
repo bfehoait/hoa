@@ -1,0 +1,355 @@
+.panel,
+.memberPanel {
+  margin: 24px 0;
+}
+.panel {
+  padding: 24px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+}
+.sectionHeading h3 {
+  font-size: 20px;
+  margin: 0 0 6px;
+}
+.sectionHeading p,
+.note {
+  color: var(--muted);
+  font-size: 14px;
+  max-width: 85ch;
+  line-height: 1.6;
+}
+.sectionHeading p {
+  margin: 0;
+}
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+.memberPanel .filters {
+  max-width: 400px;
+}
+.filters label,
+.reason,
+.tabSearch {
+  display: grid;
+  gap: 8px;
+}
+.filters select,
+.reason input,
+.tabSearch input {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 16px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+}
+.tabSearch {
+  max-width: 400px;
+}
+.explanation {
+  margin-block: 20px;
+  max-width: 85ch;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.explanation strong {
+  font-weight: 600;
+}
+.explanation p {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+.explanation .unavailable {
+  padding: 12px 16px;
+  margin-top: 12px;
+  border-left: 3px solid var(--amber);
+  background: var(--amber-bg);
+  color: var(--amber);
+  border-radius: var(--radius-sm);
+}
+.matrix {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-block: 20px;
+}
+.matrixHead,
+.permissionRow {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(175px, 0.85fr) minmax(
+      330px,
+      1.5fr
+    );
+  align-items: center;
+  gap: 20px;
+  padding: 16px;
+}
+.groupMatrix .matrixHead,
+.groupMatrix .permissionRow {
+  grid-template-columns: minmax(150px, 1fr) minmax(330px, 1.5fr);
+}
+.matrixHead {
+  color: var(--muted);
+  background: var(--wash);
+  font-size: 14px;
+}
+.permissionRow {
+  border-top: 1px solid var(--line);
+  min-height: 108px;
+}
+.moduleName strong {
+  font-weight: 600;
+  display: block;
+}
+.moduleName small {
+  display: block;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+.unsaved {
+  display: inline-block;
+  color: var(--amber);
+  background: var(--amber-bg);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  margin-top: 8px;
+}
+.currentAccess {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 14px;
+}
+.currentAccess > span:not(.mobileLabel) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  line-height: 1.5;
+}
+.currentAccess svg {
+  flex: none;
+}
+.currentAccess small {
+  flex-basis: 100%;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.allowed {
+  color: var(--green);
+  background: var(--green-bg);
+}
+.blocked {
+  color: var(--muted);
+  background: var(--wash);
+}
+.limited,
+.notReported {
+  color: var(--amber);
+  background: var(--amber-bg);
+}
+.mobileLabel {
+  display: none;
+}
+.ruleOptions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  min-width: 0;
+}
+.ruleChoice {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+  min-height: 72px;
+  padding: 10px 6px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  background: transparent;
+  color: var(--muted);
+}
+.ruleChoice[data-selected] {
+  color: var(--accent);
+  font-weight: 700;
+}
+.ruleChoice:hover {
+  background: var(--wash);
+}
+.toggleHint {
+  display: block;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.ruleChoice input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+}
+.ruleChoice:has(input:focus-visible) {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+.ruleChoice:has(input:disabled) {
+  opacity: 0.5;
+  cursor: wait;
+}
+.toggleState {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+.toggleTrack {
+  position: relative;
+  width: 34px;
+  height: 20px;
+  /* The track fill sits at 1.15:1 against the surface, so this border is the
+     only thing giving the control an edge. --line-strong measured 2.77:1 in
+     light mode, under the 3:1 WCAG 1.4.11 asks of a control boundary; --muted
+     clears it at 5.86:1 light / 7.30:1 dark and matches the knob. */
+  border: 1px solid var(--muted);
+  border-radius: 12px;
+  background: var(--wash);
+  flex: none;
+}
+.toggleTrack::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .toggleTrack::after {
+    transition: transform 160ms;
+  }
+}
+.ruleChoice[data-selected] .toggleTrack {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.ruleChoice[data-selected] .toggleTrack::after {
+  transform: translateX(14px);
+  background: var(--on-accent);
+}
+.defaultRule {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+.defaultRule small {
+  font-size: 14px;
+  color: var(--muted);
+}
+.defaultRule button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.reason {
+  max-width: 640px;
+  margin: 24px 0;
+}
+.actions {
+  position: sticky;
+  bottom: 12px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px;
+  margin-block: 16px;
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.delegation {
+  border-top: 1px solid var(--line);
+  margin-top: 24px;
+  padding-top: 24px;
+}
+.noMatches {
+  padding: 16px;
+  margin: 0;
+  color: var(--muted);
+}
+@media (max-width: 1200px) {
+  .matrixHead {
+    display: none;
+  }
+  .permissionRow,
+  .groupMatrix .permissionRow {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    padding: 20px;
+  }
+  .permissionRow:first-of-type {
+    border-top: 0;
+  }
+  .ruleOptions {
+    max-width: 560px;
+  }
+  .mobileLabel {
+    display: block;
+    flex-basis: 100%;
+    font-weight: 600;
+    color: var(--muted);
+  }
+}
+@media (max-width: 600px) {
+  .panel {
+    padding: 16px;
+  }
+  .permissionRow,
+  .groupMatrix .permissionRow {
+    padding: 16px;
+  }
+  .ruleOptions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .ruleChoice {
+    flex-direction: column;
+    min-height: 80px;
+    gap: 8px;
+  }
+  .actions {
+    bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+}

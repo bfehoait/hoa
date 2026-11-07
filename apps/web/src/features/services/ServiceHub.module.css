@@ -1,0 +1,29 @@
+.section {
+  margin: 28px 0;
+}
+.section > h2 {
+  margin-bottom: 16px;
+  font-size: 18px;
+  font-weight: 700;
+}
+.activity {
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.activity > a:last-child {
+  border-bottom: 0;
+}
+@media (max-width: 600px) {
+  .activity > a {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .activity > a > span:nth-child(2) {
+    flex-basis: 60%;
+  }
+  .activity > a > span:last-child {
+    margin-left: 60px;
+  }
+}

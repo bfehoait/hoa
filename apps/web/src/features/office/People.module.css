@@ -1,0 +1,256 @@
+.summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  margin: 24px 0;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius-lg);
+}
+.summaryIcon {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.summary p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  margin: 24px 0;
+}
+.filters label {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 650;
+  flex: 1 1 140px;
+  min-width: 0;
+}
+.filters select,
+.filters input {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+}
+.filters .search {
+  flex: 3 1 220px;
+}
+.search > span {
+  position: relative;
+}
+.search svg {
+  position: absolute;
+  left: 12px;
+  top: 14px;
+  color: var(--muted);
+}
+.search input {
+  padding-left: 40px;
+}
+.resultsHeading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 24px 0 16px;
+}
+.resultsHeading h2 {
+  margin: 0;
+}
+.resultsHeading > span {
+  color: var(--muted);
+  font-size: 14px;
+}
+.records {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+.records > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+.identity {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+  grid-column: 1/-1;
+}
+.identity > div {
+  min-width: 0;
+}
+.identity strong,
+.identity div > span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.identity div > span {
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 4px;
+}
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 14px;
+}
+.roles {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+  grid-column: 1/-1;
+}
+.unit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  grid-column: 1/-1;
+}
+.records button {
+  justify-self: end;
+}
+.columnLabels {
+  display: none;
+}
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 24px 0;
+}
+.pagination > span {
+  font-size: 14px;
+  white-space: nowrap;
+}
+.pagination button {
+  padding-inline: 10px;
+  gap: 4px;
+}
+.empty {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  padding: 32px 20px;
+  background: var(--surface);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-lg);
+}
+.empty svg {
+  color: var(--accent);
+}
+.empty p {
+  max-width: 48ch;
+  color: var(--muted);
+}
+.boundaries {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin-top: 24px;
+}
+.boundaries summary {
+  cursor: pointer;
+  min-height: 48px;
+  align-content: center;
+  font-weight: 650;
+}
+.boundaries p {
+  color: var(--muted);
+  font-size: 14px;
+  max-width: 75ch;
+}
+.details {
+  display: grid;
+  gap: 16px;
+}
+.details > div {
+  display: grid;
+  gap: 4px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.details dt {
+  color: var(--muted);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+@media (min-width: 1100px) {
+  .columnLabels,
+  .records > li {
+    grid-template-columns:
+      minmax(200px, 2fr) minmax(120px, 1.2fr) minmax(110px, 1fr)
+      minmax(90px, 0.7fr) auto;
+  }
+  .columnLabels {
+    display: grid;
+    gap: 16px;
+    padding: 12px 20px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .records {
+    gap: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .records > li {
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+  }
+  .records > li:last-child {
+    border-bottom: 0;
+  }
+  .identity,
+  .roles,
+  .unit {
+    grid-column: auto;
+  }
+}
+@media (max-width: 480px) {
+  .summary {
+    flex-wrap: wrap;
+  }
+  .summary > div {
+    flex: 1 1 160px;
+  }
+}
