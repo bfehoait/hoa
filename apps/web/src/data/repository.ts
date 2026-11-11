@@ -40,6 +40,8 @@ export function readState(): DemoState {
   try {
     const state = stateSchema.parse(JSON.parse(raw));
     for (const record of state.records) {
+      if (record.kind === "booking" && record.title === "Clubhouse")
+        record.title = "Swimming pool";
       if (record.kind === "request") {
         if (record.status === "In review") record.status = "In progress";
         if (record.status === "Saved locally") record.status = "Open";

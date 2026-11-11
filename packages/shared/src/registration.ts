@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { lotPartsSchema } from "./lot-address";
 const answer = z.enum(["not_provided", "yes", "no"]);
 export const householdPersonSchema = z
   .object({
@@ -16,9 +17,7 @@ export const registrationSchema = z
     email: z.string().trim().toLowerCase().max(200).pipe(z.email()),
     phone: z.string().trim().min(7).max(40),
     role: z.enum(["homeowner", "renter"]),
-    phase: z.coerce.number().int().min(1).max(99),
-    block: z.coerce.number().int().min(1).max(999),
-    lot: z.coerce.number().int().min(1).max(9999),
+    ...lotPartsSchema.shape,
     street: z.string().trim().max(120),
     ownerName: z.string().trim().min(1).max(120),
     proof: z.string().trim().max(60).optional(),

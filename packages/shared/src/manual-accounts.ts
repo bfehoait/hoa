@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { canonicalLotAddressSchema } from "./lot-address.ts";
 
 export const manualAccountRoles = [
   "homeowner",
@@ -39,8 +40,12 @@ export const manualAccountSchema = z
   .strict()
   .refine(
     (value) =>
-      !["homeowner", "renter"].includes(value.role) || value.unit.length > 0,
-    { path: ["unit"], message: "Enter their household address." },
+      (value.unit === "" && !["homeowner", "renter"].includes(value.role)) ||
+      canonicalLotAddressSchema.safeParse(value.unit).success,
+    {
+      path: ["unit"],
+      message: "Choose phase 1–3, block 01–19 and lot 001–111.",
+    },
   );
 export type ManualAccountInput = z.infer<typeof manualAccountSchema>;
 

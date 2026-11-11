@@ -3,6 +3,11 @@ import { Link } from "../../components/AccessLink";
 import { Button, Feedback, Field } from "../../components/UI";
 import { makeClient } from "../../data/auth";
 import { registrationSchema } from "../../../../../packages/shared/src/registration";
+import { formatLotAddress } from "../../../../../packages/shared/src/lot-address";
+import {
+  LotAddressFields,
+  type LotParts,
+} from "../../components/LotAddressFields";
 import { AuthFrame } from "./AuthFrame";
 import styles from "../office/CreateAccount.module.css";
 const answers = [
@@ -22,6 +27,11 @@ export default function Registration() {
     [clientId] = useState(() => crypto.randomUUID());
   const [role, setRole] = useState("homeowner"),
     [household, setHousehold] = useState<Person[]>([]);
+  const [lotParts, setLotParts] = useState<LotParts>({
+    phase: "",
+    block: "",
+    lot: "",
+  });
   const [pending, setPending] = useState(false),
     [sent, setSent] = useState(false),
     [error, setError] = useState<Error | null>(null);
@@ -149,9 +159,12 @@ export default function Registration() {
                 <option value="renter">Renter</option>
               </select>
             </Field>
-            {field("phase", "Phase", "number")}
-            {field("block", "Block", "number")}
-            {field("lot", "Lot", "number")}
+            <LotAddressFields value={lotParts} onChange={setLotParts} />
+            {formatLotAddress(lotParts) && (
+              <p className={styles.note}>
+                Lot address: {formatLotAddress(lotParts)}
+              </p>
+            )}
             {field("street", "Street (optional)", "text", 120, false)}
             {field("ownerName", "Registered homeowner name")}
             {["senior", "pwd"].map((key) => (

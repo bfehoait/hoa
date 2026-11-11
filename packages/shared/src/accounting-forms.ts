@@ -135,6 +135,32 @@ export const accountingForms: AccountingForm[] = [
       question("memo", "Notes and reconciliation explanation", "textarea"),
     ],
   },
+  {
+    id: "amenity-charge",
+    title: "Amenity charge",
+    effect:
+      "Confirm the amount due for a booking using the Office quote. Enter reservation fee only if it is additional to rental. Posting adds rental, any additional reservation fee and the refundable bond to the booking account's Other balance. No payment is recorded.",
+    fields: [
+      question("booking", "Booking reference"),
+      question("rental", "Rental due (PHP)", "number"),
+      question("reservation", "Additional reservation fee due (PHP)", "number"),
+      question("bond", "Refundable bond due (PHP)", "number"),
+      question("memo", "Office quote / rate and fee explanation", "textarea"),
+    ],
+  },
+  {
+    id: "amenity-payment",
+    title: "Amenity payment",
+    effect:
+      "Apply verified payment evidence to a specific posted amenity charge. Independent posting reduces Other and the total balance. It does not execute a payment or allocate HOA receipts.",
+    fields: [
+      question("charge", "Posted amenity charge reference"),
+      question("amount", "Amount paid (PHP)", "number"),
+      question("date", "Date paid", "date"),
+      question("reference", "Official receipt / payment reference"),
+      question("memo", "Payment verification notes", "textarea"),
+    ],
+  },
 ];
 export const accountingEntrySchema = z.object({
   id: z.uuid(),

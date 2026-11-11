@@ -2,13 +2,15 @@ import { Link } from "../../components/AccessLink";
 import { ChevronRight } from "lucide-react";
 import { useLinkedPropertyAddress } from "../../data/linked-properties";
 import styles from "./ResidentHome.module.css";
-import { useHoaBalance } from "../../data/hoa-balance";
+import { useAccountBalance } from "../../data/hoa-balance";
 import { balanceMoney } from "../../../../../packages/shared/src/hoa-balance";
 
 export default function HomeownerSummary() {
   const { address, properties } = useLinkedPropertyAddress();
-  const balance = useHoaBalance();
-  const billed = !!balance.data?.invoice_count && !balance.data.needs_review;
+  const balance = useAccountBalance();
+  const billed =
+    !!(balance.data?.hoa.invoice_count || balance.data?.amenity_charge_count) &&
+    !balance.data?.hoa.needs_review;
   return (
     <section
       className={styles.accountCard}
@@ -30,11 +32,11 @@ export default function HomeownerSummary() {
           <dd>{address}</dd>
         </div>
         <div>
-          <dt>Recorded HOA balance</dt>
+          <dt>Total balance</dt>
           <dd>
             {billed && balance.data
-              ? balanceMoney(balance.data.total_recorded_balance_centavos)
-              : balance.data?.needs_review
+              ? balanceMoney(balance.data.total_balance_centavos)
+              : balance.data?.hoa.needs_review
                 ? "Under review"
                 : balance.isError
                   ? "Unavailable"
@@ -48,10 +50,10 @@ export default function HomeownerSummary() {
       </dl>
       <p className={styles.accountNote}>
         {billed
-          ? "HOA invoices only. Water, other charges and unverified historical coverage are not included."
+          ? "HOA dues and your confirmed amenity charges. Water dues are unavailable."
           : balance.isError
             ? "Open My account to retry the balance connection."
-            : "Monthly bills appear after Office verification and posting."}
+            : "Bills and amenity charges appear after Office confirmation. Water dues are unavailable."}
       </p>
     </section>
   );

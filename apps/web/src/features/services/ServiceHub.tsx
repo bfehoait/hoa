@@ -37,7 +37,7 @@ const actions: Destination[] = [
   {
     to: "/services/bookings",
     title: "Book an amenity",
-    detail: "Clubhouse, court & pool",
+    detail: "Swimming pool, court & function hall",
     icon: CalendarDays,
   },
   {

@@ -8,6 +8,11 @@ const runtime = JSON.parse(
   await read("supabase/functions/bfe-create-account/deno.json"),
 );
 const schema = await read("packages/shared/src/manual-accounts.ts");
+const lotSchema = await read("packages/shared/src/lot-address.ts");
+const lotImport =
+  'import { canonicalLotAddressSchema } from "./lot-address.ts";';
+if (schema.split(lotImport).length !== 2)
+  throw new Error("Lot schema import changed. Update the editor generator.");
 const handler = await read("supabase/functions/bfe-create-account/index.ts");
 const schemaImport = 'import { z } from "zod";';
 const clientImport = 'import { createClient } from "@supabase/supabase-js";';
@@ -30,7 +35,8 @@ const output = [
   "// Function name: bfe-create-account. No keys or passwords belong in this file.",
   `import { createClient } from "${runtime.imports["@supabase/supabase-js"]}";`,
   `import { z } from "${runtime.imports.zod}";`,
-  schema.replace(schemaImport, "").trim(),
+  lotSchema.replace(schemaImport, "").trim(),
+  schema.replace(schemaImport, "").replace(lotImport, "").trim(),
   handler.replace(clientImport, "").replace(localImport, "").trim(),
   "",
 ].join("\n\n");

@@ -11,7 +11,9 @@ export const requestSchema = z.object({
 });
 export const bookingSchema = z
   .object({
-    amenity: z.enum(["Clubhouse", "Basketball court", "Swimming pool"]),
+    amenity: z
+      .enum(["Clubhouse", "Function Hall", "Basketball court", "Swimming pool"])
+      .transform((name) => (name === "Clubhouse" ? "Swimming pool" : name)),
     date: z.iso.date("Choose a valid date."),
     time: z.enum(["09:00–11:00", "14:00–16:00", "17:00–19:00"]),
     guests: z.coerce.number().int().min(1).max(50),

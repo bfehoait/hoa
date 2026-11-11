@@ -24,6 +24,13 @@ import WorkflowHistory from "./WorkflowHistory";
 import BookingComposerFrame from "./BookingComposerFrame";
 import BookingSlots from "./BookingSlots";
 import BookingDatePicker from "./BookingDatePicker";
+import AmenityGuidelines from "./AmenityGuidelines";
+import BookingCharge from "./BookingCharge";
+import {
+  amenityAttendeeLimit,
+  amenityKey,
+  amenityGuidelines,
+} from "../../../../../packages/shared/src/amenity-guidelines";
 import schedule from "./BookingSchedule.module.css";
 import { CalendarDays, House } from "lucide-react";
 import { Link } from "../../components/AccessLink";
@@ -175,6 +182,8 @@ export default function OperationsDesk({
           "office-facility-calendar",
           "office-review-inbox",
           "notifications",
+          "booking-charge",
+          "registry",
         ].map((key) => cache.invalidateQueries({ queryKey: [key] })),
       );
     },
@@ -397,10 +406,14 @@ export default function OperationsDesk({
                       <CalendarDays size={24} aria-hidden="true" />
                       <strong>{f.name}</strong>
                       <span>
-                        {f.opens.slice(0, 5)}–{f.closes.slice(0, 5)} ·{" "}
-                        {f.slot_minutes}-minute slots
+                        {amenityKey(f.name)
+                          ? amenityGuidelines[amenityKey(f.name)!].hours
+                          : `${f.opens.slice(0, 5)}–${f.closes.slice(0, 5)}`}
                       </span>
-                      <span>Up to {f.capacity} people</span>
+                      <span>
+                        Booking limit:{" "}
+                        {amenityAttendeeLimit(f.name, f.capacity)} people
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -411,18 +424,19 @@ export default function OperationsDesk({
                   <div className={schedule.amenityFacts}>
                     <span>{chosen.slot_minutes}-minute intervals</span>
                     <span>Up to {chosen.max_minutes / 60} hours</span>
-                    <span>Capacity {chosen.capacity}</span>
                     <span>
-                      {chosen.opens.slice(0, 5) < "07:00"
-                        ? "07:00"
-                        : chosen.opens.slice(0, 5)}
-                      –
-                      {chosen.closes.slice(0, 5) > "22:00"
-                        ? "22:00"
-                        : chosen.closes.slice(0, 5)}
+                      Configured booking limit:{" "}
+                      {amenityAttendeeLimit(chosen.name, chosen.capacity)}{" "}
+                      people
                     </span>
                     <p>Policy: {chosen.policy_reference}</p>
                   </div>
+                  <AmenityGuidelines name={chosen.name} />
+                  <p className="note">
+                    Office confirms the applicable price after reviewing the
+                    booking. Confirmed charges appear under Other in My account;
+                    submitting a request does not record payment.
+                  </p>
                   <div className={schedule.layout}>
                     <BookingDatePicker
                       value={date}
@@ -474,7 +488,7 @@ export default function OperationsDesk({
                       name="attendees"
                       type="number"
                       min={1}
-                      max={chosen?.capacity ?? 10000}
+                      max={amenityAttendeeLimit(chosen.name, chosen.capacity)}
                       step={1}
                     />
                   </label>
@@ -769,13 +783,15 @@ export default function OperationsDesk({
                     <p>
                       {f.opens.slice(0, 5)}–{f.closes.slice(0, 5)} ·{" "}
                       {f.slot_minutes}-minute slots · maximum {f.max_minutes}{" "}
-                      minutes · capacity {f.capacity}
+                      minutes · configured booking limit{" "}
+                      {amenityAttendeeLimit(f.name, f.capacity)}
                     </p>
                     <p>
                       {f.renters ? "Homeowners and renters" : "Homeowners"} ·{" "}
                       {f.active ? "Open for booking" : "Unavailable"}
                     </p>
                     <p>Policy: {f.policy_reference}</p>
+                    <AmenityGuidelines name={f.name} />
                   </article>
                 ))}
                 {!eligibleFacilities.length && (
@@ -975,6 +991,9 @@ export default function OperationsDesk({
                 : selected.facility_name}
             </h3>
             <p>{selected.purpose}</p>
+            {kind === "booking" && (
+              <BookingCharge id={selected.id} office={office} />
+            )}
             <p>
               {display(
                 "visitor" in selected

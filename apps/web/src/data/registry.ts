@@ -13,6 +13,13 @@ export function registryError(
 ) {
   if (!error) return;
   if (
+    readName === "bfe_my_account_balance" &&
+    ["PGRST202", "42883", "42P01"].includes(error.code ?? "")
+  )
+    throw new Error(
+      "Account balance services are not installed yet. Ask the owner to apply migration 069 after 068.",
+    );
+  if (
     readName === "bfe_my_hoa_balance" &&
     ["PGRST202", "42883", "42P01"].includes(error.code ?? "")
   )
