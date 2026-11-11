@@ -38,6 +38,8 @@ const featureCapabilities: Record<string, string> = {
   "access-proposals": "operations",
   "facility-rules": "operations",
   "election-candidates": "documents",
+  vehicles: "property",
+  permits: "property",
 };
 function tabForPath(
   path: string,
@@ -52,6 +54,8 @@ function tabForPath(
   const entries: [RegExp, string, string][] = [
     [/^\/account(\/|$)/, "finance", "own"],
     [/^\/more\/lots(\/|$)/, "property", "own"],
+    [/^\/more\/vehicles(\/|$)/, "property", "own"],
+    [/^\/more\/permits(\/|$)/, "property", "own"],
     [/^\/services\/(book|booking|bookings|calendar)(\/|$)/, "calendar", "own"],
     [/^\/services\/(visitor|visitors)(\/|$)/, "security", "own"],
     [/^\/services\/(request|requests|inbox)(\/|$)/, "requests", "own"],
@@ -63,6 +67,7 @@ function tabForPath(
       "approved",
     ],
     [/^\/community(\/|$)/, "community", "approved"],
+    [/^\/more\/hotlines(\/|$)/, "hotlines", "approved"],
     [/^\/security(\/|$)/, "security", "association"],
   ];
   const item = entries.find(([pattern]) => pattern.test(normalized));
@@ -88,7 +93,7 @@ export function usePermissions() {
       !auth.checking &&
       !auth.memberError &&
       auth.member.status === "Active",
-    gcTime: 0,
+    gcTime: 300_000,
     staleTime: 0,
     retry: false,
     refetchOnWindowFocus: true,
@@ -129,6 +134,9 @@ export function usePermissions() {
   };
   const readOnlyPath = (path: string) => {
     const tab = tabForPath(path);
+    // Approved-feed viewing does not decide own-scope creation. Those pages
+    // receive can_create/postable_modules from their authorized dashboard.
+    if (tab?.scope === "approved") return false;
     return (
       !!tab &&
       !!query.data?.tab_modes.some(

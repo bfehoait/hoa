@@ -802,3 +802,125 @@ The matrix gives Super admin only profile, support and hotlines, while
 present. Narrowing that would withdraw access from the account administering
 the system and is a question about who may read residents' records. Left for
 the association. See `docs/PERMISSION-MATRIX-CHECK.md`.
+
+## UI-36 — "Save tab permissions" looked broken; it was blocked (9 Nov 2026)
+
+The owner reported the save button on Roles & committee access not working.
+
+It was working as designed. `bfe_save_tab_access` refuses any change whose
+reason is not between 3 and 200 characters, and the button mirrors that with
+`disabled={!draft || note.trim().length < 3}`. With no reason typed, the button
+greys out.
+
+The defect is that it said nothing. The reason field sits well above the button
+and scrolls out of view on this screen, so what the owner saw was a greyed
+control beside an "Unsaved change" badge — which reads as broken, not blocked.
+A second control, the permission-management toggle, carried the same silent
+guard.
+
+- The reason field now states it is required and says why: the server records
+  it on the change, so it is what an audit shows later.
+- A line beside each disabled button explains the block: "Add a reason above to
+  save. Permission changes are not accepted without one." Linked to the input
+  with `aria-describedby`, so a screen reader reaches the same explanation.
+- `--amber` on the surface measures 6.50:1 light and 11.08:1 dark.
+
+No behaviour changed. The server rule was already right; only the silence was
+wrong.
+
+Verified: tsc, ESLint, Vitest 315/315, vite build 89 precache entries. Not
+visually confirmed — this screen renders only in authenticated mode.
+
+## UI-37 — Dead ends (9 November 2026)
+
+The owner: "a lot of dead end on this system". Measured, and correct.
+
+**28 `<Empty>` states; 2 had an action.** Twenty-six times a resident arrived
+somewhere, was told there was nothing, and was given no way forward. The
+component has supported an `action` prop the whole time.
+
+Fixed the resident-facing ones, now **7 of 28**:
+
+| Screen | Was | Now offers |
+| --- | --- | --- |
+| Every feature workflow (`LiveFeature`) | "No records in this view" | **New submission**, when the server says the viewer may create one |
+| Facility bookings / visitor passes | "No records yet" | **New booking** / **New visitor pass**, with copy saying what happens next |
+| Community calendar | "Nothing scheduled" | **Request a facility today**, which opens the booking form on today |
+| More hub search | "No matching feature" | **Show everything** — clears search and category |
+| Services search | "No matching service" | **Show all services** |
+
+Each action is gated on the same condition as the real control elsewhere on the
+page — `can_create`, `canCreate`, `onPickDay` — so an empty state never offers
+something the server would refuse. The `LiveFeature` handler calls
+`mutation.reset()` and `setRecordSaved(false)` exactly as the toolbar button
+does, rather than a simplified version that would leave stale state.
+
+Twenty-one remain, concentrated in preview-only screens (`Admin`,
+`CommunityModules`, `FeatureBaseline`, `Inbox`) where the dead end costs a
+demonstration rather than a resident.
+
+### The wider pattern
+
+This is the same defect as UI-36 and the facility booking button: **a control
+that is correctly unavailable, with nothing saying why.** Blocked and broken
+look identical. Three instances so far, all found by the owner rather than by
+tests — because nothing in the suite checks that a screen offers a way forward.
+
+Verified: tsc, ESLint, Vitest 315/315, vite build 89 precache entries.
+
+## UI-38 — Duplicate access tab, and plainer permission wording (9 Nov 2026)
+
+The owner: "we have a lot of redundant tabs", and asked why granting access is
+spread across People & accounts, Access & roles and Roles & committee access.
+
+**The redundancy is real and confirmed.** `DeveloperConsole.tsx:93`:
+
+```
+if (path === "access" || (path === "roles" && !auth.preview))
+  return <AccessPlanning />;
+```
+
+`/developer/roles` ("Access & roles") and `/developer/access` ("Roles &
+committee access") render **the same screen** for a signed-in account. Two nav
+entries, near-identical names, one destination. The roles entry is only its own
+thing — role previews — inside the preview build, so it is now hidden from the
+navigation when signed in.
+
+People & accounts already carries a "Manage account access" link to the same
+screen, so the route from a person to their permissions exists.
+
+### Wording
+
+- "Data scope" is now **"Which records"**, with a line saying a permission is
+  always about a kind of record and that most office work is association
+  records. Options read "Only their own household's records" and "Association
+  records — everyone's" instead of `own` and `association`.
+- The change reason now asks **"Why are you changing this?"** and explains that
+  it is kept with the change and is what answers the question next year.
+
+### Still a design problem, not fixed
+
+One screen holds **three different permission editors**, each writing somewhere
+different and speaking a different language:
+
+| Section | Writes to | Speaks in |
+| --- | --- | --- |
+| Tab access | `bfe_tab_rules` | No access / Read only / Read & edit |
+| Roles & account status | `members.role`, `extra_roles` | role names |
+| Committee permissions | `bfe_access_grants` | module × action × scope × effect |
+
+Someone whose task is "let Maintenance see complaints" has to already know
+which of the three that is. The audit field also appears twice under two names
+— "Why are you changing this?" and "Approval reference" — both required, same
+purpose.
+
+Fixing that means deciding the three or four tasks an operator actually comes
+here to do and building those, keeping the raw grid behind an advanced section.
+That is design work and is not attempted here.
+
+Verified: tsc, ESLint, Vitest 315/315, vite build clean.
+
+
+## 9 November - Manage access interaction redesign
+
+Local implementation, awaiting owner browser verification. Manage access opens one member side panel over the existing table; it no longer moves an inline editor above the page or mixes role defaults and committee reference into the lookup state. The panel separates loading, missing/duplicate account, migration setup, connection/access error, manual selection and editable-member states. Page-permission save/reason/feedback stay in its footer; drafts are guarded on close. Roles and committee grants remain Advanced. Existing account-link requirements and server authority are unchanged. Typecheck passed; no automated suites or deployment.

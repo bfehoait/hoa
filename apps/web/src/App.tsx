@@ -1,4 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import CustomerBack from "./components/CustomerBack";
+import CustomerSearch from "./components/CustomerSearch";
 import {
   NavLink,
   Navigate,
@@ -6,6 +8,8 @@ import {
   Routes,
   Link,
   useLocation,
+  useNavigate,
+  useNavigationType,
 } from "react-router-dom";
 import {
   ArrowUpRight,
@@ -29,7 +33,7 @@ import { PwaPrompt } from "./components/PwaPrompt";
 import { Home } from "./features/home/Home";
 import styles from "./App.module.css";
 import { useAuth } from "./data/auth";
-import DeveloperSearch from "./features/developer/DeveloperSearch";
+
 import { NotificationBell } from "./components/NotificationBell";
 import Notifications from "./features/more/Notifications";
 import { useOwnProfile } from "./data/accounts";
@@ -44,8 +48,6 @@ import {
 import { AuthGate, WorkspacePicker } from "./features/auth/AuthGate";
 import { previewScope } from "./data/preview-scope";
 import { RolePreview } from "./features/developer/RolePreview";
-import { monitorModules } from "../../../packages/shared/src/monitoring";
-import { monitorModuleIcons } from "./features/developer/monitor-icons";
 
 const LotRegister = lazy(() => import("./features/registry/LotRegister"));
 const Shuttle = lazy(() => import("./features/transport/Shuttle"));
@@ -54,6 +56,10 @@ const Account = lazy(() => import("./features/account/Account"));
 const Community = lazy(() => import("./features/community/Community"));
 const Services = lazy(() => import("./features/services/Services"));
 const More = lazy(() => import("./features/more/More"));
+const Hotlines = lazy(() => import("./features/more/Hotlines"));
+const CustomerSearchPage = lazy(
+  () => import("./features/more/CustomerSearchPage"),
+);
 const Admin = lazy(() => import("./features/admin/Admin"));
 const Office = lazy(() => import("./features/office/Office"));
 const RequestDesk = lazy(() => import("./features/services/RequestDesk"));
@@ -147,9 +153,10 @@ function PreviewShell() {
 }
 function AppShell() {
   const auth = useAuth();
+  const navigate = useNavigate();
   const ownProfile = useOwnProfile();
   const accountGroups = useAccountNavigation();
-  const moduleNavigation = useRef<HTMLDivElement>(null);
+
   const permissions = usePermissions();
   const [dark, setDark] = useState(() => {
     try {
@@ -176,7 +183,8 @@ function AppShell() {
     !auth.preview &&
     !auth.rolePreview &&
     !!auth.member &&
-    memberRoles(auth.member).includes("developer");
+    memberRoles(auth.member).includes("developer") &&
+    location.pathname.startsWith("/developer");
   const workspaceName = office
     ? "Office preview"
     : security
@@ -186,28 +194,16 @@ function AppShell() {
         : board
           ? "Board preview"
           : "Resident preview";
-  useEffect(() => {
-    const nav = moduleNavigation.current;
-    const active = nav?.querySelector<HTMLElement>(
-      'nav[aria-label="Developer module monitoring"] [aria-current="page"]',
-    );
-    if (!nav || !active || window.innerWidth < 1024) return;
-    const bounds = nav.getBoundingClientRect();
-    const item = active.getBoundingClientRect();
-    if (item.top < bounds.top) nav.scrollTop += item.top - bounds.top;
-    else if (item.bottom > bounds.bottom)
-      nav.scrollTop += item.bottom - bounds.bottom;
-  }, [developer, location.pathname]);
-  const routeArea = developer
-    ? "developer"
-    : office
-      ? "office"
-      : security
-        ? "security"
-        : driver
-          ? "driver"
-          : board
-            ? "board"
+  const routeArea = office
+    ? "office"
+    : security
+      ? "security"
+      : driver
+        ? "driver"
+        : board
+          ? "board"
+          : developer
+            ? "developer"
             : "resident";
   const areaId =
     routeArea === "resident" &&
@@ -223,6 +219,55 @@ function AppShell() {
         "resident")
       : routeArea;
   const currentArea = areaNavigation[areaId];
+  const workspaceOptions = accountGroups.map((group) => ({
+    id: group.id,
+    title: group.title,
+    to:
+      group.links.find(
+        (link) =>
+          link.to ===
+          (
+            {
+              developer: "/developer",
+              office: "/office",
+              board: "/board",
+              security: "/security",
+              driver: "/driver",
+              resident: "/",
+            } as Record<string, string>
+          )[group.id],
+      )?.to ?? group.links[0].to,
+  }));
+  const residentShell = areaId === "resident";
+  useEffect(() => {
+    if (
+      !residentShell ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    )
+      return;
+    const content = document.getElementById("content");
+    const transition = content?.animate(
+      [
+        { opacity: 0, transform: "translateY(6px)" },
+        { opacity: 1, transform: "translateY(0)" },
+      ],
+      { duration: 220, easing: "cubic-bezier(.2,.7,.3,1)" },
+    );
+    return () => transition?.cancel();
+  }, [location.pathname, residentShell]);
+  const navigationType = useNavigationType();
+  const scrollPositions = useRef(new Map<string, number>());
+  const customerDetail =
+    residentShell &&
+    ![
+      "/",
+      "/account",
+      "/account/lots",
+      "/account/payments",
+      "/directory/market",
+      "/services",
+      "/more",
+    ].includes(location.pathname);
   const allLinks = currentArea.links;
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? "dark" : "light";
@@ -243,10 +288,26 @@ function AppShell() {
     };
   }, []);
   useEffect(() => {
-    window.scrollTo(0, 0);
+    const path = location.pathname;
+    const savedPosition =
+      residentShell && navigationType === "POP"
+        ? (scrollPositions.current.get(path) ?? 0)
+        : 0;
+    const frame = requestAnimationFrame(() =>
+      window.scrollTo(0, savedPosition),
+    );
+    const remember = () => {
+      if (scrollPositions.current.size > 50) scrollPositions.current.clear();
+      scrollPositions.current.set(path, window.scrollY);
+    };
+    window.addEventListener("scroll", remember, { passive: true });
     document.title = `${location.pathname === "/" ? "Overview" : location.pathname.split("/")[1].replace(/^./, (c) => c.toUpperCase())} · Bellefort`;
     document.getElementById("content")?.focus({ preventScroll: true });
-  }, [location.pathname]);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", remember);
+    };
+  }, [location.pathname, navigationType, residentShell]);
   const links = auth.preview
     ? allLinks
     : allLinks
@@ -267,23 +328,51 @@ function AppShell() {
           ...links.filter((link) => link.to !== "/more").slice(0, 4),
           { to: "/more", label: "More", icon: MoreHorizontal },
         ];
-  const otherGroups = accountGroups.filter((group) => group.id !== areaId);
+
   const name = auth.preview
     ? (portal.data?.profile.name ?? "Demo resident")
     : (ownProfile.isError ? null : ownProfile.data?.display_name) ||
       auth.member?.name ||
       "Member";
   const sectionActive = (to: string) => {
+    if (residentShell && location.pathname.startsWith("/community"))
+      return to === "/";
+    const livelihoodPaths = [
+      "/directory/market",
+      "/more/marketplace",
+      "/explore/businesses",
+      "/explore/buy-sell",
+      "/explore/jobs",
+      "/explore/garage-sales",
+    ];
+    if (
+      residentShell &&
+      to === "/more" &&
+      livelihoodPaths.some(
+        (path) =>
+          location.pathname === path ||
+          location.pathname.startsWith(path + "/"),
+      )
+    )
+      return false;
     const aliases: Record<string, string[]> = {
-      "/more": ["/directory", "/explore", "/coverage", "/developer"],
+      "/more": [
+        "/directory",
+        "/explore",
+        "/coverage",
+        "/developer",
+        "/community",
+      ],
+      "/directory/market": livelihoodPaths.slice(1),
       "/office/residents": ["/office/registry", "/office/registrations"],
       "/office/operations": [
+        "/office/visitors",
         "/office/review",
-        "/office/requests",
-        "/office/inbox",
         "/office/permits",
         "/office/vehicles",
       ],
+      "/office/requests": ["/office/inbox"],
+      "/office/calendar": ["/office/bookings"],
       "/office/community": ["/office/announcements", "/office/documents"],
       "/security": ["/security/gate"],
       "/driver": ["/driver/dispatch"],
@@ -330,7 +419,11 @@ function AppShell() {
       </>
     );
   return (
-    <div className={`${styles.app} ${developer ? styles.developer : ""}`}>
+    <div
+      className={`${styles.app} ${developer ? styles.developer : ""} ${residentShell ? styles.residentShell : ""}`}
+      data-customer-ui={residentShell ? "true" : undefined}
+      data-staff-ui={!residentShell ? "true" : undefined}
+    >
       <PwaPrompt />
       <a className="skip-link" href="#content">
         Skip to content
@@ -352,7 +445,7 @@ function AppShell() {
             height="212"
           />
         </Link>
-        <div className={styles.navigationBody} ref={moduleNavigation}>
+        <div className={styles.navigationBody}>
           <div className={styles.property}>
             <Building2 size={20} />
             <span>
@@ -372,6 +465,27 @@ function AppShell() {
               </small>
             </span>
           </div>
+          {workspaceOptions.length > 1 && (
+            <label className={styles.workspaceSwitch}>
+              Workspace
+              <select
+                aria-label="Switch workspace"
+                value={areaId}
+                onChange={(event) => {
+                  const target = workspaceOptions.find(
+                    (item) => item.id === event.target.value,
+                  );
+                  if (target) navigate(target.to);
+                }}
+              >
+                {workspaceOptions.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <p className={`${styles.navLabel} eyebrow`}>
             {workspaceHeading(auth.member, location.pathname, developer, board)}
           </p>
@@ -391,50 +505,6 @@ function AppShell() {
               </Link>
             ))}
           </nav>
-          {developer && (
-            <>
-              <p className={`${styles.navLabel} eyebrow`}>SYSTEM MODULES</p>
-              <nav aria-label="Developer module monitoring">
-                {monitorModules.map((module) => {
-                  const Icon = monitorModuleIcons[module.id];
-                  const path = `/developer/modules/${module.id}`;
-                  return (
-                    <Link
-                      key={module.id}
-                      to={path}
-                      aria-current={
-                        location.pathname === path ? "page" : undefined
-                      }
-                      className={`${styles.navLink} ${location.pathname === path ? styles.selected : ""}`}
-                    >
-                      <Icon size={20} />
-                      <span>{module.title}</span>
-                    </Link>
-                  );
-                })}
-              </nav>
-            </>
-          )}
-          {otherGroups.map((group) => (
-            <section key={group.id}>
-              <p className={`${styles.navLabel} eyebrow`}>{group.title}</p>
-              <nav aria-label={`${group.title} navigation`}>
-                {group.links.map(({ to, label, icon: Icon }) => (
-                  <Link
-                    key={to}
-                    to={to}
-                    className={`${styles.navLink} ${activeWithin(to, group.links) ? styles.selected : ""}`}
-                    aria-current={
-                      activeWithin(to, group.links) ? "page" : undefined
-                    }
-                  >
-                    <Icon size={20} />
-                    <span>{label}</span>
-                  </Link>
-                ))}
-              </nav>
-            </section>
-          ))}
           {auth.preview && (
             <div className={styles.adminLink}>
               <NavLink
@@ -490,29 +560,75 @@ function AppShell() {
       </aside>
       <div className={styles.workspace}>
         <header className={styles.topbar}>
-          {developer && <DeveloperSearch />}
-          <div className={styles.breadcrumb}>
+          {!residentShell && workspaceOptions.length > 1 && (
+            <label className={styles.mobileWorkspaceSwitch}>
+              <span className="sr-only">Switch workspace</span>
+              <select
+                aria-label="Switch workspace on mobile"
+                value={areaId}
+                onChange={(event) => {
+                  const target = workspaceOptions.find(
+                    (item) => item.id === event.target.value,
+                  );
+                  if (target) navigate(target.to);
+                }}
+              >
+                {workspaceOptions.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {customerDetail && <CustomerBack />}
+          {residentShell && !customerDetail && (
             <Link
-              className={`icon-button ${styles.menuOpen}`}
-              to={auth.preview ? "/" : "/workspaces"}
-              aria-label="Bellefort overview"
+              to="/"
+              className={styles.residentBrand}
+              aria-label="Bellefort Estates home"
             >
-              <img src="/icon.svg" width="32" height="32" alt="" />
+              <img
+                className={styles.wordmarkLight}
+                src="/brand/bellefort-logo.png"
+                alt="Bellefort Estates"
+                width="479"
+                height="212"
+              />
+              <img
+                className={styles.wordmarkDark}
+                src="/brand/bellefort-logo-white.png"
+                alt="Bellefort Estates"
+                width="479"
+                height="212"
+              />
             </Link>
-            <span className={styles.desktopCrumb}>
-              Your community<span className={styles.slash}>/</span>
-            </span>
-            <span>
-              {location.pathname === "/more/notifications"
-                ? "Notifications"
-                : location.pathname === "/more/profile"
-                  ? "My profile"
-                  : location.pathname.startsWith("/admin")
-                    ? "Office & reports"
-                    : (links.find((l) => l.to !== "/" && sectionActive(l.to))
-                        ?.label ?? "Bellefort")}
-            </span>
-          </div>
+          )}
+          {!residentShell && (
+            <div className={styles.breadcrumb}>
+              <Link
+                className={`icon-button ${styles.menuOpen}`}
+                to={auth.preview ? "/" : "/workspaces"}
+                aria-label="Bellefort overview"
+              >
+                <img src="/icon.svg" width="32" height="32" alt="" />
+              </Link>
+              <span className={styles.desktopCrumb}>
+                Your community<span className={styles.slash}>/</span>
+              </span>
+              <span>
+                {location.pathname === "/more/notifications"
+                  ? "Notifications"
+                  : location.pathname === "/more/profile"
+                    ? "My profile"
+                    : location.pathname.startsWith("/admin")
+                      ? "Office & reports"
+                      : (links.find((l) => l.to !== "/" && sectionActive(l.to))
+                          ?.label ?? "Bellefort")}
+              </span>
+            </div>
+          )}
+          {residentShell && <CustomerSearch />}
           <div className={styles.topActions}>
             {developer && (
               <Link to="/more/profile" className={styles.developerProfile}>
@@ -529,45 +645,50 @@ function AppShell() {
                 </span>
               </Link>
             )}
-            <button
-              className="icon-button"
-              onClick={() => setDark(!dark)}
-              aria-label={dark ? "Use light theme" : "Use dark theme"}
-            >
-              {dark ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
+            {!residentShell && (
+              <button
+                className="icon-button"
+                onClick={() => setDark(!dark)}
+                aria-label={dark ? "Use light theme" : "Use dark theme"}
+              >
+                {dark ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+            )}
             <NotificationBell />
           </div>
         </header>
-        <div
-          className={styles.previewBar}
-          role="region"
-          aria-label="Data status"
-        >
-          <ShieldCheck size={16} />
-          <span>
-            {auth.preview || auth.rolePreview
-              ? "Local preview · Sample data — not an HOA confirmation"
-              : developer
-                ? "Signed in · Developer workspace"
-                : "Signed in · Account services"}
-          </span>
-          <Link to={auth.preview ? "/more/settings" : "/workspaces"}>
-            {auth.preview ? "Data & settings" : "My account"}
-            <ArrowUpRight size={16} />
-          </Link>
-        </div>
+        {(!residentShell || auth.preview || auth.rolePreview) && (
+          <div
+            className={styles.previewBar}
+            role="region"
+            aria-label="Data status"
+          >
+            <ShieldCheck size={16} />
+            <span>
+              {auth.preview || auth.rolePreview
+                ? "Local preview · Sample data — not an HOA confirmation"
+                : developer
+                  ? "Signed in · Developer workspace"
+                  : "Signed in · Account services"}
+            </span>
+            <Link to={auth.preview ? "/more/settings" : "/workspaces"}>
+              {auth.preview ? "Data & settings" : "My account"}
+              <ArrowUpRight size={16} />
+            </Link>
+          </div>
+        )}
         {!online && (
           <div className="offline-banner" role="status">
-            You’re offline. Database records may be out of date. Reconnect
-            before relying on an account status or submitting an action.
+            You’re offline. Information may be out of date. Reconnect before
+            checking a status or sending a request.
           </div>
         )}
         <main id="content" tabIndex={-1} className={styles.main}>
           {permissions.readOnlyPath(location.pathname) && (
             <div className="offline-banner" role="note">
-              View only. You can browse this module; changes require edit
-              permission.
+              {residentShell
+                ? "Browsing only. Contact the office if you need help making a change."
+                : "View only. You can browse this module; changes require edit permission."}
             </div>
           )}
           <Suspense fallback={<Skeleton />}>
@@ -603,6 +724,8 @@ function AppShell() {
                     )
                   }
                 />
+                <Route path="/more/hotlines" element={<Hotlines />} />
+                <Route path="/search" element={<CustomerSearchPage />} />
                 <Route
                   path="/board"
                   element={

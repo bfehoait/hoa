@@ -16,8 +16,25 @@ import {
   Skeleton,
 } from "../../components/UI";
 import styles from "./MemberAccountPicker.module.css";
+import { usePermissions } from "../../data/permissions";
+import { hasCapability } from "../../../../../packages/shared/src/permissions";
+import WorkbookAccountLinks from "../registry/WorkbookAccountLinks";
 export default function MemberAccountPicker() {
   const auth = useAuth();
+  const permissions = usePermissions();
+  const [linkAccounts, setLinkAccounts] = useState(false);
+  const canLink =
+    !auth.memberPreview &&
+    [
+      { module: "people", action: "view", scope: "association" },
+      { module: "property", action: "view", scope: "association" },
+      { module: "property", action: "manage", scope: "association" },
+    ].every((requirement) =>
+      hasCapability(
+        permissions.data,
+        requirement as Parameters<typeof hasCapability>[1],
+      ),
+    );
   const [search, setSearch] = useState(""),
     [page, setPage] = useState(0);
   const members = useAccessMembers(search, page);
@@ -81,6 +98,11 @@ export default function MemberAccountPicker() {
                   <p className={styles.result} role="status">
                     {members.data.total} members found
                   </p>
+                  {canLink && members.data.rows.length > 0 && (
+                    <Button secondary onClick={() => setLinkAccounts(true)}>
+                      Match this page to workbook lots
+                    </Button>
+                  )}
                   {!members.data.rows.length && (
                     <p className={styles.empty}>
                       No matching members. Try another name or unit.
@@ -136,6 +158,12 @@ export default function MemberAccountPicker() {
             )
           )}
         </>
+      )}
+      {linkAccounts && members.data && (
+        <WorkbookAccountLinks
+          targets={members.data.rows.map((member) => member.user_id)}
+          onClose={() => setLinkAccounts(false)}
+        />
       )}
     </>
   );

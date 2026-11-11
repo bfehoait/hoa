@@ -16,7 +16,15 @@ import {
   memberWorkspaces,
 } from "../../../../../packages/shared/src/auth";
 import { useAuth } from "../../data/auth";
-import { Badge, Button, ButtonLink, Feedback, Field, Modal, PageIntro } from "../../components/UI";
+import {
+  Badge,
+  Button,
+  ButtonLink,
+  Feedback,
+  Field,
+  Modal,
+  PageIntro,
+} from "../../components/UI";
 import { useOwnProfile, useAccountActions } from "../../data/accounts";
 import { useInstall } from "../../data/install";
 import {
@@ -24,6 +32,7 @@ import {
   type ProfilePreferences,
 } from "../../../../../packages/shared/src/accounts";
 import styles from "./More.module.css";
+import PrivateHealthNote from "./PrivateHealthNote";
 
 export default function MemberProfile() {
   const auth = useAuth();
@@ -88,6 +97,7 @@ export default function MemberProfile() {
         </div>
       </section>
       <Feedback message={notice} />
+      <PrivateHealthNote />
       {!auth.rolePreview && preferences.isError && (
         <Feedback error={preferences.error} />
       )}
@@ -154,9 +164,9 @@ export default function MemberProfile() {
                 <RefreshCw size={20} />
                 Refresh profile
               </Button>
-              <ButtonLink to="/recover">
+              <ButtonLink to="/reset-password">
                 <KeyRound size={20} />
-                Reset password
+                Change password
               </ButtonLink>
               <ButtonLink tone="danger" to="/sign-out">
                 <LogOut size={20} />
@@ -231,6 +241,8 @@ function ProfileEditor({
     <Modal
       busy={actions.saveProfile.isPending}
       title="Edit your profile"
+      presentation="task"
+      protectChanges
       description="Your login identity and assigned access stay separate."
       onClose={onClose}
     >

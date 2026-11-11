@@ -17,6 +17,8 @@ const reads = new Set([
   "bfe_my_access",
   "bfe_my_notifications",
   "bfe_list_lots",
+  "bfe_my_linked_properties",
+  "bfe_my_hoa_balance",
   "bfe_lot_detail",
   "bfe_lot_receipts",
   "bfe_staff_directory",

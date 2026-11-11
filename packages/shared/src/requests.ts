@@ -28,7 +28,71 @@ export const helpdeskCategories = [
     label: "Idea",
     detail: "Suggest an improvement to community systems or services.",
   },
+  {
+    value: "Document",
+    label: "Document request",
+    detail: "Ask for a document or its requirements.",
+  },
+  {
+    value: "Support",
+    label: "Support",
+    detail: "Get help with an account or community service.",
+  },
 ] as const;
+export const requestBusinessFields = [
+  {
+    key: "topic",
+    label: "Topic or issue type",
+    categories: [
+      "Maintenance",
+      "Concern",
+      "Complaint",
+      "Idea",
+      "Document",
+      "Support",
+    ],
+  },
+  {
+    key: "location",
+    label: "Location",
+    categories: ["Maintenance", "Concern", "Complaint", "Idea"],
+  },
+  {
+    key: "party",
+    label: "Person or household involved",
+    categories: ["Complaint"],
+  },
+  {
+    key: "service",
+    label: "Related service or document",
+    categories: ["Support", "Document"],
+  },
+  {
+    key: "evidence_reference",
+    label: "Supporting evidence reference",
+    categories: ["Maintenance", "Concern", "Complaint", "Document", "Support"],
+  },
+] as const;
+export const requestBusinessDetailsSchema = z
+  .object({
+    topic: z.string().trim().max(120).default(""),
+    location: z.string().trim().max(200).default(""),
+    party: z.string().trim().max(200).default(""),
+    service: z.string().trim().max(120).default(""),
+    evidence_reference: z.string().trim().max(500).default(""),
+  })
+  .strict();
+export const requestHandlingSchema = z.object({
+  details: requestBusinessDetailsSchema,
+  priority: z.enum(["Untriaged", "Low", "Normal", "High", "Urgent"]),
+  assignee_id: z.uuid().nullable(),
+  assignee_name: z.string().nullable(),
+  resolution: z.string(),
+  version: z.number().int(),
+  can_handle: z.boolean(),
+  can_assign: z.boolean(),
+  handlers: z.array(z.object({ id: z.uuid(), name: z.string() })),
+});
 export const requestCategoryLabel = (value: string) =>
   helpdeskCategories.find((c) => c.value === value)?.label ?? value;
 export const requestStatuses = ["Open", "In progress", "Resolved"] as const;
@@ -40,6 +104,7 @@ export const liveRequestInput = z.object({
     .min(10, "Add a little more detail (at least 10 characters).")
     .max(5000),
   category: z.enum(requestCategories),
+  business_details: requestBusinessDetailsSchema.optional(),
 });
 export const liveRequestSchema = liveRequestInput.extend({
   id: z.uuid(),

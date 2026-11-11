@@ -1,0 +1,78 @@
+/* Desktop workspace grammar. No rules here apply below 1024 CSS pixels. */
+@media (min-width: 1024px) {
+  [data-staff-ui="true"],
+  [data-staff-ui="true"] dialog {
+    --card-padding: 24px;
+    --page-heading-size: 30px;
+    --section-heading-size: 20px;
+  }
+  [data-staff-ui="true"] main > .page-intro,
+  [data-staff-ui="true"] main > div > .page-intro {
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 24px;
+  }
+  [data-staff-ui="true"] .page-intro {
+    align-items: center;
+    gap: 20px;
+  }
+  [data-staff-ui="true"] .page-intro h1 {
+    font-size: 30px;
+    line-height: 1.2;
+  }
+  [data-staff-ui="true"] .page-description {
+    margin-top: 6px;
+    max-width: 76ch;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  [data-staff-ui="true"] .page-title-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+  [data-staff-ui="true"] .page-title-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+  [data-staff-ui="true"] .page-intro .eyebrow {
+    margin-bottom: 6px;
+    font-size: 14px;
+  }
+  [data-staff-ui="true"] .section-title {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  [data-staff-ui="true"] .detail-list {
+    max-width: 100%;
+  }
+  [data-staff-ui="true"] .detail-list > div {
+    min-width: 0;
+  }
+  [data-staff-ui="true"] .table-wrap {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface);
+  }
+  [data-staff-ui="true"] table {
+    font-size: 14px;
+  }
+  [data-staff-ui="true"] th {
+    background: var(--wash);
+    font-size: 14px;
+    font-weight: 650;
+  }
+  [data-staff-ui="true"] td,
+  [data-staff-ui="true"] th {
+    padding: 14px 16px;
+    vertical-align: middle;
+  }
+  [data-staff-ui="true"] tbody tr:hover {
+    background: var(--wash);
+  }
+  [data-staff-ui="true"] input,
+  [data-staff-ui="true"] select,
+  [data-staff-ui="true"] textarea {
+    scroll-margin-block: 88px;
+  }
+}

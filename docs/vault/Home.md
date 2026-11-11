@@ -80,3 +80,86 @@ Migration 012 adds audited read-only member support inspection at /developer/mem
 The user clarified that View as means the account's actual portal interface, not an inspection dashboard. /developer/members now provides a one-click Preview account picker, with no support-reason modal. It opens the normal portal components, navigation, roles and connected read functions for the selected member under an opaque session-prefixed router. The old MemberInspection UI component was removed. A persistent read-only account banner and Exit button remain visible, including when an inner module permission is denied.
 
 Migration 013 prepares an explicitly allowlisted STABLE-read gateway. The original developer JWT/login remains unchanged. Transaction-local database member context is delegated only for a permitted read and restored on success/errors; audit records retain the original developer actor. Both the browser proxy and server gateway refuse mutations. Request table reads are adapted through protected request/thread functions; driver heartbeats and auth/password actions are suppressed. Payments/contact links and form submissions are blocked. Normal non-preview clients are unchanged. No member is notified. See docs/ACCOUNT-PREVIEW.md for new installation and the viewport/sample-page limitations. 012 is already owner-installed and must not be rerun.
+
+## 10 November 2026: staff desktop refresh
+
+Added a staff-only desktop layout pass at 1024px and above: consistent shell, panels, filters, lists and maintenance cards. Customer and homeowner/renter visuals are excluded. People filters/pagination use browser history; Office booking actions refresh related booking summaries. Typecheck/build passed; isolated synthetic Chromium checks covered 22 staff routes at three widths plus focused People history/detail checks. See docs/STAFF-DESKTOP-REFRESH.md for evidence and remaining live workflow verification.
+
+## 10 November 2026: Office review inbox wiring
+
+Added an authorized Office review inbox over existing submission stores, with pending-only feature, booking, pass and activity projections, paginated lot-link discovery and capability-specific review routes. Helpdesk and shuttle remain follow-up/dispatch workflows. Fixed permit route capability to Property and preserved direct staff announcement publishing. Migration 038 is prepared for owner installation; no live database accessed or approvals performed. Eight isolated aggregation/route tests passed and eight synthetic Office browser routes checked. Customer layout and normal submission flows are unchanged. See docs/OFFICE-REVIEW-INBOX.md for installation and live verification.
+
+## 10 November 2026: Office facility calendar
+
+Added a staff-only month calendar at /office/calendar with all-facility/status filters, reservation details and daily pagination. Prepared migration 039 for association-authorized reads using Philippine time; no PDF reservations imported or live data changed. Resident views unchanged. Four isolated SQL tests and two synthetic desktop viewport checks passed. See docs/OFFICE-FACILITY-CALENDAR.md for setup and remaining owner verification.
+
+## 10 November 2026: calendar navigation
+
+Added Facilities & calendar directly to the Office sidebar, permission-filtered through the existing calendar association-view requirement. Calendar and booking-list routes highlight this entry rather than Operations. Customer navigation unchanged.
+
+## 10 November 2026: Office QA follow-up
+
+Verified Claude's assessment before changing UI. Overview now emphasizes queues; secondary tools are collapsed and deduplicated. Simplified People/Finance navigation, corrected Helpdesk breadcrumbs and Office access labels, reduced the calendar empty state and compacted staff receipt rows. Confirmed existing receipt pagination and full-row inbox links rather than replacing them. Customer layout and server approval/permission logic unchanged. Typecheck/build and 12 synthetic staff render checks plus two dark renders passed. See docs/OFFICE-QA-FOLLOWUP.md for dispositions and live-verification limits. No SQL required for this pass.
+
+## 10 November 2026: Overview workload visuals
+
+Added current-workload summary tiles, a stacked queue comparison chart and separate follow-up links to Office Overview. Uses existing authorized inbox data only; no historical trend or invented completion rate. Full review inbox/customer layouts unchanged. TypeScript and populated/empty/denied synthetic desktop checks passed, plus a dark render. See docs/OFFICE-OVERVIEW-VISUALS.md. No SQL needed.
+
+## 10 November 2026: Office design QA second pass
+
+Added a proper staff receipt table and month drill-down, moved Office receipt/lot pagination above records, grouped Operations by area, compacted staff announcement rows and hid absent chart legend states. Prepared read-only migration 040 for full-set primary/extra-role filtering; All roles retains the old lookup RPC. Customer UI and protected decision/export functions unchanged. Typecheck/build, four isolated role-filter tests and 18 synthetic light renders plus three dark renders passed. See docs/OFFICE-DESIGN-QA-PASS-2.md for installation and limits.
+
+## 10 November 2026: submission outcome assessment
+
+Assessment only: mapped customer submissions to publication, private approval, account links and service fulfillment. Confirmed generic Reviewed is displayed as Approved despite updating only the request record; Reviewed listings cannot currently transition to Published. Also found vehicle route Security vs migration 018 Property capability mismatch, action-specific publishing-button gaps and customer calendar first-page/refresh limitations. No code or database changes made. See docs/SUBMISSION-APPROVAL-ASSESSMENT.md before follow-up wiring; queue visibility alone does not prove fulfillment.
+
+
+## 10 November 2026: Livelihood and submission outcomes
+
+Prepared migrations 041-044 and local UI: all six categories in Livelihood; explicit approve/publish including legacy Reviewed recovery; private issuance with references/dates; verified household relationships via the established independent account-lot service; complete own-month calendar reads. Issuance and household follow-up queues stay visible until fulfilled. Direct staff announcements and existing booking/pass/capacity safeguards remain. No live SQL or deployment. See docs/SUBMISSION-OUTCOMES-SETUP.md for installation, verification and accounting/ownership boundaries.
+
+
+## 10 November 2026: resident Property request defaults
+
+Customer vehicle and permit access errors reproduced from the default policy: 018 uses Property, but 023 omits resident own Property view/create. Prepared 045 to add only that baseline, retaining tab restrictions and explicit denials; customized base policies fail closed. Five isolated permission-stack checks passed. Owner applies 045 after 044 and refreshes; no live change was made. See docs/SUBMISSION-OUTCOMES-SETUP.md.
+
+
+## 10 November 2026: reviewed installed policy variant for 045
+
+The owner supplied the installed base function after the original guard rejected it. Updated 045 to recognize that exact variant and patch only its calendar own view/create clause to include Property, preserving other clauses and metadata. Repeated installation is a no-op; unknown policies remain rejected. Six isolated checks cover the supplied policy, permissions, denials, isolation and exact definition preservation. Owner must copy and run the updated complete 045; no live change was made.
+
+
+## 10 November 2026: Office record-management assessment
+
+Assessment only: People member details lacks direct individual property linking and general staff corrections; profile preferences and directory member fields are separate stores. Mapped property relationships, issuance correction gaps, booking/pass amendments, listing/publication revisions, access and accounting boundaries. Recommend one member workspace with contextual actions, before/after review, reasons, history and affected-view refresh. Owner reported 045 installed successfully. No application or live database changes; see docs/OFFICE-RECORD-MANAGEMENT-ASSESSMENT.md.
+
+
+## 10 November 2026: Office member management implementation
+
+Prepared 046 for recorded-detail corrections, before/after confirmation, direct Office property linking through 037, current relationships and scoped history. Linking is bound to the selected member snapshot and independently reviewed; login email, roles/status, profile preferences, registered ownership and receipt access remain separate. Prepared 047 after an actual-constraint test caught invalid notification destinations in earlier 042/044. Seven member-service and four household/notification checks pass. Owner installs 046 then 047; no live records changed. See docs/OFFICE-MEMBER-MANAGEMENT-SETUP.md.
+
+
+## 10 November 2026: inline member correction and property lookup guidance
+
+Simplified Office member Edit details to direct Save changes/Cancel in the existing window; removed the separate review screen while preserving reason, audit and stale-snapshot protection. Clarified that property checking searches active imported lots and does not create records. Added a scoped Lot register link and owner-run counts-only diagnostic script for missing/withdrawn/mismatched candidates. No backend migration or live change for this UI adjustment.
+
+### 11 November 2026: business form restoration through 059
+The previous production forms are treated as real business requirements. Local implementation restores category-specific Helpdesk answers and Office assignment/priority/resolution, named household occupants, association/contact management, reviewed property attributes, structured booth vendor applications, additive listing/report/candidate questions, and candidate photos. Finance gains draft -> independent review -> post/reverse forms for rates, invoice-generating billing runs, explicit payment allocations, expense categories, expenses and monthly reported totals. New invoices are not yet connected to resident balances; no rates, payments, accounts or entitlements are seeded on install.
+
+Connected carpool forms now sit alongside a separately labelled map demo. Shuttle adds private pickup notes and assigned-driver arrival estimates without extending its immediate-service deadline. Office can record Pending bookings for selected eligible residents without impersonating them. Garage sales have individual item publication/rejection/withdrawal; changing a public item sends it back to review. New accounting and item queues appear in the existing Office review inbox.
+
+Prepared SQL: 048 through 059, in numeric order after 047. Owner instructions and browser checks: docs/BUSINESS-FORM-RESTORATION-SETUP.md. Current business coverage and remaining gaps: docs/LEGACY-FORM-COVERAGE-ASSESSMENT.md. This is a substantial restoration, not a claim of full business parity: bulk import management, some identity/delivery preferences, security hold/scheduling policy, association-rule maintenance, resident ledger integration and certified elections/disclosures remain explicitly tracked.
+
+Checks: TypeScript/production build passed. Targeted ESLint passed for new restoration components/shared files and the metadata inventory script. An isolated synthetic in-memory SQL check compiled 048-059 and exercised selected actual service calls, protected refusal cases, public item privacy and the combined business inbox. Build retains dependency annotation and large-chunk warnings. No automated test suite, end-to-end browser run, axe sweep, live database connection, SQL application or deployment occurred. Owner mobile/desktop/Storage/real-role verification remains required.
+### 11 November 2026: approved links, dev-module crash and customer address display
+Owner confirmed the property link was saved as an approved household relationship. The supplied Console error identified a missing default export from PropertyBusinessDetails. Its disk source had the export, but a direct local Vite HTTP check returned an empty JavaScript module. The watch configuration now waits for file-write stability; the server restarted its transform cache and subsequent checks served expected exports for all four affected property/account modules. Office property attributes are now lazy-loaded only on Office screens. The error fallback no longer claims every session is a preview or that a preceding save made no change.
+
+Customer Home and My account now prefer current approved linked-property addresses instead of reading only recorded member.unit text. Prepared migration 060 adds the caller-only read and the narrowly extended authorized preview read. It does not rewrite recorded addresses, create memberships, grant ownership/receipts or calculate balances. Multiple relationships to the same lot are grouped; staff customer summaries do not show association-wide lots. Hard-refresh both tabs after the owner applies 060; do not recreate the already saved link.
+
+TypeScript/production build and targeted lint passed; existing build warnings remain. Isolated synthetic SQL checks passed for caller scope, revoked links, preview target and caller identity restoration. Local module HTTP checks passed; no browser automation, automated test suite, live database connection or deployment occurred. Setup and owner checks: docs/ACCOUNT-LINK-DISPLAY-RECOVERY.md.
+### 11 November 2026: owner-approved household receipt policy and complaint form fix
+Owner explicitly selected automatic visibility of all existing and future receipts for each current approved household link. Prepared migration 061 adds household-linked Finance view/own eligibility and extends the receipt predicate and optimized 036 history query. Active imports, active account, started/unexpired approved household membership, property visibility, configured access and explicit denials remain binding. Owner entitlements, approvals, exports and balance calculations remain separate. Overlapping owner entitlement/household access does not duplicate rows or totals. New history access is read dynamically; no receipts or memberships are seeded or modified on installation.
+
+Customer Properties now labels the action Link another property when an approved own link exists. The complaint-screen crash was independently identified in the shared Field helper: a child array containing input/help text was cast to one element and child.props.id dereferenced. Field now locates the control safely, generates an ID where needed and associates labels/error descriptions while retaining helper children.
+
+Checks: migration 061 compiled in isolated synthetic SQL; selected checks passed for past/new receipt visibility, unrelated lots, single-receipt/history agreement, export refusal, revoked/expired/future links, explicit Finance denial and duplicate-free overlapping paths. The actual Field function rendered locally with input/helper/error and generated-ID cases. No automated test suites, E2E browser runs or live database changes occurred. See docs/HOUSEHOLD-RECEIPT-ACCESS.md for rollout and owner verification. Owner must run 061 after installed 060, then refresh and verify live outcomes.

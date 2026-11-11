@@ -15,6 +15,9 @@ export default defineConfig({
   },
   server: {
     watch: {
+      // Wait for editor writes to finish before caching transformed modules.
+      // A truncate-then-write save can otherwise leave a cached empty module.
+      awaitWriteFinish: { stabilityThreshold: 200, pollInterval: 50 },
       ignored: [
         "**/playwright-report/**",
         "**/test-results/**",

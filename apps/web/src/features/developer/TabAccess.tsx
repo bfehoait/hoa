@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { Check, LockKeyhole, Eye, Pencil, Users } from "lucide-react";
+import { LockKeyhole, Eye, Pencil, Users } from "lucide-react";
 import { useAuth } from "../../data/auth";
 import type { AccessMember } from "../../data/access-control";
 import { featureRpc } from "../../data/feature-records";
@@ -13,6 +14,13 @@ import { roles, memberRoles } from "../../../../../packages/shared/src/auth";
 import { Button, Feedback, Skeleton } from "../../components/UI";
 import { committees } from "./AccessManager";
 import styles from "./TabAccess.module.css";
+
+export const recordScopeLabels: Record<string, string> = {
+  own: "Their own household records",
+  approved: "Published community information",
+  assigned: "Records assigned to them",
+  association: "Association records across members",
+};
 
 const settingsSchema = z.object({
   rules: z.record(z.string(), z.enum(["hidden", "view", "edit"])),
@@ -61,7 +69,7 @@ const moduleNames: Record<string, string> = {
   security: "Visitors & gate access",
   community: "Community updates",
   hotlines: "Emergency contacts",
-  livelihood: "Marketplace",
+  livelihood: "Livelihood",
   transport: "Shuttle service",
   documents: "Documents",
   elections: "Election information",
@@ -72,14 +80,20 @@ const moduleNames: Record<string, string> = {
 export default function TabAccess({
   member,
   onDirtyChange,
+  onPendingChange,
+  footerTarget,
+  recordScope,
 }: {
   member?: AccessMember;
   onDirtyChange?: (dirty: boolean) => void;
+  onPendingChange?: (pending: boolean) => void;
+  footerTarget?: HTMLElement | null;
+  recordScope?: string;
 }) {
   const auth = useAuth();
   const [kind, setKind] = useState("role");
   const [subject, setSubject] = useState("");
-  const [scope, setScope] = useState(
+  const [localScope, setScope] = useState(
     member &&
       [member.role, ...(member.extra_roles ?? [])].some(
         (r) => r === "homeowner" || r === "renter",
@@ -87,6 +101,7 @@ export default function TabAccess({
       ? "own"
       : "association",
   );
+  const scope = recordScope ?? localScope;
   const [dirty, setDirty] = useState(false);
   const reportDirty = useCallback(
     (value: boolean) => {
@@ -106,16 +121,18 @@ export default function TabAccess({
       className={member ? styles.memberPanel : styles.panel}
       aria-label="Tab access settings"
     >
-      <div className={styles.sectionHeading}>
-        <div>
-          <h3>{member ? "Tab access" : "Role & committee defaults"}</h3>
-          <p>
-            {member
-              ? "Choose one access level. Turning its toggle off restores defaults. Changes take effect after saving."
-              : "Choose one default access level. Individual member rules can override it; switching the toggle off restores inherited permissions."}
-          </p>
+      {!member && (
+        <div className={styles.sectionHeading}>
+          <div>
+            <h3>Role & committee defaults</h3>
+            <p>
+              Choose one default access level. Individual member rules can
+              override it; switching the toggle off restores inherited
+              permissions.
+            </p>
+          </div>
         </div>
-      </div>
+      )}
       <div className={styles.filters}>
         {!member && (
           <>
@@ -152,28 +169,41 @@ export default function TabAccess({
             </label>
           </>
         )}
-        <label>
-          Data scope
-          <select
-            aria-label="Data scope"
-            disabled={dirty}
-            value={scope}
-            onChange={(e) => setScope(e.target.value)}
-          >
-            {accessScopes.map((s) => (
-              <option key={s} value={s}>
-                {
+        {member && recordScope ? (
+          <div>
+            <p className={styles.note}>
+              Showing access for: {recordScopeLabels[scope]}
+            </p>
+          </div>
+        ) : (
+          <label>
+            Which records
+            <span className={styles.reasonHint}>
+              A permission is always about a kind of record. Pick which kind,
+              then set each page below. Most office work is “association
+              records”.
+            </span>
+            <select
+              aria-label="Which records"
+              disabled={dirty}
+              value={scope}
+              onChange={(e) => setScope(e.target.value)}
+            >
+              {accessScopes.map((s) => (
+                <option key={s} value={s}>
                   {
-                    own: "Their own records",
-                    approved: "Published member information",
-                    assigned: "Assigned work",
-                    association: "Association / office records",
-                  }[s]
-                }
-              </option>
-            ))}
-          </select>
-        </label>
+                    {
+                      own: "Only their own household's records",
+                      approved: "Published information everyone may read",
+                      assigned: "Work assigned to them",
+                      association: "Association records — everyone's",
+                    }[s]
+                  }
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
       {(member || subject) && (
         <Editor
@@ -186,6 +216,8 @@ export default function TabAccess({
           subject={member?.user_id ?? subject}
           scope={scope}
           onDirtyChange={reportDirty}
+          onPendingChange={onPendingChange}
+          footerTarget={footerTarget}
           isAdmin={
             !!member &&
             [member.role, ...(member.extra_roles ?? [])].includes("admin")
@@ -206,12 +238,16 @@ function Editor({
   scope,
   isAdmin,
   onDirtyChange,
+  onPendingChange,
+  footerTarget,
 }: {
   kind: string;
   subject: string;
   scope: string;
   isAdmin: boolean;
   onDirtyChange: (dirty: boolean) => void;
+  onPendingChange?: (pending: boolean) => void;
+  footerTarget?: HTMLElement | null;
 }) {
   const auth = useAuth(),
     cache = useQueryClient();
@@ -220,6 +256,10 @@ function Editor({
     [moduleSearch, setModuleSearch] = useState(""),
     [note, setNote] = useState(""),
     [message, setMessage] = useState("");
+  // The server refuses a permission change without a reason of three to 200
+  // characters (bfe_save_tab_access). Both buttons were disabled silently, so
+  // a greyed-out Save read as broken rather than blocked.
+  const noteBlocked = note.trim().length < 3;
   useEffect(() => {
     onDirtyChange(draft !== null);
   }, [draft, onDirtyChange]);
@@ -264,6 +304,9 @@ function Editor({
       await cache.invalidateQueries({ queryKey: ["permissions"] });
     },
   });
+  useEffect(() => {
+    onPendingChange?.(mutation.isPending);
+  }, [mutation.isPending, onPendingChange]);
   if (query.isPending) return <Skeleton />;
   if (query.isError) return <Feedback error={query.error} />;
   const data = query.data,
@@ -275,6 +318,49 @@ function Editor({
         .toLowerCase()
         .includes(moduleSearch.toLowerCase()),
     );
+  const reasonField = (
+    <label className={styles.reason}>
+      Reason for this change
+      <input
+        value={note}
+        maxLength={200}
+        required
+        disabled={mutation.isPending}
+        onChange={(event) => setNote(event.target.value)}
+        placeholder="For example: assigned to booking requests"
+      />
+      {draft && note.trim().length < 3 && (
+        <small>Enter at least 3 characters to save.</small>
+      )}
+    </label>
+  );
+  const saveControls = (
+    <div className={footerTarget ? styles.footerTools : styles.actions}>
+      {footerTarget && draft && reasonField}
+      {footerTarget && <Feedback error={mutation.error} message={message} />}
+      <div className={styles.footerButtons}>
+        <Button
+          disabled={!draft || note.trim().length < 3}
+          pending={mutation.isPending}
+          onClick={() => mutation.mutate(null)}
+        >
+          {footerTarget ? "Save changes" : "Save tab permissions"}
+        </Button>
+        {draft && (
+          <Button
+            secondary
+            disabled={mutation.isPending}
+            onClick={() => {
+              setDraft(null);
+              setBaseline(null);
+            }}
+          >
+            Discard changes
+          </Button>
+        )}
+      </div>
+    </div>
+  );
   return (
     <>
       <label className={styles.tabSearch}>
@@ -287,16 +373,26 @@ function Editor({
         />
       </label>
       <div className={styles.explanation}>
-        <strong>
-          {kind === "user"
-            ? "Current permissions are separate from your changes"
-            : "You are editing a group default"}
-        </strong>
         <p>
           {kind === "user"
-            ? "Current permissions come from the server for the selected data scope. Choosing a rule does not change them until you save."
-            : "Members may have individual rules or committee permissions. Open a member to see their current access."}
+            ? "Switches show saved access. Changes apply after saving."
+            : "Individual member rules can override these group defaults."}
         </p>
+        <details className={styles.legend}>
+          <summary>How access levels work</summary>
+          <ul>
+            {ruleChoices.map(({ value, label, hint }) => (
+              <li key={value}>
+                <strong>{label}:</strong> {hint}.
+              </li>
+            ))}
+          </ul>
+          <p>
+            Defaults follow role and committee permissions. Approval,
+            publication and export are granted separately. Limited access is
+            labelled with the actions allowed.
+          </p>
+        </details>
         {kind === "user" && !data.effective && (
           <p className={styles.unavailable}>
             Current permissions are not reported by this server yet. Saved rules
@@ -326,6 +422,39 @@ function Editor({
             : 0;
           const changed =
             (rules[module] ?? "inherit") !== (data.rules[module] ?? "inherit");
+          // Defaults are a rule source, not a fourth access level. Display the
+          // server's effective level until an explicit change is drafted.
+          // Limited edits use a more precise label on the active edit switch.
+          const currentLevel = effective
+            ? !effective.read && edits === 0
+              ? "hidden"
+              : effective.read && edits === 0
+                ? "view"
+                : effective.read && edits > 0
+                  ? "edit"
+                  : null
+            : null;
+          const shownMode = changed
+            ? mode === "inherit"
+              ? null
+              : mode
+            : kind === "user"
+              ? currentLevel
+              : mode;
+          const limitedCurrent =
+            kind === "user" &&
+            !changed &&
+            effective?.read &&
+            edits > 0 &&
+            edits < 3;
+          const limitedLabel =
+            edits === 1
+              ? effective?.create
+                ? "Read & create"
+                : effective?.reply
+                  ? "Read & reply"
+                  : "Read & update"
+              : "Read & edit (limited)";
           const change = (value: string) => {
             if (!draft) setBaseline({ ...data.rules });
             const next = { ...rules };
@@ -351,7 +480,7 @@ function Editor({
                 <strong>{name}</strong>
                 <small>
                   {mode === "inherit"
-                    ? "Follows role & committee defaults"
+                    ? "From defaults"
                     : kind === "user"
                       ? "Individual rule"
                       : "Group rule"}
@@ -432,59 +561,79 @@ function Editor({
                   <label
                     key={value}
                     className={styles.ruleChoice}
-                    data-selected={mode === value || undefined}
+                    data-selected={shownMode === value || undefined}
                   >
                     <input
                       type="checkbox"
                       role="switch"
                       value={value}
-                      aria-label={name + ": " + label}
+                      aria-label={
+                        name +
+                        ": " +
+                        (value === "edit" && limitedCurrent
+                          ? limitedLabel
+                          : label)
+                      }
                       aria-describedby={
                         kind + subject + scope + module + value + "-hint"
                       }
-                      checked={mode === value}
+                      checked={shownMode === value}
                       disabled={mutation.isPending}
                       onChange={(event) =>
-                        change(event.target.checked ? value : "inherit")
+                        change(
+                          event.target.checked
+                            ? value
+                            : value === "edit" && limitedCurrent
+                              ? "view"
+                              : "inherit",
+                        )
                       }
                     />
                     <span>
-                      {label}
+                      {value === "edit" && limitedCurrent
+                        ? limitedLabel
+                        : label}
                       <small
                         className={styles.toggleHint}
                         id={kind + subject + scope + module + value + "-hint"}
                       >
-                        {hint}
+                        {value === "edit" && limitedCurrent
+                          ? "Only the actions shown in Current permissions are allowed"
+                          : hint}
                       </small>
                     </span>
                     <span className={styles.toggleState} aria-hidden="true">
                       <span className={styles.toggleTrack} />
-                      {mode === value ? "On" : "Off"}
+                      {shownMode === value ? "On" : "Off"}
                     </span>
                   </label>
                 ))}
                 <div className={styles.defaultRule}>
-                  <Button
-                    secondary
-                    size="sm"
-                    disabled={mutation.isPending}
-                    aria-label={name + ": Use defaults"}
-                    aria-pressed={mode === "inherit"}
-                    onClick={() => change("inherit")}
-                  >
-                    {mode === "inherit" ? (
-                      <Check size={16} aria-hidden="true" />
-                    ) : (
-                      <Users size={16} aria-hidden="true" />
-                    )}
-                    Use defaults
-                  </Button>
-                  <small>
-                    {mode === "inherit"
-                      ? "Defaults selected"
-                      : "Custom rule selected"}
-                  </small>
+                  {mode === "inherit" ? (
+                    <small>
+                      {changed ? "Defaults after saving" : "Using defaults"}
+                    </small>
+                  ) : (
+                    <Button
+                      tone="quiet"
+                      size="sm"
+                      disabled={mutation.isPending}
+                      aria-label={name + ": Use defaults"}
+                      onClick={() => change("inherit")}
+                    >
+                      <Users size={16} aria-hidden="true" /> Use defaults
+                    </Button>
+                  )}
                 </div>
+                {kind === "user" && !shownMode && (
+                  <p className={styles.levelExplanation}>
+                    {changed && mode === "inherit"
+                      ? "Save to apply defaults and refresh the current access level."
+                      : effective
+                        ? "This member has limited action permissions. See Current permissions; no single access level describes them."
+                        : "Current access hasn't been reported. Choose a level only if you want to set a new rule."}
+                  </p>
+                )}
               </div>
             </div>
           );
@@ -496,53 +645,37 @@ function Editor({
         )}
       </div>
       <p className={styles.note}>
-        Editing includes creating, replying and updating records in this scope.
-        Approval, publishing, export and permission management remain separate
-        grants in the account settings below. Explicit denials and account
-        restrictions still apply, even when a rule allows access.
+        Approval, publishing and export need separate permissions. Account
+        restrictions still apply.
       </p>
-      <label className={styles.reason}>
-        Reason for this change
-        <input
-          value={note}
-          maxLength={200}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="What access is needed and why?"
-        />
-      </label>
-      <Feedback error={mutation.error} message={message} />
-      {draft && (
-        <div className={styles.actions}>
-          <Button
-            disabled={!draft || note.trim().length < 3}
-            pending={mutation.isPending}
-            onClick={() => mutation.mutate(null)}
-          >
-            Save tab permissions
-          </Button>
-          <Button
-            secondary
-            disabled={!draft || mutation.isPending}
-            onClick={() => {
-              setDraft(null);
-              setBaseline(null);
-            }}
-          >
-            Discard changes
-          </Button>
-        </div>
+      {!footerTarget && reasonField}
+      {footerTarget ? (
+        createPortal(saveControls, footerTarget)
+      ) : (
+        <>
+          <Feedback error={mutation.error} message={message} />
+          {draft && saveControls}
+        </>
       )}
       {kind === "user" &&
         isAdmin &&
         auth.member &&
         memberRoles(auth.member).includes("developer") && (
-          <section className={styles.delegation}>
-            <h3>Permission management</h3>
-            <p>
-              {data.manager
-                ? "This admin can manage access within their own authority."
-                : "Allow this admin to manage roles, group defaults and user permissions within their own authority."}
+          <details className={styles.delegation}>
+            <summary>
+              Manage other members' access
+              <span>{data.manager ? "Allowed" : "Not allowed"}</span>
+            </summary>
+            <p className={styles.note}>
+              Lets this office admin manage roles and permissions within their
+              own authority. Changes here apply immediately after confirmation
+              by the server.
             </p>
+            {draft ? (
+              <p className={styles.note}>Save or discard page changes first.</p>
+            ) : (
+              footerTarget && reasonField
+            )}
             <Button
               secondary
               disabled={!!draft || note.trim().length < 3}
@@ -550,10 +683,15 @@ function Editor({
               onClick={() => mutation.mutate(!data.manager)}
             >
               {data.manager
-                ? "Remove permission management"
-                : "Allow permission management"}
+                ? "Remove access management"
+                : "Allow access management"}
             </Button>
-          </section>
+            {noteBlocked && !draft && (
+              <p className={styles.reasonHint}>
+                Enter a reason of at least 3 characters to continue.
+              </p>
+            )}
+          </details>
         )}
     </>
   );

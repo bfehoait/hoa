@@ -70,10 +70,49 @@ export async function uploadListingCover(id: string, blob: Blob) {
   const { error } = await client.storage
     .from("bfe-listing-covers")
     .upload(path, blob, { contentType: "image/webp", upsert: false });
-  if (error)
+  if (error) {
+    // Show actionable categories without exposing raw server messages,
+    // object paths, account data or request credentials.
+    const status = String("statusCode" in error ? error.statusCode : ""),
+      message = error.message.toLowerCase();
+    const diagnostic = /new row violates row.level security policy/.test(
+      message,
+    )
+      ? "Server detail: new row violates row-level security policy."
+      : /permission denied for function [a-z_][a-z_0-9]*/.test(message)
+        ? `Server detail: ${message.match(/permission denied for function [a-z_][a-z_0-9]*/)?.[0]}.`
+        : /permission denied for (?:table|schema) [a-z_][a-z_0-9]*/.test(
+              message,
+            )
+          ? `Server detail: ${message.match(/permission denied for (?:table|schema) [a-z_][a-z_0-9]*/)?.[0]}.`
+          : /photo upload is no longer permitted/.test(message)
+            ? "Server detail: the upload trigger refused this record."
+            : /this module is hidden or view only/.test(message)
+              ? "Server detail: the module write guard refused the record update."
+              : "Server detail: unclassified Storage rejection; inspect the upload Response.";
+    const reason =
+      status === "409" || /already exists|duplicate/.test(message)
+        ? "A file already exists for this saved cover. Open the saved announcement to check it before retrying."
+        : status === "401" || /jwt|unauthorized|expired token/.test(message)
+          ? "The upload session was refused. Sign in again, then open the saved announcement."
+          : status === "403" ||
+              /row.level security|not authorized|permission denied/.test(
+                message,
+              )
+            ? "Storage refused the image upload. The system owner needs to check the cover policies and upload trigger."
+            : /bucket.*not found|bucket.*does not exist/.test(message)
+              ? "The private cover-image bucket is missing. Ask the system owner to check image storage setup."
+              : status === "413" ||
+                  /mime|file.*size|payload too large/.test(message)
+                ? "Storage rejected the image type or size. The prepared cover must be WebP under 1 MB."
+                : Number(status) >= 500
+                  ? "The image storage service or database upload trigger failed. Check the failed Storage response before retrying."
+                  : "Image upload was not confirmed. Check the failed Storage response or connection before retrying.";
     throw new Error(
-      "Photo upload could not be confirmed. The submission is saved. Retry, or open your saved submission to check the cover before making further changes.",
+      `${reason}${/^\d{3}$/.test(status) ? ` Storage status: ${status}.` : ""} ${diagnostic} The announcement text is saved; do not create another copy.`,
     );
+  }
+  return path;
 }
 export type PublicationLink = { label: string; url: string };
 export function PublicationLinkFields({
@@ -123,6 +162,7 @@ export function PublicationLinkFields({
           <Button
             type="button"
             secondary
+            size="sm"
             disabled={disabled}
             onClick={() => onChange(links.filter((_, n) => n !== i))}
           >
@@ -146,9 +186,19 @@ export function PublicationLinkFields({
 export default function ListingMedia({
   id,
   editable = false,
+  announcement = false,
+  alt = "Listing cover",
+  coverOnly = false,
+  hideEmpty = false,
+  preload = false,
 }: {
   id: string;
   editable?: boolean;
+  announcement?: boolean;
+  alt?: string;
+  coverOnly?: boolean;
+  hideEmpty?: boolean;
+  preload?: boolean;
 }) {
   const auth = useAuth(),
     cache = useQueryClient();
@@ -172,6 +222,13 @@ export default function ListingMedia({
       const { data, error } = await client.storage
         .from("bfe-listing-covers")
         .createSignedUrl(asset.cover_path, 60);
+      // Home keeps its few slides mounted. Decode ahead of displaying each
+      // signed image so switching slides cannot expose a partially loaded photo.
+      if (preload && !error && data.signedUrl) {
+        const image = new Image();
+        image.src = data.signedUrl;
+        await image.decode();
+      }
       return { ...asset, url: error ? null : data.signedUrl };
     },
   });
@@ -194,50 +251,86 @@ export default function ListingMedia({
     onSuccess: async () => {
       setEditing(false);
       setMessage(
-        "Saved. Your photo and links need staff review before publication.",
+        announcement
+          ? "Image saved. Review is required before publication."
+          : "Saved. Your photo and links need staff review before publication.",
       );
       await cache.invalidateQueries({ queryKey: ["listing-media"] });
       await cache.invalidateQueries({ queryKey: ["feature-records"] });
     },
   });
   if (query.isPending)
-    return <p className={styles.note}>Loading photo and links…</p>;
-  if (query.isError) return <Feedback error={query.error} />;
+    if (coverOnly)
+      return <div className={styles.placeholder}>Loading photo...</div>;
+    else
+      return (
+        <p className={styles.note}>
+          {announcement ? "Loading image..." : "Loading photo and links…"}
+        </p>
+      );
+  if (
+    coverOnly &&
+    announcement &&
+    (query.isError || (!query.isPending && !query.data?.url))
+  )
+    return null;
+  if (query.isError)
+    return coverOnly ? (
+      <div className={styles.placeholder}>Photo unavailable</div>
+    ) : (
+      <Feedback error={query.error} />
+    );
+  if (coverOnly && hideEmpty && !query.data?.url) return null;
+  if (coverOnly && !query.data?.url)
+    return (
+      <div className={styles.placeholder}>
+        {query.data?.cover_path ? "Photo unavailable" : "No photo"}
+      </div>
+    );
+  if (announcement && !editable && !query.data?.cover_path) return null;
   return (
-    <section className={styles.media} aria-label="Listing photo and links">
+    <section
+      className={styles.media}
+      aria-label={
+        announcement ? "Announcement image" : "Listing photo and links"
+      }
+    >
       {query.data?.url && (
         <img
-          className={styles.cover}
+          className={coverOnly ? styles.cardCover : styles.cover}
           src={query.data.url}
-          alt="Listing cover"
-          loading="lazy"
+          alt={alt}
+          loading={preload ? "eager" : "lazy"}
         />
       )}
       {query.data?.cover_path && !query.data.url && (
         <p className={styles.note}>
-          Cover upload has not completed or cannot be loaded. Refresh and check
-          the photo before approval.
+          {editable
+            ? "Cover upload has not completed or cannot be loaded. Refresh and check the photo before approval."
+            : "Image unavailable. Try refreshing the page."}
         </p>
       )}
-      <div className={styles.links}>
-        {query.data?.links.map(
-          (link, i) =>
-            /^https:\/\/[a-z0-9.-]+\.[a-z]{2,}([/:?#][^\s<>]*)?$/i.test(
-              link.url,
-            ) && (
-              <a
-                className="text-link"
-                key={i}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <ExternalLink size={18} />
-                {link.label}
-              </a>
-            ),
-        )}
-      </div>
+      {!coverOnly && (
+        <div className={styles.links}>
+          {query.data?.links.map(
+            (link, i) =>
+              /^https:\/\/[a-z0-9.-]+\.[a-z]{2,}([/:?#][^\s<>]*)?$/i.test(
+                link.url,
+              ) && (
+                <a
+                  className="text-link"
+                  key={i}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink size={18} />
+                  {link.label}
+                </a>
+              ),
+          )}
+        </div>
+      )}
       {editable && !auth.memberPreview && (
         <div className={styles.actions}>
           {query.data?.cover_path && (
@@ -265,19 +358,23 @@ export default function ListingMedia({
               />
             </label>
           )}
-          <Button
-            secondary
-            disabled={mutation.isPending}
-            onClick={() => {
-              setLinks(query.data?.links ?? []);
-              setEditing(!editing);
-            }}
-          >
-            Edit publication links
-          </Button>
+          {!announcement && (
+            <Button
+              secondary
+              disabled={mutation.isPending}
+              onClick={() => {
+                setLinks(query.data?.links ?? []);
+                setEditing(!editing);
+              }}
+            >
+              Edit publication links
+            </Button>
+          )}
           <p className={styles.note}>
             One cover photo. Only upload images you may share with members.
-            Links and contact details are optional.
+            {announcement
+              ? "Text-only announcements are supported."
+              : "Links and contact details are optional."}
           </p>
         </div>
       )}

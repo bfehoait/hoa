@@ -1,7 +1,7 @@
 .panel {
-  padding: 24px;
+  padding: var(--card-padding);
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
   margin-top: 24px;
 }
@@ -18,7 +18,7 @@
   padding: 20px;
   background: var(--accent-soft);
   border: 1px solid var(--accent-line);
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   margin: 20px 0;
 }
 .account span {
@@ -51,7 +51,7 @@
   padding: 12px 20px;
   background: var(--accent);
   color: var(--on-accent);
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   font-weight: 700;
   text-decoration: none;
 }

@@ -37,10 +37,12 @@ export default function ModuleMonitor() {
   const id = path.split("/")[1];
   const module = findMonitorModule(id);
   return (
-    <MonitorPage
-      key={`${path}:${module ? "" : (params.get("query") ?? "")}`}
-      module={module}
-    />
+    <>
+      <MonitorPage
+        key={`${path}:${module ? "" : (params.get("query") ?? "")}`}
+        module={module}
+      />
+    </>
   );
 }
 function MonitorPage({
@@ -76,7 +78,7 @@ function MonitorPage({
           },
           livelihood: {
             path: "/directory/market",
-            label: "Open marketplace workspace",
+            label: "Open livelihood",
           },
           transport: {
             path: "/driver/dispatch",
@@ -87,7 +89,10 @@ function MonitorPage({
             path: "/explore/election-setup",
             label: "Election setup proposals",
           },
-          access: { path: "/developer/access", label: "Manage account access" },
+          access: {
+            path: "/office/access",
+            label: "Manage account access",
+          },
           audit: {
             path: "/developer/modules/audit",
             label: "View recorded history",
@@ -137,7 +142,7 @@ function MonitorPage({
           <div className={styles.crumb}>
             <Link to="/developer">Developer</Link>
             <span>/</span>
-            <Link to="/developer/modules">System modules</Link>
+            <Link to="/developer/modules">Record diagnostics</Link>
             {module && (
               <>
                 <span>/</span>
@@ -149,7 +154,7 @@ function MonitorPage({
             <span className={styles.headingIcon}>
               {module ? <ModuleIcon id={module.id} /> : <Layers3 size={24} />}
             </span>
-            {module?.title ?? "System modules"}
+            {module?.title ?? "Record diagnostics"}
           </h1>
           <p>
             {module
@@ -282,14 +287,9 @@ function MonitorPage({
                 Submit expense evidence
               </ButtonLink>
             )}
-            {module.id === "people" && (
-              <ButtonLink to="/developer/access">
-                Manage account access
-              </ButtonLink>
-            )}
             {module.id === "livelihood" && (
               <ButtonLink to="/directory/market?view=review">
-                Review marketplace submissions
+                Review livelihood listings
               </ButtonLink>
             )}
             {module.id === "transport" && (
@@ -531,17 +531,34 @@ function MonitorPage({
                                     : recordDate(row.recorded_at)}
                               </td>
                               <td>
-                                <Button
-                                  secondary
-                                  onClick={(event) => {
-                                    event.currentTarget.focus();
-                                    setSelected(row.reference);
-                                  }}
-                                  aria-label={`View details ${row.label}`}
-                                >
-                                  View details
-                                  <ChevronRight size={16} />
-                                </Button>
+                                <div className={styles.rowActions}>
+                                  <Button
+                                    secondary
+                                    size="sm"
+                                    onClick={(event) => {
+                                      event.currentTarget.focus();
+                                      setSelected(row.reference);
+                                    }}
+                                    aria-label={`View details ${row.label}`}
+                                  >
+                                    View details
+                                    <ChevronRight size={16} />
+                                  </Button>
+                                  {/* Resolve the account through the protected
+                                    picker; do not expose its user id here. */}
+                                  {module.id === "people" &&
+                                    !!row.fields?.email && (
+                                      <ButtonLink
+                                        tone="secondary"
+                                        size="sm"
+                                        to={`/developer/modules/people?accountSearch=${encodeURIComponent(
+                                          String(row.fields.email),
+                                        )}#account-access`}
+                                      >
+                                        Manage access
+                                      </ButtonLink>
+                                    )}
+                                </div>
                               </td>
                             </tr>
                           ))}

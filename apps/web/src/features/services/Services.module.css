@@ -20,13 +20,13 @@
   height: 48px;
   display: grid;
   place-items: center;
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   margin-bottom: 16px;
 }
 .amenities h2 {
   font-family: var(--heading-font);
-  font-size: 20px;
-  font-weight: 700;
+  font-size: var(--section-heading-size);
+  font-weight: 600;
 }
 .amenities p {
   color: var(--muted);
@@ -50,9 +50,9 @@
   position: relative;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   margin-bottom: 12px;
-  padding: 20px;
+  padding: var(--card-padding);
   color: var(--ink);
 }
 .recordIcon {

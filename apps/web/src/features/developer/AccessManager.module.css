@@ -1,7 +1,7 @@
 .manager {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   padding: 24px;
   margin: 24px 0;
 }
@@ -10,12 +10,178 @@
   color: var(--muted);
   line-height: 1.6;
 }
+.accessHeading {
+  scroll-margin-block-start: 128px;
+}
+.accessDrawer.accessDrawer {
+  position: fixed;
+  inset: 0;
+  margin: 0 0 0 auto;
+  width: min(920px, calc(100% - 32px));
+  max-width: 920px;
+  height: var(--dialog-viewport-height, 100dvh);
+  max-height: var(--dialog-viewport-height, 100dvh);
+  border-radius: 18px 0 0 18px;
+}
+.accessDrawer > div {
+  height: 100%;
+}
+.picker {
+  min-width: 0;
+}
+.roleFilter {
+  display: grid;
+  gap: 8px;
+  max-width: 320px;
+  font-size: 14px;
+  margin-top: 20px;
+}
+.roleFilter select {
+  min-height: 48px;
+  font: inherit;
+  font-size: 16px;
+  padding: 12px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+.lookupState {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  max-width: 560px;
+  margin: 32px auto;
+  padding: 24px 0;
+}
+.lookupState > svg {
+  color: var(--accent);
+}
+.lookupState h3,
+.lookupState p {
+  margin: 0;
+}
+.lookupState p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+.lookupHelp {
+  margin-top: 16px;
+  font-size: 14px;
+  width: 100%;
+}
+.lookupHelp summary {
+  cursor: pointer;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+}
+.memberSummary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+.memberSummary > div {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.memberSummary strong {
+  font-size: 18px;
+}
+.memberSummary p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.memberIcon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.unsaved {
+  align-self: center;
+  margin-inline-end: auto;
+  color: var(--muted);
+  font-size: 14px;
+}
+.accessDrawer .permissionActions {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+.accessDrawer .permissionActions:empty {
+  display: none;
+}
+.editorTabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 20px;
+}
+.editorTabs button {
+  min-height: 48px;
+  padding: 10px 16px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+}
+.editorTabs button[aria-selected="true"] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+.editorTabs button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.tabSection[hidden] {
+  display: none;
+}
+.accountForm {
+  max-width: 560px;
+}
+.accountForm h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+.extraRoles {
+  margin: 16px 0;
+}
+.extraRoles summary {
+  min-height: 48px;
+  padding-block: 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.accountActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+.accountDetails > form {
+  max-width: 560px;
+  margin-top: 20px;
+}
 .search {
   display: flex;
   align-items: center;
   gap: 12px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   background: var(--bg);
   padding: 0 14px;
   margin: 20px 0;
@@ -29,6 +195,7 @@
   background: transparent;
   color: var(--ink);
   border: 0;
+  font-size: 16px;
 }
 .members {
   list-style: none;
@@ -45,7 +212,7 @@
   background: var(--bg);
   border: 1px solid var(--line);
   color: var(--ink);
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   font: inherit;
   width: 100%;
   text-align: left;
@@ -98,7 +265,7 @@
 }
 .forms form {
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   padding: 20px;
 }
 .forms h3 {
@@ -112,7 +279,7 @@
 }
 .roles {
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 12px;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -133,6 +300,7 @@
   width: 20px;
   height: 20px;
   accent-color: var(--accent);
+  font-size: 16px;
 }
 .assignments {
   padding: 0;
@@ -160,6 +328,11 @@
   }
 }
 @media (max-width: 600px) {
+  .accessDrawer.accessDrawer {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 0;
+  }
   .manager {
     padding: 16px;
   }

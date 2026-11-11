@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { lazy, Suspense, useState } from "react";
+import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import {
   Building2,
   ChevronRight,
@@ -14,6 +14,7 @@ import { z } from "zod";
 import {
   type Lot,
   type LotDetail,
+  type ReceiptPage,
   receiptPageSchema,
   receiptCsv,
 } from "../../../../../packages/shared/src/registry";
@@ -32,6 +33,7 @@ import {
   registryError,
 } from "../../data/registry";
 import { downloadCsv } from "../../data/download";
+import { useLinkedPropertyAddress } from "../../data/linked-properties";
 import { Link } from "../../components/AccessLink";
 import {
   Badge,
@@ -43,6 +45,8 @@ import {
 } from "../../components/UI";
 import styles from "./LotRegister.module.css";
 import PayDues from "../account/PayDues";
+const PropertyBusinessDetails = lazy(() => import("./PropertyBusinessDetails"));
+const CollectionCharts = lazy(() => import("../office/CollectionCharts"));
 
 const sampleId = "65000000-0000-4000-8000-000000000001";
 const example: Lot = {
@@ -71,9 +75,11 @@ function useAccess() {
 export default function LotRegister({
   office = false,
   account = false,
+  embedded = false,
 }: {
   office?: boolean;
   account?: boolean;
+  embedded?: boolean;
 }) {
   const path = useParams()["*"] ?? "";
   const id = account ? (path.startsWith("lots/") ? path.slice(5) : "") : path;
@@ -83,10 +89,22 @@ export default function LotRegister({
       ? "/account/lots"
       : "/more/lots";
   if (id) return <LotProfile key={id} id={id} root={root} />;
-  return <LotList root={root} office={office} />;
+  return <LotList root={root} office={office} embedded={embedded} />;
 }
-function LotList({ root, office }: { root: string; office: boolean }) {
+function LotList({
+  root,
+  office,
+  embedded = false,
+}: {
+  root: string;
+  office: boolean;
+  embedded?: boolean;
+}) {
   const { sample, can } = useAccess();
+  const ownLinks = useLinkedPropertyAddress(!office);
+  const linkLabel = ownLinks.properties.length
+    ? "Link another property"
+    : "Request a lot link";
   const [searchParams] = useSearchParams();
   const initialSearch = (searchParams.get("search") ?? "").slice(0, 100);
   const [draft, setDraft] = useState(initialSearch);
@@ -106,32 +124,31 @@ function LotList({ root, office }: { root: string; office: boolean }) {
       : query.data;
   return (
     <>
-      <PageIntro
-        eyebrow={sample ? "SYNTHETIC PREVIEW" : "PROPERTY RECORDS"}
-        title={office ? "Lot register" : "Your lots"}
-        icon={<Building2 size={28} />}
-        description={
-          office
-            ? "Find a property and review its linked records."
-            : "Your approved property links and permitted receipt history."
-        }
-        action={
-          !office ? (
-            <Button onClick={() => setClaim(true)}>Request a lot link</Button>
-          ) : undefined
-        }
-      />
-      {sample && <Badge tone="amber">Synthetic records only</Badge>}
-      {office && (
-        <div className={styles.actions}>
-          <Link to="/office/residents" className="text-link">
-            Member directory
-          </Link>
-          <Link to="/office/registry" className="text-link">
-            Property change drafts
-          </Link>
+      {embedded ? (
+        <div className="section-title">
+          <h2>Property records</h2>
+          <Button secondary onClick={() => setClaim(true)}>
+            {linkLabel}
+          </Button>
         </div>
+      ) : (
+        <PageIntro
+          eyebrow={sample ? "SYNTHETIC PREVIEW" : "PROPERTY RECORDS"}
+          title={office ? "Lot register" : "Your lots"}
+          icon={<Building2 size={28} />}
+          description={
+            office
+              ? "Find a property and review its linked records."
+              : "Your approved property links and permitted receipt history."
+          }
+          action={
+            !office ? (
+              <Button onClick={() => setClaim(true)}>{linkLabel}</Button>
+            ) : undefined
+          }
+        />
       )}
+      {sample && <Badge tone="amber">Synthetic records only</Badge>}
       <form
         className={styles.toolbar}
         onSubmit={(e) => {
@@ -152,38 +169,42 @@ function LotList({ root, office }: { root: string; office: boolean }) {
             }
           />
         </label>
-        <label>
-          Phase
-          <select
-            value={filter.p_phase}
-            onChange={(e) =>
-              setFilter({
-                ...filter,
-                p_phase: Number(e.target.value),
-                p_page: 0,
-              })
-            }
-          >
-            <option value={0}>All phases</option>
-            {[1, 2, 3].map((n) => (
-              <option key={n} value={n}>
-                Phase {n}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Registry status
-          <input
-            value={filter.p_status}
-            maxLength={100}
-            placeholder="All statuses"
-            onChange={(e) =>
-              setFilter({ ...filter, p_status: e.target.value, p_page: 0 })
-            }
-          />
-        </label>
-        {can("property", "view") && (
+        {!embedded && (
+          <label>
+            Phase
+            <select
+              value={filter.p_phase}
+              onChange={(e) =>
+                setFilter({
+                  ...filter,
+                  p_phase: Number(e.target.value),
+                  p_page: 0,
+                })
+              }
+            >
+              <option value={0}>All phases</option>
+              {[1, 2, 3].map((n) => (
+                <option key={n} value={n}>
+                  Phase {n}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {!embedded && (
+          <label>
+            Registry status
+            <input
+              value={filter.p_status}
+              maxLength={100}
+              placeholder="All statuses"
+              onChange={(e) =>
+                setFilter({ ...filter, p_status: e.target.value, p_page: 0 })
+              }
+            />
+          </label>
+        )}
+        {!embedded && can("property", "view") && (
           <label>
             Review priority
             <select
@@ -213,9 +234,44 @@ function LotList({ root, office }: { root: string; office: boolean }) {
       )}
       {data && (
         <>
-          <p className={styles.note}>
-            {data.total} matching {office ? "lots" : "permitted lots"}
-          </p>
+          {(office || data.total > 0) && (
+            <p className={styles.note}>
+              {data.total} {office ? "matching lots" : "properties"}
+            </p>
+          )}
+          {office && (
+            <nav className={styles.actions} aria-label="Lot pages">
+              <span>
+                {data.rows.length
+                  ? `Showing ${filter.p_page * 20 + 1}–${filter.p_page * 20 + data.rows.length} of ${data.total} lots`
+                  : `${data.total} matching lots`}
+              </span>
+              <Button
+                secondary
+                disabled={!filter.p_page || query.isFetching}
+                onClick={() =>
+                  setFilter({ ...filter, p_page: filter.p_page - 1 })
+                }
+              >
+                Previous
+              </Button>
+              <span>
+                Page {filter.p_page + 1} of{" "}
+                {Math.max(1, Math.ceil(data.total / 20))}
+              </span>
+              <Button
+                secondary
+                disabled={
+                  (filter.p_page + 1) * 20 >= data.total || query.isFetching
+                }
+                onClick={() =>
+                  setFilter({ ...filter, p_page: filter.p_page + 1 })
+                }
+              >
+                Next
+              </Button>
+            </nav>
+          )}
           <div className={styles.list}>
             {data.rows.map((l) => (
               <Link className={styles.card} key={l.id} to={`${root}/${l.id}`}>
@@ -261,27 +317,29 @@ function LotList({ root, office }: { root: string; office: boolean }) {
               </p>
             </div>
           )}
-          <div className={styles.actions}>
-            <Button
-              secondary
-              disabled={filter.p_page === 0}
-              onClick={() =>
-                setFilter({ ...filter, p_page: filter.p_page - 1 })
-              }
-            >
-              Previous
-            </Button>
-            <span>Page {filter.p_page + 1}</span>
-            <Button
-              secondary
-              disabled={(filter.p_page + 1) * 20 >= data.total}
-              onClick={() =>
-                setFilter({ ...filter, p_page: filter.p_page + 1 })
-              }
-            >
-              Next
-            </Button>
-          </div>
+          {!office && data.total > 20 && (
+            <div className={styles.actions}>
+              <Button
+                secondary
+                disabled={filter.p_page === 0}
+                onClick={() =>
+                  setFilter({ ...filter, p_page: filter.p_page - 1 })
+                }
+              >
+                Previous
+              </Button>
+              <span>Page {filter.p_page + 1}</span>
+              <Button
+                secondary
+                disabled={(filter.p_page + 1) * 20 >= data.total}
+                onClick={() =>
+                  setFilter({ ...filter, p_page: filter.p_page + 1 })
+                }
+              >
+                Next
+              </Button>
+            </div>
+          )}
         </>
       )}
       {claim && <ClaimDialog onClose={() => setClaim(false)} />}
@@ -349,6 +407,27 @@ function ClaimDialog({ onClose }: { onClose: () => void }) {
     </Modal>
   );
 }
+function registryDate(value: string, includeTime = false) {
+  const date = new Date(
+    value.length === 10 ? `${value}T00:00:00+08:00` : value,
+  );
+  if (!Number.isFinite(date.getTime())) return "Date unavailable";
+  return new Intl.DateTimeFormat("en-PH", {
+    dateStyle: "medium",
+    ...(includeTime ? { timeStyle: "short" as const } : {}),
+    timeZone: "Asia/Manila",
+  }).format(date);
+}
+
+function auditValue(value: unknown): string {
+  if (value === null || value === undefined || value === "")
+    return "Not recorded";
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value))
+    return registryDate(value, true);
+  return typeof value === "object" ? JSON.stringify(value) : String(value);
+}
+
 function LotProfile({ id, root }: { id: string; root: string }) {
   const { sample, can } = useAccess();
   const query = useLot(id);
@@ -386,7 +465,7 @@ function LotProfile({ id, root }: { id: string; root: string }) {
       </>
     );
   return (
-    <>
+    <article className={styles.profile}>
       <Link to={root} className="text-link">
         ← Back to {root.startsWith("/office") ? "lot register" : "your lots"}
       </Link>
@@ -405,26 +484,30 @@ function LotProfile({ id, root }: { id: string; root: string }) {
       )}
       {data && (
         <>
-          <div className={styles.tabs} aria-label="Lot sections">
+          <div
+            className={styles.profileTabs}
+            role="group"
+            aria-label="Lot sections"
+          >
             {[
               "Overview",
               "People",
               "Receipts",
               ...(data.evidence ? ["Review", "History"] : []),
             ].map((t) => (
-              <Button
+              <button
+                type="button"
                 key={t}
-                secondary={tab !== t}
                 aria-pressed={tab === t}
                 onClick={() => setTab(t)}
               >
                 {t}
-              </Button>
+              </button>
             ))}
           </div>
           {tab === "Overview" && (
             <section className={styles.panel}>
-              <h2>Property overview</h2>
+              <h2>Property details</h2>
               <dl>
                 <div>
                   <dt>Phase / block / lot</dt>
@@ -475,6 +558,11 @@ function LotProfile({ id, root }: { id: string; root: string }) {
               )}
             </section>
           )}
+          {tab === "Overview" && !sample && root.startsWith("/office") && (
+            <Suspense fallback={<Skeleton />}>
+              <PropertyBusinessDetails lotId={id} />
+            </Suspense>
+          )}
           {tab === "People" && (
             <section className={styles.panel}>
               <h2>Linked accounts and claims</h2>
@@ -486,17 +574,29 @@ function LotProfile({ id, root }: { id: string; root: string }) {
                 <p>No visible account links or pending claims.</p>
               ) : (
                 data.memberships.map((m) => (
-                  <div className={styles.member} key={m.id}>
-                    <strong>{m.name || "Linked account"}</strong>
-                    <p>
-                      {m.relationship} · <Badge>{m.state}</Badge>
-                    </p>
-                    <p className={styles.note}>
-                      From {m.starts_at.slice(0, 10)} ·{" "}
-                      {m.expires_at
-                        ? `Until ${m.expires_at.slice(0, 10)}`
-                        : "No expiry recorded"}
-                    </p>
+                  <div className={styles.linkedMember} key={m.id}>
+                    <div>
+                      <strong>{m.name || "Linked account"}</strong>
+                      <p>
+                        {
+                          {
+                            owner: "Owner",
+                            renter: "Renter",
+                            household: "Household member",
+                          }[m.relationship]
+                        }{" "}
+                        ·{" "}
+                        <Badge>
+                          {m.state.charAt(0).toUpperCase() + m.state.slice(1)}
+                        </Badge>
+                      </p>
+                      <p className={styles.note}>
+                        From {registryDate(m.starts_at)} ·{" "}
+                        {m.expires_at
+                          ? `Until ${registryDate(m.expires_at)}`
+                          : "No expiry recorded"}
+                      </p>
+                    </div>
                     {can("property", "manage") &&
                       ["pending", "approved"].includes(m.state) && (
                         <Button secondary onClick={() => setReview(m.id)}>
@@ -508,7 +608,7 @@ function LotProfile({ id, root }: { id: string; root: string }) {
               )}
             </section>
           )}
-          {tab === "Overview" && (
+          {tab === "Overview" && !root.startsWith("/office") && (
             <PayDues phase={data.phase} block={data.block} lot={data.lot} />
           )}
           {tab === "Receipts" && (
@@ -545,24 +645,57 @@ function LotProfile({ id, root }: { id: string; root: string }) {
           )}
           {tab === "History" && (
             <section className={styles.panel}>
-              <h2>Provenance and history</h2>
-              <p>
-                {data.source.source_name || "Imported source"} ·{" "}
-                {data.source.imported_at.slice(0, 10)}
-              </p>
-              <p className={styles.note}>Batch {data.source.batch_id}</p>
+              <h2>Record history</h2>
+              <div className={styles.sourceSummary}>
+                <strong>{data.source.source_name || "Imported source"}</strong>
+                <span className={styles.note}>
+                  Imported {registryDate(data.source.imported_at)} · Philippine
+                  time
+                </span>
+                <details>
+                  <summary>Import reference</summary>
+                  <p className={styles.note}>Batch {data.source.batch_id}</p>
+                </details>
+              </div>
               {data.history.length === 0 ? (
                 <p>No audit entries are available under your current access.</p>
               ) : (
-                data.history.map((h, i) => (
-                  <div className={styles.member} key={i}>
-                    <strong>{h.action}</strong>
-                    <p>
-                      {h.actor_label} · {h.at}
-                    </p>
-                    <p className={styles.note}>{JSON.stringify(h.details)}</p>
-                  </div>
-                ))
+                <ol
+                  className={styles.timeline}
+                  aria-label="Property audit history"
+                >
+                  {data.history.map((h, i) => (
+                    <li key={i}>
+                      <div className={styles.historyHeading}>
+                        <strong>{h.action}</strong>
+                        <time dateTime={h.at}>{registryDate(h.at, true)}</time>
+                      </div>
+                      <p className={styles.note}>By {h.actor_label}</p>
+                      {typeof h.details.reference === "string" && (
+                        <p>Reference: {h.details.reference}</p>
+                      )}
+                      {Object.keys(h.details).length > 0 && (
+                        <details className={styles.auditDetails}>
+                          <summary>Change details</summary>
+                          <dl>
+                            {Object.entries(h.details).map(([key, value]) => (
+                              <div key={key}>
+                                <dt>
+                                  {key
+                                    .replace(/_/g, " ")
+                                    .replace(/^./, (letter) =>
+                                      letter.toUpperCase(),
+                                    )}
+                                </dt>
+                                <dd>{auditValue(value)}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                        </details>
+                      )}
+                    </li>
+                  ))}
+                </ol>
               )}
             </section>
           )}
@@ -623,7 +756,7 @@ function LotProfile({ id, root }: { id: string; root: string }) {
           )}
         </>
       )}
-    </>
+    </article>
   );
 }
 function OperationDialog({
@@ -681,11 +814,14 @@ export function ReceiptPanel({
   lot = null,
   memberships = [],
   sourceReceiptCount,
+  dashboard = false,
 }: {
   lot?: string | null;
   memberships?: LotDetail["memberships"];
   sourceReceiptCount?: unknown;
+  dashboard?: boolean;
 }) {
+  const office = useLocation().pathname.startsWith("/office");
   const { sample, can } = useAccess();
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -693,15 +829,51 @@ export function ReceiptPanel({
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [entitle, setEntitle] = useState<string | null>(null);
-  const query = useReceipts(
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [receiptDetail, setReceiptDetail] = useState<
+    ReceiptPage["rows"][number] | null
+  >(null);
+  const monthEnd = selectedMonth
+    ? new Date(
+        Date.UTC(
+          Number(selectedMonth.slice(0, 4)),
+          Number(selectedMonth.slice(5, 7)),
+          0,
+        ),
+      ).getUTCDate()
+    : 0;
+  const selectedFrom = selectedMonth ? `${selectedMonth}-01` : "";
+  const selectedTo = selectedMonth
+    ? `${selectedMonth}-${String(monthEnd).padStart(2, "0")}`
+    : "";
+  const requestFrom =
+    dashboard && selectedMonth
+      ? from && from > selectedFrom
+        ? from
+        : selectedFrom
+      : from;
+  const requestTo =
+    dashboard && selectedMonth ? (to && to < selectedTo ? to : selectedTo) : to;
+  const validRange = !from || !to || from <= to;
+  const overviewQuery = useReceipts(
     {
       p_lot: lot,
       p_from: from || null,
       p_to: to || null,
+      p_page: 0,
+      p_export: false,
+    },
+    dashboard && validRange,
+  );
+  const query = useReceipts(
+    {
+      p_lot: lot,
+      p_from: requestFrom || null,
+      p_to: requestTo || null,
       p_page: page,
       p_export: false,
     },
-    !from || !to || from <= to,
+    validRange,
   );
   const data = sample
     ? {
@@ -727,8 +899,8 @@ export function ReceiptPanel({
         throw new Error("Real exports are unavailable in a role preview.");
       const args = {
         p_lot: lot,
-        p_from: from || null,
-        p_to: to || null,
+        p_from: requestFrom || null,
+        p_to: requestTo || null,
         p_export: true,
       };
       const first = await api.rpc("bfe_lot_receipts", { ...args, p_page: 0 });
@@ -752,8 +924,8 @@ export function ReceiptPanel({
           "Export reconciliation failed. Refresh before retrying.",
         );
       downloadCsv(
-        `Bellefort-recorded-collections-${from || "start"}-${to || "latest"}.csv`,
-        receiptCsv(all, from, to),
+        `Bellefort-recorded-collections-${requestFrom || "start"}-${requestTo || "latest"}.csv`,
+        receiptCsv(all, requestFrom, requestTo),
       );
     } catch (e) {
       setError(e instanceof Error ? e : new Error("Export unavailable."));
@@ -765,12 +937,23 @@ export function ReceiptPanel({
     1,
     ...(data?.monthly.map((m) => m.amount_centavos) ?? []),
   );
+  const monthLabel = (month: string) =>
+    new Intl.DateTimeFormat("en-PH", {
+      month: "short",
+      year: "numeric",
+      timeZone: "UTC",
+    }).format(new Date(`${month}-01T00:00:00Z`));
   return (
-    <section className={styles.panel}>
-      <h2>Receipts & monthly totals</h2>
+    <section
+      className={dashboard ? styles.financePanel : styles.panel}
+      aria-busy={query.isFetching || (dashboard && overviewQuery.isFetching)}
+    >
+      <h2>
+        {dashboard ? "Collections overview" : "Receipts & monthly totals"}
+      </h2>
       <p className={styles.note}>
-        Imported receipts, not bills or bank-cleared payments. Residents see
-        only receipts approved for their account.
+        Imported receipts, not bills or bank-cleared payments. Visibility
+        follows your current household relationships and receipt permissions.
       </p>
       <fieldset disabled={exporting} className={styles.toolbar}>
         <label>
@@ -780,6 +963,7 @@ export function ReceiptPanel({
             value={from}
             onChange={(e) => {
               setFrom(e.target.value);
+              setSelectedMonth("");
               setPage(0);
             }}
           />
@@ -791,52 +975,177 @@ export function ReceiptPanel({
             value={to}
             onChange={(e) => {
               setTo(e.target.value);
+              setSelectedMonth("");
               setPage(0);
             }}
           />
         </label>
         {can("finance", "export") && (
-          <Button pending={exporting} onClick={() => void exportRows()}>
+          <Button
+            pending={exporting}
+            disabled={!validRange}
+            onClick={() => void exportRows()}
+          >
             <Download size={20} />
             Download CSV
           </Button>
         )}
+        {office && (from || to) && (
+          <Button
+            secondary
+            onClick={() => {
+              setFrom("");
+              setTo("");
+              setSelectedMonth("");
+              setPage(0);
+            }}
+          >
+            Clear dates
+          </Button>
+        )}
       </fieldset>
+      {dashboard &&
+        !sample &&
+        validRange &&
+        (overviewQuery.isPending ? (
+          <Skeleton />
+        ) : overviewQuery.isError ? (
+          <>
+            <Feedback error={overviewQuery.error} />
+            <Button secondary onClick={() => void overviewQuery.refetch()}>
+              Retry overview
+            </Button>
+          </>
+        ) : (
+          overviewQuery.data && (
+            <Suspense fallback={<Skeleton />}>
+              <CollectionCharts
+                data={overviewQuery.data}
+                selected={selectedMonth}
+                disabled={exporting}
+                onSelect={(month) => {
+                  setSelectedMonth(month);
+                  setPage(0);
+                }}
+              />
+            </Suspense>
+          )
+        ))}
       {from && to && from > to && (
         <p role="alert">Choose an end date on or after the start date.</p>
       )}
       {sample ? (
         <p>Synthetic preview. No imported receipts are loaded here.</p>
-      ) : query.isPending ? (
+      ) : query.isPending && validRange ? (
         <Skeleton />
       ) : null}
       <Feedback error={query.error ?? error} />
+      {dashboard && query.isError && (
+        <Button secondary onClick={() => void query.refetch()}>
+          Retry receipts
+        </Button>
+      )}
       {data && (
         <>
-          <div className={styles.metrics}>
-            <div>
-              Visible receipts<strong>{data.total}</strong>
-            </div>
-            <div>
-              Recorded amount<strong>{money(data.total_centavos)}</strong>
-            </div>
-          </div>
-          {data.monthly.length > 0 && (
-            <div aria-label="Monthly recorded collections">
-              {data.monthly.map((m) => (
-                <div key={m.month}>
-                  <strong>{m.month}</strong> · {money(m.amount_centavos)} ·{" "}
-                  {m.count} receipts
-                  <div className={styles.bar} aria-hidden="true">
-                    <span
-                      style={{ width: `${(m.amount_centavos / max) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+          {!dashboard && (
+            <div className={styles.metrics}>
+              <div>
+                Visible receipts<strong>{data.total}</strong>
+              </div>
+              <div>
+                Recorded amount<strong>{money(data.total_centavos)}</strong>
+              </div>
             </div>
           )}
-          {data.phases.length > 0 && (
+          {dashboard && (
+            <div className={styles.financeRecordsHeading}>
+              <div>
+                <h3>Receipt records</h3>
+                <p className={styles.note}>
+                  {selectedMonth
+                    ? `Filtered to ${monthLabel(selectedMonth)} within your date range`
+                    : "All receipts in your date range"}
+                </p>
+              </div>
+              {selectedMonth && (
+                <Button
+                  secondary
+                  disabled={exporting}
+                  onClick={() => {
+                    setSelectedMonth("");
+                    setPage(0);
+                  }}
+                >
+                  Show all months
+                </Button>
+              )}
+            </div>
+          )}
+          {!dashboard && data.monthly.length > 0 && (
+            <div aria-label="Monthly recorded collections">
+              {office && <h3>Recorded collections by month</h3>}
+              {office && (
+                <p className={styles.note}>
+                  Select a month to filter receipts. Bar length compares
+                  recorded amounts with the largest month shown; it does not
+                  indicate unpaid balances.
+                </p>
+              )}
+              {office ? (
+                <div className={styles.monthGrid}>
+                  {data.monthly.map((m) => (
+                    <button
+                      type="button"
+                      className={styles.monthFilter}
+                      key={m.month}
+                      aria-label={`Show receipts for ${monthLabel(m.month)}`}
+                      onClick={() => {
+                        const last = new Date(
+                          Date.UTC(
+                            Number(m.month.slice(0, 4)),
+                            Number(m.month.slice(5, 7)),
+                            0,
+                          ),
+                        ).getUTCDate();
+                        setFrom(`${m.month}-01`);
+                        setTo(`${m.month}-${last}`);
+                        setPage(0);
+                      }}
+                    >
+                      <strong>{monthLabel(m.month)}</strong>
+                      <span>
+                        {money(m.amount_centavos)} · {m.count} receipts
+                      </span>
+                      <span className={styles.bar} aria-hidden="true">
+                        <span
+                          style={{
+                            width: `${(m.amount_centavos / max) * 100}%`,
+                          }}
+                        />
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {data.monthly.map((m) => (
+                    <div key={m.month}>
+                      <strong>{m.month}</strong> · {money(m.amount_centavos)} ·{" "}
+                      {m.count} receipts
+                      <div className={styles.bar} aria-hidden="true">
+                        <span
+                          style={{
+                            width: `${(m.amount_centavos / max) * 100}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
+          {!dashboard && data.phases.length > 0 && (
             <details>
               <summary>Totals by phase and lot</summary>
               {data.phases.map((p) => (
@@ -876,54 +1185,199 @@ export function ReceiptPanel({
               </p>
             </div>
           )}
-          {data.rows.map((r) => (
-            <div className={styles.receipt} key={r.id}>
-              <div>
-                <strong>OR {r.or_number}</strong>
-                <p>{r.receipt_date}</p>
-              </div>
-              <div>
-                <strong>{money(r.amount_centavos)}</strong>
-                <p>
-                  <Link
-                    className={styles.lotLink}
-                    to={`/more/lots/${r.lot_id}?section=receipts`}
-                  >
-                    {r.physical_id}
-                  </Link>
-                </p>
-              </div>
-              <div>
-                {r.payer}
-                <p className={styles.note}>Account: {r.account_series}</p>
-                <p className={styles.note}>{r.source_file}</p>
-              </div>
-              {can("finance", "approve") && owners.length > 0 && (
-                <Button secondary onClick={() => setEntitle(r.id)}>
-                  <ShieldCheck size={20} />
-                  Receipt access
-                </Button>
-              )}
+          {office && (
+            <p>
+              {data.total
+                ? `Showing ${page * 20 + 1}–${Math.min(page * 20 + data.rows.length, data.total)} of ${data.total} receipts`
+                : "0 receipts"}
+            </p>
+          )}
+          {office && (
+            <nav className={styles.actions} aria-label="Receipt pages">
+              <Button
+                secondary
+                disabled={!page || exporting || query.isFetching}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                Previous
+              </Button>
+              <span>
+                Page {page + 1} of {Math.max(1, Math.ceil(data.total / 20))}
+              </span>
+              <Button
+                secondary
+                disabled={
+                  (page + 1) * 20 >= data.total || exporting || query.isFetching
+                }
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Next
+              </Button>
+            </nav>
+          )}
+          {office ? (
+            <div className="table-wrap">
+              <table
+                className={styles.receiptTable}
+                aria-label="Recorded receipts"
+              >
+                <thead>
+                  <tr>
+                    <th scope="col">Receipt</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Lot</th>
+                    <th scope="col">Recorded payer</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">Source</th>
+                    {can("finance", "approve") && owners.length > 0 && (
+                      <th scope="col">Access</th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.rows.map((r) => (
+                    <tr key={r.id}>
+                      <th scope="row">
+                        {dashboard ? (
+                          <button
+                            type="button"
+                            className={styles.receiptOpen}
+                            onClick={() => setReceiptDetail(r)}
+                          >
+                            OR {r.or_number}
+                          </button>
+                        ) : (
+                          <>OR {r.or_number}</>
+                        )}
+                      </th>
+                      <td>
+                        {dashboard
+                          ? registryDate(r.receipt_date)
+                          : r.receipt_date}
+                      </td>
+                      <td>
+                        {can("property", "view") ? (
+                          <Link
+                            className={styles.lotLink}
+                            to={`/office/lots/${r.lot_id}?section=receipts`}
+                          >
+                            {r.physical_id}
+                          </Link>
+                        ) : (
+                          r.physical_id
+                        )}
+                      </td>
+                      <td>{r.payer}</td>
+                      <td className={styles.amount}>
+                        {money(r.amount_centavos)}
+                      </td>
+                      <td>
+                        {r.source_file}
+                        <small className={styles.sourceAccount}>
+                          Account: {r.account_series}
+                        </small>
+                      </td>
+                      {can("finance", "approve") && owners.length > 0 && (
+                        <td>
+                          <Button secondary onClick={() => setEntitle(r.id)}>
+                            Receipt access
+                          </Button>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          ))}
-          <div className={styles.actions}>
-            <Button
-              secondary
-              disabled={page === 0 || exporting}
-              onClick={() => setPage(page - 1)}
-            >
-              Previous
-            </Button>
-            <span>Page {page + 1}</span>
-            <Button
-              secondary
-              disabled={(page + 1) * 20 >= data.total || exporting}
-              onClick={() => setPage(page + 1)}
-            >
-              Next
-            </Button>
-          </div>
+          ) : (
+            data.rows.map((r) => (
+              <div className={styles.receipt} key={r.id}>
+                <div>
+                  <strong>OR {r.or_number}</strong>
+                  <p>{r.receipt_date}</p>
+                </div>
+                <div>
+                  <strong>{money(r.amount_centavos)}</strong>
+                  <p>
+                    <Link
+                      className={styles.lotLink}
+                      to={`/more/lots/${r.lot_id}?section=receipts`}
+                    >
+                      {r.physical_id}
+                    </Link>
+                  </p>
+                </div>
+                <div>
+                  {r.payer}
+                  <p className={styles.note}>Account: {r.account_series}</p>
+                  <p className={styles.note}>{r.source_file}</p>
+                </div>
+                {can("finance", "approve") && owners.length > 0 && (
+                  <Button secondary onClick={() => setEntitle(r.id)}>
+                    <ShieldCheck size={20} />
+                    Receipt access
+                  </Button>
+                )}
+              </div>
+            ))
+          )}
+          {!office && (
+            <div className={styles.actions}>
+              <Button
+                secondary
+                disabled={page === 0 || exporting}
+                onClick={() => setPage(page - 1)}
+              >
+                Previous
+              </Button>
+              <span>Page {page + 1}</span>
+              <Button
+                secondary
+                disabled={(page + 1) * 20 >= data.total || exporting}
+                onClick={() => setPage(page + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          )}
         </>
+      )}
+      {dashboard && receiptDetail && (
+        <Modal
+          title={`Receipt ${receiptDetail.or_number}`}
+          onClose={() => setReceiptDetail(null)}
+        >
+          <p className={styles.note}>
+            Imported receipt evidence. This record does not establish bank
+            clearance or a current balance.
+          </p>
+          <dl className={styles.receiptDetail}>
+            <div>
+              <dt>Recorded amount</dt>
+              <dd>{money(receiptDetail.amount_centavos)}</dd>
+            </div>
+            <div>
+              <dt>Receipt date</dt>
+              <dd>{registryDate(receiptDetail.receipt_date)}</dd>
+            </div>
+            <div>
+              <dt>Property</dt>
+              <dd>{receiptDetail.physical_id}</dd>
+            </div>
+            <div>
+              <dt>Recorded payer</dt>
+              <dd>{receiptDetail.payer || "Not supplied"}</dd>
+            </div>
+            <div>
+              <dt>Account series</dt>
+              <dd>{receiptDetail.account_series || "Not supplied"}</dd>
+            </div>
+            <div>
+              <dt>Source</dt>
+              <dd>{receiptDetail.source_file || "Not supplied"}</dd>
+            </div>
+          </dl>
+        </Modal>
       )}
       {entitle && (
         <OperationDialog

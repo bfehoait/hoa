@@ -31,6 +31,7 @@ import ListingMedia, {
 } from "./ListingMedia";
 import ItemRows from "./ItemRows";
 import styles from "./LiveFeature.module.css";
+import { manilaInstant } from "../../../../../packages/shared/src/operations";
 
 /** Fields the server stores as newline-separated text but a person enters as a
  *  list. Only the entry changes; the stored value and its validation do not. */
@@ -43,12 +44,14 @@ type Payload = {
   consent: boolean;
   links: PublicationLink[];
   cover: Blob | null;
+  expires: string | null;
 };
 export default function FeatureSubmissionForm({
   module,
   editing,
   clientId,
   publishable,
+  directPublish = false,
   onSaved,
   onBusyChange,
   onRecordSaved,
@@ -57,6 +60,7 @@ export default function FeatureSubmissionForm({
   editing: FeatureRecord | null;
   clientId: string;
   publishable: boolean;
+  directPublish?: boolean;
   onSaved: (message: string) => void;
   onBusyChange: (busy: boolean) => void;
   onRecordSaved: () => void;
@@ -64,7 +68,9 @@ export default function FeatureSubmissionForm({
   const definition = baselineModule(module),
     cache = useQueryClient(),
     prefix = useId();
-  const media = listingModules.includes(module);
+  const announcement = module === "publishing";
+  const candidate = module === "election-candidates";
+  const media = listingModules.includes(module) || announcement || candidate;
   // Fields can depend on an earlier answer (see BaselineField.showWhen), so the
   // selects those fields depend on are controlled; everything else stays
   // uncontrolled and is read from FormData on submit.
@@ -97,6 +103,7 @@ export default function FeatureSubmissionForm({
     linksDone: boolean;
     coverDone: boolean;
     removed: boolean;
+    coverPath: string | null;
   } | null>(null);
   const payload = useRef<Payload | null>(null);
   const previewUrl = useRef<string | null>(null);
@@ -135,6 +142,7 @@ export default function FeatureSubmissionForm({
           linksDone: false,
           coverDone: false,
           removed: false,
+          coverPath: null,
         };
         setRecordSaved(true);
         onRecordSaved();
@@ -152,14 +160,28 @@ export default function FeatureSubmissionForm({
           await featureRpc("bfe_remove_listing_cover", { p_record: stage.id });
           stage.removed = true;
         }
-        await uploadListingCover(stage.id, input.cover);
+        stage.coverPath = await uploadListingCover(stage.id, input.cover);
         stage.coverDone = true;
+      }
+      if (announcement && directPublish) {
+        await featureRpc("bfe_publish_announcement", {
+          p_id: stage.id,
+          p_title: input.title,
+          p_detail: input.detail,
+          p_fields: input.fields,
+          p_expires: input.expires,
+          p_cover_path: stage.coverPath,
+        });
       }
     },
     onSuccess: async () => {
       await cache.invalidateQueries({ queryKey: ["feature-records"] });
       await cache.invalidateQueries({ queryKey: ["listing-media"] });
-      onSaved("Submission saved by the server. Review is pending.");
+      onSaved(
+        announcement && directPublish
+          ? "Announcement published."
+          : "Submission saved by the server. Review is pending.",
+      );
     },
   });
   const busy = preparing || mutation.isPending;
@@ -205,10 +227,12 @@ export default function FeatureSubmissionForm({
       return;
     }
     const consent = values.get("consent") === "on";
-    if ((cover || links.length) && !consent) {
+    if ((cover || links.length || directPublish) && !consent) {
       setValidation(
         new Error(
-          "Choose publication consent before attaching a photo or public contact links.",
+          directPublish
+            ? "Confirm that this announcement may be published to the selected audience."
+            : "Choose publication consent before attaching a photo or public contact links.",
         ),
       );
       event.currentTarget
@@ -222,20 +246,24 @@ export default function FeatureSubmissionForm({
       consent,
       links: parsedLinks.data,
       cover,
+      expires: directPublish
+        ? manilaInstant(String(values.get("publicationExpiry") ?? ""))
+        : null,
     };
     mutation.mutate(payload.current);
   }
   return (
     <form className={styles.form} onSubmit={submit}>
       <p className={styles.formHelp}>
-        Required fields are marked. Submitting does not publish or approve this
-        record.
+        {directPublish
+          ? "Post this announcement to the selected audience."
+          : "Required fields are marked. Submitting does not publish or approve this record."}
       </p>
       {recordSaved && (
         <p className={styles.notice} role="status">
-          Your submission is saved. Photo or link changes are not yet fully
-          confirmed. Retry below, or open the saved submission to check them.
-          Retrying does not create another submission.
+          {directPublish
+            ? "The announcement is saved, but publication has not been confirmed. Retry below or open the saved announcement. Retrying does not create a duplicate."
+            : "Your submission is saved. Photo or link changes are not yet fully confirmed. Retry below, or open the saved submission to check them. Retrying does not create another submission."}
         </p>
       )}
       <fieldset className={styles.formFields} disabled={busy || recordSaved}>
@@ -273,8 +301,30 @@ export default function FeatureSubmissionForm({
           </p>
         )}
         {shownFields.map((f) => {
-          const label = liveFieldLabel(f.label),
-            hint = featureFieldHint(module, f.key),
+          if (directPublish && f.key === "date")
+            return (
+              <input
+                key={f.key}
+                type="hidden"
+                name="date"
+                value={new Intl.DateTimeFormat("en-CA", {
+                  timeZone: "Asia/Manila",
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                }).format(new Date())}
+              />
+            );
+          const label =
+              directPublish && f.key === "audience"
+                ? "Audience"
+                : announcement && f.key === "attachments"
+                  ? "Image or attachment notes"
+                  : liveFieldLabel(f.label),
+            hint =
+              announcement && f.key === "attachments"
+                ? "Optional notes only. Attach the actual image under Cover image below."
+                : featureFieldHint(module, f.key),
             id = prefix + f.key;
           const options =
             f.key === "assignedTo"
@@ -384,16 +434,34 @@ export default function FeatureSubmissionForm({
             </div>
           );
         })}
+        {directPublish && (
+          <label>
+            Show until (Philippine time)
+            <input name="publicationExpiry" type="datetime-local" required />
+            <span className={styles.formHelp}>
+              The announcement is published immediately and hidden after this
+              time. Choose an expiry within one year.
+            </span>
+          </label>
+        )}
         {media && (
           <section
             className={styles.mediaComposer}
             aria-label="Photo and publication links"
           >
-            <h4>Photo & publication links</h4>
+            <h4>
+              {announcement
+                ? "Cover image (optional)"
+                : candidate
+                  ? "Candidate photo & information links"
+                  : module === "businesses"
+                    ? "Business logo & links"
+                    : "Photo & publication links"}
+            </h4>
             <p className={styles.formHelp}>
-              Optional. One cover photo and up to five HTTPS links. They stay
-              private until staff review and publication. Only upload an image
-              you may share.
+              {announcement
+                ? "Choose an image for Home and the announcement. Text-only announcements work too. Only upload images you may share."
+                : "Optional. One cover photo and up to five HTTPS links. They stay private until staff review and publication. Only upload an image you may share."}
             </p>
             {editing && (
               <>
@@ -406,10 +474,20 @@ export default function FeatureSubmissionForm({
               </>
             )}
             <label>
-              Cover photo
+              {candidate
+                ? "Candidate photo"
+                : module === "businesses"
+                  ? "Business logo"
+                  : "Cover photo"}
               <input
                 type="file"
-                aria-label="Cover photo"
+                aria-label={
+                  candidate
+                    ? "Candidate photo"
+                    : module === "businesses"
+                      ? "Business logo"
+                      : "Cover photo"
+                }
                 accept="image/jpeg,image/png,image/webp"
                 onChange={async (event) => {
                   const file = event.target.files?.[0];
@@ -457,11 +535,13 @@ export default function FeatureSubmissionForm({
                 </Button>
               </>
             )}
-            <PublicationLinkFields
-              links={links}
-              onChange={setLinks}
-              disabled={busy || recordSaved}
-            />
+            {!announcement && (
+              <PublicationLinkFields
+                links={links}
+                onChange={setLinks}
+                disabled={busy || recordSaved}
+              />
+            )}
           </section>
         )}
         {publishable && (
@@ -471,17 +551,31 @@ export default function FeatureSubmissionForm({
               name="consent"
               defaultChecked={editing?.publication_consent}
             />
-            I allow reviewed public text
-            {media ? ", the selected photo and these specific links" : ""} to be
-            published to the selected community audience. Private submitted
-            fields stay restricted.
+            {directPublish
+              ? "I confirm this announcement text"
+              : "I allow reviewed public text"}
+            {announcement
+              ? " and the selected image"
+              : media
+                ? ", the selected photo and these specific links"
+                : ""}{" "}
+            {directPublish ? "may be" : "to be"} published to the selected
+            community audience. Private submitted fields stay restricted.
           </label>
         )}
       </fieldset>
       <Feedback error={validation ?? mutation.error} />
       <div className="form-actions">
         <Button type="submit" pending={mutation.isPending} disabled={preparing}>
-          {recordSaved ? "Retry photo and links" : "Submit for review"}
+          {directPublish
+            ? recordSaved
+              ? "Retry publication"
+              : "Publish announcement"
+            : recordSaved
+              ? announcement
+                ? "Retry image upload"
+                : "Retry photo and links"
+              : "Submit for review"}
         </Button>
         {recordSaved && (
           <Button

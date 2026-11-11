@@ -26,6 +26,8 @@ import {
   requestStatuses,
   helpdeskCategories,
   requestCategoryLabel,
+  requestBusinessFields,
+  requestBusinessDetailsSchema,
   type LiveRequest,
 } from "../../../../../packages/shared/src/requests";
 import {
@@ -33,8 +35,9 @@ import {
   useRequests,
   useRequestThread,
 } from "../../data/requests";
-import { RequestStatusVisual } from "../../components/RecordVisuals";
 import styles from "./RequestDesk.module.css";
+import RequestTopicFields from "./RequestTopicFields";
+import RequestBusinessDetails from "./RequestBusinessDetails";
 import { useAuth } from "../../data/auth";
 import { usePermissions } from "../../data/permissions";
 import { hasCapability } from "../../../../../packages/shared/src/permissions";
@@ -58,6 +61,11 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
   const [notice, setNotice] = useState("");
   const query = useRequests(office, page, status, category);
   const records = query.isError ? [] : (query.data?.records ?? []);
+  const showFilters =
+    office ||
+    !!status ||
+    !!category ||
+    (query.data?.total ?? records.length) >= 5;
   const selected = records.find((record) => record.id === selectedId);
   const canNext =
     query.data?.total === null
@@ -92,84 +100,89 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
           )
         }
       />
-      <div className={styles.toolbar}>
-        <label>
-          Status
-          <select
-            value={status}
-            onChange={(event) => {
-              setStatus(event.target.value);
-              setPage(0);
-              setSelectedId(null);
-            }}
+      {showFilters && (
+        <div className={styles.toolbar}>
+          <label>
+            Status
+            <select
+              value={status}
+              onChange={(event) => {
+                setStatus(event.target.value);
+                setPage(0);
+                setSelectedId(null);
+              }}
+            >
+              <option value="">All statuses</option>
+              {requestStatuses.map((value) => (
+                <option key={value} value={value}>
+                  {requestCategoryLabel(value)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Category
+            <select
+              value={category}
+              onChange={(event) => {
+                setCategory(event.target.value);
+                setPage(0);
+                setSelectedId(null);
+              }}
+            >
+              <option value="">All categories</option>
+              {requestCategories.map((value) => (
+                <option key={value} value={value}>
+                  {requestCategoryLabel(value)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Button
+            secondary
+            pending={query.isFetching}
+            onClick={() => void query.refetch()}
           >
-            <option value="">All statuses</option>
-            {requestStatuses.map((value) => (
-              <option key={value} value={value}>
-                {requestCategoryLabel(value)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Category
-          <select
-            value={category}
-            onChange={(event) => {
-              setCategory(event.target.value);
-              setPage(0);
-              setSelectedId(null);
-            }}
-          >
-            <option value="">All categories</option>
-            {requestCategories.map((value) => (
-              <option key={value} value={value}>
-                {requestCategoryLabel(value)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <Button
-          secondary
-          pending={query.isFetching}
-          onClick={() => void query.refetch()}
-        >
-          <RefreshCw size={20} />
-          Refresh
-        </Button>
-      </div>
+            <RefreshCw size={20} />
+            Refresh
+          </Button>
+        </div>
+      )}
       <Feedback message={notice} />
       {query.isPending ? (
         <Skeleton />
       ) : query.isError ? (
-        <Feedback error={query.error} />
+        <>
+          <Feedback error={query.error} />
+          <Button secondary onClick={() => void query.refetch()}>
+            Try again
+          </Button>
+        </>
       ) : (
         <>
-          <RequestStatusVisual
-            records={records}
-            label="Current filtered page only"
-          />
-          <p className={styles.source}>
-            <CheckCircle2 size={18} />
-            <span>
-              {sample ? "Sample data · This tab only" : "Database records"} ·{" "}
-              {query.data?.total === null
-                ? `${records.length} on this page`
-                : `${query.data?.total ?? 0} matching`}{" "}
-              · Updated{" "}
-              {new Date(query.dataUpdatedAt).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </span>
-          </p>
+          {(office || sample) && (
+            <p className={styles.source}>
+              <CheckCircle2 size={18} />
+              <span>
+                {sample ? "Sample data · This tab only" : "Database records"} ·{" "}
+                {query.data?.total === null
+                  ? `${records.length} on this page`
+                  : `${query.data?.total ?? 0} matching`}{" "}
+                · Updated{" "}
+                {new Date(query.dataUpdatedAt).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            </p>
+          )}
           {!records.length ? (
             <section className={styles.empty}>
               <MessageSquare size={36} />
               <h2>
                 {status || category
                   ? "No matching requests"
-                  : "A clear place to follow up"}
+                  : "No requests yet"}
               </h2>
               <p>
                 {office
@@ -217,25 +230,27 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
               ))}
             </ul>
           )}
-          <nav className={styles.pagination} aria-label="Request pages">
-            <Button
-              secondary
-              disabled={!page || query.isFetching}
-              onClick={() => setPage((value) => value - 1)}
-            >
-              <ArrowLeft size={18} />
-              Previous
-            </Button>
-            <span>Page {page + 1}</span>
-            <Button
-              secondary
-              disabled={!canNext || query.isFetching}
-              onClick={() => setPage((value) => value + 1)}
-            >
-              Next
-              <ArrowRight size={18} />
-            </Button>
-          </nav>
+          {(page > 0 || canNext) && (
+            <nav className={styles.pagination} aria-label="Request pages">
+              <Button
+                secondary
+                disabled={!page || query.isFetching}
+                onClick={() => setPage((value) => value - 1)}
+              >
+                <ArrowLeft size={18} />
+                Previous
+              </Button>
+              <span>Page {page + 1}</span>
+              <Button
+                secondary
+                disabled={!canNext || query.isFetching}
+                onClick={() => setPage((value) => value + 1)}
+              >
+                Next
+                <ArrowRight size={18} />
+              </Button>
+            </nav>
+          )}
         </>
       )}
       {creating && !!query.data && (
@@ -285,19 +300,39 @@ function NewRequest({
   const auth = useAuth();
   const actions = useRequestActions();
   const [draft, setDraft] = useState({
-    title: "",
     description: "",
     category: initialCategory,
+    business_details: requestBusinessDetailsSchema.parse({}),
   });
   const [clientId, setClientId] = useState(() => crypto.randomUUID());
   const [errors, setErrors] = useState<Record<string, string>>({});
-  function change(key: keyof typeof draft, value: string) {
-    setDraft((current) => ({ ...current, [key]: value }));
+  function change(key: "description" | "category", value: string) {
+    setDraft((current) => ({
+      ...current,
+      [key]: value,
+      ...(key === "category"
+        ? { business_details: requestBusinessDetailsSchema.parse({}) }
+        : {}),
+    }));
     setClientId(crypto.randomUUID());
   }
   async function submit(event: FormEvent) {
     event.preventDefault();
-    const parsed = liveRequestInput.safeParse(draft);
+    if (!draft.business_details.topic.trim()) {
+      setErrors({
+        business_details: "Choose a type and specific type, or describe Other.",
+      });
+      document.getElementById("request-topic-type")?.focus();
+      return;
+    }
+    const parsed = liveRequestInput.safeParse({
+      ...draft,
+      title:
+        `${requestCategoryLabel(draft.category)}: ${draft.business_details.topic}`.slice(
+          0,
+          120,
+        ),
+    });
     if (!parsed.success) {
       setErrors(
         Object.fromEntries(
@@ -310,11 +345,7 @@ function NewRequest({
       const first = String(parsed.error.issues[0]?.path[0]);
       document
         .getElementById(
-          first === "title"
-            ? "request-title"
-            : first === "description"
-              ? "request-details"
-              : "request-category",
+          first === "description" ? "request-details" : "request-category",
         )
         ?.focus();
       return;
@@ -330,6 +361,8 @@ function NewRequest({
   return (
     <Modal
       title="New request"
+      presentation="task"
+      protectChanges
       busy={actions.create.isPending}
       description={
         auth.rolePreview || auth.preview
@@ -358,17 +391,59 @@ function NewRequest({
           Your request is visible to you and authorized handlers, not the
           community feed.
         </p>
-        <Field label="Title" error={errors.title}>
-          <input
-            id="request-title"
-            value={draft.title}
-            maxLength={120}
-            aria-invalid={!!errors.title}
-            aria-describedby={errors.title ? "request-title-error" : undefined}
-            onChange={(event) => change("title", event.target.value)}
-            disabled={actions.create.isPending}
-          />
-        </Field>
+        <RequestTopicFields
+          key={draft.category}
+          category={draft.category}
+          disabled={actions.create.isPending}
+          error={errors.business_details}
+          onChange={(topic) => {
+            setDraft((current) => ({
+              ...current,
+              business_details: { ...current.business_details, topic },
+            }));
+            setClientId(crypto.randomUUID());
+          }}
+        />
+        {requestBusinessFields
+          .filter(
+            (field) =>
+              field.key !== "topic" &&
+              (field.categories as readonly string[]).includes(draft.category),
+          )
+          .map((field) => (
+            <Field
+              key={field.key}
+              label={field.label}
+              error={errors.business_details}
+            >
+              <input
+                value={draft.business_details[field.key]}
+                maxLength={
+                  field.key === "evidence_reference"
+                    ? 500
+                    : field.key === "topic" || field.key === "service"
+                      ? 120
+                      : 200
+                }
+                disabled={actions.create.isPending}
+                onChange={(e) => {
+                  setDraft((current) => ({
+                    ...current,
+                    business_details: {
+                      ...current.business_details,
+                      [field.key]: e.target.value,
+                    },
+                  }));
+                  setClientId(crypto.randomUUID());
+                }}
+              />
+              {field.key === "evidence_reference" && (
+                <small>
+                  A description or reference only; no file is uploaded here.
+                </small>
+              )}
+            </Field>
+          ))}
         <Field label="Details" error={errors.description}>
           <textarea
             id="request-details"
@@ -427,6 +502,8 @@ function Thread({
   const [body, setBody] = useState("");
   const [clientId, setClientId] = useState(() => crypto.randomUUID());
   const [notice, setNotice] = useState("");
+  const [handlingBusy, setHandlingBusy] = useState(false);
+  const [handlingEditing, setHandlingEditing] = useState(false);
   async function reply(event: FormEvent) {
     event.preventDefault();
     if (!body.trim()) return;
@@ -450,7 +527,9 @@ function Thread({
   return (
     <Modal
       title={request.title}
-      busy={actions.reply.isPending || actions.status.isPending}
+      presentation={office ? "sheet" : "task"}
+      busy={actions.reply.isPending || actions.status.isPending || handlingBusy}
+      protectChanges={handlingEditing || !!body.trim()}
       description={`${request.category} · ${request.status}`}
       onClose={onClose}
     >
@@ -462,7 +541,13 @@ function Thread({
           : ""}
         . Recorded unit text is not proof of property ownership.
       </p>
-      {office && canStatus && (
+      <RequestBusinessDetails
+        request={request}
+        office={office}
+        onBusy={setHandlingBusy}
+        onEditing={setHandlingEditing}
+      />
+      {office && canStatus && !handlingEditing && (
         <section
           className={styles.statusActions}
           aria-label="Office status actions"

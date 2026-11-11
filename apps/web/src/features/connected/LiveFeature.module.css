@@ -26,7 +26,7 @@
   text-align: left;
   padding: 16px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   background: var(--surface);
   color: var(--ink);
   font: inherit;
@@ -171,23 +171,45 @@
   min-height: 48px;
   font: inherit;
   padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--ink);
+  font-size: 16px;
 }
 .form textarea {
   min-height: 100px;
   resize: vertical;
+  font-size: 16px;
 }
 .card {
   display: grid;
   gap: 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  padding: 20px;
+  padding: var(--card-padding);
   background: var(--surface);
   overflow-wrap: anywhere;
+}
+.listingGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+  gap: 20px;
+}
+.listingGrid .card {
+  align-content: start;
+  gap: 10px;
+  padding: 16px;
+}
+.listingGrid .cardHead {
+  order: 3;
+}
+.listingGrid .cardTitle {
+  font-size: 18px;
+}
+.listingPrice {
+  font-size: 20px;
+  color: var(--ink);
 }
 .card p {
   white-space: pre-wrap;
@@ -232,8 +254,12 @@
   font-size: var(--text-sm);
   color: var(--muted);
 }
+:global([data-customer-ui="true"]) .card > details > p {
+  font-family: var(--body-font);
+}
 .actions {
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
   gap: 12px;
   margin-top: 16px;
@@ -241,7 +267,7 @@
 .notice {
   padding: 16px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-size: 14px;
 }
 .notice summary {
@@ -263,6 +289,7 @@
   width: 24px;
   min-height: 24px;
   flex: none;
+  font-size: 16px;
 }
 .fields {
   display: grid;
@@ -322,6 +349,11 @@
   display: grid;
   gap: 8px;
 }
+.itemRows > button {
+  justify-self: start;
+  align-self: start;
+  max-width: 100%;
+}
 .itemRow {
   display: flex;
   gap: 8px;
@@ -330,4 +362,273 @@
 .itemRow input {
   flex: 1;
   min-width: 0;
+  font-size: 16px;
+}
+
+@media (max-width: 767px) {
+  .sections {
+    display: flex;
+    overflow-x: auto;
+    gap: 8px;
+    padding: 4px 2px 12px;
+    scrollbar-width: thin;
+  }
+  .sections button {
+    flex: 0 0 auto;
+    min-height: 48px;
+    padding: 10px 16px;
+    border-radius: var(--radius-pill);
+  }
+  .sections button[aria-pressed="true"] {
+    box-shadow: none;
+  }
+  .toolbar label {
+    min-width: 0;
+    flex: 1 1 140px;
+  }
+  .actions > button,
+  .actions > a {
+    flex: 1 1 140px;
+  }
+  .card {
+    overflow-wrap: anywhere;
+  }
+}
+.residentRecord {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  text-align: left;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.residentRecordText {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  flex: 1;
+}
+.residentRecordText strong {
+  font-size: 16px;
+  font-weight: 650;
+}
+.residentRecordText > span {
+  font-size: 14px;
+  color: var(--muted);
+}
+.residentRecordText > span:last-child {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.residentRecordEnd {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.residentRecordEnd > svg {
+  color: var(--muted);
+}
+.residentRecord:active {
+  background: var(--accent-soft);
+}
+:global([data-customer-ui="true"]) .stack:has(> .residentRecord),
+:global([data-customer-ui="true"]) .stack:has(> .recordRow) {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--surface);
+}
+:global([data-customer-ui="true"]) .stack > .residentRecord,
+:global([data-customer-ui="true"]) .stack > .recordRow {
+  border: 0;
+  border-radius: 0;
+}
+:global([data-customer-ui="true"]) .stack > .residentRecord + .residentRecord,
+:global([data-customer-ui="true"]) .stack > .recordRow + .recordRow {
+  border-top: 1px solid var(--line);
+}
+:global([data-customer-ui]) .toolbar {
+  box-shadow: none;
+  position: static;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  align-items: end;
+}
+:global([data-customer-ui]) .toolbar label {
+  min-width: 0;
+}
+@media (max-width: 767px) {
+  :global([data-customer-ui]) .toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+}
+.readerViews {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.readerViews button[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
+.browseRecord {
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  min-width: 0;
+}
+.browseRecord > div {
+  padding: 16px;
+}
+.browseRecord h2 {
+  margin: 4px 0 8px;
+  font-size: 18px;
+}
+.browseRecord h2 button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0;
+  border: 0;
+  color: var(--ink);
+  background: transparent;
+  font: inherit;
+  font-weight: 650;
+  text-align: left;
+  cursor: pointer;
+}
+.browseRecord h2 button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.browseRecord h2 button:focus-visible::after {
+  outline: 2px solid var(--accent);
+  outline-offset: -4px;
+  border-radius: var(--radius-lg);
+}
+.browseRecord h2 svg {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+.browseRecord > div > p:last-child {
+  color: var(--muted);
+  font-size: 14px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+:global([data-customer-ui]) .fieldTag {
+  display: inline;
+  margin-left: 8px;
+  font-size: 14px;
+  font-weight: 400;
+}
+:global([data-customer-ui]) .formFields label > input,
+:global([data-customer-ui]) .formFields label > textarea {
+  display: block;
+  margin-top: 8px;
+}
+.browseRecord > section {
+  margin: 0;
+}
+.browseRecord > section > img {
+  aspect-ratio: 16 / 9;
+  max-height: none;
+  object-fit: contain;
+  border-radius: 0;
+}
+
+@media (min-width: 1024px) {
+  :global([data-staff-ui="true"]) .toolbar {
+    position: static;
+    box-shadow: none;
+    padding: 20px;
+    gap: 16px;
+    border-radius: 14px;
+  }
+  :global([data-staff-ui="true"]) .stack {
+    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+  }
+  :global([data-staff-ui="true"]) .card {
+    padding: 24px;
+    border-radius: 14px;
+  }
+  :global([data-staff-ui="true"]) .statusStrip {
+    background: var(--surface);
+    padding: 14px 20px;
+  }
+  :global([data-staff-ui="true"]) .sections {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  :global([data-staff-ui="true"]) .sections button {
+    min-height: 48px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :global([data-staff-ui="true"]) .toolbar {
+    padding: 16px;
+    gap: 12px;
+  }
+  :global([data-staff-ui="true"]) .toolbar label {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    flex: 1 1 200px;
+    font-size: 14px;
+  }
+  :global([data-staff-ui="true"]) .toolbar :is(input, select) {
+    width: 100%;
+  }
+  :global([data-staff-ui="true"]) .card {
+    padding: 16px 20px;
+  }
+  :global([data-staff-ui="true"]) .statusStrip {
+    padding: 12px 16px;
+  }
+}
+
+/* Direct grid actions should not stretch to a labelled field's size.
+   Existing flex action groups and persistent dialog footers stay in charge
+   of their own layout. Primary submissions can fill a narrow screen. */
+.form > button,
+.form fieldset > button {
+  align-self: end;
+  justify-self: start;
+  max-width: 100%;
+}
+@media (max-width: 767px) {
+  .form > button[type="submit"],
+  .form fieldset > button[type="submit"] {
+    justify-self: stretch;
+  }
 }

@@ -102,12 +102,16 @@ export default function AccountInterfacePreview({
       >
         <div>
           <strong>
-            Previewing account: {query.data?.member.name ?? "Loading member…"}
+            Preview: {query.data?.member.name ?? "Loading member…"}
           </strong>
-          <span>Real account view · Read-only · No member notification</span>
+          <span>Read-only · No member notification</span>
         </div>
-        <Button secondary onClick={() => void exit()}>
-          Exit account preview
+        <Button
+          secondary
+          aria-label="Exit account preview"
+          onClick={() => void exit()}
+        >
+          Exit preview
         </Button>
       </div>
       {message && <p role="status">{message}</p>}

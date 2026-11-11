@@ -1,15 +1,15 @@
 .panel,
 .memberPanel {
-  margin: 24px 0;
+  margin: 16px 0;
 }
 .panel {
-  padding: 24px;
+  padding: var(--card-padding);
   border: 1px solid var(--line);
   background: var(--surface);
   border-radius: var(--radius-lg);
 }
 .sectionHeading h3 {
-  font-size: 20px;
+  font-size: 18px;
   margin: 0 0 6px;
 }
 .sectionHeading p,
@@ -26,7 +26,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
   gap: 16px;
-  margin: 24px 0;
+  margin: 16px 0;
 }
 .memberPanel .filters {
   max-width: 400px;
@@ -54,10 +54,25 @@
   max-width: 400px;
 }
 .explanation {
-  margin-block: 20px;
+  margin-block: 12px;
   max-width: 85ch;
   font-size: 14px;
   line-height: 1.6;
+}
+.legend {
+  margin-top: 4px;
+  color: var(--muted);
+}
+.legend summary {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.legend ul {
+  margin: 0;
+  padding-left: 20px;
 }
 .explanation strong {
   font-weight: 600;
@@ -75,25 +90,26 @@
   border-radius: var(--radius-sm);
 }
 .matrix {
+  container-type: inline-size;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  margin-block: 20px;
+  margin-block: 12px;
 }
 .matrixHead,
 .permissionRow {
   display: grid;
-  grid-template-columns: minmax(150px, 1fr) minmax(175px, 0.85fr) minmax(
-      330px,
+  grid-template-columns: minmax(130px, 1fr) minmax(140px, 0.85fr) minmax(
+      300px,
       1.5fr
     );
   align-items: center;
-  gap: 20px;
-  padding: 16px;
+  gap: 12px;
+  padding: 12px 16px;
 }
 .groupMatrix .matrixHead,
 .groupMatrix .permissionRow {
-  grid-template-columns: minmax(150px, 1fr) minmax(330px, 1.5fr);
+  grid-template-columns: minmax(130px, 1fr) minmax(300px, 1.5fr);
 }
 .matrixHead {
   color: var(--muted);
@@ -102,9 +118,10 @@
 }
 .permissionRow {
   border-top: 1px solid var(--line);
-  min-height: 108px;
+  min-height: 88px;
 }
 .moduleName strong {
+  font-size: 16px;
   font-weight: 600;
   display: block;
 }
@@ -136,8 +153,16 @@
   align-items: center;
   gap: 6px;
   border-radius: var(--radius-sm);
-  padding: 4px 8px;
+  padding: 0;
   line-height: 1.5;
+}
+.currentAccess .allowed,
+.currentAccess .blocked,
+.currentAccess .limited {
+  background: transparent;
+}
+.currentAccess .blocked {
+  color: var(--muted);
 }
 .currentAccess svg {
   flex: none;
@@ -170,6 +195,13 @@
   gap: 6px;
   min-width: 0;
 }
+.levelExplanation {
+  grid-column: 1 / -1;
+  margin: 4px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+}
 .ruleChoice {
   position: relative;
   display: flex;
@@ -178,8 +210,8 @@
   justify-content: center;
   text-align: center;
   gap: 6px;
-  min-height: 72px;
-  padding: 10px 6px;
+  min-height: 48px;
+  padding: 6px 4px;
   border: 0;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -191,18 +223,21 @@
 }
 .ruleChoice[data-selected] {
   color: var(--accent);
-  font-weight: 700;
+  font-weight: 600;
 }
 .ruleChoice:hover {
   background: var(--wash);
 }
 .toggleHint {
-  display: block;
-  font-size: 14px;
-  line-height: 1.5;
-  font-weight: 400;
-  color: var(--muted);
-  margin-top: 4px;
+  /* Read by aria-describedby; explanations are visible once in the legend. */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .ruleChoice input {
   position: absolute;
@@ -212,10 +247,11 @@
   height: 100%;
   margin: 0;
   cursor: pointer;
+  font-size: 16px;
 }
 .ruleChoice:has(input:focus-visible) {
-  outline: 3px solid var(--accent);
-  outline-offset: 3px;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .ruleChoice:has(input:disabled) {
   opacity: 0.5;
@@ -236,7 +272,7 @@
      light mode, under the 3:1 WCAG 1.4.11 asks of a control boundary; --muted
      clears it at 5.86:1 light / 7.30:1 dark and matches the knob. */
   border: 1px solid var(--muted);
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   background: var(--wash);
   flex: none;
 }
@@ -269,7 +305,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 4px;
+  margin-top: 0;
 }
 .defaultRule small {
   font-size: 14px;
@@ -299,25 +335,58 @@
   background: var(--surface);
   box-shadow: var(--shadow-sm);
 }
+.footerTools {
+  display: grid;
+  gap: 10px;
+}
+.footerTools .reason {
+  margin: 0;
+  max-width: none;
+}
+.footerTools .reason small {
+  color: var(--muted);
+  font-size: 14px;
+}
+.footerButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
 .delegation {
   border-top: 1px solid var(--line);
   margin-top: 24px;
   padding-top: 24px;
+}
+.delegation summary {
+  min-height: 48px;
+  align-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+}
+.delegation summary span {
+  margin-left: 12px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 400;
+}
+.delegation .reason {
+  margin: 12px 0;
 }
 .noMatches {
   padding: 16px;
   margin: 0;
   color: var(--muted);
 }
-@media (max-width: 1200px) {
+@container (max-width: 680px) {
   .matrixHead {
     display: none;
   }
   .permissionRow,
   .groupMatrix .permissionRow {
     grid-template-columns: minmax(0, 1fr);
-    gap: 14px;
-    padding: 20px;
+    gap: 8px;
+    padding: 12px 16px;
   }
   .permissionRow:first-of-type {
     border-top: 0;
@@ -346,10 +415,25 @@
   }
   .ruleChoice {
     flex-direction: column;
-    min-height: 80px;
-    gap: 8px;
+    min-height: 56px;
+    gap: 4px;
   }
   .actions {
     bottom: calc(84px + env(safe-area-inset-bottom));
   }
+}
+.reasonHint {
+  font-size: var(--text-sm);
+  font-weight: 400;
+  color: var(--muted);
+  line-height: 1.5;
+  max-width: 70ch;
+}
+/* Why a disabled control is disabled, beside the control itself. */
+.blocked {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--amber);
+  line-height: 1.5;
 }

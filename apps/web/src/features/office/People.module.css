@@ -58,6 +58,7 @@
 }
 .search input {
   padding-left: 40px;
+  font-size: 16px;
 }
 .resultsHeading {
   display: flex;
@@ -86,7 +87,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 16px;
-  padding: 20px;
+  padding: var(--card-padding);
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
@@ -119,7 +120,7 @@
   flex-shrink: 0;
   background: var(--accent-soft);
   color: var(--accent);
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
 }
 .roles {
   display: flex;
@@ -141,6 +142,45 @@
 }
 .columnLabels {
   display: none;
+}
+@media (min-width: 1024px) {
+  .summary {
+    padding: 12px 16px;
+    margin-block: 20px;
+    background: var(--surface);
+    border-color: var(--line);
+  }
+  .summaryIcon {
+    display: none;
+  }
+  .summary > div {
+    flex: 1;
+  }
+  .filters {
+    padding: 20px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface);
+    gap: 16px;
+  }
+  .records > li {
+    padding: 16px 20px;
+    min-height: 88px;
+  }
+  .records > li:hover {
+    background: var(--wash);
+  }
+  .identity strong {
+    font-weight: 650;
+  }
+  .avatar {
+    border-radius: 50%;
+    background: var(--wash);
+  }
+  .details > div {
+    grid-template-columns: 180px minmax(0, 1fr);
+    gap: 20px;
+  }
 }
 .pagination {
   display: flex;
@@ -253,4 +293,56 @@
   .summary > div {
     flex: 1 1 160px;
   }
+}
+
+@media (max-width: 767px) {
+  .filters {
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+  .filters .search {
+    flex-basis: 100%;
+  }
+  .records > li {
+    padding: 16px;
+    gap: 12px;
+  }
+  .records > li > button {
+    min-width: 48px;
+  }
+}
+
+.resultsTitle {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+@media (min-width: 1024px) {
+  .filters {
+    margin-block: 16px;
+    padding: 16px;
+    gap: 12px;
+  }
+  .resultsHeading {
+    margin: 16px 0 8px;
+  }
+  .records > li {
+    padding: 12px 16px;
+    min-height: 76px;
+    gap: 12px;
+  }
+  .columnLabels {
+    padding: 8px 16px;
+    gap: 12px;
+  }
+}
+
+.unit small {
+  display: block;
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 4px;
 }

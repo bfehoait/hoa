@@ -1,0 +1,66 @@
+.context {
+  display: grid;
+  gap: 12px;
+  margin-block: 16px;
+}
+.accountingTools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  margin-block: 20px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.accountingTools h2 {
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+.accountingTools p {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0;
+}
+.accountingTools nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.accountingTools a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  color: var(--accent);
+  text-decoration: none;
+}
+.accountingTools a:hover {
+  background: var(--accent-soft);
+}
+.view {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  font-size: 14px;
+}
+.view select {
+  width: 100%;
+}
+.availability {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+@media (min-width: 1024px) {
+  .context {
+    grid-template-columns: minmax(240px, 340px) minmax(0, 1fr);
+    align-items: center;
+    gap: 24px;
+  }
+}

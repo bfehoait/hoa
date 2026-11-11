@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useSearchParams } from "react-router-dom";
 import {
   Building2,
   ChevronLeft,
@@ -8,7 +8,6 @@ import {
   Mail,
   RefreshCw,
   Search,
-  ShieldCheck,
   UserRound,
   Users,
 } from "lucide-react";
@@ -28,6 +27,16 @@ import {
 } from "../../components/UI";
 import { usePeople, type PeopleFilter } from "../../data/people";
 import styles from "./People.module.css";
+import CreateAccount from "./CreateAccount";
+import RegistrationReview from "./RegistrationReview";
+import MemberWorkspace from "./MemberWorkspace";
+import { useRegistryRpc } from "../../data/registry";
+import { usePermissions } from "../../data/permissions";
+import { z } from "zod";
+
+const linkedDirectorySchema = z.object({
+  rows: z.array(z.object({ user_id: z.uuid(), physical_id: z.string() })),
+});
 
 const initialFilter: PeopleFilter = {
   page: 0,
@@ -40,12 +49,73 @@ export default function People({
 }: {
   applications?: boolean;
 }) {
-  // Route key supplied by Office resets filters and selected private records on tab changes.
-  const [draft, setDraft] = useState("");
-  const [filter, setFilter] = useState(initialFilter);
+  const [params, setParams] = useSearchParams();
+  const requestedPage = Number(params.get("page") ?? 0);
+  const field = params.get("field");
+  const status = params.get("status") ?? "";
+  const filter: PeopleFilter = {
+    page:
+      Number.isInteger(requestedPage) &&
+      requestedPage >= 0 &&
+      requestedPage <= 10000
+        ? requestedPage
+        : 0,
+    search: (params.get("q") ?? "").slice(0, 100),
+    field: field === "email" || field === "unit" ? field : "name",
+    status: (applications
+      ? ["Pending", "Approved", "Rejected"]
+      : ["Active", "Invited", "Suspended"]
+    ).includes(status)
+      ? status
+      : "",
+  };
+  const [draft, setDraft] = useState(filter.search);
+  const [draftSearch, setDraftSearch] = useState(filter.search);
+  if (draftSearch !== filter.search) {
+    setDraftSearch(filter.search);
+    setDraft(filter.search);
+  }
+  const setFilter = (
+    next: PeopleFilter | ((current: PeopleFilter) => PeopleFilter),
+  ) => {
+    const value = typeof next === "function" ? next(filter) : next;
+    const nextParams = new URLSearchParams(params);
+    for (const [key, entry] of Object.entries({
+      q: value.search,
+      field: value.field === "name" ? "" : value.field,
+      status: value.status,
+      page: value.page || "",
+    })) {
+      if (entry === "") nextParams.delete(key);
+      else nextParams.set(key, String(entry));
+    }
+    setParams(nextParams, { preventScrollReset: true });
+  };
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedMember, setSelectedMember] = useState<DirectoryMember | null>(
+    null,
+  );
+  const navigationKey = params.toString();
+  const [selectionKey, setSelectionKey] = useState(navigationKey);
+  if (selectionKey !== navigationKey) {
+    setSelectionKey(navigationKey);
+    setSelectedId(null);
+    setSelectedMember(null);
+  }
   const query = usePeople(applications ? "registrations" : "members", filter);
   const rows = query.isError ? [] : (query.data?.rows ?? []);
+  const permissions = usePermissions();
+  const userIds = rows.flatMap((row) =>
+    "user_id" in row && row.user_id ? [row.user_id] : [],
+  );
+  const linked = useRegistryRpc(
+    "bfe_staff_linked_properties",
+    { p_users: userIds },
+    linkedDirectorySchema,
+    !applications &&
+      userIds.length > 0 &&
+      permissions.allowsPath("/office/lots"),
+  );
   const selected = rows.find((row) => row.id === selectedId);
   const updateFilter = (patch: Partial<PeopleFilter>) => {
     setSelectedId(null);
@@ -63,52 +133,28 @@ export default function People({
         }
         icon={applications ? <ClipboardCheck size={28} /> : <Users size={28} />}
         action={
-          <Button
-            secondary
-            pending={query.isFetching}
-            onClick={() => {
-              setSelectedId(null);
-              void query.refetch();
-            }}
-          >
-            <RefreshCw size={20} />
-            Refresh
-          </Button>
+          <div className="page-actions">
+            {!applications && <CreateAccount />}
+            <Button
+              secondary
+              pending={query.isFetching}
+              onClick={() => {
+                setSelectedId(null);
+                void query.refetch();
+                if (userIds.length && permissions.allowsPath("/office/lots"))
+                  void linked.refetch();
+              }}
+            >
+              <RefreshCw size={20} />
+              Refresh
+            </Button>
+          </div>
         }
       />
       <NavigationGroup aria-label="People workspace">
         <NavLink to="/office/residents">Members</NavLink>
         <NavLink to="/office/registrations">Registrations</NavLink>
-        <NavLink to="/office/lots">Lot register</NavLink>
-        <NavLink to="/office/registry">Property change drafts</NavLink>
-        <NavLink to="/office/access">Access planning</NavLink>
       </NavigationGroup>
-      <section className={styles.summary} aria-label="Directory connection">
-        <span className={styles.summaryIcon}>
-          <ShieldCheck size={28} />
-        </span>
-        <div>
-          <strong>
-            {query.isError
-              ? "Connection needs attention"
-              : query.isPending
-                ? "Connecting to records"
-                : "Database records"}
-          </strong>
-          <p>
-            {query.isError
-              ? "No sample fallback is shown."
-              : "Only records returned by your database permissions appear here."}
-          </p>
-        </div>
-        {query.data && !query.isError && (
-          <Badge>
-            {query.data.total === null
-              ? `${rows.length} loaded`
-              : `${query.data.total} matching`}
-          </Badge>
-        )}
-      </section>
       <form
         className={styles.filters}
         onSubmit={(event) => {
@@ -183,7 +229,16 @@ export default function People({
       ) : (
         <>
           <div className={styles.resultsHeading}>
-            <h2>{applications ? "Applications" : "Member directory"}</h2>
+            <div className={styles.resultsTitle}>
+              <h2>{applications ? "Applications" : "Member directory"}</h2>
+              {query.data && (
+                <Badge>
+                  {query.data.total === null
+                    ? `${rows.length} loaded`
+                    : `${query.data.total} matching`}
+                </Badge>
+              )}
+            </div>
             <span>
               {query.dataUpdatedAt
                 ? `Checked ${new Date(query.dataUpdatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
@@ -206,7 +261,11 @@ export default function People({
                 <span>
                   {applications ? "Requested role" : "Assigned roles"}
                 </span>
-                <span>Recorded unit</span>
+                <span>
+                  {applications
+                    ? "Recorded unit"
+                    : "Property / recorded address"}
+                </span>
                 <span>Status</span>
                 <span>Details</span>
               </div>
@@ -235,10 +294,12 @@ export default function People({
                         <Badge key={role}>{role}</Badge>
                       ))}
                     </div>
-                    <span className={styles.unit}>
-                      <Building2 size={18} aria-hidden="true" />
-                      {row.unit || "Not assigned"}
-                    </span>
+                    <DirectoryProperty
+                      row={row}
+                      links={linked.data?.rows ?? []}
+                      pending={linked.isFetching}
+                      failed={linked.isError}
+                    />
                     <span>
                       <Badge
                         tone={row.status === "Active" ? "green" : "neutral"}
@@ -248,7 +309,11 @@ export default function People({
                     </span>
                     <Button
                       secondary
-                      onClick={() => setSelectedId(row.id)}
+                      onClick={() => {
+                        if ("user_id" in row)
+                          setSelectedMember(row as DirectoryMember);
+                        setSelectedId(row.id);
+                      }}
                       aria-label={`View ${row.name || "record"}`}
                     >
                       View
@@ -301,9 +366,9 @@ export default function People({
       <details className={styles.boundaries}>
         <summary>Account actions & household verification</summary>
         <p>
-          This directory is read-only. Invitations, role changes, suspension,
-          deletion and application approval require protected server operations
-          before they can be enabled.
+          Authorized staff can create accounts and review registration
+          applications. Roles, status and deletion are managed through member
+          access settings.
         </p>
         <p>
           Recorded unit text is not proof of ownership or occupancy. Household
@@ -311,7 +376,13 @@ export default function People({
           their own connected records.
         </p>
       </details>
-      {selected && !query.isError && (
+      {!applications && selectedId && selectedMember?.id === selectedId && (
+        <MemberWorkspace
+          initial={selectedMember}
+          onClose={() => setSelectedId(null)}
+        />
+      )}
+      {applications && selected && !query.isError && (
         <Modal
           title={selected.name || "Member details"}
           description={
@@ -366,11 +437,48 @@ export default function People({
           </dl>
           <p className="note">
             {applications
-              ? "Registration proofs are not downloaded by this screen. Approval and invitation delivery are not connected."
+              ? "Verify proof and household details before approving. No email will be sent."
               : "All assigned roles are shown. Primary and extra roles can grant different workspaces; they do not establish property ownership."}
           </p>
+          {applications && <RegistrationReview id={selected.id} />}
         </Modal>
       )}
     </>
+  );
+}
+
+function DirectoryProperty({
+  row,
+  links,
+  pending,
+  failed,
+}: {
+  row: { user_id?: string | null; unit?: string | null };
+  links: { user_id: string; physical_id: string }[];
+  pending: boolean;
+  failed: boolean;
+}) {
+  const matches = links.filter((link) => link.user_id === row.user_id);
+  const unit = row.unit?.trim();
+  return (
+    <span className={styles.unit}>
+      <Building2 size={18} aria-hidden="true" />
+      <span>
+        {matches.length
+          ? matches.map((link) => link.physical_id).join("; ")
+          : unit && !/^(n\/?a|none|-+)$/i.test(unit)
+            ? unit
+            : "Not recorded"}
+        <small>
+          {matches.length
+            ? "Approved property link"
+            : row.user_id && pending
+              ? "Checking property links..."
+              : failed
+                ? "Linked addresses unavailable"
+                : "Recorded address"}
+        </small>
+      </span>
+    </span>
   );
 }

@@ -13,6 +13,7 @@ import {
   Skeleton,
 } from "../../components/UI";
 import styles from "./LiveFeature.module.css";
+import { Link } from "../../components/AccessLink";
 const response = z.object({
   total: z.number(),
   can_create: z.boolean(),
@@ -31,6 +32,7 @@ const response = z.object({
       activity_title: z.string().nullable(),
       places: z.number(),
       details: z.string(),
+      answers: z.record(z.string(), z.string()).optional(),
       status: z.string(),
       version: z.number(),
       history: z.array(
@@ -42,9 +44,13 @@ const response = z.object({
 export default function ParticipationDesk({
   module,
   office = false,
+  pendingOnly = false,
+  initialActivity,
 }: {
   module: "booth-events" | "workshops" | "carpools";
   office?: boolean;
+  pendingOnly?: boolean;
+  initialActivity?: string;
 }) {
   const auth = useAuth(),
     cache = useQueryClient();
@@ -56,15 +62,16 @@ export default function ParticipationDesk({
     [client, setClient] = useState(() => crypto.randomUUID()),
     [notice, setNotice] = useState("");
   const query = useQuery({
-    queryKey: ["participation", auth.userId, module, office, page],
+    queryKey: ["participation", auth.userId, module, office, page, pendingOnly],
     retry: false,
     gcTime: 0,
     refetchInterval: 30000,
     queryFn: async () =>
       response.parse(
-        await featureRpc("bfe_participation_dashboard", {
+        await featureRpc("bfe_business_participation_dashboard", {
           p_module: module,
           p_office: office,
+          p_pending: pendingOnly,
           p_page: page,
         }),
       ),
@@ -78,12 +85,38 @@ export default function ParticipationDesk({
       args: Record<string, unknown>;
     }) => featureRpc(name, args),
     onSuccess: async () => {
-      await cache.invalidateQueries({ queryKey: ["participation"] });
+      await cache.invalidateQueries({
+        predicate: (query) =>
+          query.queryKey[0] === "account" &&
+          query.queryKey.includes("notifications"),
+      });
+      await Promise.all(
+        [
+          "participation",
+          "marketplace",
+          "office-review-inbox",
+          "notifications",
+        ].map((key) => cache.invalidateQueries({ queryKey: [key] })),
+      );
     },
   });
   const data = query.isError ? undefined : query.data;
   return (
     <>
+      {office && (
+        <Link
+          className="text-link"
+          to={
+            pendingOnly
+              ? `/office/participation/${module}?history=1`
+              : `/office/participation/${module}`
+          }
+        >
+          {pendingOnly
+            ? "All applications & history"
+            : "Pending applications only"}
+        </Link>
+      )}
       <PageIntro
         eyebrow="ACTIVITY PARTICIPATION"
         title={
@@ -133,6 +166,27 @@ export default function ParticipationDesk({
                   <p>
                     {r.places} place(s) · {r.details}
                   </p>
+                  {r.answers && (
+                    <dl>
+                      {Object.entries(r.answers)
+                        .filter(([, value]) => value)
+                        .map(([key, value]) => (
+                          <div key={key}>
+                            <dt>
+                              {(
+                                {
+                                  participant: "Applicant",
+                                  phone: "Contact phone",
+                                  business: "Business",
+                                  products: "Products or services",
+                                } as Record<string, string>
+                              )[key] ?? key}
+                            </dt>
+                            <dd>{value}</dd>
+                          </div>
+                        ))}
+                    </dl>
+                  )}
                   <details>
                     <summary>History</summary>
                     <ol>
@@ -168,22 +222,24 @@ export default function ParticipationDesk({
                 Your server-confirmed applications appear here.
               </Empty>
             )}
-            <div className={styles.actions}>
-              <Button
-                secondary
-                disabled={!page}
-                onClick={() => setPage(page - 1)}
-              >
-                Previous
-              </Button>
-              <Button
-                secondary
-                disabled={(page + 1) * 20 >= data.total}
-                onClick={() => setPage(page + 1)}
-              >
-                Next
-              </Button>
-            </div>
+            {data.total > 20 && (
+              <div className={styles.actions}>
+                <Button
+                  secondary
+                  disabled={!page}
+                  onClick={() => setPage(page - 1)}
+                >
+                  Previous
+                </Button>
+                <Button
+                  secondary
+                  disabled={(page + 1) * 20 >= data.total}
+                  onClick={() => setPage(page + 1)}
+                >
+                  Next
+                </Button>
+              </div>
+            )}
           </>
         )
       )}
@@ -200,12 +256,21 @@ export default function ParticipationDesk({
               const f = new FormData(e.currentTarget);
               mutation.mutate(
                 {
-                  name: "bfe_request_participation",
+                  name: "bfe_request_business_participation",
                   args: {
                     p_client: client,
                     p_activity: f.get("activity"),
                     p_places: Number(f.get("places")),
                     p_details: f.get("details"),
+                    p_answers: Object.fromEntries(
+                      [
+                        "participant",
+                        "phone",
+                        ...(module === "booth-events"
+                          ? ["business", "products"]
+                          : []),
+                      ].map((key) => [key, String(f.get(key) ?? "")]),
+                    ),
                   },
                 },
                 {
@@ -220,7 +285,15 @@ export default function ParticipationDesk({
           >
             <label>
               Activity
-              <select required name="activity">
+              <select
+                required
+                name="activity"
+                defaultValue={
+                  data.activities.some((a) => a.id === initialActivity)
+                    ? initialActivity
+                    : ""
+                }
+              >
                 <option value="">Choose an open activity</option>
                 {data.activities.map((a) => (
                   <option key={a.id} value={a.id}>
@@ -242,6 +315,26 @@ export default function ParticipationDesk({
                 defaultValue={1}
               />
             </label>
+            <label>
+              {module === "booth-events" ? "Vendor name" : "Participant name"}
+              <input name="participant" required maxLength={120} />
+            </label>
+            <label>
+              Contact phone
+              <input name="phone" type="tel" required maxLength={40} />
+            </label>
+            {module === "booth-events" && (
+              <>
+                <label>
+                  Business name
+                  <input name="business" required maxLength={120} />
+                </label>
+                <label>
+                  Products or services
+                  <textarea name="products" required maxLength={1000} />
+                </label>
+              </>
+            )}
             <label>
               Application details
               <textarea

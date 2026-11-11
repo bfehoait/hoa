@@ -1,5 +1,9 @@
 # Current: customer workflows and imported registry
 
+Business form restoration (11 November 2026): [setup, SQL 048-059 and owner verification](BUSINESS-FORM-RESTORATION-SETUP.md). [Coverage and remaining gaps](LEGACY-FORM-COVERAGE-ASSESSMENT.md). Prepared locally; not applied to the live database by the agent.
+
+Current local follow-up: [Resident access and onboarding](RESIDENT-ACCESS-FOLLOWUP.md). Includes migration 023 preserving the owner-applied visitor/carpool permissions and a read-only registration-readiness script. Nothing here records a new live installation.
+
 Latest UI and permissions update: [UI, access and listing media setup](UI-ACCESS-MEDIA-SETUP.md) covers new migrations 014–015, user/role/committee tab access, designated admin management, moderated listing photos/links, and improved booking slots. [Full screenshot/request checklist](UI-UX-FIX-LIST.md). Existing migrations and imports must not be rerun.
 
 Latest correction: [Account interface preview](ACCOUNT-PREVIEW.md) replaces the inspection dashboard with the selected member's actual portal screens, navigation and connected reads. Install only new migration 013 after the already successful 012. The developer stays signed in; writes are blocked and no member notification is sent.

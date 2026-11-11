@@ -4,6 +4,7 @@ import { Link } from "../../components/AccessLink";
 import { useAccountActions, useOwnProfile } from "../../data/accounts";
 import { Button, Feedback, PageIntro, Skeleton } from "../../components/UI";
 import styles from "./Settings.module.css";
+import PrivateHealthNote from "./PrivateHealthNote";
 
 const THEME_KEY = "bellefort-theme";
 
@@ -54,6 +55,7 @@ export default function Settings() {
         title="Settings"
         description="Appearance on this device, and the contact details the office holds for you."
       />
+      <PrivateHealthNote />
 
       <section className={styles.panel} aria-labelledby={ids + "-appearance"}>
         <h2 id={ids + "-appearance"}>Appearance</h2>
@@ -119,9 +121,7 @@ export default function Settings() {
               defaultValue={profile.data?.phone ?? ""}
               maxLength={30}
             />
-            <p className={styles.help}>
-              Digits, spaces and + ( ) . - only.
-            </p>
+            <p className={styles.help}>Digits, spaces and + ( ) . - only.</p>
             <label htmlFor={ids + "-bio"}>About you</label>
             <textarea
               id={ids + "-bio"}

@@ -23,7 +23,7 @@
   place-items: center;
   color: var(--accent);
   background: var(--surface);
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   width: 56px;
   height: 56px;
   flex-shrink: 0;
@@ -38,7 +38,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 24px;
+  padding: var(--card-padding);
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
@@ -83,7 +83,8 @@
   color: var(--ink);
   background: var(--surface);
   border: 1px solid var(--line-strong);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
+  font-size: 16px;
 }
 .records {
   display: flex;
@@ -95,12 +96,12 @@
   align-items: center;
   text-align: left;
   gap: 16px;
-  padding: 20px;
+  padding: var(--card-padding);
   min-height: 80px;
   color: var(--ink);
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   width: 100%;
 }
 .record:hover {
@@ -133,7 +134,7 @@
   padding: 16px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius-control);
 }
 .step > span {
   display: grid;
@@ -178,7 +179,7 @@
   align-items: center;
   gap: 12px;
   background: var(--wash);
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   padding: 16px;
   color: var(--muted);
   font-size: 14px;

@@ -17,7 +17,7 @@
   padding: 20px;
   margin: 20px 0;
   border: 1px solid var(--accent-line);
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   background: var(--accent-soft);
 }
 .workspaceActions p {
@@ -128,7 +128,7 @@
   width: 48px;
   height: 48px;
   flex-shrink: 0;
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   color: var(--accent);
   background: var(--wash);
 }
@@ -270,7 +270,7 @@
     gap: 12px;
     font-size: 30px;
     line-height: 1.25;
-    font-weight: 750;
+    font-weight: 600;
     letter-spacing: -0.6px;
     margin: 0;
   }
@@ -279,7 +279,7 @@
     place-items: center;
     width: 44px;
     height: 44px;
-    border-radius: 12px;
+    border-radius: var(--radius-control);
     background: var(--accent-soft);
     color: var(--accent);
     flex-shrink: 0;
@@ -319,7 +319,7 @@
     min-width: 0;
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: 12px;
+    border-radius: var(--radius-control);
     padding: 18px 20px;
   }
   .sourceSummary small {
@@ -340,7 +340,7 @@
     flex-shrink: 0;
     width: 44px;
     height: 44px;
-    border-radius: 12px;
+    border-radius: var(--radius-control);
     background: var(--accent-soft);
     color: var(--accent);
   }
@@ -368,7 +368,7 @@
   }
   .recordTools h2 {
     font-size: 16px;
-    font-weight: 700;
+    font-weight: 600;
     margin: 0;
   }
   .recordTools > div > span {
@@ -391,12 +391,12 @@
   .recordTools input,
   .recordTools select {
     min-height: 48px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-sm);
     background: var(--bg);
     color: var(--ink);
     font: inherit;
-    font-size: 14px;
+    font-size: 16px;
     padding: 10px 12px;
     width: 100%;
     min-width: 0;
@@ -404,9 +404,11 @@
   .recordTools input {
     padding-left: 38px;
     max-width: 260px;
+    font-size: 16px;
   }
   .recordTools select {
     min-width: 132px;
+    font-size: 16px;
   }
   .noMatches {
     display: grid;
@@ -433,7 +435,7 @@
   .monitor :global(.page-title-icon) {
     width: 40px;
     height: 40px;
-    border-radius: 10px;
+    border-radius: var(--radius-control);
   }
   .monitor :global(.page-description) {
     font-size: 14px;
@@ -546,7 +548,7 @@
     width: 36px;
     height: 36px;
     flex-shrink: 0;
-    border-radius: 10px;
+    border-radius: var(--radius-control);
     color: var(--accent);
     background: var(--accent-soft);
     font-size: 14px;
@@ -645,6 +647,7 @@
   }
   .recordTools input {
     max-width: none;
+    font-size: 16px;
   }
   .desktopHeading h1 {
     font-size: 26px;
@@ -677,5 +680,22 @@
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
+  }
+}
+/* Two actions in one cell: side by side where there is room, stacked and
+   full width where there is not, and never breaking a label across lines. */
+.rowActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.rowActions > * {
+  white-space: nowrap;
+}
+@media (max-width: 1200px) {
+  .rowActions {
+    flex-direction: column;
+    align-items: stretch;
   }
 }

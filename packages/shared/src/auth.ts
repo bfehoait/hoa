@@ -139,6 +139,9 @@ export function canOpenPath(member: AuthMember, input: string): boolean {
     return false;
   const assigned = memberRoles(member);
   if (!assigned.length) return false;
+  // Marketplace browsing is shared by signed-in community accounts. Server
+  // audience/expiry/permission checks still control every listing and action.
+  if (["/directory/market", "/more/marketplace"].includes(path)) return true;
   if (
     assigned.includes("developer") &&
     ["/office", "/admin", "/board", "/security", "/driver", "/explore"].some(
@@ -153,6 +156,8 @@ export function canOpenPath(member: AuthMember, input: string): boolean {
       "/sign-out",
       "/more/profile",
       "/more/help",
+      "/more/hotlines",
+      "/search",
       "/more/notifications",
     ].includes(path)
   )

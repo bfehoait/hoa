@@ -1,6 +1,42 @@
 import { z } from "zod";
 
 const cents = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
+export const accountLotMatchSchema = z.object({
+  expected: z.object({
+    user_id: z.uuid(),
+    name: z.string().nullable(),
+    unit: z.string().nullable(),
+    role: z.string(),
+    extra_roles: z.array(z.string()).nullable(),
+    status: z.string(),
+  }),
+  physical_id: z.string().nullable(),
+  can_link: z.boolean(),
+  candidate: z
+    .object({
+      id: z.uuid(),
+      physical_id: z.string(),
+      recorded_homeowner: z.string(),
+      version: z.number().int(),
+    })
+    .nullable(),
+  relationships: z.array(
+    z.object({ relationship: z.string(), state: z.string() }),
+  ),
+});
+export const workbookAccountMatchesSchema = z.object({
+  workbook_installed: z.boolean(),
+  ready: z.number().int().nonnegative(),
+  rows: z.array(
+    z.object({
+      target_id: z.uuid(),
+      name: z.string().nullable(),
+      unit: z.string().nullable(),
+      status: z.string(),
+      match: accountLotMatchSchema.nullable(),
+    }),
+  ),
+});
 export const lotSchema = z.object({
   id: z.uuid(),
   physical_id: z.string(),

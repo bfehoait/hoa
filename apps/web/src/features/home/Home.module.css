@@ -16,7 +16,7 @@
 }
 .greeting h1 {
   font-size: 32px;
-  font-weight: 750;
+  font-weight: 600;
   letter-spacing: -1px;
   line-height: 1.2;
 }
@@ -56,7 +56,7 @@
   background: var(--brand);
   color: var(--on-brand);
   border-radius: var(--radius-lg);
-  padding: 24px;
+  padding: var(--card-padding);
   box-shadow: var(--shadow-sm);
 }
 .balanceHeader {

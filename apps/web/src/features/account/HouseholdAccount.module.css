@@ -1,0 +1,408 @@
+.page {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+.billingDetails {
+  padding: 16px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  margin-block: 16px;
+}
+.billingDetails > summary {
+  min-height: 48px;
+  padding-block: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.invoiceList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.invoiceList > li {
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+  min-width: 0;
+}
+.invoiceHeading {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
+}
+.invoiceHeading p {
+  margin: 4px 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.invoiceList dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 12px 0 0;
+}
+.invoiceList dt {
+  font-size: 14px;
+  color: var(--muted);
+}
+.invoiceList dd {
+  margin: 4px 0 0;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+@media (min-width: 900px) {
+  .invoiceList > li {
+    display: grid;
+    grid-template-columns: minmax(200px, 1fr) minmax(0, 1.5fr);
+    gap: 24px;
+    align-items: center;
+  }
+  .invoiceList dl {
+    margin: 0;
+  }
+}
+.billingNotice {
+  margin-top: 16px;
+  padding: 16px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+}
+.billingNotice h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+.billingNotice p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.heroTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.heroTop a {
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  font-size: 14px;
+  font-weight: 600;
+  text-underline-offset: 4px;
+}
+.heroTop a:focus-visible {
+  outline-color: var(--accent);
+}
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: 20px 0;
+  padding: 5px;
+  background: var(--wash);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+.tabs a {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 48px;
+  padding: 8px;
+  text-align: center;
+  color: var(--muted);
+  text-decoration: none;
+  border-radius: var(--radius-control);
+  font-size: 14px;
+  font-weight: 650;
+}
+.tabs a[aria-current="page"] {
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+.tabs a:hover {
+  color: var(--accent);
+}
+.payments,
+.properties {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  padding: var(--card-padding);
+}
+.properties {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+.sectionHeading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.sectionHeading h2,
+.properties h2 {
+  font-size: var(--section-heading-size);
+  margin: 0;
+}
+.sectionHeading > span {
+  font-size: 14px;
+  color: var(--muted);
+}
+.note {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.page > .note {
+  margin: 16px 4px;
+}
+.filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 20px 0;
+}
+.filters label {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+}
+.filters input {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 16px;
+  padding: 10px;
+}
+.receipts {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.receipts li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+}
+.receiptHead {
+  display: none;
+}
+.receipts li > h3 {
+  grid-column: 1;
+  grid-row: 1;
+}
+.receipts li > strong {
+  grid-column: 2;
+  grid-row: 1;
+  text-align: right;
+}
+.receipts li > p {
+  grid-column: 1;
+  grid-row: 2;
+}
+.receipts li > time {
+  grid-column: 1 / -1;
+  grid-row: 3;
+}
+.receipts h3 {
+  font-size: 16px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.receipts p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.receipts time {
+  color: var(--muted);
+  font-size: 14px;
+}
+.receipts strong {
+  flex-shrink: 0;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.empty {
+  padding: 20px 0;
+}
+.empty h3 {
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+.empty p {
+  margin: 0;
+  color: var(--muted);
+}
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 20px;
+}
+.pagination span {
+  font-size: 14px;
+}
+@media (min-width: 768px) {
+  .receiptHead,
+  .receipts li {
+    display: grid;
+    grid-template-columns:
+      minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr)
+      minmax(110px, auto);
+    gap: 16px;
+    align-items: center;
+  }
+  .receiptHead {
+    padding: 12px 0;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .receiptHead > :last-child {
+    text-align: right;
+  }
+  .receipts li > h3,
+  .receipts li > p,
+  .receipts li > time,
+  .receipts li > strong {
+    grid-column: auto;
+    grid-row: auto;
+  }
+  .receipts li {
+    min-height: 64px;
+  }
+  .payments,
+  .properties {
+    padding: var(--card-padding);
+  }
+}
+@media (max-width: 360px) {
+  .payments,
+  .properties {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .heroTop {
+    gap: 8px;
+  }
+}
+@media (min-width: 1100px) {
+  .filters {
+    max-width: 640px;
+  }
+}
+.accountHeader {
+  margin-bottom: 16px;
+}
+.accountHeader h1 {
+  font-size: 26px;
+  line-height: 1.3;
+  letter-spacing: -0.5px;
+}
+.holder {
+  margin: 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.address {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.balance {
+  padding: 24px;
+  background: var(--brand);
+  color: var(--on-brand);
+  border-radius: var(--radius-hero);
+  margin: 0 0 16px;
+}
+.balance h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.balance > strong {
+  display: block;
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.2;
+  letter-spacing: -0.6px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.balance p {
+  margin: 12px 0 0;
+  font-size: 14px;
+  max-width: 55ch;
+}
+@media (min-width: 1000px) {
+  .balance {
+    padding: 28px 32px;
+  }
+}
+@media (max-width: 480px) {
+  .accountHeader h1 {
+    font-size: 28px;
+  }
+  .balance {
+    padding: 20px;
+  }
+}
+@media (max-width: 359px) {
+}
+.balanceBreakdown {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 20px 0 0;
+}
+.balanceBreakdown > div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--on-brand-divider);
+  border-radius: var(--radius-control);
+  background: var(--on-brand-panel);
+}
+.balanceBreakdown dt {
+  font-size: 14px;
+  line-height: 1.4;
+}
+.balanceBreakdown dd {
+  margin: 6px 0 0;
+  font-size: 18px;
+  line-height: 1.3;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 480px) {
+  .balanceBreakdown > div {
+    padding: 10px 8px;
+  }
+  .balanceBreakdown dd {
+    font-size: 16px;
+  }
+}

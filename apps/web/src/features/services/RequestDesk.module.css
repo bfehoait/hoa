@@ -40,6 +40,7 @@
 .form textarea {
   min-height: 130px;
   resize: vertical;
+  font-size: 16px;
 }
 .source {
   display: flex;
@@ -55,9 +56,9 @@
 }
 .empty {
   background: var(--surface);
-  border: 1px dashed var(--line-strong);
+  border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  padding: 32px 20px;
+  padding: 28px 20px;
   text-align: center;
 }
 .empty svg {
@@ -76,7 +77,14 @@
   padding: 0;
   margin: 0;
   display: grid;
-  gap: 12px;
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--surface);
+}
+.requests li + li {
+  border-top: 1px solid var(--line);
 }
 .requests button {
   display: grid;
@@ -86,8 +94,8 @@
   align-items: center;
   text-align: left;
   padding: 20px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
+  border: 0;
+  border-radius: 0;
   color: var(--ink);
   background: var(--surface);
   cursor: pointer;
@@ -104,7 +112,7 @@
   place-items: center;
   color: var(--accent);
   background: var(--wash);
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
 }
 .requestInfo {
   min-width: 0;
@@ -162,7 +170,7 @@
 }
 .threadTitle h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: var(--section-heading-size);
 }
 .messages {
   display: grid;
@@ -204,5 +212,64 @@
   .requests button > svg:last-child {
     grid-column: auto;
     grid-row: auto;
+  }
+}
+
+@media (max-width: 767px) {
+  .toolbar label {
+    min-width: 0;
+    flex: 1 1 140px;
+  }
+  .toolbar > button,
+  .toolbar > a {
+    flex: 1 1 100%;
+  }
+}
+
+@media (min-width: 1024px) {
+  :global([data-staff-ui="true"]) .toolbar {
+    padding: 20px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface);
+  }
+  :global([data-staff-ui="true"]) .requests {
+    background: var(--surface);
+    border-radius: 14px;
+  }
+  :global([data-staff-ui="true"]) .requests button {
+    padding: 18px 24px;
+  }
+  :global([data-staff-ui="true"]) .requests button:hover {
+    background: var(--wash);
+  }
+}
+.form fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  display: grid;
+  gap: 16px;
+}
+.form fieldset label {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+}
+
+/* Direct grid actions should not stretch to a labelled field's size.
+   Existing flex action groups and persistent dialog footers stay in charge
+   of their own layout. Primary submissions can fill a narrow screen. */
+.form > button,
+.form fieldset > button {
+  align-self: end;
+  justify-self: start;
+  max-width: 100%;
+}
+@media (max-width: 767px) {
+  .form > button[type="submit"],
+  .form fieldset > button[type="submit"] {
+    justify-self: stretch;
   }
 }

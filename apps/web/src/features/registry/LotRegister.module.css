@@ -8,10 +8,63 @@
   align-items: center;
   margin-block: 20px;
 }
+.financePanel {
+  min-width: 0;
+}
+.financePanel > h2 {
+  font-size: var(--section-heading-size);
+  margin-bottom: 8px;
+}
+.financeRecordsHeading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+  margin-top: 20px;
+}
+.financeRecordsHeading h3 {
+  font-size: 18px;
+  margin: 0;
+}
+.financeRecordsHeading p {
+  margin: 4px 0;
+}
+.receiptOpen {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 8px 0;
+  background: transparent;
+  border: 0;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.receiptDetail {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+.receiptDetail dt {
+  color: var(--muted);
+  font-size: 14px;
+}
+.receiptDetail dd {
+  margin: 4px 0 0;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
 .toolbar {
   padding: 18px;
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
 }
 .toolbar label,
@@ -30,8 +83,8 @@
   width: 100%;
   min-width: 0;
   padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
   background: var(--surface);
   color: var(--ink);
   font: inherit;
@@ -42,12 +95,26 @@
   gap: 12px;
   margin-block: 20px;
 }
+:global([data-customer-ui="true"]) .list:has(> a) {
+  gap: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+:global([data-customer-ui="true"]) .list > a {
+  border: 0;
+  border-radius: 0;
+}
+:global([data-customer-ui="true"]) .list > a + a {
+  border-top: 1px solid var(--line);
+}
 .card,
 .panel {
-  padding: 20px;
+  padding: var(--card-padding);
   border: 1px solid var(--line);
   background: var(--surface);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   min-width: 0;
 }
 .card {
@@ -59,7 +126,7 @@
 }
 .card h2,
 .panel h2 {
-  font-size: 20px;
+  font-size: var(--section-heading-size);
   margin: 0 0 8px;
 }
 .card p,
@@ -79,7 +146,7 @@
   flex: 1;
   min-width: 140px;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   padding: 18px;
   background: var(--surface);
 }
@@ -161,6 +228,58 @@ fieldset.form {
   margin: 10px 0 18px;
   overflow: hidden;
 }
+.monthGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  margin-bottom: 20px;
+}
+.monthFilter {
+  min-height: 48px;
+  display: grid;
+  gap: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  font: inherit;
+  text-align: left;
+}
+.monthFilter:hover {
+  background: var(--wash);
+}
+.monthFilter > span {
+  font-size: 14px;
+}
+.monthFilter .bar {
+  margin: 4px 0 0;
+}
+.receiptTable {
+  min-width: 760px;
+  width: 100%;
+}
+.receiptTable th,
+.receiptTable td {
+  overflow-wrap: anywhere;
+  max-width: 240px;
+}
+.receiptTable td {
+  font-size: 16px;
+}
+.receiptTable th[scope="row"] {
+  background: var(--surface);
+}
+.amount {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.sourceAccount {
+  display: block;
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 4px;
+}
 .bar span {
   display: block;
   height: 100%;
@@ -192,11 +311,155 @@ fieldset.form {
   padding-bottom: 10px;
   overflow-wrap: anywhere;
 }
+
+/* Lot detail surfaces only: shared registry lists and other desks keep their layout. */
+.profile {
+  min-width: 0;
+}
+.profileTabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin: 16px 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--wash);
+  overflow-x: auto;
+}
+.profileTabs button {
+  flex: 1 0 100px;
+  min-height: 48px;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+}
+.profileTabs button:hover {
+  color: var(--accent);
+}
+.profileTabs button[aria-pressed="true"] {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--accent);
+  font-weight: 650;
+  box-shadow: var(--shadow-sm);
+}
+.profileTabs button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -3px;
+}
+.profile > .panel {
+  padding: 20px;
+}
+.profile .panel > dl {
+  gap: 16px 24px;
+  margin-block: 16px;
+  grid-template-columns: minmax(0, 1fr);
+}
+.profile .panel > dl > div {
+  min-width: 0;
+}
+.profile .panel > dl dt {
+  margin-bottom: 4px;
+}
+.profile .panel > dl dd {
+  font-size: 16px;
+  line-height: 1.5;
+}
+.businessPanel > button {
+  margin-top: 8px;
+}
+.linkedMember {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px 24px;
+  border-top: 1px solid var(--line);
+  padding-block: 16px;
+  overflow-wrap: anywhere;
+}
+.linkedMember > div {
+  min-width: 0;
+}
+.sourceSummary {
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+  background: var(--wash);
+  border-radius: var(--radius-control);
+  margin-block: 16px;
+  overflow-wrap: anywhere;
+}
+.timeline {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.timeline > li {
+  position: relative;
+  padding: 20px 0 20px 24px;
+  border-left: 2px solid var(--line);
+  overflow-wrap: anywhere;
+}
+.timeline > li::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: 26px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.timeline > li + li {
+  border-top: 1px solid var(--line);
+}
+.historyHeading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 24px;
+}
+.historyHeading time {
+  font-size: 14px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.profile .auditDetails dl {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--wash);
+  border-radius: var(--radius-control);
+}
+.auditDetails summary,
+.sourceSummary summary {
+  color: var(--accent);
+  font-size: 14px;
+}
+@media (min-width: 768px) {
+  .profile .panel > dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .profile .auditDetails dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1200px) {
+  .profile .panel > dl {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
 @media (min-width: 1000px) {
   .list {
     gap: 0;
     border: 1px solid var(--line);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     overflow: hidden;
   }
   .card {
@@ -223,4 +486,136 @@ fieldset.form {
 
 .metrics {
   align-items: stretch;
+}
+
+@media (max-width: 767px) {
+  .toolbar {
+    padding: 16px;
+    gap: 12px;
+  }
+  .toolbar label {
+    min-width: 0;
+    flex: 1 1 140px;
+  }
+  .toolbar > button,
+  .toolbar > a {
+    flex: 1 1 100%;
+  }
+  .tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  .tabs button {
+    flex: 0 0 auto;
+  }
+  .actions > button,
+  .actions > a {
+    flex: 1 1 140px;
+  }
+}
+@media (min-width: 1100px) {
+  .list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+@media (min-width: 1024px) {
+  :global([data-staff-ui="true"]) .toolbar {
+    padding: 20px;
+    gap: 16px;
+    align-items: end;
+  }
+  :global([data-staff-ui="true"]) .list {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+  :global([data-staff-ui="true"]) .list > .card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    padding: 18px 24px;
+    border: 0;
+    border-radius: 0;
+  }
+  :global([data-staff-ui="true"]) .list > .card + .card {
+    border-top: 1px solid var(--line);
+  }
+  :global([data-staff-ui="true"]) .list > .card:hover {
+    background: var(--wash);
+  }
+  :global([data-staff-ui="true"]) .receipt {
+    padding: 16px 20px;
+    grid-template-columns:
+      minmax(100px, 1fr) minmax(120px, 1fr) minmax(180px, 1.5fr)
+      auto;
+    align-items: center;
+    gap: 16px;
+  }
+  :global([data-staff-ui="true"]) .receipt p {
+    margin: 4px 0;
+  }
+  :global([data-staff-ui="true"]) .metrics > div {
+    min-width: 160px;
+    padding: 18px 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :global([data-staff-ui="true"]) .toolbar {
+    padding: 12px 0;
+    margin-block: 12px;
+    gap: 12px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  :global([data-staff-ui="true"]) .panel .toolbar {
+    border-block: 1px solid var(--line);
+  }
+  :global([data-staff-ui="true"]) .toolbar > label {
+    flex: 0 1 280px;
+  }
+  :global([data-staff-ui="true"]) .metrics {
+    margin-block: 12px;
+  }
+  :global([data-staff-ui="true"]) .metrics > div {
+    padding: 12px 16px;
+    background: var(--wash);
+    border-color: transparent;
+  }
+  :global([data-staff-ui="true"]) .metrics strong {
+    margin-top: 4px;
+  }
+  :global([data-staff-ui="true"]) .monthGrid {
+    gap: 8px;
+    margin-bottom: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  }
+  :global([data-staff-ui="true"]) .monthFilter {
+    padding: 12px;
+  }
+  :global([data-staff-ui="true"]) .list > .card {
+    padding: 12px 16px;
+  }
+}
+
+/* Direct grid actions should not stretch to a labelled field's size.
+   Existing flex action groups and persistent dialog footers stay in charge
+   of their own layout. Primary submissions can fill a narrow screen. */
+.form > button,
+.form fieldset > button {
+  align-self: end;
+  justify-self: start;
+  max-width: 100%;
+}
+@media (max-width: 767px) {
+  .form > button[type="submit"],
+  .form fieldset > button[type="submit"] {
+    justify-self: stretch;
+  }
 }

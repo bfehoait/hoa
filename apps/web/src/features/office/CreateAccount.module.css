@@ -1,0 +1,65 @@
+.form,
+.fields {
+  display: grid;
+  gap: 16px;
+}
+.fields {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.fields > div {
+  margin: 0;
+  min-width: 0;
+}
+.memberActions {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+.memberActions > button {
+  align-self: center;
+  max-width: 100%;
+}
+.note {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.password {
+  display: block;
+  position: relative;
+}
+.password input {
+  min-width: 0;
+  min-height: 52px;
+  padding-right: 60px;
+  font-size: 16px;
+}
+.password button {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  bottom: 2px;
+  min-width: 48px;
+  padding: 0;
+}
+.deleteSection {
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+  margin-top: 24px;
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+@media (max-width: 600px) {
+  .fields {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+}

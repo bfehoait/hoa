@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { featureReviewCapabilities } from "./office-review";
 
 export const accessModules = [
   "overview",
@@ -97,8 +98,33 @@ export function officeRequirement(
   )
     return null;
   const section = path.replace(/^\/(office|admin)\/?/, "").split("/")[0];
+  if (section === "review" && path.split("/")[3]) {
+    const code = path.split("/")[3] as keyof typeof featureReviewCapabilities;
+    const module =
+      path.split("/").length === 4 &&
+      Object.hasOwn(featureReviewCapabilities, code)
+        ? featureReviewCapabilities[code]
+        : undefined;
+    return module
+      ? { module, action: "view", scope: "association" }
+      : undefined;
+  }
+  if (section === "participation") {
+    const code = path.split("/")[3];
+    const module =
+      code === "carpools"
+        ? "transport"
+        : ["booth-events", "workshops"].includes(code)
+          ? "livelihood"
+          : undefined;
+    return module
+      ? { module, action: "view", scope: "association" }
+      : undefined;
+  }
   const modules: Record<string, Capability["module"]> = {
     "": "overview",
+    approvals: "overview",
+    shuttle: "transport",
     residents: "people",
     registry: "property",
     lots: "property",
@@ -107,9 +133,12 @@ export function officeRequirement(
     requests: "requests",
     inbox: "requests",
     operations: "operations",
+    settings: "operations",
+    hotlines: "hotlines",
+    "garage-items": "livelihood",
     review: "operations",
-    permits: "operations",
-    vehicles: "security",
+    permits: "property",
+    vehicles: "property",
     finance: "finance",
     community: "community",
     announcements: "community",

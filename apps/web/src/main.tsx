@@ -10,6 +10,8 @@ import { previewScope } from "./data/preview-scope";
 import { accountPreview } from "./data/account-preview-client";
 import "./styles/tokens.css";
 import "./styles/global.css";
+import "./styles/customer.css";
+import "./styles/desktop.css";
 
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -22,10 +24,13 @@ class ErrorBoundary extends React.Component<
   render() {
     return this.state.failed ? (
       <main className="fatal">
-        <p className="eyebrow">Bellefort · Preview</p>
+        <p className="eyebrow">Bellefort Estates</p>
         <h1>We couldn’t open this screen.</h1>
-        <p>Reload to try again. Your real HOA account has not been changed.</p>
-        <button onClick={() => location.reload()}>Reload preview</button>
+        <p>
+          Reload to reopen this screen. If you just saved a change, check its
+          status before submitting it again.
+        </p>
+        <button onClick={() => location.reload()}>Reload screen</button>
       </main>
     ) : (
       this.props.children

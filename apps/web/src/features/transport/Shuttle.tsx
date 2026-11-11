@@ -27,10 +27,10 @@ import {
   PageIntro,
   Skeleton,
 } from "../../components/UI";
-import { Link } from "../../components/AccessLink";
-import CommunityMap from "../../components/CommunityMap";
 import styles from "./Shuttle.module.css";
 import { usePermissions } from "../../data/permissions";
+import ShuttleStops, { shuttleStops } from "./ShuttleStops";
+import ShuttleDemoMap from "./ShuttleDemoMap";
 
 const exampleId = "78000000-0000-4000-8000-000000000001";
 const passengerId = "78000000-0000-4000-8000-000000000002";
@@ -88,11 +88,18 @@ export default function Shuttle() {
   const sample = auth.preview || !!auth.rolePreview;
   const roles = auth.member ? memberRoles(auth.member) : [];
   const sampleDriver = roles.includes("driver");
+  const passengerView =
+    !location.pathname.startsWith("/driver") &&
+    !location.pathname.startsWith("/office") &&
+    ((sample && !sampleDriver) ||
+      roles.some((role) => role === "homeowner" || role === "renter"));
   const uid = auth.userId ?? exampleId;
   const [history, setHistory] = useState(false);
   const [outcomeFilter, setOutcomeFilter] = useState("");
   const [page, setPage] = useState(0);
   const [form, setForm] = useState(false);
+  const [pickupStop, setPickupStop] = useState("");
+  const [destinationStop, setDestinationStop] = useState("");
   const [roster, setRoster] = useState(false);
   const [selectedShuttle, setSelectedShuttle] = useState("");
   const [message, setMessage] = useState("");
@@ -140,7 +147,7 @@ export default function Shuttle() {
     queryFn: async ({ signal }) => {
       const parsed = shuttleDashboardSchema.safeParse(
         await rpc(
-          "bfe_shuttle_dashboard",
+          "bfe_shuttle_journey_dashboard",
           {
             p_history: history,
             p_page: page,
@@ -303,6 +310,42 @@ export default function Shuttle() {
       /* Visible error below; no optimistic success. */
     }
   }
+  const requestAction =
+    data &&
+    !history &&
+    ((sample && !sampleDriver) ||
+      roles.some((role) => role === "homeowner" || role === "renter")) ? (
+      <>
+        <Button
+          disabled={
+            readOnly ||
+            (passengerView && (!pickupStop || !destinationStop)) ||
+            !data.shuttles.some(
+              (vehicle) => vehicle.active && vehicle.available,
+            ) ||
+            rows.some((row) => row.owner_id === uid) ||
+            !!data.prior_day_request
+          }
+          onClick={() => {
+            setForm(true);
+            setMessage("");
+          }}
+        >
+          Request a shuttle
+        </Button>
+        {readOnly ? (
+          <p>Your account has view-only access.</p>
+        ) : data.prior_day_request ? (
+          <p>Review your earlier request below before requesting again.</p>
+        ) : rows.some((row) => row.owner_id === uid) ? (
+          <p>You already have an active request. Follow its progress below.</p>
+        ) : !data.shuttles.some(
+            (vehicle) => vehicle.active && vehicle.available,
+          ) ? (
+          <p>No shuttle is available right now. Check again later.</p>
+        ) : null}
+      </>
+    ) : null;
   return (
     <>
       <PageIntro
@@ -311,8 +354,29 @@ export default function Shuttle() {
         }
         title="Shuttle service"
         icon={<BusFront size={28} />}
-        description="Check shuttle availability, request a pickup, and follow your trip."
+        description="Choose your stops, check availability and follow your pickup."
       />
+      {passengerView && (
+        <ShuttleDemoMap
+          pickup={pickupStop}
+          destination={destinationStop}
+          onChange={(pickup, destination) => {
+            setPickupStop(pickup);
+            setDestinationStop(destination);
+          }}
+        />
+      )}
+      {passengerView && (
+        <ShuttleStops
+          pickup={pickupStop}
+          action={requestAction}
+          destination={destinationStop}
+          onChange={(pickup, destination) => {
+            setPickupStop(pickup);
+            setDestinationStop(destination);
+          }}
+        />
+      )}
       <div className={`${styles.toolbar} ${styles.navigation}`}>
         <Button
           secondary
@@ -495,26 +559,7 @@ export default function Shuttle() {
               </p>
             </details>
           </section>
-          {!history &&
-            ((sample && !sampleDriver) ||
-              roles.some((r) => r === "homeowner" || r === "renter")) && (
-              <div className={styles.toolbar}>
-                <Button
-                  disabled={
-                    readOnly ||
-                    !data.shuttles.some((s) => s.active && s.available) ||
-                    rows.some((r) => r.owner_id === uid) ||
-                    !!data.prior_day_request
-                  }
-                  onClick={() => {
-                    setForm(true);
-                    setMessage("");
-                  }}
-                >
-                  Request a shuttle
-                </Button>
-              </div>
-            )}
+          {!passengerView && requestAction}
           {!history &&
             page === 0 &&
             data.driver &&
@@ -715,6 +760,30 @@ export default function Shuttle() {
                   </p>
                 )}
                 {r.reason && <p>{r.reason}</p>}
+                {r.pickup_note && (
+                  <p>
+                    <strong>Pickup note:</strong> {r.pickup_note}
+                  </p>
+                )}
+                {r.driver_note && (
+                  <p>
+                    <strong>Driver note:</strong> {r.driver_note}
+                  </p>
+                )}
+                {r.estimated_arrival && (
+                  <p>
+                    Estimated arrival {when(r.estimated_arrival)}. This is an
+                    estimate.
+                  </p>
+                )}
+                {!sample &&
+                  !readOnly &&
+                  data.driver &&
+                  r.driver_id === uid &&
+                  ["Accepted", "On the way"].includes(r.status) &&
+                  Date.parse(r.expires_at) > now && (
+                    <JourneyEstimate request={r} />
+                  )}
                 {!history && (
                   <div className={styles.toolbar}>
                     {shuttleActions(
@@ -783,15 +852,12 @@ export default function Shuttle() {
               </div>
             )}
           </section>
-          {!location.pathname.startsWith("/driver") && (
-            <Link className="text-link" to="/directory/transport">
-              Explore separate carpool offers
-            </Link>
-          )}
         </>
       )}
       {form && (
         <NewShuttleRequest
+          initialPickup={pickupStop}
+          initialDestination={destinationStop}
           sample={sample}
           busy={action.isPending}
           onClose={() => setForm(false)}
@@ -819,12 +885,13 @@ export default function Shuttle() {
               );
             } else {
               await action.mutateAsync({
-                name: "bfe_create_shuttle_request",
+                name: "bfe_create_shuttle_journey",
                 args: {
                   p_client: client,
                   p_pickup: input.pickup,
                   p_destination: input.destination,
                   p_passengers: input.passengers,
+                  p_note: input.pickup_note ?? "",
                 },
               });
               setMessage(
@@ -849,30 +916,37 @@ export default function Shuttle() {
           }}
         />
       )}
-      <CommunityMap
-        title="Pickup and drop-off"
-        description="The shuttle serves Bellefort Estates and the sales office. Stations and routes are set by the office."
-      />
     </>
   );
 }
 
 function NewShuttleRequest({
+  initialPickup,
+  initialDestination,
   sample,
   busy,
   onClose,
   onSubmit,
 }: {
+  initialPickup: string;
+  initialDestination: string;
   sample: boolean;
   busy: boolean;
   onClose: () => void;
   onSubmit: (
-    input: { pickup: string; destination: string; passengers: number },
+    input: {
+      pickup: string;
+      destination: string;
+      passengers: number;
+      pickup_note?: string;
+    },
     client: string,
   ) => Promise<void>;
 }) {
   const [error, setError] = useState<Error | null>(null);
   const [client, setClient] = useState(() => crypto.randomUUID());
+  const [pickup, setPickup] = useState(initialPickup);
+  const [destination, setDestination] = useState(initialDestination);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
@@ -884,6 +958,16 @@ function NewShuttleRequest({
         new Error(
           "Enter pickup and destination (3–200 characters) and 1–20 passengers.",
         ),
+      );
+      return;
+    }
+    if (
+      !shuttleStops.includes(parsed.data.pickup) ||
+      !shuttleStops.includes(parsed.data.destination) ||
+      parsed.data.pickup === parsed.data.destination
+    ) {
+      setError(
+        new Error("Choose two different stops for pickup and destination."),
       );
       return;
     }
@@ -900,6 +984,8 @@ function NewShuttleRequest({
   return (
     <Modal
       title="Request a shuttle"
+      presentation="task"
+      protectChanges
       description={
         sample
           ? "Synthetic preview only. No dispatch or notification."
@@ -913,14 +999,19 @@ function NewShuttleRequest({
         onSubmit={submit}
         onChange={() => setClient(crypto.randomUUID())}
       >
-        <label>
-          Pickup point
-          <input name="pickup" required minLength={3} maxLength={200} />
-        </label>
-        <label>
-          Destination
-          <input name="destination" required minLength={3} maxLength={200} />
-        </label>
+        <ShuttleStops
+          pickup={pickup}
+          destination={destination}
+          disabled={busy}
+          onChange={(from, to) => {
+            setPickup(from);
+            setDestination(to);
+            setClient(crypto.randomUUID());
+            setError(null);
+          }}
+        />
+        <input type="hidden" name="pickup" value={pickup} />
+        <input type="hidden" name="destination" value={destination} />
         <label>
           Passengers
           <input
@@ -932,12 +1023,92 @@ function NewShuttleRequest({
             required
           />
         </label>
+        <label>
+          Pickup note (optional)
+          <textarea
+            name="pickup_note"
+            maxLength={1000}
+            placeholder="Landmark or pickup instructions"
+          />
+        </label>
         <Feedback error={error} />
         <Button type="submit" pending={busy}>
           {sample ? "Save sample request" : "Send shuttle request"}
         </Button>
       </form>
     </Modal>
+  );
+}
+function JourneyEstimate({ request }: { request: ShuttleRequest }) {
+  const [open, setOpen] = useState(false);
+  const cache = useQueryClient();
+  const save = useMutation({
+    mutationFn: async (f: FormData) => {
+      await rpc("bfe_update_shuttle_journey", {
+        p_id: request.id,
+        p_version: request.version,
+        p_minutes: Number(f.get("minutes")),
+        p_note: f.get("note"),
+      });
+    },
+    onSuccess: async () => {
+      setOpen(false);
+      await cache.invalidateQueries({ queryKey: ["shuttle"] });
+    },
+  });
+  return (
+    <>
+      <Button
+        secondary
+        onClick={() => {
+          save.reset();
+          setOpen(true);
+        }}
+      >
+        Update arrival estimate
+      </Button>
+      {open && (
+        <Modal
+          title="Arrival estimate"
+          description="Update only when safely parked. This does not extend the arrival deadline."
+          busy={save.isPending}
+          protectChanges
+          onClose={() => setOpen(false)}
+        >
+          <form
+            className={styles.form}
+            onSubmit={(e) => {
+              e.preventDefault();
+              save.mutate(new FormData(e.currentTarget));
+            }}
+          >
+            <fieldset disabled={save.isPending}>
+              <label>
+                Minutes until arrival
+                <input name="minutes" type="number" min={1} max={60} required />
+              </label>
+              <label>
+                Message to passenger (optional)
+                <textarea
+                  name="note"
+                  maxLength={1000}
+                  defaultValue={request.driver_note ?? ""}
+                />
+              </label>
+              <Feedback error={save.error} />
+              <div className="form-actions">
+                <Button secondary onClick={() => setOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" pending={save.isPending}>
+                  Save estimate
+                </Button>
+              </div>
+            </fieldset>
+          </form>
+        </Modal>
+      )}
+    </>
   );
 }
 function Roster({

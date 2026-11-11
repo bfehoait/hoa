@@ -21,10 +21,14 @@ import { Button, Feedback, Field, formValues } from "../../components/UI";
 import { useAuth } from "../../data/auth";
 import { AuthFrame } from "./AuthFrame";
 import PreviewAccess from "./PreviewAccess";
+import Registration from "./Registration";
 import styles from "./Access.module.css";
 
 export default function Access() {
   const auth = useAuth();
+  const location = useLocation();
+  if (!auth.preview && location.pathname === "/register")
+    return <Registration />;
   return auth.preview ? <PreviewAccess /> : <SignIn />;
 }
 function SignIn() {

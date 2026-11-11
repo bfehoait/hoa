@@ -1,6 +1,6 @@
 import { NavigationGroup } from "../../components/Navigation";
 import { useState, type FormEvent } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { Navigate, useParams, useSearchParams } from "react-router-dom";
 import { Link } from "../../components/AccessLink";
 import {
   ArrowLeft,
@@ -69,6 +69,7 @@ import LiveFeature from "../connected/LiveFeature";
 import Shuttle from "../transport/Shuttle";
 import RequestDesk from "../services/RequestDesk";
 import LotRegister from "../registry/LotRegister";
+import OperationsDesk from "../connected/OperationsDesk";
 import ParticipationDesk from "../connected/ParticipationDesk";
 import { canOpenPath } from "../../../../../packages/shared/src/auth";
 
@@ -98,6 +99,16 @@ export default function FeatureBaseline() {
     const definition = baselineModules.find((item) => item.id === id);
     if (!auth.preview && !auth.rolePreview) {
       if (
+        ["booth-applications", "participation"].includes(id) &&
+        pageQuery.get("view") !== "review"
+      )
+        return (
+          <Navigate
+            replace
+            to={`/directory/market?section=${id === "booth-applications" ? "booth-events" : "workshops"}&view=applications`}
+          />
+        );
+      if (
         id === "booth-applications" ||
         id === "participation" ||
         id === "carpool-interests"
@@ -116,6 +127,8 @@ export default function FeatureBaseline() {
         );
       if (id === "ride-requests") return <Shuttle />;
       if (id === "unit-register") return <LotRegister />;
+      if (["gate-passes", "walk-ins"].includes(id))
+        return <OperationsDesk kind="visitor" />;
       if (["complaints", "concerns", "tickets", "messages"].includes(id))
         return <RequestDesk />;
     }

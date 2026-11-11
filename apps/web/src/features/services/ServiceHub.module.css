@@ -3,13 +3,13 @@
 }
 .section > h2 {
   margin-bottom: 16px;
-  font-size: 18px;
-  font-weight: 700;
+  font-size: var(--section-heading-size);
+  font-weight: 600;
 }
 .activity {
   padding: 0 16px;
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
 }
 .activity > a:last-child {
@@ -25,5 +25,42 @@
   }
   .activity > a > span:last-child {
     margin-left: 60px;
+  }
+}
+
+.hub {
+  min-width: 0;
+}
+@media (min-width: 1100px) {
+  .hub {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
+    gap: 24px 32px;
+    align-items: start;
+  }
+  .hub > :global(.page-intro),
+  .hub > :global(.search),
+  .hub > details {
+    grid-column: 1 / -1;
+  }
+  .hub > :global(.page-intro),
+  .hub > :global(.search) {
+    margin-bottom: 0;
+  }
+  .hub > :global(.search) {
+    max-width: 640px;
+    width: 100%;
+  }
+  .hub .section {
+    margin: 0;
+    min-width: 0;
+  }
+  .primary {
+    grid-column: 1;
+    grid-row: span 2;
+  }
+  .planning,
+  .latest {
+    grid-column: 2;
   }
 }

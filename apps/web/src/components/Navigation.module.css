@@ -9,10 +9,10 @@
   align-items: flex-start;
   position: relative;
   gap: 14px;
-  padding: 20px;
+  padding: var(--card-padding);
   min-height: 148px;
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
   color: var(--ink);
   text-decoration: none;
@@ -23,7 +23,7 @@
   place-items: center;
   width: 52px;
   height: 52px;
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   background: var(--accent-soft);
   color: var(--accent);
   flex-shrink: 0;
@@ -54,7 +54,7 @@
   display: inline-flex;
   align-items: center;
   min-height: 24px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 2px 8px;
   font-size: 14px;
   color: var(--accent);
@@ -73,7 +73,7 @@
 .compact .tileIcon {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: var(--radius-control);
 }
 .compact .tileArrow {
   display: none;
@@ -92,7 +92,7 @@
   border: 1px solid var(--line-strong);
   /* Was a hardcoded 12px, which gave this corner a different curve from every
      other bordered action on the same screen. */
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   color: var(--accent);
   background: var(--surface);
   font-size: 14px;
@@ -114,7 +114,7 @@
   min-height: 64px;
   padding: 12px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   background: var(--surface);
   color: var(--ink);
   font-size: 14px;
@@ -126,7 +126,7 @@
   place-items: center;
   width: 36px;
   height: 36px;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   background: var(--wash);
   color: var(--accent);
   flex-shrink: 0;
@@ -155,7 +155,7 @@
   margin-top: 10px;
   padding: 10px 14px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   background: var(--wash);
   color: var(--ink);
   font-size: 14px;
@@ -170,7 +170,7 @@
 .disclosure {
   margin: 24px 0;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
 }
 .disclosure summary {
@@ -267,7 +267,7 @@
   .tileIcon {
     width: 44px;
     height: 44px;
-    border-radius: 12px;
+    border-radius: var(--radius-control);
   }
   .tileIcon > svg {
     width: 22px;
@@ -286,5 +286,146 @@
   .compact .destination {
     min-height: 0;
     padding: 14px 16px;
+  }
+}
+
+@media (max-width: 767px) {
+  .destination {
+    min-height: 128px;
+    padding: 16px;
+    gap: 10px;
+  }
+  .tileText {
+    gap: 4px;
+  }
+  .tileText strong {
+    line-height: 1.35;
+  }
+  .tileText > span {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  .compact .destination {
+    min-height: 80px;
+  }
+}
+/* Compact utility destinations, shared by customer hubs. */
+.tiles {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.tiles .destination {
+  flex-direction: row;
+  align-items: center;
+  min-height: 88px;
+  padding: 14px 12px;
+  gap: 10px;
+  box-shadow: none;
+}
+.tiles .tileIcon {
+  width: 36px;
+  height: 40px;
+  background: transparent;
+}
+.tiles .tileIcon svg {
+  width: 24px;
+  height: 24px;
+}
+.tiles .tileText strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+.tiles .tileText > span,
+.tiles .tileArrow {
+  display: none;
+}
+.rows {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--surface);
+}
+.rows .destination {
+  flex-direction: row;
+  align-items: center;
+  min-height: 80px;
+  padding: 16px;
+  gap: 14px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.rows .destination + .destination {
+  border-top: 1px solid var(--line);
+}
+.rows .tileIcon {
+  width: 42px;
+  height: 42px;
+}
+.rows .tileIcon svg {
+  width: 22px;
+  height: 22px;
+}
+.rows .tileText {
+  flex: 1;
+  gap: 3px;
+}
+.rows .tileText strong {
+  font-weight: 600;
+}
+.rows .tileArrow {
+  position: static;
+  flex-shrink: 0;
+}
+.tiles .destination:active,
+.rows .destination:active {
+  background: var(--accent-soft);
+}
+:global([data-customer-ui="true"]) .rows .destination {
+  min-height: 76px;
+  padding: 16px;
+}
+:global([data-customer-ui="true"]) .rows .tileIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--wash);
+  color: var(--accent);
+}
+:global([data-customer-ui="true"]) .rows .tileText strong {
+  font-weight: 600;
+}
+@media (min-width: 1100px) {
+  .tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 359px) {
+  .tiles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .tiles .destination,
+  .rows .destination {
+    transition: background var(--motion-fast);
+  }
+}
+.tileText {
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 1024px) {
+  :global([data-staff-ui="true"]) .navigation {
+    margin-bottom: 16px;
+  }
+  :global([data-staff-ui="true"]) .routeGrid {
+    gap: 8px;
+  }
+  :global([data-staff-ui="true"]) .routeGrid > a {
+    min-height: 56px;
+    padding: 8px 12px;
   }
 }

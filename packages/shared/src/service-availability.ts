@@ -1,3 +1,4 @@
+import { featureReviewCapabilities } from "./office-review";
 // Presentation readiness only. AuthGate and protected server operations still
 // determine who may read or change records.
 export function unavailableService(pathname: string): string | null {
@@ -5,11 +6,18 @@ export function unavailableService(pathname: string): string | null {
   const unavailable: Record<string, string> = {
     "/office/registry": "Property & household changes",
     "/office/history": "Office activity history",
-    "/office/settings": "Office settings",
     "/explore/imports": "Import staging",
     "/explore/calculator": "Billing calculator",
   };
   if (unavailable[path]) return unavailable[path];
+  if (
+    path.startsWith("/office/review/") &&
+    path.split("/").length === 4 &&
+    Object.hasOwn(featureReviewCapabilities, path.split("/")[3])
+  )
+    return null;
+  if (/^\/office\/participation\/(workshops|booth-events|carpools)$/.test(path))
+    return null;
   if (path.startsWith("/admin/")) return "Legacy administration";
   if (path.startsWith("/developer/preview/")) return "Role simulation";
   if (
@@ -27,6 +35,11 @@ export function unavailableService(pathname: string): string | null {
     path.startsWith("/office/") &&
     ![
       "/office/access",
+      "/office/settings",
+      "/office/garage-items",
+      "/office/hotlines",
+      "/office/approvals",
+      "/office/shuttle",
       "/office/residents",
       "/office/registrations",
       "/office/requests",
@@ -50,6 +63,7 @@ export function unavailableService(pathname: string): string | null {
     ![
       "/more/profile",
       "/more/help",
+      "/more/hotlines",
       "/more/notifications",
       "/more/transport",
       "/more/marketplace",
@@ -65,9 +79,12 @@ export function unavailableService(pathname: string): string | null {
     return "Community service";
   if (
     path.startsWith("/board/") &&
-    !["/board/documents", "/board/elections", "/board/shuttle", "/board/reports"].includes(
-      path,
-    ) &&
+    ![
+      "/board/documents",
+      "/board/elections",
+      "/board/shuttle",
+      "/board/reports",
+    ].includes(path) &&
     !/^\/board\/updates(\/|$)/.test(path)
   )
     return "Board service";

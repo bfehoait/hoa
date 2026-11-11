@@ -1,11 +1,8 @@
 import { z } from "zod";
-import {
-  baselineModule,
-  fieldVisible,
-  type BaselineField,
-} from "./baseline";
+import { baselineModule, fieldVisible, type BaselineField } from "./baseline";
 export const featureRecordSchema = z.object({
   id: z.uuid(),
+  owner_id: z.uuid().optional(),
   module: z.string(),
   title: z.string(),
   detail: z.string(),

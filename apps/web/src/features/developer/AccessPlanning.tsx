@@ -14,17 +14,25 @@ import {
 import styles from "./DeveloperConsole.module.css";
 import AccessManager from "./AccessManager";
 import TabAccess from "./TabAccess";
+import { useLocation } from "react-router-dom";
 
-export default function AccessPlanning() {
+export default function AccessPlanning({
+  memberOnly = false,
+}: {
+  memberOnly?: boolean;
+}) {
   const access = usePermissions();
+  const office = useLocation().pathname.startsWith("/office");
   const manages = !!(
     access.data?.developer_control || access.data?.access_manager
   );
+  if (memberOnly) return <AccessManager overlayOnly />;
   return (
     <>
       <PageIntro
         eyebrow={
-          access.data?.access_manager && !access.data.developer_control
+          office ||
+          (access.data?.access_manager && !access.data.developer_control)
             ? "OFFICE · ACCESS MANAGEMENT"
             : "DEVELOPER · ACCESS MANAGEMENT"
         }

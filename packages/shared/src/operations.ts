@@ -47,6 +47,11 @@ export const visitorPassSchema = z.object({
   ]),
   effective_status: z.string(),
   version: z.number().int(),
+  pass_kind: z.enum(["visitor", "gate", "small_delivery"]).optional(),
+  arrival_mode: z.enum(["commute", "vehicle"]).optional(),
+  direction: z.enum(["inbound", "outbound"]).optional(),
+  party_count: z.number().int().optional(),
+  items: z.string().optional(),
 });
 export const visitorDashboardSchema = z.object({
   rows: z.array(visitorPassSchema),
@@ -54,7 +59,16 @@ export const visitorDashboardSchema = z.object({
   can_create: z.boolean(),
   can_approve: z.boolean(),
   can_gate: z.boolean(),
-  lots: z.array(z.object({ id: z.uuid(), physical_id: z.string() })),
+  lots: z.array(
+    z.object({
+      id: z.uuid(),
+      physical_id: z.string(),
+      homeowner: z.string().nullable().optional(),
+      phase: z.number().optional(),
+      block: z.number().optional(),
+      lot: z.number().optional(),
+    }),
+  ),
 });
 export type Booking = z.infer<typeof bookingSchema>;
 export type VisitorPass = z.infer<typeof visitorPassSchema>;

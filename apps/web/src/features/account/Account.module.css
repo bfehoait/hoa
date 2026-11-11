@@ -37,7 +37,7 @@
   background: var(--on-brand);
   color: var(--brand-strong);
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   padding: 12px 24px;
   font-weight: 700;
   font-size: 14px;

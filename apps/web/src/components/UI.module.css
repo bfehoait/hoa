@@ -2,9 +2,11 @@
    Tone carries the meaning; this block only carries the shape. */
 .button {
   min-height: 48px;
+  min-block-size: 48px;
+  flex-shrink: 0;
   padding: 12px 24px;
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   font: inherit;
   font-weight: 600;
   display: inline-flex;
@@ -20,13 +22,27 @@
     border-color 160ms,
     transform 160ms;
 }
+:global([data-customer-ui="true"]) .button {
+  border-radius: var(--radius-control);
+  padding-inline: 20px;
+}
+:global([data-customer-ui="true"]) .empty {
+  padding: 28px 20px;
+}
+:global([data-customer-ui="true"]) .emptyMark {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  background: var(--wash);
+}
 .primary {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--on-accent);
 }
 .secondary {
-  background: transparent;
+  background: var(--surface);
   border-color: var(--line-strong);
   color: var(--ink);
 }
@@ -91,10 +107,10 @@
 .badge {
   display: inline-flex;
   align-items: center;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   padding: 4px 8px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
   background: var(--wash);
   color: var(--muted);
@@ -316,7 +332,7 @@ a.row:active {
 }
 .dialogHeader h2 {
   font-family: var(--heading-font);
-  font-weight: 750;
+  font-weight: 600;
   font-size: 22px;
   line-height: 1.35;
   margin: 0;
@@ -387,10 +403,12 @@ a.row:active {
   color: var(--ink);
   padding: 12px 16px;
   font: inherit;
+  font-size: 16px;
 }
 .field textarea {
   min-height: 120px;
   resize: vertical;
+  font-size: 16px;
 }
 .field [aria-invalid="true"] {
   border-color: var(--red);
@@ -409,7 +427,7 @@ a.row:active {
     display: block;
     width: 36px;
     height: 4px;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background: var(--line-strong);
     opacity: 0.5;
     margin: 8px auto 0;
@@ -419,7 +437,7 @@ a.row:active {
     padding: 12px 20px 16px;
   }
   .dialogHeader h2 {
-    font-size: 20px;
+    font-size: var(--section-heading-size);
   }
   .dialogBody {
     --dialog-body-pad: 20px;
@@ -464,5 +482,73 @@ a.row:active {
   .dialogBody textarea {
     font-size: 16px;
     scroll-margin-block: 24px 120px;
+  }
+}
+.discard {
+  padding: 16px 24px;
+  background: var(--amber-bg);
+  color: var(--amber);
+  border-bottom: 1px solid var(--amber-line);
+}
+.discard p {
+  font-size: 14px;
+  margin: 0 0 12px;
+}
+.discard > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+@media (max-width: 767px),
+  (max-width: 1023px) and (max-height: 500px) and (pointer: coarse) {
+  .dialog.taskDialog {
+    width: 100%;
+    max-width: none;
+    height: var(--dialog-viewport-height, 100dvh);
+    max-height: var(--dialog-viewport-height, 100dvh);
+    margin: 0;
+    inset: 0;
+    border: 0;
+    border-radius: 0;
+  }
+  .taskDialog .dialogInner {
+    height: 100%;
+    max-height: 100%;
+  }
+  .taskDialog .dialogGrabber {
+    display: none;
+  }
+  .taskDialog .dialogHeader {
+    align-items: center;
+    padding: max(12px, env(safe-area-inset-top)) 16px 12px;
+  }
+  .taskDialog .dialogHeader h2 {
+    font-size: 20px;
+    line-height: 1.4;
+  }
+  .taskDialog .dialogBody {
+    --dialog-body-pad: 16px;
+    padding: 20px 16px max(24px, env(safe-area-inset-bottom));
+  }
+  .taskDialog .dialogClose {
+    margin: 0;
+    flex-shrink: 0;
+  }
+  .taskDialog .dialogFooter {
+    padding-inline: 16px;
+  }
+  .taskDialog .discard {
+    padding: 12px 16px;
+  }
+  .empty {
+    padding: 32px 16px;
+  }
+  .empty h2 {
+    font-size: 20px;
+  }
+  .emptyMark {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 16px;
   }
 }

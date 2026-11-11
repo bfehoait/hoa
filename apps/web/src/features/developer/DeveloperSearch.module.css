@@ -9,7 +9,7 @@
     flex: 1;
     max-width: 560px;
     border: 1px solid var(--line);
-    border-radius: 10px;
+    border-radius: var(--radius-control);
     background: var(--bg);
     padding-left: 14px;
     min-width: 180px;
@@ -25,7 +25,7 @@
     background: transparent;
     color: var(--ink);
     font: inherit;
-    font-size: 14px;
+    font-size: 16px;
     min-height: 48px;
   }
   .search button {

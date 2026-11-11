@@ -1,22 +1,21 @@
 import {
   ArrowRight,
   Building2,
-  ClipboardCheck,
   FileText,
   Landmark,
-  LifeBuoy,
   MessageSquare,
   ShieldCheck,
   Store,
   Users,
 } from "lucide-react";
 import { Link } from "../../components/AccessLink";
-import { Badge, PageIntro } from "../../components/UI";
+import { PageIntro } from "../../components/UI";
 import styles from "./StaffHome.module.css";
 import { useAuth } from "../../data/auth";
-import { useRequestSummary } from "../../data/requests";
-import { RequestVisual } from "../../components/RequestVisual";
+import { usePermissions } from "../../data/permissions";
+import { areaNavigation } from "../../components/AccountNavigation";
 import { unavailableService } from "../../../../../packages/shared/src/service-availability";
+import OfficeReviewInbox from "./OfficeReviewInbox";
 
 const areas = [
   {
@@ -69,6 +68,18 @@ const areas = [
     links: [
       { title: "Announcements", to: "/office/announcements" },
       { title: "Documents", to: "/office/documents" },
+      {
+        title: "Garage sale items",
+        to: "/office/garage-items",
+        connected: true,
+      },
+      { title: "Hotline management", to: "/office/hotlines", connected: true },
+      {
+        title: "Association settings",
+        to: "/office/settings",
+        connected: true,
+      },
+      { title: "Election setup proposals", to: "/explore/election-setup" },
       { title: "Content review", to: "/office/review" },
       { title: "Community events", to: "/explore/events" },
     ],
@@ -79,9 +90,9 @@ const areas = [
     detail: "Bookings, visitors and household services.",
     links: [
       { title: "Amenity calendar", to: "/office/calendar" },
+      { title: "Visitor & gate passes", to: "/office/visitors" },
       { title: "Vehicle requests", to: "/office/vehicles" },
       { title: "Permit enquiries", to: "/office/permits" },
-      { title: "Gate pass proposals", to: "/explore/gate-passes" },
     ],
   },
   {
@@ -91,146 +102,81 @@ const areas = [
     links: [
       { title: "Feature catalogue", to: "/explore" },
       { title: "Community directory", to: "/directory" },
+      { title: "Livelihood review", to: "/office/review" },
+      { title: "Training & workshops", to: "/directory/learning" },
       { title: "Import staging", to: "/explore/imports" },
-      { title: "Office settings", to: "/office/settings" },
     ],
   },
 ];
 
 export default function StaffHome() {
   const auth = useAuth();
+  const permissions = usePermissions();
   const sample = auth.preview || !!auth.rolePreview;
-  const summary = useRequestSummary();
+  const destinations = new Set(
+    areaNavigation.office.links.map((link) => link.to),
+  );
+  // These destinations are already exposed inside their primary workspaces.
+  for (const path of [
+    "/office/registrations",
+    "/office/inbox",
+    "/office/finance/collections",
+    "/office/finance/expenses",
+    "/office/finance/reconciliation",
+    "/office/announcements",
+    "/explore/tickets",
+  ])
+    destinations.add(path);
+  const tools = areas
+    .map((area) => ({
+      ...area,
+      links: area.links.filter((link) => {
+        if (
+          destinations.has(link.to) ||
+          unavailableService(link.to) ||
+          !permissions.allowsPath(link.to)
+        )
+          return false;
+        destinations.add(link.to);
+        return true;
+      }),
+    }))
+    .filter((area) => area.links.length);
   return (
     <>
       <PageIntro
         eyebrow="OFFICE & ADMINISTRATION"
         title="Your office, organized."
-        description="Find a person, review an application or open the right work queue."
+        description="Submissions awaiting decisions and work that needs follow-up."
         icon={<Building2 size={28} />}
       />
-      <section
-        className={styles.metrics}
-        aria-label={sample ? "Sample request activity" : "Request activity"}
-      >
-        {summary.data && !summary.isError ? (
-          summary.data.map((item) => (
-            <Link key={item.status} to="/office/requests">
-              <span>{item.status}</span>
-              <strong
-                aria-label={
-                  item.count === null ? "Unavailable" : String(item.count)
-                }
-              >
-                {item.count === null
-                  ? "—"
-                  : new Intl.NumberFormat("en-PH", {
-                      notation: "compact",
-                      maximumFractionDigits: 1,
-                    }).format(item.count)}
-              </strong>
-              <small>
-                {sample ? "Synthetic requests" : "Authorized request records"}
-              </small>
-            </Link>
-          ))
-        ) : (
-          <div className={styles.metricUnavailable}>
-            <MessageSquare size={24} />
-            <div>
-              <strong>
-                {summary.isPending
-                  ? "Checking request activity"
-                  : "Request activity unavailable"}
-              </strong>
-              <p>
-                {summary.isPending
-                  ? "Waiting for database confirmation."
-                  : "The request backend may need setup, or access could not be confirmed. Open the request desk for details."}
-              </p>
-            </div>
+      <OfficeReviewInbox compact />
+      {sample && <p>These previews do not change real association records.</p>}
+      {!!tools.length && (
+        <details className={styles.tools}>
+          <summary>More Office tools</summary>
+          <div className={styles.areas}>
+            {tools.map((area) => (
+              <section key={area.title} className={styles.area}>
+                <div className={styles.areaHeading}>
+                  <area.icon size={24} />
+                  <h2>{area.title}</h2>
+                </div>
+                <ul>
+                  {area.links.map((link) => (
+                    <li key={link.to}>
+                      <Link to={link.to}>
+                        <span>{link.title}</span>
+                        <ArrowRight size={18} />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
           </div>
-        )}
-      </section>
-      <RequestVisual />
-      <section className={styles.priority} aria-labelledby="staff-start-title">
-        <div>
-          <span className={styles.eyebrow}>START HERE</span>
-          <h2 id="staff-start-title">People first.</h2>
-          <p>
-            {sample
-              ? "Explore invented people and office workflows. Every change stays inside this role preview."
-              : "Member details and registrations read from the existing database. Request services require the new protected backend setup."}
-          </p>
-        </div>
-        <div className={styles.quickActions}>
-          <Link to="/office/residents">
-            <Users size={24} />
-            <span>
-              Find a member<small>Recorded details & roles</small>
-            </span>
-            <ArrowRight size={20} />
-          </Link>
-          <Link to="/office/registrations">
-            <ClipboardCheck size={24} />
-            <span>
-              Review applications<small>Read submitted information</small>
-            </span>
-            <ArrowRight size={20} />
-          </Link>
-        </div>
-      </section>
-      <div className={styles.legend}>
-        <ShieldCheck size={18} />
-        <span>
-          {sample
-            ? "Sample means invented local records. No changes are sent to the HOA."
-            : "Services use your recorded account and permissions. Unavailable services are marked; current records are checked when you open a service."}
-        </span>
-      </div>
-      <div className={styles.areas}>
-        {areas.map((area) => (
-          <section key={area.title} className={styles.area}>
-            <div className={styles.areaHeading}>
-              <span>
-                <area.icon size={24} />
-              </span>
-              <div>
-                <h2>{area.title}</h2>
-                <p>{area.detail}</p>
-              </div>
-            </div>
-            <ul>
-              {area.links.map((link) => (
-                <li key={link.to}>
-                  <Link to={link.to}>
-                    <span>{link.title}</span>
-                    <Badge tone="neutral">
-                      {sample
-                        ? "Sample"
-                        : unavailableService(link.to)
-                          ? "Not available yet"
-                          : "Open service"}
-                    </Badge>
-                    <ArrowRight size={18} />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
-      </div>
-      <section className={styles.help}>
-        <LifeBuoy size={24} />
-        <div>
-          <h2>Connecting the full office workflow</h2>
-          <p>
-            Property verification, approvals, financial posting and dashboard
-            totals will become available as their protected backend operations
-            are implemented. No example counts are presented as live totals.
-          </p>
-        </div>
-      </section>
+        </details>
+      )}
     </>
   );
 }

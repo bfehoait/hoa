@@ -59,6 +59,7 @@ import styles from "./CommunityModules.module.css";
 import LiveFeatureDirectory from "../connected/LiveFeatureDirectory";
 import LiveFeature from "../connected/LiveFeature";
 import BookingsCalendar from "../connected/BookingsCalendar";
+import DocumentLibrary from "../connected/DocumentLibrary";
 
 const listings = [
   {
@@ -100,7 +101,11 @@ export default function CommunityModules({ area }: { area: string }) {
         />
       );
     if (area === "documents")
-      return <LiveFeature module="board-records" initialView="published" />;
+      return auth.memberPreview ? (
+        <LiveFeature module="board-records" initialView="published" />
+      ) : (
+        <DocumentLibrary />
+      );
     if (area === "elections")
       return (
         <LiveFeature module="election-candidates" initialView="published" />

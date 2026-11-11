@@ -1,21 +1,19 @@
-import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import CommunityCalendar from "./CommunityCalendar";
 import OperationsDesk from "./OperationsDesk";
 
 /**
- * Availability and booking on one screen.
- *
- * Checking a date and reserving it are one task, so they are one page: the
- * month view shows what is already taken, and picking a day opens the request
- * below it. The booking is created as Pending and holds the slot; only the
- * office can approve it, and that rule lives in the server, not here.
+ * Keep schedule browsing separate from the inline booking task. A selected
+ * schedule date links into that task; approval remains server-owned.
  */
 export default function BookingsCalendar() {
-  const [requestDate, setRequestDate] = useState<string>();
-  return (
-    <>
-      <CommunityCalendar onPickDay={setRequestDate} />
-      <OperationsDesk kind="booking" requestDate={requestDate} />
-    </>
+  const location = useLocation();
+  const navigate = useNavigate();
+  return location.pathname.endsWith("/calendar") ? (
+    <CommunityCalendar
+      onPickDay={(date) => navigate(`/services/bookings?date=${date}`)}
+    />
+  ) : (
+    <OperationsDesk kind="booking" />
   );
 }

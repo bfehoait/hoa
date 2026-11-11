@@ -39,7 +39,7 @@ export default function Community({
 }: { basePath?: string } = {}) {
   const auth = useAuth();
   if (!auth.preview && !auth.rolePreview)
-    return <LiveFeature module="publishing" initialView="published" />;
+    return <LiveFeature module="publishing" initialView="published" resident />;
   return <SampleCommunity basePath={basePath} />;
 }
 function SampleCommunity({ basePath = "/community" }: { basePath?: string }) {

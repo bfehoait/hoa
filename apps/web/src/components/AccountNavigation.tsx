@@ -1,5 +1,6 @@
 import {
   Building2,
+  CalendarDays,
   House,
   LayoutDashboard,
   MoreHorizontal,
@@ -10,6 +11,7 @@ import {
   Wrench,
   CarFront,
   KeyRound,
+  Store,
   type LucideIcon,
 } from "lucide-react";
 import { memberWorkspaces } from "../../../../packages/shared/src/auth";
@@ -32,10 +34,10 @@ export const areaNavigation: Record<
       { to: "/", label: "Home", icon: House },
       { to: "/account", label: "My account", mobile: "Account", icon: Wallet },
       {
-        to: "/community",
-        label: "Community",
-        mobile: "Updates",
-        icon: Newspaper,
+        to: "/directory/market",
+        label: "Livelihood",
+        mobile: "Livelihood",
+        icon: Store,
       },
       { to: "/services", label: "Services", icon: Wrench },
       {
@@ -51,10 +53,10 @@ export const areaNavigation: Record<
     links: [
       { to: "/developer", label: "Overview", mobile: "Home", icon: House },
       {
-        to: "/developer/modules",
-        label: "System modules",
-        mobile: "Modules",
-        icon: LayoutDashboard,
+        to: "/developer/members",
+        label: "Account support",
+        mobile: "Support",
+        icon: ShieldCheck,
       },
       {
         to: "/developer/connections",
@@ -63,19 +65,16 @@ export const areaNavigation: Record<
         icon: ShieldCheck,
       },
       {
-        to: "/developer/roles",
-        label: "Access & roles",
-        mobile: "Roles",
+        to: "/developer/access",
+        label: "Access configuration",
+        mobile: "Access",
         icon: LayoutDashboard,
       },
-      { to: "/more/lots", label: "Lot register", icon: Building2 },
-      { to: "/driver/dispatch", label: "Shuttle service", icon: CarFront },
-      { to: "/developer/activity", label: "Activity", icon: Newspaper },
       {
-        to: "/developer/access",
-        label: "Roles & committee access",
-        mobile: "Access",
-        icon: KeyRound,
+        to: "/developer/activity",
+        label: "Diagnostics & audit",
+        mobile: "Audit",
+        icon: Newspaper,
       },
     ],
   },
@@ -83,13 +82,20 @@ export const areaNavigation: Record<
     title: "Office",
     links: [
       { to: "/office", label: "Overview", mobile: "Home", icon: House },
-      { to: "/office/residents", label: "People", icon: Building2 },
+      { to: "/office/approvals", label: "Review inbox", icon: ShieldCheck },
+      { to: "/office/residents", label: "People & accounts", icon: Building2 },
       { to: "/office/finance", label: "Finance", icon: Wallet },
       {
         to: "/office/operations",
         label: "Operations",
         mobile: "Tasks",
         icon: Wrench,
+      },
+      {
+        to: "/office/calendar",
+        label: "Facilities & calendar",
+        mobile: "Calendar",
+        icon: CalendarDays,
       },
       {
         to: "/office/community",

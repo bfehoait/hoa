@@ -1,10 +1,18 @@
 import { useMemo, useState } from "react";
+import { z } from "zod";
+import { featureDashboardSchema } from "../../../../../packages/shared/src/feature-records";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { bookingDashboardSchema } from "../../../../../packages/shared/src/operations";
 import { useAuth } from "../../data/auth";
-import { featureRpc, useFeatureRecords } from "../../data/feature-records";
-import { Empty, Feedback, PageIntro, Skeleton } from "../../components/UI";
+import { featureRpc } from "../../data/feature-records";
+import {
+  Button,
+  Empty,
+  Feedback,
+  PageIntro,
+  Skeleton,
+} from "../../components/UI";
 import styles from "./CommunityCalendar.module.css";
 
 type Entry = {
@@ -56,7 +64,9 @@ export default function CommunityCalendar({
   });
   const bookings = useQuery({
     queryKey: ["calendar-bookings", auth.userId],
-    enabled: connected,
+    enabled: connected && !!auth.memberPreview,
+    gcTime: 0,
+    refetchInterval: 30000,
     retry: false,
     queryFn: async () =>
       bookingDashboardSchema.parse(
@@ -66,9 +76,45 @@ export default function CommunityCalendar({
         }),
       ),
   });
-  const events = useFeatureRecords("events", "published", 0, "");
+  const events = useQuery({
+    queryKey: ["calendar-preview-events", auth.userId, auth.memberPreview],
+    enabled: connected && !!auth.memberPreview,
+    retry: false,
+    gcTime: 0,
+    queryFn: async () =>
+      featureDashboardSchema.parse(
+        await featureRpc("bfe_feature_dashboard", {
+          p_module: "events",
+          p_view: "published",
+          p_page: 0,
+          p_search: "",
+        }),
+      ),
+  });
+  const month = `${cursor.year}-${pad(cursor.month + 1)}-01`;
+  const fullMonth = useQuery({
+    queryKey: ["calendar-bookings", auth.userId, month, auth.memberPreview],
+    enabled: connected && !auth.memberPreview,
+    retry: false,
+    gcTime: 0,
+    refetchInterval: 30000,
+    queryFn: async () =>
+      z
+        .array(
+          z.object({
+            day: z.string(),
+            label: z.string(),
+            detail: z.string(),
+            kind: z.enum(["booking", "event"]),
+          }),
+        )
+        .parse(
+          await featureRpc("bfe_resident_calendar_month", { p_month: month }),
+        ),
+  });
 
   const entries = useMemo(() => {
+    if (!auth.memberPreview) return fullMonth.data ?? [];
     const out: Entry[] = [];
     for (const row of bookings.data?.rows ?? []) {
       if (row.status === "Cancelled" || row.status === "Rejected") continue;
@@ -98,7 +144,7 @@ export default function CommunityCalendar({
       });
     }
     return out;
-  }, [bookings.data, events.data]);
+  }, [bookings.data, events.data, fullMonth.data, auth.memberPreview]);
 
   const byDay = useMemo(() => {
     const map = new Map<string, Entry[]>();
@@ -121,15 +167,19 @@ export default function CommunityCalendar({
       return { year: next.getUTCFullYear(), month: next.getUTCMonth() };
     });
   const todayKey = dayKey(new Date().toISOString());
-  const pending = bookings.isPending || events.isPending;
-  const error = (bookings.error ?? events.error) as Error | null;
+  const pending = auth.memberPreview
+    ? bookings.isPending || events.isPending
+    : fullMonth.isPending;
+  const error = (
+    auth.memberPreview ? (bookings.error ?? events.error) : fullMonth.error
+  ) as Error | null;
 
   return (
     <>
       <PageIntro
         eyebrow="COMMUNITY SERVICES"
         title="Community calendar"
-        description="Your facility bookings and the events the office has published. Dates and times use Philippine time."
+        description="Your amenity bookings and the events the office has published. Dates and times use Philippine time."
       />
       {error ? (
         <Feedback error={error} />
@@ -184,7 +234,9 @@ export default function CommunityCalendar({
                         onClick={() => onPickDay(key)}
                       >
                         <span className={styles.date}>{day}</span>
-                        <span className={styles.pickHint}>Request this day</span>
+                        <span className={styles.pickHint}>
+                          Request this day
+                        </span>
                       </button>
                     ) : (
                       <span className={styles.date}>{day}</span>
@@ -207,7 +259,7 @@ export default function CommunityCalendar({
             <p className={styles.legend}>
               <span>
                 <span className={styles.swatch} aria-hidden="true" />
-                Your facility bookings
+                Your amenity bookings
               </span>
               <span>
                 <span
@@ -219,9 +271,19 @@ export default function CommunityCalendar({
             </p>
           </section>
           {entries.length === 0 && (
-            <Empty icon={<CalendarDays size={32} />} title="Nothing scheduled">
-              Your approved facility bookings and the events the office
-              publishes will appear here.
+            <Empty
+              icon={<CalendarDays size={32} />}
+              title="Nothing scheduled"
+              action={
+                onPickDay ? (
+                  <Button onClick={() => onPickDay(todayKey)}>
+                    Book an amenity today
+                  </Button>
+                ) : undefined
+              }
+            >
+              Your approved amenity bookings and the events the office publishes
+              will appear here.
             </Empty>
           )}
         </>

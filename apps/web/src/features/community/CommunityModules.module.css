@@ -24,7 +24,7 @@
   flex-shrink: 0;
 }
 .listing h2 {
-  font-size: 18px;
+  font-size: var(--section-heading-size);
   margin: 16px 0 12px;
 }
 .listing p {
@@ -170,7 +170,7 @@
   }
   .session h2,
   .election h2 {
-    font-size: 18px;
+    font-size: var(--section-heading-size);
   }
   .session > .listingIcon,
   .lock {
@@ -279,7 +279,7 @@
   padding: 20px;
 }
 .monthPanel h2 {
-  font-size: 18px;
+  font-size: var(--section-heading-size);
   text-align: center;
 }
 .calendarLegend {

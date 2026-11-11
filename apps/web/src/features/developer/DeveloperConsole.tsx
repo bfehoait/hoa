@@ -94,6 +94,7 @@ export default function DeveloperConsole() {
     return <AccessPlanning />;
   if (path === "modules" || path.startsWith("modules/"))
     return <ModuleMonitor />;
+  if (!path) return <DeveloperHome />;
   const checked = auth.verifiedAt
     ? new Date(auth.verifiedAt).toLocaleString("en-PH", {
         timeZone: "Asia/Manila",
@@ -101,11 +102,6 @@ export default function DeveloperConsole() {
     : "Not verified";
   return (
     <div className={`${styles.console} ${!path ? styles.hasDashboard : ""}`}>
-      {!path && (
-        <div className={styles.desktopHome}>
-          <DeveloperHome />
-        </div>
-      )}
       <PageIntro
         eyebrow="TECHNICAL OVERSIGHT"
         title={
@@ -118,119 +114,18 @@ export default function DeveloperConsole() {
                 : "Developer console"
         }
         icon={<MonitorCog size={28} />}
-        description="Monitor system modules with your developer account, or inspect an isolated role preview."
+        description="System maintenance and technical diagnostics. Daily operations belong in their assigned workspace."
       />
       {auth.preview && (
         <NavigationGroup aria-label="Developer console sections">
           <Link to="/developer">Overview</Link>
-          <Link to="/developer/modules">System modules</Link>
+          <Link to="/developer/modules">Record diagnostics</Link>
           <Link to="/developer/connections">Connections</Link>
           <Link to="/developer/roles">Role previews</Link>
           <Link to="/developer/activity">Activity</Link>
         </NavigationGroup>
       )}
-      {!path && (
-        <>
-          <RequestVisual />
-          {!auth.preview &&
-            !auth.memberPreview &&
-            auth.member &&
-            memberRoles(auth.member).includes("developer") && (
-              <div className={styles.actions}>
-                <ButtonLink to="/office/announcements?new=1">
-                  Create announcement
-                </ButtonLink>
-                <ButtonLink to="/office/review" tone="secondary">
-                  Create & review submissions
-                </ButtonLink>
-              </div>
-            )}
-          <Link className="text-link" to="/developer/members">
-            <Eye size={20} />
-            View member — read-only
-            <ArrowRight size={20} />
-          </Link>
-          <Link className="text-link" to="/developer/access">
-            <ShieldCheck size={20} /> Roles & committee access{" "}
-            <ArrowRight size={20} />
-          </Link>
-          <div className={styles.overview}>
-            <MonitorCog size={40} />
-            <div>
-              <h2>Your maintenance workspace</h2>
-              <p>
-                Open System modules to inspect connected operational records.
-                Role previews remain a separate synthetic workspace.
-              </p>
-            </div>
-            <ShieldCheck size={28} />
-          </div>
-          <div className={styles.grid}>
-            <section className={styles.card}>
-              <span className={styles.icon}>
-                <Database size={28} />
-              </span>
-              <h2>Monitor every module</h2>
-              <p>
-                Recorded accounts, requests, finance, security, community and
-                audit sections. Database setup and source availability are
-                checked when opened. Implemented actions use protected developer
-                controls.
-              </p>
-              <ButtonLink to="/developer/modules" tone="secondary">
-                Open system modules
-                <ArrowRight size={20} />
-              </ButtonLink>
-            </section>
-            <section className={styles.card}>
-              <div className={styles.cardHead}>
-                <span className={styles.icon}>
-                  <ShieldCheck size={26} />
-                </span>
-                <Badge
-                  tone={auth.userId && !auth.preview ? "green" : "neutral"}
-                >
-                  {auth.userId && !auth.preview ? "Verified" : "Preview only"}
-                </Badge>
-              </div>
-              <h2>Current account</h2>
-              <p>
-                Your identity and active member assignment, not the health of
-                every account.
-              </p>
-              <dl className={styles.facts}>
-                <div>
-                  <dt>Last identity verification</dt>
-                  <dd>{checked}</dd>
-                </div>
-                <div>
-                  <dt>Application version</dt>
-                  <dd>{version.version}</dd>
-                </div>
-              </dl>
-              <ButtonLink to="/more/profile" tone="secondary">
-                My profile
-                <ArrowRight size={20} />
-              </ButtonLink>
-            </section>
-            <section className={styles.card}>
-              <span className={styles.icon}>
-                <Eye size={28} />
-              </span>
-              <h2>See through every role</h2>
-              <p>
-                Six isolated synthetic views. No real user impersonation and no
-                change to your assigned roles.
-              </p>
-              <ButtonLink to="/developer/roles" tone="secondary">
-                Choose a role
-                <Eye size={20} />
-              </ButtonLink>
-            </section>
-          </div>
-        </>
-      )}
-      {(!path || path === "connections") && (
+      {path === "connections" && (
         <>
           <div className="section-title">
             <h2>Connection status</h2>

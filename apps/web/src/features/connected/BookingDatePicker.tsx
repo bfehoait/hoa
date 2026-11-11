@@ -32,21 +32,7 @@ export default function BookingDatePicker({
   }
   return (
     <section className={styles.calendar} aria-label="Booking date">
-      <label htmlFor={id}>1. Choose a date</label>
-      <input
-        id={id}
-        name="date"
-        type="date"
-        required
-        min={today}
-        max={last}
-        value={value}
-        onChange={(e) => {
-          onChange(e.target.value);
-          if (e.target.value) setMonth(e.target.value.slice(0, 7));
-        }}
-        aria-label="Date"
-      />
+      <h3 className={styles.stepTitle}>Choose a date</h3>
       <div className={styles.month}>
         <button
           type="button"
@@ -72,33 +58,65 @@ export default function BookingDatePicker({
           <ChevronRight size={20} />
         </button>
       </div>
-      <div className={styles.days}>
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-          <span key={d}>{d}</span>
-        ))}
-        {Array.from({ length: first.getUTCDay() }, (_, i) => (
-          <span key={"pad" + i} />
-        ))}
-        {Array.from({ length: days }, (_, i) => {
-          const date = month + "-" + String(i + 1).padStart(2, "0");
-          return (
-            <button
-              type="button"
-              key={date}
-              disabled={date < today || date > last}
-              aria-label={new Intl.DateTimeFormat("en-PH", {
-                dateStyle: "full",
-                timeZone: "UTC",
-              }).format(new Date(date + "T12:00:00Z"))}
-              aria-pressed={value === date}
-              onClick={() => onChange(date)}
-            >
-              {i + 1}
-            </button>
-          );
-        })}
+      <div
+        className={styles.dateGrid}
+        tabIndex={0}
+        role="region"
+        aria-label="Month dates"
+      >
+        <div className={styles.days}>
+          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+            <span key={d}>{d}</span>
+          ))}
+          {Array.from({ length: first.getUTCDay() }, (_, i) => (
+            <span key={"pad" + i} />
+          ))}
+          {Array.from({ length: days }, (_, i) => {
+            const date = month + "-" + String(i + 1).padStart(2, "0");
+            return (
+              <button
+                type="button"
+                key={date}
+                disabled={date < today || date > last}
+                aria-label={new Intl.DateTimeFormat("en-PH", {
+                  dateStyle: "full",
+                  timeZone: "UTC",
+                }).format(new Date(date + "T12:00:00Z"))}
+                aria-pressed={value === date}
+                onClick={() => onChange(date)}
+              >
+                {i + 1}
+              </button>
+            );
+          })}
+        </div>
       </div>
-      <p>Dates and times use Philippine time.</p>
+      <p className={styles.selectedDate} aria-live="polite">
+        {value
+          ? new Intl.DateTimeFormat("en-PH", {
+              dateStyle: "full",
+              timeZone: "UTC",
+            }).format(new Date(value + "T12:00:00Z"))
+          : "Select a day above"}
+      </p>
+      <details className={styles.manual}>
+        <summary>Enter a date manually</summary>
+        <label htmlFor={id}>Enter a date</label>
+        <input
+          id={id}
+          name="date"
+          type="date"
+          min={today}
+          max={last}
+          value={value}
+          onChange={(e) => {
+            onChange(e.target.value);
+            if (e.target.value) setMonth(e.target.value.slice(0, 7));
+          }}
+          aria-label="Date"
+        />
+      </details>
+      <p>Philippine time (UTC+8)</p>
     </section>
   );
 }

@@ -1,0 +1,207 @@
+.tabs,
+.actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+.tabs {
+  padding: 4px;
+  background: var(--wash);
+  border-radius: var(--radius-lg);
+}
+.tabs button {
+  flex: 1;
+  min-height: 48px;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+}
+.tabs button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--accent);
+  border-color: var(--line);
+}
+.tabs button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.form {
+  display: grid;
+  gap: 16px;
+}
+.form label {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+}
+.form input:not([type="checkbox"]),
+.form select,
+.form textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 12px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: 16px;
+}
+.form textarea {
+  min-height: 88px;
+}
+.form fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  display: grid;
+  gap: 16px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.details {
+  margin: 0;
+}
+.details > div {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(0, 2fr);
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.details dt,
+.note {
+  color: var(--muted);
+  font-size: 14px;
+}
+.details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.note {
+  line-height: 1.6;
+}
+.record {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
+.record > p {
+  margin: 8px 0;
+}
+.changes {
+  padding-left: 20px;
+  font-size: 14px;
+}
+.check {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 12px;
+  line-height: 1.6;
+}
+.check input {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  margin-top: 2px;
+}
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .details > div {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .actions > * {
+    flex: 1 1 150px;
+  }
+}
+
+.address {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* Preserve the details rows when staff switch between reading and editing. */
+.inlineDetails {
+  gap: 0;
+}
+.inlineDetails .details > div {
+  align-items: center;
+  min-height: 76px;
+  padding-block: 12px;
+}
+.inlineDetails .details dd {
+  min-width: 0;
+}
+.inlineDetails .actions {
+  margin-bottom: 0;
+}
+
+.inlineDetails > button {
+  justify-self: start;
+}
+
+.footerBar {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.footerActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.footerBar > :not(button):not(.footerActions) {
+  width: 100%;
+}
+@media (max-width: 559px) {
+  .footerBar > button,
+  .footerActions {
+    flex: 1 1 auto;
+  }
+  .footerActions > button {
+    flex: 1 1 auto;
+  }
+}
+
+@media (min-width: 701px) {
+  .workspace {
+    height: min(820px, 88dvh);
+  }
+  .workspace > div {
+    height: 100%;
+  }
+}
+
+/* Direct grid actions should not stretch to a labelled field's size.
+   Existing flex action groups and persistent dialog footers stay in charge
+   of their own layout. Primary submissions can fill a narrow screen. */
+.form > button,
+.form fieldset > button {
+  align-self: end;
+  justify-self: start;
+  max-width: 100%;
+}
+@media (max-width: 767px) {
+  .form > button[type="submit"],
+  .form fieldset > button[type="submit"] {
+    justify-self: stretch;
+  }
+}

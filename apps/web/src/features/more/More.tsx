@@ -51,7 +51,7 @@ const destinations = [
   },
   {
     to: "marketplace",
-    title: "Neighborhood market",
+    title: "Livelihood",
     detail: "Local skills, small businesses, and everyday finds.",
     icon: ShoppingBag,
   },

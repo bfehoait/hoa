@@ -19,9 +19,12 @@ export const shuttleInput = z.object({
   pickup: z.string().trim().min(3).max(200),
   destination: z.string().trim().min(3).max(200),
   passengers: z.coerce.number().int().min(1).max(20),
+  pickup_note: z.string().trim().max(1000).optional(),
 });
 export const shuttleRequestSchema = shuttleInput.extend({
   driver_name: z.string().nullable().optional(),
+  driver_note: z.string().optional(),
+  estimated_arrival: z.string().nullable().optional(),
   id: z.uuid(),
   owner_id: z.uuid(),
   driver_id: z.uuid().nullable(),

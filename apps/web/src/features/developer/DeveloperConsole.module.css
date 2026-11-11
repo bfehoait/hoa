@@ -44,14 +44,14 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 24px;
+  padding: var(--card-padding);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   background: var(--surface);
   min-width: 0;
 }
 .card h2 {
-  font-size: 20px;
+  font-size: var(--section-heading-size);
 }
 .card p {
   color: var(--muted);
@@ -227,10 +227,10 @@
     align-items: flex-start;
   }
   .overview h2 {
-    font-size: 20px;
+    font-size: var(--section-heading-size);
   }
   .card {
-    padding: 20px;
+    padding: var(--card-padding);
   }
   .previewBanner {
     padding: 8px 12px;
@@ -258,5 +258,26 @@
 @media (prefers-reduced-motion: reduce) {
   .roleCard {
     transition: none;
+  }
+}
+/* Inspection identity remains explicit without overwhelming the phone UI. */
+@media (max-width: 767px) {
+  .previewBanner {
+    min-height: 72px;
+    padding: 10px 16px;
+    align-items: center;
+  }
+  .previewBanner strong {
+    font-size: 14px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+  .previewBanner > div > span {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .previewBanner > button {
+    padding: 10px 12px;
+    font-size: 14px;
   }
 }

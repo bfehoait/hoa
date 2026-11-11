@@ -1,7 +1,11 @@
 import {
+  Children,
+  cloneElement,
+  isValidElement,
   useEffect,
   useId,
   useRef,
+  useState,
   type ReactNode,
   type FormEvent,
   type RefAttributes,
@@ -62,9 +66,12 @@ export function Button({
     <button
       {...props}
       disabled={props.disabled || pending}
+      aria-busy={pending || props["aria-busy"] || undefined}
       className={actionClass(resolved, size, block, props.className)}
     >
-      {pending && <LoaderCircle size={20} className="spin" aria-hidden="true" />}
+      {pending && (
+        <LoaderCircle size={20} className="spin" aria-hidden="true" />
+      )}
       {children}
     </button>
   );
@@ -107,7 +114,7 @@ export function PageIntro({
   action,
   icon,
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   description?: string;
   action?: ReactNode;
@@ -116,7 +123,7 @@ export function PageIntro({
   return (
     <header className="page-intro">
       <div>
-        <p className="eyebrow">{eyebrow}</p>
+        {eyebrow && <p className="eyebrow">{eyebrow}</p>}
         {icon ? (
           <div className="page-title">
             <span className="page-title-icon" aria-hidden="true">
@@ -253,6 +260,8 @@ export function Modal({
   busy = false,
   footer,
   size = "md",
+  presentation = "sheet",
+  protectChanges = false,
 }: {
   title: string;
   description?: string;
@@ -263,11 +272,29 @@ export function Modal({
   /** Actions pinned below the scroll area so they never scroll out of reach. */
   footer?: ReactNode;
   size?: "sm" | "md" | "lg";
+  presentation?: "sheet" | "task";
+  protectChanges?: boolean;
 }) {
+  const [dirty, setDirty] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const requestClose = () => {
+    if (busy) return;
+    if (protectChanges && dirty) setLeaving(true);
+    else onClose();
+  };
   const ref = useRef<HTMLDialogElement>(null);
   const inner = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const descriptionId = useId();
+  useEffect(() => {
+    if (!protectChanges || !dirty) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [protectChanges, dirty]);
   useEffect(() => {
     const dialog = ref.current;
     const trigger = document.activeElement as HTMLElement | null;
@@ -310,10 +337,10 @@ export function Modal({
       aria-labelledby={titleId}
       aria-describedby={description ? descriptionId : undefined}
       aria-busy={busy || undefined}
-      className={`${styles.dialog} ${styles[`dialog${size.toUpperCase()}` as keyof typeof styles] ?? ""} ${className ?? ""}`}
+      className={`${styles.dialog} ${presentation === "task" ? styles.taskDialog : ""} ${styles[`dialog${size.toUpperCase()}` as keyof typeof styles] ?? ""} ${className ?? ""}`}
       onCancel={(event) => {
         event.preventDefault();
-        if (!busy) onClose();
+        requestClose();
       }}
       onKeyDown={(event) => {
         if (event.key !== "Tab") return;
@@ -342,7 +369,7 @@ export function Modal({
             e.clientY < bounds.top ||
             e.clientY > bounds.bottom)
         )
-          onClose();
+          requestClose();
       }}
     >
       <div className={styles.dialogInner} ref={inner} tabIndex={-1}>
@@ -360,12 +387,37 @@ export function Modal({
             className={`icon-button ${styles.dialogClose}`}
             aria-label="Close dialog"
             disabled={busy}
-            onClick={onClose}
+            onClick={requestClose}
           >
             <X size={24} />
           </button>
         </div>
-        <div className={styles.dialogBody}>{children}</div>
+        {leaving && (
+          <div className={styles.discard} role="alert">
+            <p>
+              Leave this form? Any unfinished changes will be lost. Already
+              saved records are kept.
+            </p>
+            <div>
+              <Button secondary onClick={() => setLeaving(false)}>
+                Keep editing
+              </Button>
+              <Button tone="danger" onClick={onClose}>
+                Leave form
+              </Button>
+            </div>
+          </div>
+        )}
+        <div
+          className={styles.dialogBody}
+          onChangeCapture={() => setDirty(true)}
+          onClickCapture={(event) => {
+            if ((event.target as HTMLElement).closest("[data-form-change]"))
+              setDirty(true);
+          }}
+        >
+          {children}
+        </div>
         {footer && <div className={styles.dialogFooter}>{footer}</div>}
       </div>
     </dialog>
@@ -382,17 +434,44 @@ export function Field({
   children: ReactNode;
   htmlFor?: string;
 }) {
-  const child = children as React.ReactElement<{
+  type ControlProps = {
     id?: string;
     "aria-invalid"?: boolean;
     "aria-describedby"?: string;
-  }>;
+  };
+  const generatedId = useId();
+  const nodes = Children.toArray(children);
+  const child = nodes.find(
+    (node) =>
+      isValidElement<ControlProps>(node) &&
+      typeof node.type === "string" &&
+      ["input", "select", "textarea"].includes(node.type),
+  );
+  const control = isValidElement<ControlProps>(child) ? child : undefined;
+  const id = htmlFor ?? control?.props.id ?? generatedId;
+  const errorId = `${id}-error`;
   return (
     <div className={styles.field}>
-      <label htmlFor={htmlFor ?? child.props.id}>{label}</label>
-      {children}
+      <label htmlFor={id}>{label}</label>
+      {nodes.map((node) =>
+        control && node === control
+          ? cloneElement(control, {
+              id,
+              "aria-invalid": error ? true : control.props["aria-invalid"],
+              "aria-describedby":
+                [
+                  ...new Set(
+                    [
+                      control.props["aria-describedby"],
+                      error ? errorId : undefined,
+                    ].filter(Boolean),
+                  ),
+                ].join(" ") || undefined,
+            })
+          : node,
+      )}
       {error && (
-        <p className="field-error" id={`${htmlFor ?? child.props.id}-error`}>
+        <p className="field-error" id={errorId}>
           {error}
         </p>
       )}

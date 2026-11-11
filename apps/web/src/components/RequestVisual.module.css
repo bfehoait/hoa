@@ -1,6 +1,6 @@
 .visual {
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
   padding: 24px;
   margin: 24px 0;
@@ -16,7 +16,7 @@
   min-width: 180px;
 }
 .visual h2 {
-  font-size: 18px;
+  font-size: var(--section-heading-size);
   margin: 0 0 4px;
 }
 .visual header p {
@@ -29,7 +29,7 @@
   place-items: center;
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   background: var(--accent-soft);
   color: var(--accent);
 }
@@ -62,7 +62,7 @@
   display: flex;
   gap: 3px;
   height: 20px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
   background: var(--wash);
 }

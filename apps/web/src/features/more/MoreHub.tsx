@@ -2,20 +2,18 @@ import { useAuth } from "../../data/auth";
 import { usePermissions } from "../../data/permissions";
 import { canOpenPath } from "../../../../../packages/shared/src/auth";
 import { useAccountNavigation } from "../../components/AccountNavigation";
-import { useState } from "react";
+
 import {
   CalendarDays,
   Building2,
   CarFront,
   CircleHelp,
   ClipboardCheck,
-  FileText,
   GraduationCap,
   LayoutDashboard,
   LayoutGrid,
   LogOut,
   MessageSquare,
-  Search,
   Settings2,
   ShoppingBag,
   UserRound,
@@ -43,24 +41,6 @@ const groups: { title: string; category: string; items: Destination[] }[] = [
         title: "Your lots",
         detail: "Verified property links and receipts",
         icon: Building2,
-      },
-      {
-        to: "/more/vehicles",
-        title: "Vehicles & stickers",
-        detail: "Registration requests",
-        icon: CarFront,
-      },
-      {
-        to: "/more/permits",
-        title: "Permits & clearances",
-        detail: "Property work & documents",
-        icon: ClipboardCheck,
-      },
-      {
-        to: "/more/documents",
-        title: "Community documents",
-        detail: "Read published records",
-        icon: FileText,
       },
       {
         to: "/services/calendar",
@@ -92,21 +72,15 @@ const groups: { title: string; category: string; items: Destination[] }[] = [
         detail: "Damage or maintenance in the community",
         icon: Wrench,
       },
-      {
-        to: "/services/requests",
-        title: "Your requests",
-        detail: "Follow everything you have raised",
-        icon: ClipboardCheck,
-      },
     ],
   },
   {
-    title: "Livelihood & marketplace",
+    title: "Around the community",
     category: "Community",
     items: [
       {
         to: "/directory/market",
-        title: "Marketplace",
+        title: "Livelihood",
         detail: "Businesses, jobs & nearby finds",
         icon: ShoppingBag,
       },
@@ -123,16 +97,16 @@ const groups: { title: string; category: string; items: Destination[] }[] = [
         icon: CarFront,
       },
       {
-        to: "/directory/transport",
-        title: "Carpooling",
-        detail: "Share a ride with neighbours",
-        icon: Users,
-      },
-      {
         to: "/more/elections",
         title: "Community elections",
         detail: "Readiness & information",
         icon: Vote,
+      },
+      {
+        to: "/directory/transport",
+        title: "Carpooling",
+        detail: "Share a ride with neighbours",
+        icon: Users,
       },
     ],
   },
@@ -147,12 +121,6 @@ const groups: { title: string; category: string; items: Destination[] }[] = [
         icon: UserRound,
       },
       {
-        to: "/services/inbox",
-        title: "Messages",
-        detail: "Your office conversations",
-        icon: MessageSquare,
-      },
-      {
         to: "/more/notifications",
         title: "Notifications",
         detail: "New and earlier activity",
@@ -161,7 +129,7 @@ const groups: { title: string; category: string; items: Destination[] }[] = [
       {
         to: "/more/help",
         title: "Help & support",
-        detail: "Answers & preview guidance",
+        detail: "Get help using the app",
         icon: CircleHelp,
       },
       {
@@ -219,95 +187,47 @@ export default function MoreHub() {
   const availableGroups = groups
     .map((group) => ({ ...group, items: group.items.filter(allowed) }))
     .filter((group) => group.items.length);
-
-  const [search, setSearch] = useState(""),
-    [category, setCategory] = useState("All");
-  const match = (item: Destination) =>
-    `${item.title} ${item.detail}`.toLowerCase().includes(search.toLowerCase());
   const visible = availableGroups
-    .filter((group) => category === "All" || group.category === category)
-    .map((group) => ({ ...group, items: group.items.filter(match) }))
+    .map((group) => ({
+      ...group,
+      items: group.items.filter(
+        (item) =>
+          !["/directory/market", "/directory/learning"].includes(item.to),
+      ),
+    }))
     .filter((group) => group.items.length);
   const matches = tools.filter(
-    (item) =>
-      (auth.preview || !!auth.rolePreview) && allowed(item) && match(item),
+    (item) => (auth.preview || !!auth.rolePreview) && allowed(item),
   );
   return (
     <>
-      <PageIntro
-        eyebrow="FIND YOUR WAY AROUND"
-        title="More"
-        description="Home, community and account essentials."
-      />
-      <div className="search">
-        <Search size={20} aria-hidden="true" />
-        <input
-          aria-label="Find a feature"
-          placeholder="Search features…"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setCategory("All");
-          }}
-        />
-      </div>
-      <div
-        className={styles.categories}
-        role="group"
-        aria-label="Feature categories"
-      >
-        {["All", ...availableGroups.map((group) => group.category)].map(
-          (value) => (
-            <button
-              type="button"
-              key={value}
-              className="filter"
-              aria-pressed={category === value}
-              onClick={() => setCategory(value)}
-            >
-              {value}
-            </button>
-          ),
-        )}
-      </div>
-      {category === "All" &&
-        accessGroups.map((area) => {
-          const items = area.links
-            .map((link) => ({
-              to: link.to,
-              title: `${area.title}: ${link.label}`,
-              icon: link.icon,
-            }))
-            .filter(match);
-          return items.length ? (
-            <DetailDisclosure key={area.id} title={area.title}>
-              <DestinationGrid items={items} compact />
-            </DetailDisclosure>
-          ) : null;
-        })}
+      <PageIntro title="More" />
+      {accessGroups.map((area) => {
+        const items = area.links.map((link) => ({
+          to: link.to,
+          title: `${area.title}: ${link.label}`,
+          icon: link.icon,
+        }));
+        return items.length ? (
+          <DetailDisclosure key={area.id} title={area.title}>
+            <DestinationGrid items={items} variant="rows" />
+          </DetailDisclosure>
+        ) : null;
+      })}
       {visible.map((group) => (
         <section key={group.category} className={styles.group}>
           <h2>{group.title}</h2>
-          <DestinationGrid
-            items={group.items}
-            compact={group.category === "Account"}
-          />
+          <DestinationGrid items={group.items} variant="rows" />
         </section>
       ))}
       {!visible.length &&
         !matches.length &&
-        !accessGroups.some((area) =>
-          area.links.some((link) =>
-            `${area.title}: ${link.label}`
-              .toLowerCase()
-              .includes(search.toLowerCase()),
-          ),
-        ) && (
-          <Empty title="No matching feature.">
-            Try another word or choose a different category.
+        !accessGroups.some((area) => area.links.length) && (
+          <Empty title="No matching feature">
+            No additional features are available for this account.
           </Empty>
         )}
-      {!search && matches.length > 0 && (
+      {matches.length > 0 && (
         <DetailDisclosure
           title={
             auth.preview || auth.rolePreview
@@ -324,12 +244,6 @@ export default function MoreHub() {
             <DestinationGrid items={matches} compact />
           </div>
         </DetailDisclosure>
-      )}
-      {search && matches.length > 0 && (
-        <section className={styles.group}>
-          <h2>Matching tools</h2>
-          <DestinationGrid items={matches} compact />
-        </section>
       )}
       {!auth.rolePreview && (
         <div className={styles.exit}>

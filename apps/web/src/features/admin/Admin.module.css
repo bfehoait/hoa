@@ -145,14 +145,14 @@
 .barTrack {
   background: var(--wash);
   height: 8px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 .barTrack > span {
   height: 100%;
   display: block;
   background: var(--chart-aging-current);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
 }
 .barTrack .late {
   background: var(--chart-aging-mid);

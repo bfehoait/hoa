@@ -35,7 +35,7 @@ export function useRequestSummary() {
         !auth.memberError &&
         assigned.some((role) => role === "admin" || role === "developer") &&
         permissions.allowsPath("/office/requests")),
-    gcTime: 0,
+    gcTime: 300_000,
     retry: false,
     refetchOnWindowFocus: true,
     refetchInterval: 30_000,
@@ -79,7 +79,7 @@ export function useRequestSummary() {
     },
   });
 }
-function requestError(error: { code?: string } | null) {
+function requestError(error: { code?: string; message?: string } | null) {
   if (!error) return;
   if (["42P01", "42883", "PGRST202", "PGRST205"].includes(error.code ?? ""))
     throw new Error(
@@ -93,6 +93,8 @@ function requestError(error: { code?: string } | null) {
     throw new Error(
       "Your account is not allowed to perform this action. Refresh your membership or contact the office.",
     );
+  if (["22023", "P0001"].includes(error.code ?? "") && error.message)
+    throw new Error(error.message);
   throw new Error(
     "The operation could not be confirmed. Refresh to check the saved record before retrying. Your text has been kept on this screen.",
   );
@@ -129,7 +131,7 @@ export function useRequests(
       category,
     ],
     enabled: sample || enabled,
-    gcTime: 0,
+    gcTime: 300_000,
     retry: false,
     refetchOnWindowFocus: true,
     refetchInterval: 30_000,
@@ -202,7 +204,7 @@ export function useRequestThread(id: string | null, page: number) {
           !!auth.member &&
           !auth.checking &&
           !auth.memberError)),
-    gcTime: 0,
+    gcTime: 300_000,
     retry: false,
     refetchOnWindowFocus: true,
     refetchInterval: 30_000,
@@ -281,11 +283,12 @@ export function useRequestActions(office = false) {
       const parsed = liveRequestInput.parse(input);
       if (sample) return createRequestSample(parsed, clientId);
       return liveRequestSchema.parse(
-        await call("bfe_create_request", {
+        await call("bfe_create_business_request", {
           p_client_id: clientId,
           p_title: parsed.title,
           p_description: parsed.description,
           p_category: parsed.category,
+          p_details: parsed.business_details ?? {},
         }),
       );
     },

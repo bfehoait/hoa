@@ -1,7 +1,10 @@
-import { useSearchParams } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import LiveFeature from "./LiveFeature";
+import Marketplace from "./Marketplace";
+import CarpoolHub from "../transport/CarpoolHub";
 import styles from "./LiveFeature.module.css";
 import { baselineModules } from "../../../../../packages/shared/src/baseline";
+import { featureReviewCapabilities } from "../../../../../packages/shared/src/office-review";
 import {
   Store,
   ShoppingBag,
@@ -19,6 +22,17 @@ const sectionIcons: Record<string, LucideIcon> = {
   "garage-sales": CalendarDays,
   "booth-events": Flag,
   workshops: GraduationCap,
+};
+const reviewAreas: Record<string, string> = {
+  property: "Property & permits",
+  security: "Security & passes",
+  livelihood: "Livelihood & activities",
+  transport: "Transport",
+  requests: "Helpdesk & requests",
+  documents: "Documents & governance",
+  community: "Community & publishing",
+  finance: "Finance",
+  operations: "Operations & access",
 };
 const groups: Record<string, Array<[string, string]>> = {
   Market: [
@@ -52,13 +66,46 @@ export default function LiveFeatureDirectory({
       ? baselineModules.map((m) => [m.id, m.title])
       : (groups[section] ?? Object.values(groups).flat());
   const [params, setParams] = useSearchParams();
+  const groupedReview = initialView === "review" && section === "All";
+  const groupFor = (id: string) =>
+    (groupedReview
+      ? reviewAreas[
+          featureReviewCapabilities[
+            id as keyof typeof featureReviewCapabilities
+          ]
+        ]
+      : undefined) ??
+    baselineModules.find((m) => m.id === id)?.group ??
+    "Other";
+  const areaNames = [...new Set(choices.map(([id]) => groupFor(id)))].sort();
+  const area =
+    groupedReview && areaNames.includes(params.get("area") ?? "")
+      ? params.get("area")!
+      : "";
+  const availableChoices = choices.filter(
+    ([id]) => !area || groupFor(id) === area,
+  );
   const selected =
-    choices.find(([id]) => id === params.get("section"))?.[0] ?? choices[0][0];
+    availableChoices.find(
+      ([id]) =>
+        id ===
+        (params.get("section") ??
+          (initialView === "review" ? params.get("module") : null)),
+    )?.[0] ?? availableChoices[0][0];
   const setSelected = (value: string) => {
     const next = new URLSearchParams(params);
     next.set("section", value);
     setParams(next);
   };
+  if (section === "Learning" && initialView === "published") {
+    const next = new URLSearchParams(params);
+    if (!next.has("section")) next.set("section", "workshops");
+    return <Navigate replace to={`/directory/market?${next}`} />;
+  }
+  if (section === "Market" && initialView === "published")
+    return <Marketplace />;
+  if (section === "Transport" && initialView === "published")
+    return <CarpoolHub />;
   return (
     <>
       {choices.length <= 8 && (
@@ -85,22 +132,72 @@ export default function LiveFeatureDirectory({
       )}
       {choices.length > 8 && (
         <div className={styles.toolbar}>
+          {groupedReview && (
+            <label>
+              Area
+              <select
+                value={area}
+                onChange={(e) => {
+                  const next = new URLSearchParams(params);
+                  if (e.target.value) next.set("area", e.target.value);
+                  else next.delete("area");
+                  const first = choices.find(
+                    ([id]) =>
+                      !e.target.value || groupFor(id) === e.target.value,
+                  );
+                  if (first) next.set("section", first[0]);
+                  setParams(next);
+                }}
+              >
+                <option value="">All areas</option>
+                {areaNames.map((name) => (
+                  <option key={name}>{name}</option>
+                ))}
+              </select>
+            </label>
+          )}
           <label>
-            Section
+            {groupedReview ? "Workflow" : "Section"}
             <select
               value={selected}
               onChange={(e) => setSelected(e.target.value)}
             >
-              {choices.map(([id, label]) => (
-                <option key={id} value={id}>
-                  {label}
-                </option>
-              ))}
+              {groupedReview
+                ? areaNames
+                    .filter((name) => !area || name === area)
+                    .map((name) => (
+                      <optgroup key={name} label={name}>
+                        {availableChoices
+                          .filter(([id]) => groupFor(id) === name)
+                          .map(([id, label]) => (
+                            <option key={id} value={id}>
+                              {label}
+                            </option>
+                          ))}
+                      </optgroup>
+                    ))
+                : choices.map(([id, label]) => (
+                    <option key={id} value={id}>
+                      {label}
+                    </option>
+                  ))}
             </select>
           </label>
         </div>
       )}
-      <LiveFeature key={selected} module={selected} initialView={initialView} />
+      {groupedReview && (
+        <p className={styles.formHelp}>
+          Area narrows the workflow list. Choose a workflow to review its
+          submissions; each decision records the outcome available for that
+          service.
+        </p>
+      )}
+      <LiveFeature
+        key={selected}
+        module={selected}
+        initialView={initialView}
+        resident={initialView !== "review"}
+      />
     </>
   );
 }

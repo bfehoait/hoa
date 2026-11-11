@@ -1,29 +1,10 @@
 .group {
   margin: 28px 0;
 }
-.categories {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 4px;
-  width: max-content;
-  max-width: 100%;
-  background: var(--wash);
-  padding: 4px;
-  border-radius: 12px;
-  margin: 20px 0 24px;
-}
-.categories > button {
-  min-width: 48px;
-  min-height: 48px;
-  flex: 0 0 auto;
-  padding: 8px 10px;
-  font-size: 14px;
-  border-color: transparent;
-}
 .group > h2 {
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 16px;
+  font-size: 20px;
+  font-weight: 500;
+  margin-bottom: 12px;
 }
 .tools {
   margin-top: 20px;
@@ -38,10 +19,8 @@
   color: var(--muted);
   margin-top: 12px;
 }
-@media (max-width: 359px) {
-  .categories {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    width: 100%;
+@media (min-width: 1100px) {
+  .group {
+    max-width: 1000px;
   }
 }

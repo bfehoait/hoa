@@ -59,6 +59,43 @@ button {
 button:disabled {
   cursor: not-allowed;
 }
+/* Low specificity gives every native form a usable baseline, while scoped
+   controls (search, uploads, checkboxes) retain their own layout. */
+:where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
+      [type="color"]
+    ):not([type="hidden"]),
+  select,
+  textarea
+) {
+  min-height: var(--control-height);
+  max-width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  padding: 12px 16px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.5;
+}
+:where(textarea) {
+  min-height: 120px;
+  resize: vertical;
+}
+:where(input, textarea)::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+:where(input, select, textarea)[aria-invalid="true"] {
+  border-color: var(--red);
+}
+:where(input, select, textarea):disabled {
+  background: var(--wash);
+  cursor: not-allowed;
+}
+:where(input[type="checkbox"], input[type="radio"]) {
+  accent-color: var(--accent);
+}
 a {
   color: inherit;
 }
@@ -67,8 +104,17 @@ a:active {
   transform: translateY(1px);
 }
 :focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: 4px;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* Staff workspaces use a compact ring around dense forms and action bars. */
+[data-staff-ui="true"] :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+[data-staff-ui="true"] .search:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 main:focus {
   outline: none;
@@ -81,18 +127,19 @@ p {
 }
 h1 {
   font-family: var(--heading-font);
-  font-size: 32px;
-  font-weight: 750;
+  font-size: var(--page-heading-size);
+  font-weight: 600;
   line-height: 1.15;
-  letter-spacing: -1px;
+  letter-spacing: -0.025em;
 }
 h2 {
-  font-size: 18px;
+  font-size: var(--section-heading-size);
   line-height: 1.4;
   font-weight: 600;
 }
 h3 {
   font-size: 16px;
+  font-weight: 600;
 }
 svg {
   stroke-width: 1.6;
@@ -179,7 +226,7 @@ svg {
   color: var(--accent);
   border: 1px solid var(--line-strong);
   background: var(--surface);
-  border-radius: 12px;
+  border-radius: var(--radius-pill);
   padding: 10px 14px;
   max-width: 100%;
 }
@@ -194,7 +241,7 @@ svg {
   justify-content: center;
   flex-shrink: 0;
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   background: transparent;
   color: var(--muted);
   text-decoration: none;
@@ -216,10 +263,11 @@ svg {
   color: var(--accent);
 }
 .panel {
+  min-width: 0;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  padding: 24px;
+  padding: var(--card-padding);
 }
 .stack {
   display: flex;
@@ -228,7 +276,7 @@ svg {
 }
 .two-column {
   display: grid;
-  grid-template-columns: 1.35fr 1fr;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
   gap: 32px;
 }
 .grid-2 {
@@ -236,11 +284,20 @@ svg {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
 }
+/* A tablet sidebar consumes part of the viewport; its content area needs the
+   same single-column treatment as a phone before a two-column workspace fits. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .two-column,
+  .grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .list {
   border-top: 1px solid var(--line);
 }
 .form-actions {
   display: flex;
+  align-items: center;
   gap: 12px;
   margin-top: 24px;
   justify-content: flex-end;
@@ -275,7 +332,7 @@ svg {
   min-height: 48px;
   min-width: 48px;
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   padding: 8px 16px;
   background: transparent;
   color: var(--muted);
@@ -290,7 +347,7 @@ svg {
   align-items: center;
   gap: 12px;
   border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   padding: 0 16px;
   margin-bottom: 24px;
   max-width: 480px;
@@ -305,8 +362,8 @@ svg {
   outline: none;
 }
 .search:focus-within {
-  outline: 3px solid var(--accent);
-  outline-offset: 3px;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .sr-only {
   position: absolute;
@@ -488,6 +545,11 @@ th:last-child {
   }
 }
 @media (max-width: 767px) {
+  :root {
+    --card-padding: 20px;
+    --page-heading-size: 28px;
+    --section-heading-size: 18px;
+  }
   h1 {
     font-size: 32px;
     letter-spacing: -0.6px;
@@ -507,7 +569,7 @@ th:last-child {
     gap: 24px;
   }
   .panel {
-    padding: 24px;
+    padding: var(--card-padding);
   }
   .table-wrap {
     margin-right: -4px;
@@ -688,5 +750,50 @@ summary {
   }
   .notice-note {
     margin-bottom: 20px;
+  }
+}
+
+.page-actions {
+  display: contents;
+}
+@media (min-width: 1024px) {
+  [data-staff-ui="true"] .page-intro {
+    align-items: center;
+    gap: 16px 24px;
+    margin-bottom: var(--staff-section-gap, 16px);
+    padding-bottom: 16px;
+  }
+  [data-staff-ui="true"] .page-intro > :first-child {
+    flex: 1;
+    min-width: 0;
+  }
+  [data-staff-ui="true"] .page-intro .eyebrow {
+    margin-bottom: 6px;
+  }
+  [data-staff-ui="true"] .page-description {
+    margin-top: 6px;
+    max-width: 80ch;
+    font-size: 14px;
+  }
+  [data-staff-ui="true"] .page-title {
+    gap: 12px;
+  }
+  [data-staff-ui="true"] .page-title-icon {
+    width: 44px;
+    height: 44px;
+  }
+  [data-staff-ui="true"] .page-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-width: 48%;
+  }
+  [data-staff-ui="true"] .stack {
+    gap: var(--staff-section-gap, 16px);
+  }
+  [data-staff-ui="true"] :is(.grid-2, .two-column) {
+    gap: 20px;
   }
 }

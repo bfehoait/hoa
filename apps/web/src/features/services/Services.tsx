@@ -98,9 +98,11 @@ export default function Services() {
   if (
     !auth.preview &&
     !auth.rolePreview &&
-    ["/services/bookings", "/services/visitors"].includes(location.pathname)
+    ["/services/bookings", "/services/calendar", "/services/visitors"].includes(
+      location.pathname,
+    )
   )
-    return location.pathname.endsWith("bookings") ? (
+    return !location.pathname.endsWith("visitors") ? (
       <BookingsCalendar key={location.pathname} />
     ) : (
       <OperationsDesk key={location.pathname} kind="visitor" />

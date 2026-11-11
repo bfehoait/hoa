@@ -1,0 +1,1211 @@
+{
+  "referenceFile": "reference/upstream-hoa/index.html",
+  "referenceSha256": "a5830a1427437ded2114000a45efdaa9f7474df70677550bd0b0591175e97875",
+  "method": "Static literal input/select/textarea identifiers grouped by enclosing function. Search/filter controls and helpers included; dynamically generated controls may be omitted. Not a count of complete business forms or field parity.",
+  "controlTagCount": 265,
+  "distinctControlIdentifiers": 214,
+  "referenceOwners": [
+    {
+      "owner": "static",
+      "firstControlLine": 767,
+      "controls": [
+        "email",
+        "pass",
+        "roleSwitch",
+        "viewAsSel"
+      ]
+    },
+    {
+      "owner": "adminPositionField",
+      "firstControlLine": 1130,
+      "controls": [
+        "f_pos",
+        "f_pos_other"
+      ]
+    },
+    {
+      "owner": "lhSearchBar",
+      "firstControlLine": 1414,
+      "controls": [
+        "lhSearchInput"
+      ]
+    },
+    {
+      "owner": "profiles",
+      "firstControlLine": 2512,
+      "controls": [
+        "profileSearchInput"
+      ]
+    },
+    {
+      "owner": "billing",
+      "firstControlLine": 2922,
+      "controls": [
+        "cs_day",
+        "cs_fee",
+        "cs_flat",
+        "cs_rate"
+      ]
+    },
+    {
+      "owner": "association",
+      "firstControlLine": 3036,
+      "controls": [
+        "as_addr",
+        "as_hours",
+        "as_name",
+        "as_quiet"
+      ]
+    },
+    {
+      "owner": "chatModalHTML",
+      "firstControlLine": 3496,
+      "controls": [
+        "chatInput"
+      ]
+    },
+    {
+      "owner": "quickMessageAdmin",
+      "firstControlLine": 3564,
+      "controls": [
+        "f_qm"
+      ]
+    },
+    {
+      "owner": "accountSettings",
+      "firstControlLine": 3693,
+      "controls": [
+        "avatarFile",
+        "pf_digest",
+        "pf_email",
+        "pf_name",
+        "pf_phone",
+        "pf_position"
+      ]
+    },
+    {
+      "owner": "anonymous",
+      "firstControlLine": 4053,
+      "controls": [
+        "gp_type"
+      ]
+    },
+    {
+      "owner": "gpForm",
+      "firstControlLine": 4054,
+      "controls": [
+        "gp_addr",
+        "gp_bearer",
+        "gp_date",
+        "gp_plate",
+        "gp_purpose",
+        "gp_time"
+      ]
+    },
+    {
+      "owner": "gpDecline",
+      "firstControlLine": 4153,
+      "controls": [
+        "gp_reason"
+      ]
+    },
+    {
+      "owner": "gpCheck",
+      "firstControlLine": 4182,
+      "controls": [
+        "gp_note"
+      ]
+    },
+    {
+      "owner": "gpHold",
+      "firstControlLine": 4191,
+      "controls": [
+        "gp_flag"
+      ]
+    },
+    {
+      "owner": "secRemove",
+      "firstControlLine": 4258,
+      "controls": [
+        "sec_reason"
+      ]
+    },
+    {
+      "owner": "guardForm",
+      "firstControlLine": 4274,
+      "controls": [
+        "gr_contact",
+        "gr_name",
+        "gr_post",
+        "gr_shift"
+      ]
+    },
+    {
+      "owner": "gate",
+      "firstControlLine": 5146,
+      "controls": [
+        "gateSearchInput"
+      ]
+    },
+    {
+      "owner": "announceForm",
+      "firstControlLine": 5405,
+      "controls": [
+        "f_att",
+        "f_body",
+        "f_cat",
+        "f_date",
+        "f_title",
+        "f_vis"
+      ]
+    },
+    {
+      "owner": "annPhotoPicker",
+      "firstControlLine": 5459,
+      "controls": [
+        "annPhotoFile"
+      ]
+    },
+    {
+      "owner": "assignForm",
+      "firstControlLine": 5490,
+      "controls": [
+        "f_as",
+        "f_pr"
+      ]
+    },
+    {
+      "owner": "requestForm",
+      "firstControlLine": 5498,
+      "controls": [
+        "f_detail",
+        "f_title",
+        "f_type"
+      ]
+    },
+    {
+      "owner": "carpoolForm",
+      "firstControlLine": 5606,
+      "controls": [
+        "f_cpcontact",
+        "f_cpdate",
+        "f_cpfrom",
+        "f_cpkind",
+        "f_cpnote",
+        "f_cpseats",
+        "f_cpshare",
+        "f_cptime",
+        "f_cpto"
+      ]
+    },
+    {
+      "owner": "rideForm",
+      "firstControlLine": 5663,
+      "controls": [
+        "f_pk",
+        "f_rd",
+        "f_rn",
+        "f_rp",
+        "f_rt"
+      ]
+    },
+    {
+      "owner": "acceptRide",
+      "firstControlLine": 5692,
+      "controls": [
+        "f_vh"
+      ]
+    },
+    {
+      "owner": "rideOnTheWay",
+      "firstControlLine": 5706,
+      "controls": [
+        "f_eta"
+      ]
+    },
+    {
+      "owner": "visitorForm",
+      "firstControlLine": 5748,
+      "controls": [
+        "f_vdate",
+        "f_vmode",
+        "f_vname",
+        "f_vplate",
+        "f_vpurpose"
+      ]
+    },
+    {
+      "owner": "trainingForm",
+      "firstControlLine": 5832,
+      "controls": [
+        "f_cat",
+        "f_contact",
+        "f_desc",
+        "f_fac",
+        "f_fee",
+        "f_link",
+        "f_slots",
+        "f_tdate",
+        "f_tend",
+        "f_title",
+        "f_tstart",
+        "f_venue"
+      ]
+    },
+    {
+      "owner": "lhLinkField",
+      "firstControlLine": 5880,
+      "controls": [
+        "f_plink"
+      ]
+    },
+    {
+      "owner": "lhPhotoPicker",
+      "firstControlLine": 5922,
+      "controls": [
+        "mktPhotoFile"
+      ]
+    },
+    {
+      "owner": "mktTypeFields",
+      "firstControlLine": 5971,
+      "controls": [
+        "f_cat",
+        "f_cond",
+        "f_kind",
+        "f_price",
+        "f_rate",
+        "f_title"
+      ]
+    },
+    {
+      "owner": "marketplaceForm",
+      "firstControlLine": 5999,
+      "controls": [
+        "f_biz",
+        "f_contact",
+        "f_desc",
+        "f_fb"
+      ]
+    },
+    {
+      "owner": "lhLogoPicker",
+      "firstControlLine": 6034,
+      "controls": [
+        "bizLogoFile"
+      ]
+    },
+    {
+      "owner": "businessForm",
+      "firstControlLine": 6055,
+      "controls": [
+        "f_cat",
+        "f_contact",
+        "f_desc",
+        "f_fbpage",
+        "f_hours",
+        "f_listedby",
+        "f_ownername",
+        "f_title",
+        "f_web"
+      ]
+    },
+    {
+      "owner": "jobForm",
+      "firstControlLine": 6125,
+      "controls": [
+        "f_contact",
+        "f_desc",
+        "f_japply",
+        "f_jcomp",
+        "f_jdl",
+        "f_jkind",
+        "f_jloc",
+        "f_jpay",
+        "f_jsetup",
+        "f_jtype",
+        "f_title"
+      ]
+    },
+    {
+      "owner": "garageForm",
+      "firstControlLine": 6188,
+      "controls": [
+        "f_contact",
+        "f_desc",
+        "f_gdate",
+        "f_gend",
+        "f_gstart",
+        "f_gvis",
+        "f_title"
+      ]
+    },
+    {
+      "owner": "rejectGarageItemForm",
+      "firstControlLine": 6250,
+      "controls": [
+        "f_reason"
+      ]
+    },
+    {
+      "owner": "adminListingForm",
+      "firstControlLine": 6263,
+      "controls": [
+        "f_contact",
+        "f_days",
+        "f_desc",
+        "f_fb",
+        "f_posted"
+      ]
+    },
+    {
+      "owner": "boothApplyForm",
+      "firstControlLine": 6344,
+      "controls": [
+        "f_bbiz",
+        "f_bphone",
+        "f_bprod",
+        "f_bvendor"
+      ]
+    },
+    {
+      "owner": "boothEventForm",
+      "firstControlLine": 6365,
+      "controls": [
+        "f_ecap",
+        "f_edate",
+        "f_eend",
+        "f_esetup",
+        "f_estart",
+        "f_etheme",
+        "f_etitle",
+        "f_evenue"
+      ]
+    },
+    {
+      "owner": "rejectBoothForm",
+      "firstControlLine": 6413,
+      "controls": [
+        "f_reason"
+      ]
+    },
+    {
+      "owner": "rejectMktForm",
+      "firstControlLine": 6443,
+      "controls": [
+        "f_reason"
+      ]
+    },
+    {
+      "owner": "payForm",
+      "firstControlLine": 6470,
+      "controls": [
+        "f_method",
+        "f_ref"
+      ]
+    },
+    {
+      "owner": "payDateField",
+      "firstControlLine": 6481,
+      "controls": [
+        "f_paid"
+      ]
+    },
+    {
+      "owner": "recordPaymentForm",
+      "firstControlLine": 6496,
+      "controls": [
+        "f_method",
+        "f_ref"
+      ]
+    },
+    {
+      "owner": "disclosureForm",
+      "firstControlLine": 6542,
+      "controls": [
+        "f_dd",
+        "f_de",
+        "f_di",
+        "f_dk",
+        "f_dl",
+        "f_dp",
+        "f_ds",
+        "f_dt"
+      ]
+    },
+    {
+      "owner": "billingRun",
+      "firstControlLine": 6579,
+      "controls": [
+        "f_per"
+      ]
+    },
+    {
+      "owner": "bkFacSelect",
+      "firstControlLine": 6729,
+      "controls": [
+        "f_fac"
+      ]
+    },
+    {
+      "owner": "bookForm",
+      "firstControlLine": 6740,
+      "controls": [
+        "f_purpose"
+      ]
+    },
+    {
+      "owner": "adminBookForm",
+      "firstControlLine": 6762,
+      "controls": [
+        "f_member",
+        "f_purpose",
+        "f_status",
+        "f_unit",
+        "f_unitpick"
+      ]
+    },
+    {
+      "owner": "declineBookingForm",
+      "firstControlLine": 6813,
+      "controls": [
+        "bk_reason"
+      ]
+    },
+    {
+      "owner": "validateForm",
+      "firstControlLine": 6826,
+      "controls": [
+        "f_c"
+      ]
+    },
+    {
+      "owner": "boardDocForm",
+      "firstControlLine": 6839,
+      "controls": [
+        "f_d",
+        "f_k",
+        "f_n",
+        "f_t"
+      ]
+    },
+    {
+      "owner": "userForm",
+      "firstControlLine": 6863,
+      "controls": [
+        "f_e",
+        "f_n",
+        "f_p",
+        "f_pw",
+        "f_r",
+        "f_s",
+        "f_t",
+        "f_u"
+      ]
+    },
+    {
+      "owner": "addrFields",
+      "firstControlLine": 6998,
+      "controls": [
+        "f_ablk",
+        "f_alot",
+        "f_aph"
+      ]
+    },
+    {
+      "owner": "auditFieldsHTML",
+      "firstControlLine": 7057,
+      "controls": [
+        "au_doc",
+        "au_reason"
+      ]
+    },
+    {
+      "owner": "activateUser",
+      "firstControlLine": 7209,
+      "controls": [
+        "f_pw"
+      ]
+    },
+    {
+      "owner": "resetPassword",
+      "firstControlLine": 7227,
+      "controls": [
+        "f_pw"
+      ]
+    },
+    {
+      "owner": "hhForm",
+      "firstControlLine": 7284,
+      "controls": [
+        "hh_contact",
+        "hh_name",
+        "hh_rel",
+        "hh_type"
+      ]
+    },
+    {
+      "owner": "unitForm",
+      "firstControlLine": 7361,
+      "controls": [
+        "f_aid",
+        "f_hs",
+        "f_lot",
+        "f_oc",
+        "f_ow",
+        "f_park",
+        "f_rate",
+        "f_rem",
+        "f_role",
+        "f_st",
+        "f_ty",
+        "f_ust"
+      ]
+    },
+    {
+      "owner": "unitImportForm",
+      "firstControlLine": 7418,
+      "controls": [
+        "f_xf"
+      ]
+    },
+    {
+      "owner": "expenseCategoryForm",
+      "firstControlLine": 7601,
+      "controls": [
+        "f_i"
+      ]
+    },
+    {
+      "owner": "expenseForm",
+      "firstControlLine": 7616,
+      "controls": [
+        "f_amt",
+        "f_cat",
+        "f_memo",
+        "f_pay"
+      ]
+    },
+    {
+      "owner": "exportCollectionsForm",
+      "firstControlLine": 7671,
+      "controls": [
+        "f_xp",
+        "f_xs"
+      ]
+    },
+    {
+      "owner": "expenseImportForm",
+      "firstControlLine": 7705,
+      "controls": [
+        "f_xf"
+      ]
+    },
+    {
+      "owner": "monthlyExpenseForm",
+      "firstControlLine": 7771,
+      "controls": [
+        "f_mm",
+        "f_mn",
+        "f_mt"
+      ]
+    },
+    {
+      "owner": "walkInForm",
+      "firstControlLine": 7800,
+      "controls": [
+        "wi_mode",
+        "wi_name",
+        "wi_note",
+        "wi_people",
+        "wi_plate",
+        "wi_purpose",
+        "wi_unit"
+      ]
+    },
+    {
+      "owner": "stickerForm",
+      "firstControlLine": 7915,
+      "controls": [
+        "f_ex",
+        "f_pl",
+        "f_u",
+        "f_v"
+      ]
+    },
+    {
+      "owner": "incidentForm",
+      "firstControlLine": 7929,
+      "controls": [
+        "f_d",
+        "f_k",
+        "f_t",
+        "f_w"
+      ]
+    },
+    {
+      "owner": "resolveComplaint",
+      "firstControlLine": 7951,
+      "controls": [
+        "f_res"
+      ]
+    },
+    {
+      "owner": "complaintForm",
+      "firstControlLine": 7961,
+      "controls": [
+        "f_ag",
+        "f_cat",
+        "f_detail",
+        "f_title"
+      ]
+    },
+    {
+      "owner": "concernForm",
+      "firstControlLine": 7978,
+      "controls": [
+        "f_msg",
+        "f_sub",
+        "f_top"
+      ]
+    },
+    {
+      "owner": "ruleForm",
+      "firstControlLine": 7994,
+      "controls": [
+        "f_t",
+        "f_x"
+      ]
+    },
+    {
+      "owner": "candidateForm",
+      "firstControlLine": 8054,
+      "controls": [
+        "candPhotoFile",
+        "f_cred",
+        "f_n",
+        "f_newpos",
+        "f_p",
+        "f_pos",
+        "f_u"
+      ]
+    },
+    {
+      "owner": "ticketForm",
+      "firstControlLine": 8173,
+      "controls": [
+        "f_d",
+        "f_p",
+        "f_s"
+      ]
+    },
+    {
+      "owner": "addItem",
+      "firstControlLine": 8399,
+      "controls": [
+        "f_i"
+      ]
+    },
+    {
+      "owner": "setPasswordForm",
+      "firstControlLine": 8413,
+      "controls": [
+        "f_b",
+        "f_c"
+      ]
+    },
+    {
+      "owner": "registerForm",
+      "firstControlLine": 8435,
+      "controls": [
+        "rg_d",
+        "rg_e",
+        "rg_m",
+        "rg_n",
+        "rg_o",
+        "rg_ok",
+        "rg_p",
+        "rg_r",
+        "rg_ref",
+        "rg_u"
+      ]
+    },
+    {
+      "owner": "approveReg",
+      "firstControlLine": 8527,
+      "controls": [
+        "rv_note"
+      ]
+    },
+    {
+      "owner": "rejectReg",
+      "firstControlLine": 8544,
+      "controls": [
+        "rv_note"
+      ]
+    }
+  ],
+  "currentCatalogFile": "packages/shared/src/baseline.ts",
+  "currentAdditionalQuestionsFile": "packages/shared/src/business-form-fields.ts",
+  "currentCatalogModules": [
+    {
+      "module": "unit-register",
+      "line": 72,
+      "fields": [
+        "unit",
+        "owner",
+        "area",
+        "occupancy"
+      ]
+    },
+    {
+      "module": "expense-evidence",
+      "line": 100,
+      "fields": [
+        "date",
+        "category",
+        "amount",
+        "reference"
+      ]
+    },
+    {
+      "module": "businesses",
+      "line": 123,
+      "fields": [
+        "category",
+        "fulfilment",
+        "serviceArea",
+        "storefront",
+        "businessKind",
+        "hours",
+        "owner",
+        "contact",
+        "website"
+      ],
+      "additionalFields": [
+        "listedBy",
+        "facebook"
+      ]
+    },
+    {
+      "module": "buy-sell",
+      "line": 178,
+      "fields": [
+        "category",
+        "condition",
+        "price",
+        "contact",
+        "photoNote"
+      ],
+      "additionalFields": [
+        "listingKind",
+        "rate",
+        "rateUnit",
+        "business",
+        "facebook"
+      ]
+    },
+    {
+      "module": "jobs",
+      "line": 203,
+      "fields": [
+        "kind",
+        "company",
+        "jobType",
+        "setup",
+        "location",
+        "pay",
+        "deadline",
+        "applyLink"
+      ],
+      "additionalFields": [
+        "contact"
+      ]
+    },
+    {
+      "module": "garage-sales",
+      "line": 231,
+      "fields": [
+        "date",
+        "start",
+        "end",
+        "location",
+        "items",
+        "visibility",
+        "contact"
+      ]
+    },
+    {
+      "module": "booth-events",
+      "line": 260,
+      "fields": [
+        "venue",
+        "date",
+        "setup",
+        "start",
+        "end",
+        "capacity"
+      ],
+      "additionalFields": [
+        "theme",
+        "vendorRules",
+        "contact"
+      ]
+    },
+    {
+      "module": "booth-applications",
+      "line": 285,
+      "fields": [
+        "eventId",
+        "business",
+        "products",
+        "contact"
+      ],
+      "additionalFields": [
+        "vendor",
+        "phone"
+      ]
+    },
+    {
+      "module": "workshops",
+      "line": 308,
+      "fields": [
+        "date",
+        "start",
+        "end",
+        "venue",
+        "facilitator",
+        "capacity",
+        "fee"
+      ],
+      "additionalFields": [
+        "category",
+        "contact",
+        "signupLink"
+      ]
+    },
+    {
+      "module": "participation",
+      "line": 334,
+      "fields": [
+        "sessionId",
+        "participant",
+        "places"
+      ]
+    },
+    {
+      "module": "ride-requests",
+      "line": 352,
+      "fields": [
+        "pickup",
+        "destination",
+        "date",
+        "time",
+        "passengers"
+      ],
+      "additionalFields": [
+        "station",
+        "driverNote"
+      ]
+    },
+    {
+      "module": "carpools",
+      "line": 376,
+      "fields": [
+        "pickup",
+        "destination",
+        "date",
+        "time",
+        "seats",
+        "contact"
+      ],
+      "additionalFields": [
+        "kind",
+        "contribution",
+        "note"
+      ]
+    },
+    {
+      "module": "carpool-interests",
+      "line": 401,
+      "fields": [
+        "carpoolId",
+        "participant",
+        "places"
+      ]
+    },
+    {
+      "module": "stations",
+      "line": 415,
+      "fields": [
+        "location",
+        "dispatcher",
+        "drivers",
+        "hours"
+      ]
+    },
+    {
+      "module": "complaints",
+      "line": 434,
+      "fields": [
+        "category",
+        "party",
+        "location",
+        "resolution"
+      ]
+    },
+    {
+      "module": "concerns",
+      "line": 458,
+      "fields": [
+        "category",
+        "location",
+        "priority"
+      ]
+    },
+    {
+      "module": "tickets",
+      "line": 477,
+      "fields": [
+        "channel",
+        "priority",
+        "assignedTo"
+      ]
+    },
+    {
+      "module": "messages",
+      "line": 503,
+      "fields": [
+        "recipient",
+        "topic"
+      ]
+    },
+    {
+      "module": "gate-passes",
+      "line": 534,
+      "fields": [
+        "purpose",
+        "crew",
+        "movingUnit",
+        "purposeDetail",
+        "date",
+        "items",
+        "vehicle",
+        "party"
+      ]
+    },
+    {
+      "module": "walk-ins",
+      "line": 570,
+      "fields": [
+        "visitor",
+        "unit",
+        "purpose",
+        "date"
+      ]
+    },
+    {
+      "module": "vehicles",
+      "line": 598,
+      "fields": [
+        "request",
+        "plate",
+        "vehicleType",
+        "makeModel",
+        "colour",
+        "unit",
+        "owner",
+        "driver",
+        "company",
+        "lostReport",
+        "orCr"
+      ]
+    },
+    {
+      "module": "permits",
+      "line": 650,
+      "fields": [
+        "permit",
+        "unit",
+        "start",
+        "finish",
+        "scope",
+        "contractor",
+        "workers",
+        "mover",
+        "documents"
+      ]
+    },
+    {
+      "module": "incidents",
+      "line": 696,
+      "fields": [
+        "kind",
+        "occurred",
+        "time",
+        "location",
+        "severity",
+        "plate",
+        "injuries",
+        "damage",
+        "action",
+        "reportedBy"
+      ]
+    },
+    {
+      "module": "board-reports",
+      "line": 741,
+      "fields": [
+        "kind",
+        "period",
+        "audience",
+        "committee",
+        "summary",
+        "reference"
+      ],
+      "additionalFields": [
+        "reportedIncome",
+        "reportedExpenses",
+        "reportLink",
+        "reportDate"
+      ]
+    },
+    {
+      "module": "guard-roster",
+      "line": 777,
+      "fields": [
+        "post",
+        "guard",
+        "date",
+        "start",
+        "end"
+      ],
+      "additionalFields": [
+        "contact",
+        "shift"
+      ]
+    },
+    {
+      "module": "household-changes",
+      "line": 801,
+      "fields": [
+        "unit",
+        "change",
+        "effective",
+        "member",
+        "evidence"
+      ]
+    },
+    {
+      "module": "publishing",
+      "line": 830,
+      "fields": [
+        "audience",
+        "pinned",
+        "date",
+        "attachments"
+      ]
+    },
+    {
+      "module": "events",
+      "line": 864,
+      "fields": [
+        "date",
+        "start",
+        "end",
+        "venue"
+      ]
+    },
+    {
+      "module": "board-records",
+      "line": 879,
+      "fields": [
+        "category",
+        "version",
+        "owner",
+        "audience",
+        "source"
+      ]
+    },
+    {
+      "module": "election-setup",
+      "line": 912,
+      "fields": [
+        "date",
+        "start",
+        "end",
+        "positions",
+        "eligibility",
+        "proxy"
+      ]
+    },
+    {
+      "module": "billing-proposals",
+      "line": 937,
+      "fields": [
+        "period",
+        "mode",
+        "rate",
+        "due",
+        "scope"
+      ]
+    },
+    {
+      "module": "payment-evidence",
+      "line": 964,
+      "fields": [
+        "unit",
+        "date",
+        "amount",
+        "reference",
+        "method",
+        "allocation"
+      ]
+    },
+    {
+      "module": "budgets",
+      "line": 993,
+      "fields": [
+        "period",
+        "category",
+        "planned",
+        "actual",
+        "source"
+      ]
+    },
+    {
+      "module": "access-proposals",
+      "line": 1013,
+      "fields": [
+        "account",
+        "change",
+        "scope",
+        "evidence"
+      ]
+    },
+    {
+      "module": "facility-rules",
+      "line": 1046,
+      "fields": [
+        "setting",
+        "scope",
+        "proposed"
+      ]
+    },
+    {
+      "module": "election-candidates",
+      "line": 1077,
+      "fields": [
+        "electionId",
+        "position",
+        "nominee",
+        "biography",
+        "photoDescription"
+      ],
+      "additionalFields": [
+        "credentials"
+      ]
+    }
+  ],
+  "limitations": "Current dedicated forms are assessed separately in docs/LEGACY-FORM-COVERAGE-ASSESSMENT.md. A catalog entry is not proof of routing, permission, persistence or fulfillment. No live state was inspected."
+}

@@ -15,18 +15,29 @@
 -- because those require an account holding calendar/manage/association and the
 -- developer role respectively. Using them from the app is the real path; this
 -- is a shortcut for setting up a test.
+-- Deliberate opt-in for an isolated test database. Do not enable this on the
+-- resident-facing production database. The script refuses to run by default.
+-- In a test database only, change the next setting to 'on' after BEGIN.
 BEGIN;
+SET LOCAL app.bfe_allow_synthetic_configuration = 'off';
+DO $$
+BEGIN
+ IF current_setting('app.bfe_allow_synthetic_configuration',true) IS DISTINCT FROM 'on' THEN
+  RAISE EXCEPTION 'Synthetic test configuration is disabled. Use an isolated test database and explicitly opt in.';
+ END IF;
+END;
+$$;
 
 -- 1. Facilities ------------------------------------------------------------
 -- slot_minutes must be 15, 30 or 60; max_minutes must be a multiple of it.
 INSERT INTO public.bfe_facilities
   (name, opens, closes, slot_minutes, max_minutes, capacity, renters, active, policy_reference)
 VALUES
-  ('Function hall',    '08:00', '22:00', 60, 480, 120, true,  true,
+  ('SYNTHETIC TEST - Function hall',    '08:00', '22:00', 60, 480, 120, true,  true,
    'TEST CONFIGURATION — placeholder hours and capacity, not approved policy'),
-  ('Basketball court', '06:00', '22:00', 30, 240,  30, true,  true,
+  ('SYNTHETIC TEST - Basketball court', '06:00', '22:00', 30, 240,  30, true,  true,
    'TEST CONFIGURATION — placeholder hours and capacity, not approved policy'),
-  ('Clubhouse',        '08:00', '21:00', 60, 360,  60, false, true,
+  ('SYNTHETIC TEST - Clubhouse',        '08:00', '21:00', 60, 360,  60, false, true,
    'TEST CONFIGURATION — placeholder hours and capacity, not approved policy')
 ON CONFLICT (name) DO NOTHING;
 

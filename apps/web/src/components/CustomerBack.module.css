@@ -1,0 +1,28 @@
+.back {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 650;
+  text-decoration: none;
+}
+.back svg {
+  color: var(--accent);
+}
+@media (min-width: 768px) {
+  .back {
+    display: none;
+  }
+}
+@media (min-width: 768px) and (max-width: 1023px) and (max-height: 500px) and (pointer: coarse) {
+  .back {
+    display: inline-flex;
+  }
+}

@@ -1,7 +1,8 @@
 import financeStyles from "./FinanceReports.module.css";
 import { DetailDisclosure, NavigationGroup } from "../../components/Navigation";
-import { lazy, useState } from "react";
-import { NavLink, useParams } from "react-router-dom";
+import { lazy, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { NavLink, useParams, useSearchParams } from "react-router-dom";
 import { Link } from "../../components/AccessLink";
 import {
   ArrowRight,
@@ -38,20 +39,87 @@ import Admin from "../admin/Admin";
 import { useAuth } from "../../data/auth";
 import People from "./People";
 import StaffHome from "./StaffHome";
+import OfficeReviewInbox from "./OfficeReviewInbox";
+import FacilityCalendar from "./FacilityCalendar";
+import ParticipationDesk from "../connected/ParticipationDesk";
+import Shuttle from "../transport/Shuttle";
+import { featureReviewCapabilities } from "../../../../../packages/shared/src/office-review";
 import { ExpenseVisual } from "../../components/RecordVisuals";
 import { RequestVisual } from "../../components/RequestVisual";
 import RequestDesk from "../services/RequestDesk";
 import OperationsDesk from "../connected/OperationsDesk";
 import LiveFeature from "../connected/LiveFeature";
+import AnnouncementManager from "../connected/AnnouncementManager";
 import LiveFeatureDirectory from "../connected/LiveFeatureDirectory";
 import AccessPlanning from "../developer/AccessPlanning";
 const FinanceReports = lazy(() => import("./FinanceReports"));
 const RecordedFinance = lazy(() => import("./RecordedFinance"));
+const AccountingWorkbench = lazy(() => import("./AccountingWorkbench"));
+const OfficeConfiguration = lazy(() => import("./OfficeConfiguration"));
+const GarageSaleItems = lazy(() => import("../connected/GarageSaleItems"));
 const OfficeCalendar = lazy(() => import("../community/CommunityModules"));
 
 export default function Office() {
   const auth = useAuth();
+  const cache = useQueryClient();
+  useEffect(() => {
+    if (auth.preview || auth.rolePreview || auth.memberPreview) return;
+    return cache.getMutationCache().subscribe((event) => {
+      if (event.type === "updated" && event.action.type === "success") {
+        void cache.invalidateQueries({ queryKey: ["office-review-inbox"] });
+        void cache.invalidateQueries({ queryKey: ["office-pending-lots"] });
+      }
+    });
+  }, [cache, auth.preview, auth.rolePreview, auth.memberPreview]);
   const path = useParams()["*"] ?? "";
+  const [params] = useSearchParams();
+  if (!auth.preview && !auth.rolePreview) {
+    if (path === "garage-items") return <GarageSaleItems office />;
+    if (path === "finance/accounting") return <AccountingWorkbench />;
+    if (path === "settings" || path === "hotlines")
+      return <OfficeConfiguration contacts={path === "hotlines"} />;
+    if (path === "calendar") return <FacilityCalendar />;
+    if (path === "approvals") return <OfficeReviewInbox />;
+    if (path === "shuttle") return <Shuttle />;
+    const [desk, module] = path.split("/");
+    if (desk === "review" && Object.hasOwn(featureReviewCapabilities, module))
+      return (
+        <>
+          <Link
+            className="text-link"
+            to={
+              params.get("history") === "1"
+                ? `/office/review/${module}`
+                : `/office/review/${module}?history=1`
+            }
+          >
+            {params.get("history") === "1"
+              ? "Pending review only"
+              : "All submissions & history"}
+          </Link>
+          <LiveFeature
+            key={`${module}:${params.get("history")}`}
+            module={module}
+            initialView="review"
+            pendingOnly={params.get("history") !== "1"}
+          />
+        </>
+      );
+    if (
+      desk === "participation" &&
+      (module === "workshops" ||
+        module === "booth-events" ||
+        module === "carpools")
+    )
+      return (
+        <ParticipationDesk
+          key={`${module}:${params.get("history")}`}
+          module={module}
+          office
+          pendingOnly={params.get("history") !== "1"}
+        />
+      );
+  }
   // Signed-in staff get the connected request desk. The Admin fallback is
   // fixture-backed and would show synthetic records to a real office account.
   if (!auth.preview && !auth.rolePreview && path === "requests")
@@ -72,7 +140,7 @@ export default function Office() {
   )
     return (
       <OperationsDesk
-        key={path}
+        key={`${path}:${params.get("queue")}`}
         office
         kind={path === "visitors" ? "visitor" : "booking"}
       />
@@ -82,12 +150,10 @@ export default function Office() {
     !auth.rolePreview &&
     ["announcements", "community", "documents"].includes(path)
   )
-    return (
-      <LiveFeature
-        key={path}
-        module={path === "documents" ? "board-records" : "publishing"}
-        initialView="review"
-      />
+    return path === "documents" ? (
+      <LiveFeature key={path} module="board-records" initialView="review" />
+    ) : (
+      <AnnouncementManager key={path} />
     );
   if (!auth.preview && !auth.rolePreview && path === "operations")
     return <LiveFeatureDirectory initialView="review" />;

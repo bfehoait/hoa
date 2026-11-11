@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { businessFormAdditions } from "./business-form-fields";
 
 export type BaselineField = {
   key: string;
@@ -1098,6 +1099,10 @@ export const baselineModules: BaselineModule[] = [
     [8031, 8032, 8037],
   ),
 ];
+
+for (const entry of baselineModules) {
+  entry.fields.push(...(businessFormAdditions[entry.id] ?? []));
+}
 
 export function baselineModule(id: string) {
   const value = baselineModules.find((item) => item.id === id);

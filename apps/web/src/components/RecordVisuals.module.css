@@ -15,7 +15,7 @@
   margin-bottom: 20px;
 }
 .visual h2 {
-  font-size: 20px;
+  font-size: var(--section-heading-size);
 }
 .visual header span,
 .visual p {

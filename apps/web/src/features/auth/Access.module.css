@@ -7,7 +7,8 @@
 }
 .identity {
   padding: 48px;
-  background: var(--accent-soft);
+  background: var(--surface);
+  border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -22,7 +23,7 @@
 }
 .brand > span {
   font-size: 24px;
-  font-weight: 800;
+  font-weight: 600;
 }
 .brand small {
   display: block;
@@ -51,6 +52,10 @@
 .card {
   width: 100%;
   max-width: 480px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-hero);
+  padding: var(--card-padding);
 }
 .card h1 {
   font-size: 24px;
@@ -123,6 +128,8 @@
   .identity {
     padding: 24px;
     gap: 24px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
   }
   .identity > div,
   .identity > p {
@@ -150,7 +157,7 @@
   height: 64px;
   background: var(--accent-soft);
   color: var(--accent);
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   margin-bottom: 24px;
 }
 .highlights {
@@ -183,11 +190,12 @@
   flex: 1;
   width: 0;
   background: transparent;
+  font-size: 16px;
 }
 .passwordField > button {
   flex-shrink: 0;
 }
-.passwordField:focus-within {
+.passwordField:has(input:focus-visible) {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }

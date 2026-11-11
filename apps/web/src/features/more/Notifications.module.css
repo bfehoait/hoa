@@ -3,7 +3,7 @@
   margin: auto;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   padding: 24px;
 }
 .centre {
@@ -28,7 +28,7 @@
 .toolbar > div button {
   padding: 10px 18px;
   border: 0;
-  border-radius: 24px;
+  border-radius: var(--radius-hero);
   background: transparent;
   color: var(--muted);
   font: inherit;
@@ -40,8 +40,8 @@
   color: var(--accent);
 }
 .group h2 {
-  font-size: 18px;
-  font-weight: 750;
+  font-size: var(--section-heading-size);
+  font-weight: 600;
   margin: 24px 0 12px;
 }
 .group ul {
@@ -56,7 +56,7 @@
   display: flex;
   gap: 14px;
   padding: 16px;
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   border: 1px solid transparent;
   min-width: 0;
 }
@@ -72,7 +72,7 @@
   background: var(--surface);
   border: 1px solid var(--line);
   color: var(--accent);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
 }
 .row > div {
   flex: 1;
@@ -137,7 +137,7 @@
   color: var(--accent);
 }
 .empty h2 {
-  font-size: 20px;
+  font-size: var(--section-heading-size);
   color: var(--ink);
   margin: 16px 0 8px;
 }

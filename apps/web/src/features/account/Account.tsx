@@ -1,6 +1,6 @@
 import { useAuth } from "../../data/auth";
-import LotRegister from "../registry/LotRegister";
 import PayDues from "./PayDues";
+import HouseholdAccount from "./HouseholdAccount";
 import { NavigationGroup } from "../../components/Navigation";
 import { useState } from "react";
 import {
@@ -28,14 +28,7 @@ import styles from "./Account.module.css";
 
 export default function Account() {
   const auth = useAuth();
-  const path = useParams()["*"] ?? "";
-  if (!auth.preview && !auth.rolePreview)
-    return (
-      <>
-        <LotRegister account />
-        {!path.startsWith("lots/") && <PayDues />}
-      </>
-    );
+  if (!auth.preview && !auth.rolePreview) return <HouseholdAccount />;
   return <SampleAccount />;
 }
 

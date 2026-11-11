@@ -45,12 +45,16 @@ export type Destination = {
 export function DestinationGrid({
   items,
   compact = false,
+  variant = "cards",
 }: {
   items: Destination[];
   compact?: boolean;
+  variant?: "cards" | "tiles" | "rows";
 }) {
   return (
-    <div className={`${styles.destinations} ${compact ? styles.compact : ""}`}>
+    <div
+      className={`${styles.destinations} ${compact ? styles.compact : ""} ${styles[variant] ?? ""}`}
+    >
       {items.map(({ to, title, detail, icon: Icon, badge }) => (
         <Link key={to} to={to} className={styles.destination}>
           <span className={styles.tileIcon}>

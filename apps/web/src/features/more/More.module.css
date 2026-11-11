@@ -67,7 +67,7 @@
   padding-top: 24px;
 }
 .listingNumber {
-  font-family: var(--heading-font);
+  font-family: var(--body-font);
   font-size: 48px;
   color: var(--muted);
   display: block;

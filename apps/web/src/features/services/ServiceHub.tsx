@@ -22,6 +22,7 @@ import {
   Row,
   SectionTitle,
   Skeleton,
+  Button,
 } from "../../components/UI";
 import { usePortal } from "../../data/usePortal";
 import styles from "./ServiceHub.module.css";
@@ -79,12 +80,8 @@ export default function ServiceHub() {
   ).length;
   const recent = portal.data?.records.slice(0, 2) ?? [];
   return (
-    <>
-      <PageIntro
-        eyebrow="YOUR HOME, ONE PLACE"
-        title="Services"
-        description="What would you like to do?"
-      />
+    <div className={styles.hub}>
+      <PageIntro title="Services" description="What would you like to do?" />
       <div className="search">
         <Search size={20} aria-hidden="true" />
         <input
@@ -95,19 +92,28 @@ export default function ServiceHub() {
         />
       </div>
       <section
-        className={styles.section}
+        className={`${styles.section} ${styles.primary}`}
         aria-labelledby="service-action-heading"
       >
         <h2 id="service-action-heading">Choose a service</h2>
         <DestinationGrid items={matches} />
         {!matches.length && (
-          <Empty title="No matching service.">
+          <Empty
+            title="No matching service"
+            action={
+              search ? (
+                <Button secondary onClick={() => setSearch("")}>
+                  Show all services
+                </Button>
+              ) : undefined
+            }
+          >
             Try “visitor”, “permit”, “vehicle” or “concern”.
           </Empty>
         )}
       </section>
       <section
-        className={styles.section}
+        className={`${styles.section} ${styles.planning}`}
         aria-labelledby="service-tracking-heading"
       >
         <h2 id="service-tracking-heading">Track & plan</h2>
@@ -131,7 +137,7 @@ export default function ServiceHub() {
           ]}
         />
       </section>
-      <section className={styles.section}>
+      <section className={`${styles.section} ${styles.latest}`}>
         <SectionTitle
           title="Your latest activity"
           to="/services/requests"
@@ -175,6 +181,6 @@ export default function ServiceHub() {
           a connected backend and approved rules.
         </p>
       </DetailDisclosure>
-    </>
+    </div>
   );
 }

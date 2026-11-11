@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ArrowUpRight, Copy } from "lucide-react";
 import { buyaniAccount } from "../../../../../packages/shared/src/payment";
+import { money } from "../../../../../packages/shared/src";
 import { Button, Feedback } from "../../components/UI";
 import styles from "./PayDues.module.css";
 
@@ -8,31 +9,53 @@ export default function PayDues({
   phase,
   block,
   lot,
+  monthlyDuesCentavos,
+  linearPark,
 }: {
   phase?: number;
   block?: number;
   lot?: number;
+  monthlyDuesCentavos?: number | null;
+  linearPark?: "yes" | "no" | null;
 }) {
   const account =
     phase && block && lot ? buyaniAccount(phase, block, lot) : null;
   const [message, setMessage] = useState("");
   return (
     <section className={styles.panel}>
-      <h2>Pay your dues</h2>
+      <h2>HOA dues & payment</h2>
+      {account && (
+        <p>
+          Phase {phase} · Block {block} · Lot {lot}
+        </p>
+      )}
+      {monthlyDuesCentavos !== undefined && (
+        <p>
+          <strong>
+            {monthlyDuesCentavos === null
+              ? "Monthly HOA rate unavailable"
+              : `${money(monthlyDuesCentavos)} / month`}
+          </strong>
+          <br />
+          {linearPark === "yes"
+            ? "Linear Park lot"
+            : linearPark === "no"
+              ? "Non-linear-park lot"
+              : "Linear Park classification needs Office review"}
+          . Recurring rate only; this is not your outstanding balance.
+        </p>
+      )}
       <p>
-        Continue to Buyani to view your provider account and pay your HOA dues.
+        Payment method: <strong>Buyani</strong>. Continue to your provider
+        account to pay.
       </p>
-      <div className={styles.account}>
-        <span>
-          {account ? "Account number for this lot" : "Example account number"}
-        </span>
-        <strong>{account || "BF1-019-026"}</strong>
-        <span>
-          {account
-            ? "Check this matches your registered Buyani account."
-            : "Phase 1 · Block 19 · Lot 26 — replace with your own lot details."}
-        </span>
-      </div>
+      {account && (
+        <div className={styles.account}>
+          <span>Account reference for this lot</span>
+          <strong>{account}</strong>
+          <span>Check this matches your registered Buyani account.</span>
+        </div>
+      )}
       <p className={styles.note}>
         Use your registered Buyani account; some references include an
         additional suffix. Payment confirmation appears here only after it is

@@ -36,18 +36,20 @@ async function controlCall(
       error.code === "40001"
         ? "This member changed. Reload the account before saving."
         : ["PGRST202", "42883"].includes(error.code)
-          ? "Developer controls need database migration 004."
+          ? name === "bfe_filtered_access_members"
+            ? "Role filtering needs database update 040. Choose All roles to use the existing search."
+            : "Developer controls need database migration 004."
           : error.code === "42501"
             ? "Developer control was not authorized. Refresh your membership."
             : "The change could not be confirmed. Check the account and approval reference, then reload before retrying.",
     );
   return data;
 }
-export function useAccessMembers(search: string, page: number) {
+export function useAccessMembers(search: string, page: number, role = "") {
   const auth = useAuth();
   const access = usePermissions();
   return useQuery({
-    queryKey: ["access-control", auth.userId, "members", search, page],
+    queryKey: ["access-control", auth.userId, "members", search, page, role],
     enabled:
       !auth.preview &&
       !auth.rolePreview &&
@@ -56,15 +58,23 @@ export function useAccessMembers(search: string, page: number) {
       !auth.memberError &&
       (memberRoles(auth.member).includes("developer") ||
         !!access.data?.access_manager),
-    gcTime: 0,
+    gcTime: 300_000,
     retry: false,
     queryFn: async ({ signal }) =>
       z
-        .object({ rows: z.array(accessMemberSchema), total: z.number().int() })
+        .object({
+          rows: z.array(accessMemberSchema),
+          total: z.number().int(),
+          lookup_mode: z.enum(["email_exact", "name_unit"]).optional(),
+        })
         .parse(
           await controlCall(
-            "bfe_access_members",
-            { p_search: search, p_page: page },
+            role ? "bfe_filtered_access_members" : "bfe_access_members",
+            {
+              p_search: search,
+              p_page: page,
+              ...(role ? { p_role: role } : {}),
+            },
             signal,
           ),
         ),
@@ -75,7 +85,7 @@ export function useMemberAssignments(userId: string) {
   return useQuery({
     queryKey: ["access-control", auth.userId, "assignments", userId],
     enabled: !!userId && !auth.preview && !auth.rolePreview,
-    gcTime: 0,
+    gcTime: 300_000,
     retry: false,
     queryFn: async ({ signal }) =>
       assignmentsSchema.parse(

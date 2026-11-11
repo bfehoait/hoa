@@ -13,3 +13,8 @@ test-results/
 playwright-report/
 *.tsbuildinfo
 .DS_Store
+
+# Local editor and reference material (kept out of the public repo)
+.obsidian/
+reference/
+docs/previews/

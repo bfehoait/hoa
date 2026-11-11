@@ -13,9 +13,16 @@ import { usePermissions } from "../../data/permissions";
 import { canOpenPath } from "../../../../../packages/shared/src/auth";
 import { DestinationGrid, type Destination } from "../../components/Navigation";
 import { PageIntro } from "../../components/UI";
-import HomeownerSummary from "./HomeownerSummary";
+import ResidentDashboard from "./ResidentDashboard";
+import styles from "./ServiceDirectory.module.css";
 
 const services: Destination[] = [
+  {
+    to: "/services/visitors",
+    title: "Security & passes",
+    detail: "Visitors, gate movements and small deliveries",
+    icon: UserRound,
+  },
   {
     to: "/services/requests",
     title: "Helpdesk",
@@ -24,15 +31,9 @@ const services: Destination[] = [
   },
   {
     to: "/services/bookings",
-    title: "Facility bookings",
-    detail: "Check facilities, availability and your requests",
+    title: "Amenities & calendar",
+    detail: "Choose an amenity and an available time",
     icon: CalendarDays,
-  },
-  {
-    to: "/services/visitors",
-    title: "Visitor passes",
-    detail: "Request a pass and follow its status",
-    icon: UserRound,
   },
   {
     to: "/community",
@@ -42,7 +43,7 @@ const services: Destination[] = [
   },
   {
     to: "/directory/market",
-    title: "Marketplace",
+    title: "Livelihood",
     detail: "Browse listings or send your own for review",
     icon: Store,
   },
@@ -51,6 +52,12 @@ const services: Destination[] = [
     title: "Your account",
     detail: "View linked properties and recorded payments",
     icon: Building2,
+  },
+  {
+    to: "/more/documents",
+    title: "Community documents",
+    detail: "Policies, resolutions and approved HOA records",
+    icon: FileText,
   },
   {
     to: "/more/profile",
@@ -108,36 +115,69 @@ export default function ConnectedHome({
   ];
   const items = (area === "board" ? board : services).filter(
     (item) =>
+      !(area === "home" && item.to === "/account") &&
       auth.member &&
       canOpenPath(auth.member, item.to) &&
       permissions.allowsPath(item.to) &&
       `${item.title} ${item.detail}`
         .toLowerCase()
-        .includes(search.toLowerCase()),
+        .includes(area === "board" ? search.toLowerCase() : ""),
   );
-  const name = auth.member?.name?.trim().split(/\s+/)[0];
+  if (area === "home") return <ResidentDashboard />;
+  if (area === "services" || area === "help") {
+    const serviceGroups =
+      area === "help"
+        ? [
+            { title: "Contact the office", paths: ["/services/requests"] },
+            { title: "Useful resources", paths: ["/more/documents"] },
+          ]
+        : [
+            {
+              title: "Access & amenities",
+              paths: ["/services/visitors", "/services/bookings"],
+            },
+            {
+              title: "Requests & property",
+              paths: ["/services/requests", "/more/vehicles", "/more/permits"],
+            },
+            { title: "Community resources", paths: ["/more/documents"] },
+          ];
+    return (
+      <div className={styles.page}>
+        <PageIntro
+          title={area === "help" ? "Help & support" : "Services"}
+          description={
+            area === "help"
+              ? "Contact the office through Helpdesk and follow your request."
+              : "What can we help you with?"
+          }
+        />
+        <div className={styles.groups}>
+          {serviceGroups.map((group) => {
+            const destinations = items.filter((item) =>
+              group.paths.includes(item.to),
+            );
+            return destinations.length ? (
+              <section key={group.title}>
+                <h2>{group.title}</h2>
+                <DestinationGrid items={destinations} variant="rows" />
+              </section>
+            ) : null;
+          })}
+        </div>
+        {!items.some((item) =>
+          serviceGroups.some((group) => group.paths.includes(item.to)),
+        ) && <p role="status">No matching services. Try another search.</p>}
+      </div>
+    );
+  }
   return (
     <>
       <PageIntro
         eyebrow={area === "board" ? "BOARD WORKSPACE" : "YOUR COMMUNITY"}
-        title={
-          area === "services"
-            ? "Services"
-            : area === "help"
-              ? "Help & support"
-              : area === "board"
-                ? "Board workspace"
-                : name
-                  ? `Welcome, ${name}`
-                  : "Welcome home"
-        }
-        description={
-          area === "help"
-            ? "Use Helpdesk to contact the office. You can follow the conversation in your requests."
-            : "Open a service to view its current records and available actions."
-        }
+        title="Board workspace"
+        description="Community notices and services for your household."
       />
-      {area === "home" && <HomeownerSummary />}
       <div className="search">
         <Search size={20} aria-hidden="true" />
         <input
