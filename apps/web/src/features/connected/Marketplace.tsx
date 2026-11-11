@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
@@ -90,7 +90,11 @@ export default function Marketplace() {
   const selectedId = params.get("listing");
   const [draft, setDraft] = useState(search);
   const [ownModule, setOwnModule] = useState("buy-sell");
-  useEffect(() => setDraft(search), [search]);
+  const [previousSearch, setPreviousSearch] = useState(search);
+  if (previousSearch !== search) {
+    setPreviousSearch(search);
+    setDraft(search);
+  }
   function update(values: Record<string, string | number | null>) {
     const next = new URLSearchParams(params);
     for (const [key, value] of Object.entries(values)) {
@@ -184,10 +188,10 @@ export default function Marketplace() {
   if (mode === "applications")
     return (
       <>
-        <Button secondary onClick={() => setMode("browse")}>
-          Back to Livelihood
-        </Button>
         <div className={styles.manageToolbar}>
+          <Button secondary onClick={() => setMode("browse")}>
+            Back to Livelihood
+          </Button>
           <label>
             Application type
             <select

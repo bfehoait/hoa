@@ -273,3 +273,27 @@
     background: var(--wash);
   }
 }
+
+/* Maintenance tools become readable rows on phones, not narrow tall cards. */
+@media (max-width: 767px) {
+  .groups {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .group {
+    min-height: 0;
+  }
+  .group > header {
+    padding: 16px;
+    align-items: start;
+  }
+  .group h2 {
+    font-size: 18px;
+  }
+  .group p {
+    margin: 6px 0 0;
+  }
+  .group > div {
+    padding: 8px 12px;
+  }
+}

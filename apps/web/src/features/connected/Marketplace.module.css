@@ -389,3 +389,20 @@
     padding-inline: 12px;
   }
 }
+
+.manageToolbar {
+  align-items: end;
+  gap: 16px;
+}
+.manageToolbar > button {
+  align-self: end;
+}
+@media (max-width: 599px) {
+  .manageToolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .manageToolbar > button {
+    justify-self: start;
+  }
+}

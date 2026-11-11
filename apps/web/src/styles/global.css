@@ -32,6 +32,13 @@ body {
   font-size: 16px;
   line-height: 1.55;
 }
+.btn-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-block: 20px;
+}
 button,
 input,
 select,
@@ -81,6 +88,24 @@ button:disabled {
 :where(textarea) {
   min-height: 120px;
   resize: vertical;
+}
+/* Native iOS date controls have an intrinsic width even inside a narrow grid. */
+:where(label, fieldset) {
+  min-inline-size: 0;
+}
+:where(input[type="date"], input[type="time"], input[type="datetime-local"]) {
+  display: block;
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+input::-webkit-date-and-time-value {
+  min-height: 1.5em;
+  text-align: start;
+}
+input::-webkit-datetime-edit {
+  min-width: 0;
+  padding: 0;
 }
 :where(input, textarea)::placeholder {
   color: var(--muted);
@@ -795,5 +820,15 @@ summary {
   }
   [data-staff-ui="true"] :is(.grid-2, .two-column) {
     gap: 20px;
+  }
+}
+
+@media (max-width: 767px) {
+  [data-staff-ui="true"] .page-intro h1 {
+    font-size: 28px;
+    line-height: 1.25;
+  }
+  [data-staff-ui="true"] .page-intro {
+    gap: 12px;
   }
 }

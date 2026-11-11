@@ -1,6 +1,9 @@
 /* Shared shell for every action, whether it renders as a button or a link.
    Tone carries the meaning; this block only carries the shape. */
 .button {
+  align-self: center;
+  max-width: 100%;
+  min-width: 0;
   min-height: 48px;
   min-block-size: 48px;
   flex-shrink: 0;
@@ -21,6 +24,9 @@
     background 160ms,
     border-color 160ms,
     transform 160ms;
+}
+.button > svg {
+  flex-shrink: 0;
 }
 :global([data-customer-ui="true"]) .button {
   border-radius: var(--radius-control);

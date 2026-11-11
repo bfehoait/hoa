@@ -2,6 +2,50 @@
   display: grid;
   gap: 16px;
 }
+.recordRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  min-height: 72px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+}
+.recordRow > span:first-child {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.recordRow > span:first-child > span {
+  color: var(--muted);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.recordRow > span:last-child {
+  flex-shrink: 0;
+}
+.participation {
+  min-width: 0;
+}
+.sectionTitle {
+  margin: 28px 0 12px;
+  font-size: var(--section-heading-size);
+}
+.sectionNote {
+  padding: 16px;
+  margin: 0;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+}
 /* A record card is read, not scanned across. Past roughly 1100px a single
    column stretches a two-line title over the full width of a desktop screen,
    so the list becomes two columns of comfortable measure instead. */
@@ -630,5 +674,45 @@
   .form > button[type="submit"],
   .form fieldset > button[type="submit"] {
     justify-self: stretch;
+  }
+}
+
+.sectionTabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 4px;
+  margin: 0 0 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.sectionTabs > button {
+  padding: 10px 12px;
+  font-size: 14px;
+}
+@media (max-width: 767px) {
+  .sectionTabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .toolbar > button {
+    justify-self: start;
+    width: auto;
+  }
+}
+
+.notice {
+  margin-block: 16px;
+}
+.recordRow:hover {
+  background: var(--accent-soft);
+}
+@media (max-width: 480px) {
+  .residentRecordEnd {
+    max-width: 36%;
+    flex-shrink: 1;
+  }
+  .residentRecordEnd > span {
+    white-space: normal;
   }
 }
