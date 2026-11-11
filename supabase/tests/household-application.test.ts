@@ -6,16 +6,20 @@ const staff = "93000000-0000-4000-8000-000000000001",
   resident = "93000000-0000-4000-8000-000000000002",
   lot = "94000000-0000-4000-8000-000000000001",
   request = "95000000-0000-4000-8000-000000000001";
-async function call(expression: string, args: unknown[] = [], actor = staff) {
+async function call<T = unknown>(
+  expression: string,
+  args: unknown[] = [],
+  actor = staff,
+): Promise<T> {
   await db.exec("BEGIN;SET LOCAL ROLE authenticated");
   try {
     await db.query("SELECT set_config('test.actor',$1,true)", [actor]);
-    const result = await db.query<{ result: any }>(
+    const result = await db.query<{ result: unknown }>(
       `SELECT ${expression} AS result`,
       args,
     );
     await db.exec("COMMIT");
-    return result.rows[0].result;
+    return result.rows[0].result as T;
   } catch (e) {
     await db.exec("ROLLBACK");
     throw e;
@@ -84,7 +88,10 @@ async function apply(
   actor = staff,
   expected?: unknown,
 ) {
-  const match = await call("bfe_account_lot_match($1,'9-99-999')", [target]);
+  const match = await call<{ expected: unknown }>(
+    "bfe_account_lot_match($1,'9-99-999')",
+    [target],
+  );
   return call(
     "bfe_apply_household_request($1,$2,$3,$4,$5,1,'household','Synthetic verified evidence')",
     [request, version, target, lot, expected ?? match.expected],
@@ -99,11 +106,20 @@ it("applies the real independently approved membership, with audit and notificat
   );
   expect(rows.rows).toEqual([{ state: "approved", relationship: "household" }]);
   expect(
-    (await call("bfe_household_application($1)", [request], resident))
-      .application.physical_id,
+    (
+      await call<{ application: { physical_id: string } }>(
+        "bfe_household_application($1)",
+        [request],
+        resident,
+      )
+    ).application.physical_id,
   ).toBe("9-99-999");
   expect(
-    (await call("bfe_office_household_queue('household-changes')")).total,
+    (
+      await call<{ total: number }>(
+        "bfe_office_household_queue('household-changes')",
+      )
+    ).total,
   ).toBe(0);
   expect(
     (

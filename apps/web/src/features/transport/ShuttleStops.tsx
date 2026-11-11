@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { ArrowDown, BusFront } from "lucide-react";
 import styles from "./Shuttle.module.css";
 
@@ -27,9 +27,7 @@ export default function ShuttleStops({
     pickup && destination ? null : "pickup",
   );
   const instruction = useId();
-  useEffect(() => {
-    if (pickup && destination) setChoosing(null);
-  }, [pickup, destination]);
+  const activeChoosing = pickup && destination ? null : choosing;
   return (
     <section className={styles.tripPlanner} aria-label="Choose shuttle stops">
       <div className={styles.tripHeading}>
@@ -40,7 +38,7 @@ export default function ShuttleStops({
       <div className={styles.tripEndpoints}>
         <button
           type="button"
-          aria-pressed={choosing === "pickup"}
+          aria-pressed={activeChoosing === "pickup"}
           disabled={disabled}
           onClick={() => setChoosing("pickup")}
         >
@@ -50,7 +48,7 @@ export default function ShuttleStops({
         <ArrowDown size={20} aria-hidden="true" />
         <button
           type="button"
-          aria-pressed={choosing === "destination"}
+          aria-pressed={activeChoosing === "destination"}
           disabled={disabled}
           onClick={() => setChoosing("destination")}
         >
@@ -59,18 +57,18 @@ export default function ShuttleStops({
         </button>
       </div>
       <p id={instruction} aria-live="polite">
-        {choosing === "pickup"
+        {activeChoosing === "pickup"
           ? "Choose your pickup stop."
-          : choosing === "destination"
+          : activeChoosing === "destination"
             ? "Choose a different stop for your destination."
             : "Pickup and destination selected. Tap either to change it."}
       </p>
-      {choosing && (
+      {activeChoosing && (
         <div
           className={styles.stopChoices}
           role="group"
           aria-label={
-            choosing === "pickup" ? "Pickup stop" : "Destination stop"
+            activeChoosing === "pickup" ? "Pickup stop" : "Destination stop"
           }
           aria-describedby={instruction}
         >
@@ -81,13 +79,15 @@ export default function ShuttleStops({
               key={stop}
               disabled={
                 disabled ||
-                (choosing === "pickup" ? stop === destination : stop === pickup)
+                (activeChoosing === "pickup"
+                  ? stop === destination
+                  : stop === pickup)
               }
               aria-pressed={
-                (choosing === "pickup" ? pickup : destination) === stop
+                (activeChoosing === "pickup" ? pickup : destination) === stop
               }
               onClick={() => {
-                if (choosing === "pickup") {
+                if (activeChoosing === "pickup") {
                   onChange(stop, destination);
                   setChoosing("destination");
                 } else {

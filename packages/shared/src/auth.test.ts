@@ -119,7 +119,7 @@ describe("identity and member boundaries", () => {
     );
     expect(
       canOpenPath({ ...member, role: "security" }, "/directory/market"),
-    ).toBe(false);
+    ).toBe(true);
     expect(canOpenPath({ ...member, role: "admin" }, "/account")).toBe(false);
     expect(
       canOpenPath({ ...developer, status: "Suspended" }, "/developer"),

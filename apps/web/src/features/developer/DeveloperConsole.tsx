@@ -24,17 +24,12 @@ import {
 } from "../../components/UI";
 import { DetailDisclosure, NavigationGroup } from "../../components/Navigation";
 import { useAuth } from "../../data/auth";
-import {
-  previewRoles,
-  memberRoles,
-} from "../../../../../packages/shared/src/auth";
+import { previewRoles } from "../../../../../packages/shared/src/auth";
 import { roleLabels } from "./RolePreview";
-import version from "../../../../../package.json";
 import styles from "./DeveloperConsole.module.css";
 import ModuleMonitor from "./ModuleMonitor";
 import AccessPlanning from "./AccessPlanning";
 import DeveloperHome from "./DeveloperHome";
-import { RequestVisual } from "../../components/RequestVisual";
 import MemberInspection from "./MemberAccountPicker";
 
 const roleInfo = {

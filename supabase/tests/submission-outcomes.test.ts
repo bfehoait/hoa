@@ -5,16 +5,20 @@ const db = new PGlite();
 const owner = "91000000-0000-4000-8000-000000000001";
 const staff = "91000000-0000-4000-8000-000000000002";
 const record = "92000000-0000-4000-8000-000000000001";
-async function call(expression: string, args: unknown[] = [], actor = staff) {
+async function call<T = unknown>(
+  expression: string,
+  args: unknown[] = [],
+  actor = staff,
+): Promise<T> {
   await db.exec("BEGIN; SET LOCAL ROLE authenticated");
   try {
     await db.query("SELECT set_config('test.actor',$1,true)", [actor]);
-    const r = await db.query<{ result: any }>(
+    const r = await db.query<{ result: unknown }>(
       `SELECT ${expression} AS result`,
       args,
     );
     await db.exec("COMMIT");
-    return r.rows[0]?.result;
+    return r.rows[0]?.result as T;
   } catch (error) {
     await db.exec("ROLLBACK");
     throw error;
@@ -68,10 +72,20 @@ const publish = (version = 1, actor = staff) =>
     [record, version],
     actor,
   );
+type Feed = {
+  total: number;
+  rows: Array<{ module: string }>;
+  postable_modules: string[];
+};
+type Queue = { total: number };
+type Issuance = {
+  issuance: { reference: string; outcome: string };
+  can_issue: boolean;
+};
 it("publishes a submitted activity and exposes it in the six-category resident feed", async () => {
-  expect((await call("bfe_marketplace_feed()", [], owner)).total).toBe(0);
+  expect((await call<Feed>("bfe_marketplace_feed()", [], owner)).total).toBe(0);
   await publish();
-  const feed = await call("bfe_marketplace_feed()", [], owner);
+  const feed = await call<Feed>("bfe_marketplace_feed()", [], owner);
   expect(feed.rows[0].module).toBe("workshops");
   expect(feed.postable_modules).toContain("workshops");
   expect(feed.postable_modules).not.toContain("booth-events");
@@ -84,9 +98,11 @@ it("recovers an explicitly reviewed listing but rejects misleading generic appro
     ]),
   ).rejects.toThrow(/Approve and publish/);
   await db.exec("UPDATE bfe_feature_records SET status='Reviewed'");
-  expect((await call("bfe_office_feature_queue('workshops')")).total).toBe(1);
+  expect(
+    (await call<Queue>("bfe_office_feature_queue('workshops')")).total,
+  ).toBe(1);
   await publish();
-  expect((await call("bfe_marketplace_feed()", [], owner)).total).toBe(1);
+  expect((await call<Feed>("bfe_marketplace_feed()", [], owner)).total).toBe(1);
 });
 it("rejects unauthorized, stale, non-consented and incomplete-image publication", async () => {
   await expect(publish(1, owner)).rejects.toThrow(/permission/);
@@ -116,11 +132,19 @@ it("requires approval, then records immutable private issuance with safe retries
   await db.exec("UPDATE bfe_feature_records SET status='Reviewed'");
   await expect(issue(owner)).rejects.toThrow(/permission/);
   await expect(issue(staff, 2)).rejects.toThrow(/changed/);
-  expect((await call("bfe_office_issuance_queue('permits')")).total).toBe(1);
+  expect(
+    (await call<Queue>("bfe_office_issuance_queue('permits')")).total,
+  ).toBe(1);
   await issue();
   await issue();
-  expect((await call("bfe_office_issuance_queue('permits')")).total).toBe(0);
-  const result = await call("bfe_request_issuance($1)", [record], owner);
+  expect(
+    (await call<Queue>("bfe_office_issuance_queue('permits')")).total,
+  ).toBe(0);
+  const result = await call<Issuance>(
+    "bfe_request_issuance($1)",
+    [record],
+    owner,
+  );
   expect(result.issuance.reference).toBe("SYNTHETIC-REF");
   expect(result.can_issue).toBe(false);
   const counts = await db.query<{ n: number }>(
@@ -145,7 +169,8 @@ it("checks validity and supports recording actual vehicle removal separately", a
   await expect(issue()).rejects.toThrow(/validity/);
   await issue(staff, 1, null);
   expect(
-    (await call("bfe_request_issuance($1)", [record], owner)).issuance.outcome,
+    (await call<Issuance>("bfe_request_issuance($1)", [record], owner)).issuance
+      .outcome,
   ).toBe("vehicle_removed");
 });
 
@@ -177,7 +202,7 @@ it("shows all own bookings in the selected month, including day boundaries, with
     ('${record}','${staff}','2026-11-10 08:00+08','2026-11-10 09:00+08','Approved'),
     ('${record}','${owner}','2026-10-31 23:00+08','2026-11-01 01:00+08','Pending'),
     ('${record}','${owner}','2026-11-01 02:00+08','2026-11-01 03:00+08','Rejected');`);
-  const entries = await call(
+  const entries = await call<Array<{ day: string }>>(
     "bfe_resident_calendar_month('2026-11-01')",
     [],
     owner,
@@ -201,5 +226,5 @@ it("lets authorized publishers finish reviewed curated documents without calling
   );
   expect(r.rows[0].status).toBe("Published");
   expect(r.rows[0].public_title).toBe("Synthetic workshop");
-  expect((await call("bfe_marketplace_feed()", [], owner)).total).toBe(0);
+  expect((await call<Feed>("bfe_marketplace_feed()", [], owner)).total).toBe(0);
 });

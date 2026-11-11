@@ -141,9 +141,7 @@ export const baselineModules: BaselineModule[] = [
         "category",
         ["Food", "Retail"],
       ),
-      when(field("serviceArea", "Areas served"), "category", [
-        "Home services",
-      ]),
+      when(field("serviceArea", "Areas served"), "category", ["Home services"]),
       when(
         select("storefront", "Where it operates from", [
           "Home-based",
@@ -663,11 +661,11 @@ export const baselineModules: BaselineModule[] = [
       field("unit", "Unit the work is for"),
       field("start", "Proposed start date", "date"),
       field("finish", "Proposed finish date", "date"),
-      when(
-        field("scope", "Describe the work", "textarea"),
-        "permit",
-        ["Construction", "Renovation", "Other"],
-      ),
+      when(field("scope", "Describe the work", "textarea"), "permit", [
+        "Construction",
+        "Renovation",
+        "Other",
+      ]),
       when(field("contractor", "Contractor or crew"), "permit", [
         "Construction",
         "Renovation",
@@ -716,11 +714,9 @@ export const baselineModules: BaselineModule[] = [
         "Urgent",
       ]),
       when(field("plate", "Vehicle plate involved"), "kind", ["Vehicle"]),
-      when(
-        field("injuries", "Who was hurt and how", "textarea"),
-        "kind",
-        ["Injury or medical"],
-      ),
+      when(field("injuries", "Who was hurt and how", "textarea"), "kind", [
+        "Injury or medical",
+      ]),
       when(field("damage", "What was damaged", "textarea"), "kind", [
         "Property damage",
       ]),
@@ -757,9 +753,7 @@ export const baselineModules: BaselineModule[] = [
         "Homeowners",
         "Board only",
       ]),
-      when(field("committee", "Which committee"), "kind", [
-        "Committee report",
-      ]),
+      when(field("committee", "Which committee"), "kind", ["Committee report"]),
       field("summary", "Summary", "textarea"),
       field("reference", "Supporting document reference", "text", false),
     ],
@@ -1233,46 +1227,43 @@ export function baselineSchema(id: string) {
 }
 function specSchema(spec: BaselineField): z.ZodType {
   let schema: z.ZodType;
-    if (spec.options) schema = z.enum(spec.options);
-    else if (spec.type === "number")
-      schema = z
-        .string()
-        .refine(
-          (value) =>
-            value.trim() !== "" &&
-            Number.isFinite(Number(value)) &&
-            Number(value) >= (spec.min ?? 0) &&
-            Number(value) <= (spec.max ?? 1000000) &&
-            (Number.isInteger(Number(value)) ||
-              ["price", "rate", "fee", "amount", "planned", "actual"].includes(
-                spec.key,
-              )),
-          "Enter a valid sample number within the displayed limits.",
-        );
-    else if (spec.type === "date") schema = z.iso.date();
-    else if (spec.type === "time")
-      schema = z
-        .string()
-        .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use a valid time.");
-    else if (spec.type === "email")
-      schema = z
-        .email()
-        .refine(
-          (value) => value.endsWith("@example.invalid"),
-          "Use a synthetic address ending in @example.invalid.",
-        );
-    else if (spec.type === "url")
-      schema = z.url().refine((value) => {
-        const url = new URL(value);
-        return (
-          url.protocol === "https:" &&
-          url.hostname === "example.invalid" &&
-          !url.username &&
-          !url.password
-        );
-      }, "Use https://example.invalid/ for sample links.");
-    else
-    schema = z.string().trim().min(2, "Add at least 2 characters.").max(300);
+  if (spec.options) schema = z.enum(spec.options);
+  else if (spec.type === "number")
+    schema = z
+      .string()
+      .refine(
+        (value) =>
+          value.trim() !== "" &&
+          Number.isFinite(Number(value)) &&
+          Number(value) >= (spec.min ?? 0) &&
+          Number(value) <= (spec.max ?? 1000000) &&
+          (Number.isInteger(Number(value)) ||
+            ["price", "rate", "fee", "amount", "planned", "actual"].includes(
+              spec.key,
+            )),
+        "Enter a valid sample number within the displayed limits.",
+      );
+  else if (spec.type === "date") schema = z.iso.date();
+  else if (spec.type === "time")
+    schema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use a valid time.");
+  else if (spec.type === "email")
+    schema = z
+      .email()
+      .refine(
+        (value) => value.endsWith("@example.invalid"),
+        "Use a synthetic address ending in @example.invalid.",
+      );
+  else if (spec.type === "url")
+    schema = z.url().refine((value) => {
+      const url = new URL(value);
+      return (
+        url.protocol === "https:" &&
+        url.hostname === "example.invalid" &&
+        !url.username &&
+        !url.password
+      );
+    }, "Use https://example.invalid/ for sample links.");
+  else schema = z.string().trim().min(2, "Add at least 2 characters.").max(300);
   return schema;
 }
 

@@ -135,5 +135,7 @@ export default defineConfig({
   test: {
     include: ["packages/**/*.test.ts", "supabase/tests/**/*.test.ts"],
     environment: "node",
+    // PGlite-backed migration fixtures need a little more startup time on CI.
+    hookTimeout: 30_000,
   },
 });

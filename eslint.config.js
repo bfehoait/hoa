@@ -10,6 +10,7 @@ export default ts.config(
       "reference/**",
       "playwright-report/**",
       "test-results/**",
+      ".private-imports/**",
       ".browsers/**",
       ".npm-cache/**",
     ],

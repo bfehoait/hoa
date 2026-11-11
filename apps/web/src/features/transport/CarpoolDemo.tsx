@@ -18,7 +18,9 @@ export default function CarpoolDemo() {
   const [notice, setNotice] = useState(""),
     [error, setError] = useState<Error | null>(null);
   const [mapKey, setMapKey] = useState(0);
-  const today = new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10);
+  const [today] = useState(() =>
+    new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10),
+  );
   function reset() {
     setResults(false);
     setNotice("");
