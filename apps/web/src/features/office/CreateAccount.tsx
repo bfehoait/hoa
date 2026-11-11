@@ -10,6 +10,11 @@ import {
   manualAccountSchema,
 } from "../../../../../packages/shared/src/manual-accounts";
 import styles from "./CreateAccount.module.css";
+import { LotAddressFields } from "../../components/LotAddressFields";
+import {
+  formatLotAddress,
+  splitLotAddress,
+} from "../../../../../packages/shared/src/lot-address";
 
 // Shared by the existing developer monitor and office member directory.
 export type RegistrationAccount = {
@@ -106,7 +111,10 @@ function AccountForm({
   const [role, setRole] = useState<(typeof manualAccountRoles)[number]>(
     application?.role ?? "homeowner",
   );
-  const [unit, setUnit] = useState(application?.unit ?? "");
+  const [lotParts, setLotParts] = useState(() =>
+    splitLotAddress(application?.unit ?? ""),
+  );
+  const unit = formatLotAddress(lotParts);
   const [password, setPassword] = useState("");
   const [reason, setReason] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -115,7 +123,13 @@ function AccountForm({
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [discard, setDiscard] = useState(false);
-  const dirty = !!(name || email || unit || password || reason);
+  const dirty = !!(
+    name ||
+    email ||
+    Object.values(lotParts).some(Boolean) ||
+    password ||
+    reason
+  );
   const close = () => {
     if (busy) return;
     if (dirty && !created) setDiscard(true);
@@ -134,6 +148,14 @@ function AccountForm({
   };
   async function submit() {
     if (busy || created) return;
+    if (Object.values(lotParts).some(Boolean) && !unit) {
+      setError(
+        new Error(
+          "Choose phase, block and lot, or clear all three for a staff account.",
+        ),
+      );
+      return;
+    }
     const parsed = manualAccountSchema.safeParse({
       ...(application ? { registrationId: application.id } : {}),
       requestId,
@@ -282,26 +304,23 @@ function AccountForm({
                   {description[role]}
                 </span>
               </Field>
-              <Field
-                label={
-                  "Household address" +
-                  (["homeowner", "renter"].includes(role) ? "" : " (optional)")
-                }
-                htmlFor={id + "-unit"}
-              >
-                <input
-                  id={id + "-unit"}
-                  aria-describedby={id + "-unit-hint"}
-                  value={unit}
-                  maxLength={40}
-                  required={["homeowner", "renter"].includes(role)}
-                  placeholder="Phase, block and lot"
-                  onChange={(event) => setUnit(event.target.value)}
-                />
-                <span id={id + "-unit-hint"} className={styles.note}>
-                  Address only. Lot access is approved separately.
-                </span>
-              </Field>
+              <LotAddressFields
+                value={lotParts}
+                onChange={setLotParts}
+                required={["homeowner", "renter"].includes(role)}
+              />
+              <p className={styles.note}>
+                {unit && <>Lot address: {unit}. </>}Lot access is approved
+                separately.
+                {application &&
+                  !formatLotAddress(splitLotAddress(application.unit)) && (
+                    <>
+                      {" "}
+                      The submitted address needs review; choose the correct lot
+                      before creating the account.
+                    </>
+                  )}
+              </p>
               <Field label="Initial password" htmlFor={id + "-password"}>
                 <span className={styles.password}>
                   <input

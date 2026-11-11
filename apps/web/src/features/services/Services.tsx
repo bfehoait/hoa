@@ -41,26 +41,27 @@ import RequestDesk from "./RequestDesk";
 import { useAuth } from "../../data/auth";
 import OperationsDesk from "../connected/OperationsDesk";
 import BookingsCalendar from "../connected/BookingsCalendar";
+import AmenityGuidelines from "../connected/AmenityGuidelines";
 
 type Kind = "request" | "booking" | "visitor";
 const amenities = [
   {
-    name: "Clubhouse",
-    icon: Users,
-    line: "For gathering, celebrating, and being together.",
-    meta: "Capacity and fees · not yet confirmed",
+    name: "Swimming pool",
+    icon: PoolIcon,
+    line: "A slower afternoon, close to home.",
+    meta: "Maximum 40 people · closed Mondays",
   },
   {
     name: "Basketball court",
     icon: CircleCourt,
     line: "Make a little room for a good game.",
-    meta: "Booking rules · awaiting HOA confirmation",
+    meta: "Sunday closing · noon",
   },
   {
-    name: "Swimming pool",
-    icon: PoolIcon,
-    line: "A slower afternoon, close to home.",
-    meta: "Operating hours · not yet confirmed",
+    name: "Function Hall",
+    icon: Users,
+    line: "For gathering, celebrating, and being together.",
+    meta: "Guidelines dated 21 October 2025",
   },
 ];
 function CircleCourt({ size = 24 }: { size?: number }) {
@@ -121,7 +122,7 @@ function ServicesPage() {
           : "request"
       : null,
   );
-  const [amenity, setAmenity] = useState("Clubhouse");
+  const [amenity, setAmenity] = useState("Swimming pool");
   const [detail, setDetail] = useState<LocalRecord | null>(null);
   const [status, setStatus] = useState("All");
   const portal = usePortal();
@@ -211,6 +212,7 @@ function ServicesPage() {
               <h2>{name}</h2>
               <p>{line}</p>
               <span>{meta}</span>
+              <AmenityGuidelines name={name} />
               <Button secondary onClick={() => open("booking", name)}>
                 Request a time
                 <ArrowUpRight size={18} />

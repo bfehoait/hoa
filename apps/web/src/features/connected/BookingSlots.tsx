@@ -5,6 +5,7 @@ import {
   manilaInstant,
 } from "../../../../../packages/shared/src/operations";
 import styles from "./BookingSlots.module.css";
+import { amenityWindows } from "../../../../../packages/shared/src/amenity-guidelines";
 const minutes = (value: string) =>
   Number(value.slice(0, 2)) * 60 + Number(value.slice(3, 5));
 const time = (value: number) =>
@@ -35,6 +36,7 @@ export default function BookingSlots({
   }, []);
   const opens = Math.max(420, minutes(facility.opens)),
     closes = Math.min(1320, minutes(facility.closes));
+  const windows = amenityWindows(facility.name, date);
   const slots: { at: number; blocked: boolean }[] = [];
   // Retain the configured slot alignment even if operating hours are narrower.
   for (
@@ -48,6 +50,9 @@ export default function BookingSlots({
     slots.push({
       at,
       blocked:
+        !windows.some(
+          ([open, close]) => at >= open && at + facility.slot_minutes <= close,
+        ) ||
         from <= now ||
         occupied.some(
           (s) => Date.parse(s.start) < until && Date.parse(s.end) > from,

@@ -30,7 +30,7 @@ const destinations = [
     title: "Amenities",
     detail: "Book a community facility",
     to: "/services/bookings",
-    terms: "court clubhouse hall booking reservation calendar",
+    terms: "court swimming pool clubhouse hall booking reservation calendar",
   },
   {
     title: "Helpdesk",

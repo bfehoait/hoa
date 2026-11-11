@@ -893,3 +893,33 @@ Validation: TypeScript, targeted ESLint, formatting and production build passed 
 ### 11 November 2026 ? final screenshot UI polish
 
 See [Final UI polish assessment](../FINAL-UI-POLISH-ASSESSMENT.md). Fixed native date sizing/phone date layouts, missing booking-row styling, single mobile navigation selection, duplicate customer empty-state actions, shared action-row spacing and participation section rhythm. Polished scripture metadata, mobile Developer cards, access choices, Finance metrics and active-workspace wording. Existing financial/auth/approval rules unchanged. Owner scripture additions preserved. Local production build passed with existing bundle/annotation warnings; final TypeScript and targeted ESLint checked. No automated browser suites or device checks; owner iOS/Android and desktop verification remains required. Performance/authentication optimization is a separate unfinished follow-up.
+
+### 11 November 2026 - registration lots, amenity guidelines and icons
+
+See [Registration and amenities follow-up](../REGISTRATION-AMENITY-FOLLOWUP.md) for source, rollout and limits. Shared bounded lot selectors and canonical schemas cover registration and Office creation. Prepared 066 for canonical new registration storage and 067 for the owner-supplied 21 October 2025 amenity schedule/pool-cap guards. Hours, rates and restrictions are displayed with unspecified values left unavailable. App icons now use the existing Bellefort logo; regenerated the account Edge editor artifact with shared validation.
+
+Frontend TypeScript and git diff whitespace checks passed. Local Chromium checked mobile/desktop registration with a synthetic intercepted submission; shared Office schema and guideline calculations passed. Inspected synthetic mobile registration and 192px icon. Isolated PGlite exercised actual 063/066 patches, Office directory projection and 067 schedule/capacity boundaries. Role helpers were stubbed: no live Auth/RLS or authenticated Office browser check is claimed. No automated suites or axe sweep. Owner chose SQL preparation: no live connection, SQL application, deployment, commit, push or publication. Owner must apply 066/067 after 065, update the Edge function, review facility configuration and verify live Inbox/account/booking/device flows.
+
+### 11 November 2026 - guided editable lot fields
+
+Owner requested typed fields instead of dropdowns. Shared LotAddressFields now provides digits-only text entry, mobile numeric keyboard, visible Phase 1-3 / Block 01-19 / Lot 001-111 guides, native range patterns and valid-value padding on blur. Registration and Office creation share the component and existing schema/canonical formatting. No backend change is required for this follow-up. Source reviewed; TypeScript and git diff --check passed. No new browser run or automated suite; owner should verify typing, invalid values, padding, optional staff address and submission. Earlier dropdown browser checks do not validate this replacement. See docs/REGISTRATION-AMENITY-FOLLOWUP.md.
+
+### 11 November 2026 - compact Today's Gospel card
+
+Owner requested a more compact resident-home scripture card. Consolidated duplicate CSS rules, reduced padding/gaps and icon/watermark size, tightened verse line height to 1.5 at 16px, and shortened the date to month/day so it can share the title row on mobile. Full verse/reference remain visible; secondary text stays 14px, wrapping and reduced-motion behavior remain supported. Frontend TypeScript and git diff --check passed. No browser run or automated tests; owner should check small-phone/desktop wrapping, long verses, dark mode and zoom. No SQL or deployment changes.
+
+### 11 November 2026 - ESV daily verse
+
+Replaced the 75 Douay-Rheims selection slots with official ESV passage text and corresponding ESV Psalm numbering, retaining selection order and the Philippine-time rotation. Lamentations is now 3:22-23 to retain the prior selection's theme (76 verses in 75 slots). Removed extracted Psalm headings and included per-entry official source links. Card now says Today's Verse and provides an ESV credit dialog with publisher notice/source link. No runtime external request or API key. See [Daily ESV verse](../ESV-SCRIPTURE.md) for source and quotation notes.
+
+All extracted selections reviewed; TypeScript and git diff --check passed. No browser run or automated suite. Owner should verify long verse wrapping, credit dialog focus/open/close, source links, mobile layout and dark mode. No SQL, backend, deployment or publication changes.
+
+### 11 November 2026 - remove ESV controls from verse card
+
+Owner clarified that ESV refers to verse wording, not a visible card label or popup. Removed the card's ESV button, modal and related CSS; retained the verified English Standard Version text, reference and compact layout. Moved the publisher attribution/source link into a collapsed Scripture copyright disclosure in Settings. Updated docs/ESV-SCRIPTURE.md. Source reviewed; frontend TypeScript and git diff --check passed. No browser run or automated suite; owner should verify the plain card and Settings disclosure. No backend, SQL or publication changes.
+
+### 11 November 2026 - swimming pool option and amenity account charges
+
+See [Amenity choices and account charges](../AMENITY-ACCOUNT-CHARGES.md). Replaced preview Clubhouse choice with Swimming pool without duplicates; retained Function Hall separately. Prepared 068 to retire the connected legacy choice while preserving history and refusing unresolved future reservations. Prepared 069 for approved-booking charges and verified payments through existing independent Finance posting/reversal. Other includes own confirmed amenity charges; Total balance combines these with linked-property HOA, with unavailable water explicitly disclosed. Owner has not answered the offered timing/name alternatives; no unapproved booking is automatically charged and no PDF pricing ambiguity is guessed.
+
+TypeScript, edited-source formatting and git diff --check passed. Isolated synthetic SQL used real 054/064 Finance services, 065 HOA read and 068/069. Valid charge/payment/HOA sums, reversals, no automatic cancellation waiver, own-account isolation and pending/duplicate/self-review/resident/overpayment/duplicate-receipt refusals passed. Role helpers and preview dispatcher were stubbed. No automated suite, browser run, live connection, SQL application, deployment or publication. Owner must install 068/069, review facility/quote policy, publish and verify actual roles/mobile/preview/receipt behavior.

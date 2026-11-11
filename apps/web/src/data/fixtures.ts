@@ -91,7 +91,7 @@ export const initialRecords: LocalRecord[] = [
   {
     id: "BOOK-0218",
     kind: "booking",
-    title: "Clubhouse",
+    title: "Swimming pool",
     detail: "14:00–16:00 · 8 guests",
     status: "Pending review",
     date: "2026-11-14",

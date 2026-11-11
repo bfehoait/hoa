@@ -9,15 +9,20 @@ import { money } from "../../../../../packages/shared/src";
 import LotRegister from "../registry/LotRegister";
 import PayDues from "./PayDues";
 import MonthlyHoaCharges from "./MonthlyHoaCharges";
-import { useHoaBalance } from "../../data/hoa-balance";
+import { useAccountBalance } from "../../data/hoa-balance";
+import AmenityCharges from "./AmenityCharges";
 import { balanceMoney } from "../../../../../packages/shared/src/hoa-balance";
 import styles from "./HouseholdAccount.module.css";
 
 export default function HouseholdAccount() {
   const { member } = useAuth();
   const links = useLinkedPropertyAddress();
-  const balance = useHoaBalance();
-  const billed = !!balance.data?.invoice_count && !balance.data.needs_review;
+  const balance = useAccountBalance();
+  const hoa = balance.data?.hoa;
+  const billed = !!hoa?.invoice_count && !hoa.needs_review;
+  const hasCharges =
+    !!(hoa?.invoice_count || balance.data?.amenity_charge_count) &&
+    !hoa?.needs_review;
   const path = useParams()["*"] ?? "";
   const section = path === "payments" ? "payments" : "properties";
   if (path.startsWith("lots/")) return <LotRegister account />;
@@ -46,11 +51,11 @@ export default function HouseholdAccount() {
         )}
       </header>
       <section className={styles.balance} aria-labelledby="account-balance">
-        <h2 id="account-balance">Total recorded balance</h2>
+        <h2 id="account-balance">Total balance</h2>
         <strong>
-          {billed && balance.data
-            ? balanceMoney(balance.data.total_recorded_balance_centavos)
-            : balance.data?.needs_review
+          {hasCharges && balance.data
+            ? balanceMoney(balance.data.total_balance_centavos)
+            : hoa?.needs_review
               ? "Under review"
               : balance.isPending && balance.allowed
                 ? "Loading…"
@@ -59,19 +64,19 @@ export default function HouseholdAccount() {
                   : "Unavailable"}
         </strong>
         <p>
-          {billed
-            ? "HOA only. Water and other charges are not connected. Historical coverage needs Office verification."
+          {hasCharges
+            ? "HOA dues for linked properties and confirmed charges for your amenity bookings. Water dues are unavailable."
             : balance.isError
-              ? "Your recorded balance could not be loaded."
-              : "Office must verify and post the monthly HOA bills. Missing receipts are not automatically treated as debt."}
+              ? "Your balance could not be loaded."
+              : "Charges appear after Office verification. Unbilled months are not automatically treated as debt. Water dues are unavailable."}
         </p>
         <dl className={styles.balanceBreakdown} aria-label="Balance breakdown">
           <div>
             <dt>HOA dues</dt>
             <dd>
-              {billed && balance.data
-                ? balanceMoney(balance.data.hoa_balance_centavos)
-                : balance.data?.needs_review
+              {billed && hoa
+                ? balanceMoney(hoa.hoa_balance_centavos)
+                : hoa?.needs_review
                   ? "Under review"
                   : balance.data
                     ? "No bills yet"
@@ -84,17 +89,21 @@ export default function HouseholdAccount() {
           </div>
           <div>
             <dt>Other</dt>
-            <dd>No data</dd>
+            <dd>
+              {balance.data
+                ? balanceMoney(balance.data.other_balance_centavos)
+                : "No data"}
+            </dd>
           </div>
         </dl>
-        {billed && balance.data && (
+        {billed && hoa && (
           <p>
-            {balance.data.unpaid_months} month
-            {balance.data.unpaid_months === 1 ? "" : "s"} with unpaid HOA
-            charges · {balance.data.overdue_charges} overdue charge
-            {balance.data.overdue_charges === 1 ? "" : "s"}
-            {balance.data.billed_lots < balance.data.linked_lots
-              ? `. Billing is recorded for ${balance.data.billed_lots} of ${balance.data.linked_lots} linked properties.`
+            {hoa.unpaid_months} month
+            {hoa.unpaid_months === 1 ? "" : "s"} with unpaid HOA charges ·{" "}
+            {hoa.overdue_charges} overdue charge
+            {hoa.overdue_charges === 1 ? "" : "s"}
+            {hoa.billed_lots < hoa.linked_lots
+              ? `. Billing is recorded for ${hoa.billed_lots} of ${hoa.linked_lots} linked properties.`
               : ""}
           </p>
         )}
@@ -110,6 +119,10 @@ export default function HouseholdAccount() {
       <details className={styles.billingDetails}>
         <summary>Monthly HOA charges & payments applied</summary>
         <MonthlyHoaCharges />
+      </details>
+      <details className={styles.billingDetails}>
+        <summary>Other charges · amenities</summary>
+        <AmenityCharges />
       </details>
       <div aria-label="HOA dues and payment method">
         {links.properties.map((property) => (

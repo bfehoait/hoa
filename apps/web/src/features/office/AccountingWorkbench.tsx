@@ -67,6 +67,7 @@ export default function AccountingWorkbench() {
     await cache.invalidateQueries({ queryKey: ["accounting"] });
     await cache.invalidateQueries({ queryKey: ["registry"] });
     await cache.invalidateQueries({ queryKey: ["office-review-inbox"] });
+    await cache.invalidateQueries({ queryKey: ["booking-charge"] });
   };
   const save = useMutation({
     mutationFn: async (f: FormData) => {
@@ -488,7 +489,13 @@ export default function AccountingWorkbench() {
                           : undefined
                       }
                       maxLength={2000}
-                      defaultValue={draft ? draft.fields[q.key] : ""}
+                      defaultValue={
+                        draft
+                          ? draft.fields[q.key]
+                          : ["booking", "charge"].includes(q.key)
+                            ? (params.get(q.key) ?? "")
+                            : ""
+                      }
                     />
                   )}
                 </label>

@@ -5,6 +5,7 @@ import { useAccountActions, useOwnProfile } from "../../data/accounts";
 import { Button, Feedback, PageIntro, Skeleton } from "../../components/UI";
 import styles from "./Settings.module.css";
 import PrivateHealthNote from "./PrivateHealthNote";
+import { esvCopyrightNotice } from "../../data/scripture";
 
 const THEME_KEY = "bellefort-theme";
 
@@ -158,6 +159,18 @@ export default function Settings() {
           <ArrowRight size={20} aria-hidden="true" />
         </Link>
       </section>
+      <details className={styles.panel}>
+        <summary>Scripture copyright</summary>
+        <p className={styles.help}>{esvCopyrightNotice}</p>
+        <a
+          className="text-link"
+          href="https://www.esv.org/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          ESV Bible source
+        </a>
+      </details>
     </>
   );
 }

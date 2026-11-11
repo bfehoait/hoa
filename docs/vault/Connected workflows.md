@@ -55,3 +55,7 @@ All 16 areas have local coverage and explicit gates; complete behavioral parity 
 Garage item review is illustrative and cannot certify real items. Photo/QR content is metadata only. Actual fees, contacts, privacy/consent rules, role precedence and other policy values remain unapproved. `/coverage` exposes these limits beside source features. This work does not migrate live source data or recover the absent backend SQL dependencies.
 
 See [[Verification]] for executed checks. Continue business decisions in [[Product questions]] before backend implementation.
+
+### 11 November 2026 - amenity fees in My account
+
+Prepared 068/069 and frontend for Swimming pool replacement plus reviewed booking charges. An approved booking's Office quote is saved/submitted/independently posted through Finance; it then appears under Other and contributes to Total balance alongside HOA. Verified amenity payments and reversals use the same independent Finance review lifecycle. Booking cancellation never marks payment or automatically waives/refunds a fee. Water remains unavailable; no unposted request is debt. See [Amenity choices and account charges](../AMENITY-ACCOUNT-CHARGES.md) for rollout, chosen conservative defaults, payment-reference safeguards and unimplemented pricing/refund automation. Local synthetic SQL and TypeScript checks passed; live schema/roles/preview/browser acceptance remain unverified.
