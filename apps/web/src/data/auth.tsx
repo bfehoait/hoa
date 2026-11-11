@@ -46,6 +46,16 @@ const tabStorage = {
     }
   },
 };
+// True when a Supabase session is still persisted for this tab. Used to tell a
+// transient expired-token failure (refresh pending) from a real signed-out
+// state, so the loader does not flash the sign-in page on reload.
+function hasStoredSession() {
+  try {
+    return !!sessionStorage.getItem("bellefort-auth-session");
+  } catch {
+    return false;
+  }
+}
 function clearSampleDrafts() {
   for (const key of [
     "bellefort-preview-v1",
@@ -120,14 +130,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [recovering, setRecovering] = useState(false);
   const [revision, setRevision] = useState(0);
   const previousUser = useRef<string | null>(null);
+  const failureTimer = useRef<number | null>(null);
 
   useEffect(() => {
     if (!client) return;
     // Keep this callback synchronous: awaiting another Auth call here can deadlock.
     const { data } = client.auth.onAuthStateChange((event, next) => {
-      setChecking(!!next);
-      setUserId(null);
-      setAccountEmail(null);
+      // A routine token refresh, or a re-emitted sign-in for the account that
+      // is already verified, must not drop the app back to "Checking…". Only a
+      // different user, the first load, or a sign-out resets the verified view.
+      // The getUser() verification below still runs on the session change.
+      const nextUser = next?.user?.id ?? null;
+      const sameUser = nextUser !== null && nextUser === previousUser.current;
+      if (!sameUser) {
+        setChecking(!!next);
+        setUserId(null);
+        setAccountEmail(null);
+      }
       setSession(next);
       if (event === "PASSWORD_RECOVERY") setRecovering(true);
       if (event === "SIGNED_OUT") {
@@ -144,34 +163,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!client || session === undefined) return;
     let live = true;
     if (!session) return;
+    // On reload the stored access token is frequently expired, so getUser()
+    // fails for a moment before the client's automatic refresh emits a fresh
+    // session. Bouncing to /sign-in in that window is the flash the owner saw.
+    // While a stored session is still present we keep showing the loader; a
+    // TOKEN_REFRESHED or SIGNED_OUT event resolves it, and a bounded fallback
+    // surfaces a genuine failure so the loader can never hang.
+    const settleFailure = () => {
+      if (!live) return;
+      setIdentityError(true);
+      setUserId(null);
+      cache.removeQueries({ queryKey: ["auth-member"] });
+      setChecking(false);
+    };
+    const deferOrFail = () => {
+      if (!live) return;
+      if (hasStoredSession()) {
+        if (failureTimer.current) clearTimeout(failureTimer.current);
+        failureTimer.current = window.setTimeout(settleFailure, 10000);
+        return;
+      }
+      settleFailure();
+    };
     void client.auth
       .getUser()
       .then(({ data, error }) => {
         if (!live) return;
         if (error || !data.user || data.user.id !== session.user.id) {
-          setUserId(null);
-          setIdentityError(true);
-          cache.removeQueries({ queryKey: ["auth-member"] });
-        } else {
-          if (previousUser.current && previousUser.current !== data.user.id)
-            cache.clear();
-          previousUser.current = data.user.id;
-          setIdentityError(false);
-          setUserId(data.user.id);
-          setAccountEmail(data.user.email ?? null);
-          setVerifiedAt(Date.now());
+          deferOrFail();
+          return;
         }
+        if (previousUser.current && previousUser.current !== data.user.id)
+          cache.clear();
+        previousUser.current = data.user.id;
+        setIdentityError(false);
+        setUserId(data.user.id);
+        setAccountEmail(data.user.email ?? null);
+        setVerifiedAt(Date.now());
         setChecking(false);
       })
-      .catch(() => {
-        if (live) {
-          setIdentityError(true);
-          setUserId(null);
-          setChecking(false);
-        }
-      });
+      .catch(deferOrFail);
     return () => {
       live = false;
+      if (failureTimer.current) {
+        clearTimeout(failureTimer.current);
+        failureTimer.current = null;
+      }
     };
   }, [client, session, revision, cache]);
 

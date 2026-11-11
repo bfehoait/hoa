@@ -38,7 +38,7 @@ export function usePeople(
     queryKey: ["office-people", auth.userId, kind, filter],
     enabled: permitted,
     staleTime: 0,
-    gcTime: 0,
+    gcTime: 300_000,
     retry: false,
     refetchOnWindowFocus: true,
     queryFn: async ({ signal }) => {

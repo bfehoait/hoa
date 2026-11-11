@@ -17,7 +17,7 @@ export function useModuleMonitor(section: string | null, page: number) {
   return useQuery({
     queryKey: ["developer-monitor", auth.userId, section, page],
     enabled,
-    gcTime: 0,
+    gcTime: 300_000,
     retry: false,
     refetchOnWindowFocus: true,
     refetchInterval: 30_000,

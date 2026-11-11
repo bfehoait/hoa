@@ -72,7 +72,7 @@ export function useOwnProfile() {
     enabled:
       sample ||
       (!!auth.userId && !!auth.member && !auth.checking && !auth.memberError),
-    gcTime: 0,
+    gcTime: 300_000,
     retry: false,
     refetchOnWindowFocus: true,
     queryFn: async ({ signal }) => {
@@ -108,7 +108,7 @@ export function useNotifications(page = 0, unreadOnly = false) {
     enabled:
       sample ||
       (!!auth.userId && !!auth.member && !auth.checking && !auth.memberError),
-    gcTime: 0,
+    gcTime: 300_000,
     retry: false,
     refetchOnWindowFocus: true,
     refetchInterval: 30000,
