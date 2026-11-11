@@ -108,11 +108,22 @@ it("category-conditional fields appear, are required, and stay empty when hidden
     serviceArea: "",
     storefront: "",
     businessKind: "",
+    listedBy: "",
+    facebook: "",
   };
   // Food shows fulfilment only.
   expect(
     visibleFields("businesses", { category: "Food" }).map((f) => f.key),
-  ).toEqual(["category", "fulfilment", "hours", "owner", "contact", "website"]);
+  ).toEqual([
+    "category",
+    "fulfilment",
+    "hours",
+    "owner",
+    "contact",
+    "website",
+    "listedBy",
+    "facebook",
+  ]);
   expect(
     visibleFields("businesses", { category: "Home services" }).map(
       (f) => f.key,
@@ -124,6 +135,8 @@ it("category-conditional fields appear, are required, and stay empty when hidden
     "owner",
     "contact",
     "website",
+    "listedBy",
+    "facebook",
   ]);
   // Required while shown.
   expect(

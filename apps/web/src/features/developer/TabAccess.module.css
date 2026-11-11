@@ -437,3 +437,24 @@
   color: var(--amber);
   line-height: 1.5;
 }
+
+.ruleOptions {
+  gap: 8px;
+}
+.ruleChoice {
+  border: 1px solid var(--line);
+  padding: 10px 6px;
+}
+.ruleChoice[data-selected] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+@media (max-width: 480px) {
+  .permissionRow {
+    padding: 16px;
+    gap: 16px;
+  }
+  .footerButtons {
+    align-items: center;
+  }
+}

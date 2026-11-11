@@ -36,7 +36,10 @@ export default function ItemRows({
       .filter(Boolean);
     return existing.length ? existing : [""];
   });
-  const joined = rows.map((row) => row.trim()).filter(Boolean).join("\n");
+  const joined = rows
+    .map((row) => row.trim())
+    .filter(Boolean)
+    .join("\n");
   const set = (index: number, value: string) =>
     setRows((prev) => prev.map((row, i) => (i === index ? value : row)));
   return (

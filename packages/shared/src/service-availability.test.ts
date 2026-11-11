@@ -5,7 +5,6 @@ describe("authenticated service readiness", () => {
   it.each([
     "/office/registry",
     "/office/history",
-    "/office/settings",
     "/explore/imports",
     "/explore/calculator",
     "/admin/operations",

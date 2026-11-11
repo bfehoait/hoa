@@ -619,3 +619,14 @@ fieldset.form {
     justify-self: stretch;
   }
 }
+
+@media (max-width: 599px) {
+  .toolbar:has(input[type="date"]) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .toolbar:has(input[type="date"]) label {
+    min-width: 0;
+  }
+}

@@ -405,6 +405,11 @@ function AppShell() {
         item.to.startsWith(to + "/") &&
         sectionActive(item.to),
     );
+  // More is a fallback destination, never a second selected workspace tab.
+  const mobileActive =
+    mobileLinks.find(
+      (item) => item.to !== "/more" && activeWithin(item.to, mobileLinks),
+    )?.to ?? "/more";
   if (publicScreen)
     return (
       <>
@@ -669,7 +674,7 @@ function AppShell() {
                 ? "Local preview · Sample data — not an HOA confirmation"
                 : developer
                   ? "Signed in · Developer workspace"
-                  : "Signed in · Account services"}
+                  : `Signed in · ${areaId[0].toUpperCase() + areaId.slice(1)} workspace`}
             </span>
             <Link to={auth.preview ? "/more/settings" : "/workspaces"}>
               {auth.preview ? "Data & settings" : "My account"}
@@ -886,10 +891,8 @@ function AppShell() {
           <Link
             to={to}
             key={to}
-            aria-current={activeWithin(to, mobileLinks) ? "page" : undefined}
-            className={
-              activeWithin(to, mobileLinks) ? styles.mobileSelected : ""
-            }
+            aria-current={mobileActive === to ? "page" : undefined}
+            className={mobileActive === to ? styles.mobileSelected : ""}
           >
             <Icon size={24} />
             <span>{mobile ?? label}</span>

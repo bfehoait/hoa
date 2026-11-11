@@ -100,6 +100,9 @@ beforeAll(async () => {
     "202611070020_incidents_and_board_reports.sql",
     "202611070021_retire_duplicate_modules.sql",
     "202611070022_board_summary_access.sql",
+    // Keep the synthetic schema aligned with the current shared form
+    // contract. These optional questions are part of the live definitions.
+    "202611100049_business_submission_questions.sql",
   ])
     await db.exec(
       await readFile(new URL("../migrations/" + file, import.meta.url), "utf8"),

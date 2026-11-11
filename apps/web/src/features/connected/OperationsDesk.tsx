@@ -900,12 +900,16 @@ export default function OperationsDesk({
                     title={
                       kind === "booking"
                         ? "No bookings yet"
-                        : "No visitor passes yet"
+                        : office
+                          ? "No passes waiting for review"
+                          : "No visitor passes yet"
                     }
                   >
-                    {kind === "booking"
-                      ? "Book an amenity and the office will confirm it."
-                      : "Request a pass for a guest, delivery or gate movement."}
+                    {office
+                      ? "New submissions will appear here when they need your review."
+                      : kind === "booking"
+                        ? "Book an amenity and the office will confirm it."
+                        : "Request a pass for a guest, delivery or gate movement."}
                   </Empty>
                 ))}
               {data.total > 20 && (

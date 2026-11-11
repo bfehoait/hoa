@@ -102,7 +102,7 @@ export default function ParticipationDesk({
   });
   const data = query.isError ? undefined : query.data;
   return (
-    <>
+    <div className={styles.participation}>
       {office && (
         <Link
           className="text-link"
@@ -145,7 +145,13 @@ export default function ParticipationDesk({
       ) : (
         data && (
           <>
-            <h2>Open activities</h2>
+            <h2 className={styles.sectionTitle}>Open activities</h2>
+            {!data.activities.length && (
+              <p className={styles.sectionNote}>
+                No open activities right now. Published activities accepting
+                applications will appear here.
+              </p>
+            )}
             <div className={styles.stack}>
               {data.activities.map((a) => (
                 <article className={styles.card} key={a.id}>
@@ -157,7 +163,9 @@ export default function ParticipationDesk({
                 </article>
               ))}
             </div>
-            <h2>{office ? "Applications for review" : "My applications"}</h2>
+            <h2 className={styles.sectionTitle}>
+              {office ? "Applications for review" : "My applications"}
+            </h2>
             <div className={styles.stack}>
               {data.rows.map((r) => (
                 <article className={styles.card} key={r.id}>
@@ -405,6 +413,6 @@ export default function ParticipationDesk({
           </form>
         </Modal>
       )}
-    </>
+    </div>
   );
 }

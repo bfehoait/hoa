@@ -340,3 +340,18 @@
     padding: 0;
   }
 }
+
+@media (max-width: 599px) {
+  .pair {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .calendar {
+    padding: 12px;
+    overflow-x: auto;
+  }
+  .days button {
+    min-width: 48px;
+    width: 100%;
+  }
+}

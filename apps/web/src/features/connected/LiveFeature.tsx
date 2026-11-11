@@ -560,7 +560,8 @@ export default function LiveFeature({
                     >
                       Clear search
                     </Button>
-                  ) : view === "mine" &&
+                  ) : !resident &&
+                    view === "mine" &&
                     data.data.can_create &&
                     !auth.memberPreview ? (
                     <Button

@@ -192,3 +192,15 @@
       border-color 160ms ease;
   }
 }
+
+@media (max-width: 479px) {
+  .metric {
+    padding: 16px;
+  }
+  .metric > strong {
+    margin-top: 8px;
+  }
+  .metric p {
+    margin-top: 4px;
+  }
+}

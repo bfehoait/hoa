@@ -19,7 +19,7 @@ export default function CarpoolHub() {
   return (
     <>
       <div
-        className={styles.actions}
+        className={styles.sectionTabs}
         role="group"
         aria-label="Carpool sections"
       >

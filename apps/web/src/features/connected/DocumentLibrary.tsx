@@ -121,23 +121,25 @@ export default function DocumentLibrary() {
               check again after the office publishes a document.
             </p>
           )}
-          <div className="btn-row">
-            <Button
-              secondary
-              disabled={page === 0}
-              onClick={() => setPage((p) => p - 1)}
-            >
-              Previous
-            </Button>
-            <span>Page {page + 1}</span>
-            <Button
-              secondary
-              disabled={(page + 1) * 20 >= query.data.total}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
-            </Button>
-          </div>
+          {query.data.total > 20 && (
+            <nav className="btn-row" aria-label="Document pages">
+              <Button
+                secondary
+                disabled={page === 0}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                Previous
+              </Button>
+              <span>Page {page + 1}</span>
+              <Button
+                secondary
+                disabled={(page + 1) * 20 >= query.data.total}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Next
+              </Button>
+            </nav>
+          )}
         </>
       )}
       {current && (

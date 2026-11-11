@@ -13,6 +13,7 @@ import { usePermissions } from "../../data/permissions";
 import { canOpenPath } from "../../../../../packages/shared/src/auth";
 import { Link } from "../../components/AccessLink";
 import CommunityHighlights from "./CommunityHighlights";
+import DailyScripture from "./DailyScripture";
 import HomeownerSummary from "./HomeownerSummary";
 import { HomeRequests, HomeBookings } from "./HomeActivity";
 import styles from "./ResidentHome.module.css";
@@ -58,6 +59,7 @@ export default function ResidentDashboard() {
   return (
     <div className={styles.home} data-home-dashboard>
       <h1 className={styles.homeTitle}>Home</h1>
+      <DailyScripture />
       <div className={styles.homeColumns}>
         {allowed("/account") && (
           <div className={styles.homeAccount}>

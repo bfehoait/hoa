@@ -28,8 +28,10 @@ export default function CarpoolDemoMap({
     map = useRef<LibreMap | null>(null);
   const markers = useRef<maplibregl.Marker[]>([]);
   const onStopRef = useRef(onStop);
-  onStopRef.current = onStop;
   const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    onStopRef.current = onStop;
+  }, [onStop]);
   useEffect(() => {
     let instance: LibreMap;
     let resize: ResizeObserver | undefined;
@@ -57,7 +59,7 @@ export default function CarpoolDemoMap({
         map.current = null;
       };
     } catch {
-      setFailed(true);
+      queueMicrotask(() => setFailed(true));
     }
   }, []);
   useEffect(() => {

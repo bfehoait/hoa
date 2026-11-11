@@ -29,11 +29,7 @@ export default function FieldWorkspace() {
     return <OperationsDesk kind="visitor" office />;
   // Security reads vehicle registrations rather than deciding them; the review
   // desk already enforces who may change a status.
-  if (
-    !auth.preview &&
-    !auth.rolePreview &&
-    pathname === "/security/vehicles"
-  )
+  if (!auth.preview && !auth.rolePreview && pathname === "/security/vehicles")
     return <LiveFeature module="vehicles" initialView="review" />;
   // Security files incidents and the office reviews them. "mine" shows what
   // this account filed; the review view is gated by the server, not here.
