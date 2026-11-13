@@ -23,13 +23,14 @@ const linkedPropertiesSchema = z.object({
 });
 
 /** Own links only, including for staff accounts with association-wide access. */
-export function useLinkedPropertyAddress(enabled = true) {
+export function useLinkedPropertyAddress(enabled = true, poll = false) {
   const auth = useAuth();
   const query = useRegistryRpc(
     "bfe_my_linked_properties",
     {},
     linkedPropertiesSchema,
     enabled,
+    { refetchInterval: poll && !auth.memberPreview ? 30000 : false },
   );
   const unit = auth.member?.unit?.trim();
   const recordedAddress =

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { lotPartsSchema } from "./lot-address";
+import { lotPartsSchema, refinePhaseLot } from "./lot-address";
 const answer = z.enum(["not_provided", "yes", "no"]);
 export const householdPersonSchema = z
   .object({
@@ -30,5 +30,6 @@ export const registrationSchema = z
     consent: z.literal(true),
     website: z.literal(""),
   })
-  .strict();
+  .strict()
+  .superRefine(refinePhaseLot);
 export type MembershipApplication = z.infer<typeof registrationSchema>;

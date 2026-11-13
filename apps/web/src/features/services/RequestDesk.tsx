@@ -1,5 +1,7 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
+import { z } from "zod";
+import { useReadOpenedNotification } from "../../data/notification-target";
 import {
   ArrowLeft,
   ArrowRight,
@@ -16,10 +18,11 @@ import {
   Button,
   Feedback,
   Field,
-  Modal,
   PageIntro,
   Skeleton,
 } from "../../components/UI";
+import Sheet from "../../components/Sheet";
+import MobileRequestConversation from "./MobileRequestConversation";
 import {
   liveRequestInput,
   requestCategories,
@@ -50,27 +53,59 @@ function dateLabel(value: string) {
   });
 }
 export default function RequestDesk({ office = false }: { office?: boolean }) {
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
+  const [phone, setPhone] = useState(
+    () => window.matchMedia("(max-width: 767px)").matches,
+  );
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const update = () => setPhone(media.matches);
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+  const recordId = z.uuid().safeParse(params.get("record")).data ?? null;
   const auth = useAuth();
   const sample = auth.preview || !!auth.rolePreview;
   const [page, setPage] = useState(0);
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState(office ? "" : "Active");
   const [category, setCategory] = useState("");
   const [creating, setCreating] = useState(() => !office && params.has("new"));
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
-  const query = useRequests(office, page, status, category);
+  const query = useRequests(
+    office,
+    recordId ? 0 : page,
+    recordId ? "" : status,
+    recordId ? "" : category,
+    recordId,
+  );
   const records = query.isError ? [] : (query.data?.records ?? []);
-  const showFilters =
-    office ||
-    !!status ||
-    !!category ||
-    (query.data?.total ?? records.length) >= 5;
-  const selected = records.find((record) => record.id === selectedId);
+  const showFilters = office;
+  const selected = records.find(
+    (record) => record.id === (recordId ?? selectedId),
+  );
+  useReadOpenedNotification(!sample && !!selected && query.isSuccess);
+  const clearTarget = () => {
+    setSelectedId(null);
+    const next = new URLSearchParams(params);
+    next.delete("record");
+    next.delete("notification");
+    setParams(next, { replace: true });
+  };
   const canNext =
     query.data?.total === null
       ? records.length === 20
       : (page + 1) * 20 < (query.data?.total ?? 0);
+  if (!office && phone && selected)
+    return (
+      <Thread
+        key={selected.id}
+        request={selected}
+        office={false}
+        mobile
+        onClose={clearTarget}
+      />
+    );
   return (
     <>
       <PageIntro
@@ -100,6 +135,43 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
           )
         }
       />
+      {!office && (
+        <div className={styles.residentActions}>
+          <Button
+            onClick={() => setCreating(true)}
+            disabled={query.isError || query.isPending}
+          >
+            <Plus size={20} aria-hidden="true" />
+            New request
+          </Button>
+          <div
+            className={styles.requestViews}
+            role="group"
+            aria-label="Request status"
+          >
+            <button
+              type="button"
+              aria-pressed={status !== "Resolved"}
+              onClick={() => {
+                setStatus("Active");
+                setPage(0);
+              }}
+            >
+              Open
+            </button>
+            <button
+              type="button"
+              aria-pressed={status === "Resolved"}
+              onClick={() => {
+                setStatus("Resolved");
+                setPage(0);
+              }}
+            >
+              Resolved
+            </button>
+          </div>
+        </div>
+      )}
       {showFilters && (
         <div className={styles.toolbar}>
           <label>
@@ -149,6 +221,20 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
         </div>
       )}
       <Feedback message={notice} />
+      {params.has("record") && query.isSuccess && !selected && (
+        <Feedback
+          error={
+            new Error(
+              "This request is no longer available, or your account cannot view it.",
+            )
+          }
+        />
+      )}
+      {params.has("record") && (
+        <Button secondary onClick={clearTarget}>
+          Show all requests
+        </Button>
+      )}
       {query.isPending ? (
         <Skeleton />
       ) : query.isError ? (
@@ -195,7 +281,13 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
               {records.map((record) => (
                 <li key={record.id}>
                   <button
-                    onClick={() => setSelectedId(record.id)}
+                    onClick={() => {
+                      if (!office && phone) {
+                        const next = new URLSearchParams(params);
+                        next.set("record", record.id);
+                        setParams(next, { preventScrollReset: true });
+                      } else setSelectedId(record.id);
+                    }}
                     aria-label={`Open ${record.title}`}
                   >
                     <span className={styles.requestIcon}>
@@ -266,7 +358,7 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
           onSaved={() => {
             setCreating(false);
             setPage(0);
-            setStatus("");
+            setStatus(office ? "" : "Active");
             setCategory("");
             setNotice(
               sample
@@ -281,7 +373,7 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
           key={selected.id}
           request={selected}
           office={office}
-          onClose={() => setSelectedId(null)}
+          onClose={clearTarget}
         />
       )}
     </>
@@ -359,7 +451,7 @@ function NewRequest({
     }
   }
   return (
-    <Modal
+    <Sheet
       title="New request"
       presentation="task"
       protectChanges
@@ -465,17 +557,19 @@ function NewRequest({
           </Button>
         </div>
       </form>
-    </Modal>
+    </Sheet>
   );
 }
 function Thread({
   request,
   office,
   onClose,
+  mobile = false,
 }: {
   request: LiveRequest;
   office: boolean;
   onClose: () => void;
+  mobile?: boolean;
 }) {
   const [page, setPage] = useState(0);
   const messages = useRequestThread(request.id, page);
@@ -500,6 +594,13 @@ function Thread({
         scope: "association",
       }));
   const [body, setBody] = useState("");
+  const replyInput = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (!mobile || !replyInput.current) return;
+    const input = replyInput.current;
+    input.style.height = "48px";
+    input.style.height = `${Math.max(48, Math.min(160, input.scrollHeight + 2))}px`;
+  }, [body, mobile]);
   const [clientId, setClientId] = useState(() => crypto.randomUUID());
   const [notice, setNotice] = useState("");
   const [handlingBusy, setHandlingBusy] = useState(false);
@@ -524,9 +625,96 @@ function Thread({
     }
   }
   const rows = messages.isError ? [] : (messages.data?.records ?? []);
+  const replyComposer = (
+    <>
+      {request.status === "Resolved" ? (
+        <p className="note">
+          Resolved. The office must reopen this request before another reply can
+          be sent.
+        </p>
+      ) : !canReply ? (
+        <p className="note">
+          Read-only access. Reply permission is required to send a message.
+        </p>
+      ) : (
+        <form className={styles.form} onSubmit={reply}>
+          <Field label="Your reply">
+            <textarea
+              id="request-reply"
+              ref={replyInput}
+              rows={mobile ? 1 : undefined}
+              placeholder={mobile ? "Type a reply..." : undefined}
+              value={body}
+              maxLength={5000}
+              onChange={(event) => {
+                setBody(event.target.value);
+                setClientId(crypto.randomUUID());
+              }}
+              disabled={actions.reply.isPending}
+            />
+          </Field>
+          <Feedback error={actions.reply.error} />
+          <div className="form-actions">
+            <Button
+              type="submit"
+              pending={actions.reply.isPending}
+              disabled={!body.trim() || messages.isPending || messages.isError}
+            >
+              <Send size={20} />
+              <span className={mobile ? styles.replyLabel : undefined}>
+                Send reply
+              </span>
+            </Button>
+          </div>
+        </form>
+      )}
+    </>
+  );
+  if (mobile)
+    return (
+      <MobileRequestConversation
+        request={request}
+        messages={rows}
+        pending={messages.isPending}
+        fetching={messages.isFetching}
+        error={messages.isError ? messages.error : null}
+        notice={notice}
+        sample={sample}
+        busy={actions.reply.isPending}
+        dirty={!!body.trim()}
+        page={page}
+        canOlder={
+          messages.data?.total === null
+            ? rows.length === 20
+            : (page + 1) * 20 < (messages.data?.total ?? 0)
+        }
+        onPage={setPage}
+        onRefresh={() => void messages.refetch()}
+        onClose={onClose}
+        details={
+          <>
+            <p className="note">
+              Submitted {dateLabel(request.created_at)}
+              {request.unit_snapshot
+                ? ` - Recorded unit: ${request.unit_snapshot}`
+                : ""}
+              . Recorded unit text is not proof of property ownership.
+            </p>
+            <RequestBusinessDetails
+              request={request}
+              office={false}
+              onBusy={setHandlingBusy}
+              onEditing={setHandlingEditing}
+            />
+          </>
+        }
+        footer={replyComposer}
+      />
+    );
   return (
-    <Modal
+    <Sheet
       title={request.title}
+      className={!office ? styles.conversationSheet : undefined}
       presentation={office ? "sheet" : "task"}
       busy={actions.reply.isPending || actions.status.isPending || handlingBusy}
       protectChanges={handlingEditing || !!body.trim()}
@@ -601,7 +789,9 @@ function Thread({
               <li
                 key={message.id}
                 className={
-                  message.author_kind === "Office" ? styles.officeReply : ""
+                  message.author_kind === "Office"
+                    ? styles.officeReply
+                    : styles.residentReply
                 }
               >
                 <div>
@@ -638,42 +828,7 @@ function Thread({
           </nav>
         </>
       )}
-      {request.status === "Resolved" ? (
-        <p className="note">
-          Resolved. The office must reopen this request before another reply can
-          be sent.
-        </p>
-      ) : !canReply ? (
-        <p className="note">
-          Read-only access. Reply permission is required to send a message.
-        </p>
-      ) : (
-        <form className={styles.form} onSubmit={reply}>
-          <Field label="Your reply">
-            <textarea
-              id="request-reply"
-              value={body}
-              maxLength={5000}
-              onChange={(event) => {
-                setBody(event.target.value);
-                setClientId(crypto.randomUUID());
-              }}
-              disabled={actions.reply.isPending}
-            />
-          </Field>
-          <Feedback error={actions.reply.error} />
-          <div className="form-actions">
-            <Button
-              type="submit"
-              pending={actions.reply.isPending}
-              disabled={!body.trim() || messages.isPending || messages.isError}
-            >
-              <Send size={20} />
-              Send reply
-            </Button>
-          </div>
-        </form>
-      )}
-    </Modal>
+      {replyComposer}
+    </Sheet>
   );
 }

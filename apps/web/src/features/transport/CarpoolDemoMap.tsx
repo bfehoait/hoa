@@ -5,13 +5,13 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import {
   demoCoordinates,
-  demoStopCoordinates,
   demoRoadRoute,
-  demoStopRouteIndices,
   demoCarpoolRouteIndices,
   officeCoordinate,
 } from "./carpool-demo-data";
 import styles from "./CarpoolDemo.module.css";
+import { shuttleStopLocations } from "./shuttle-stop-data";
+const shuttleCoordinates = shuttleStopLocations.map((stop) => stop.coordinate);
 maplibregl.setWorkerUrl(workerUrl);
 export default function CarpoolDemoMap({
   pickup,
@@ -38,7 +38,7 @@ export default function CarpoolDemoMap({
     try {
       instance = new maplibregl.Map({
         container: container.current!,
-        center: officeCoordinate,
+        center: shuttle ? shuttleCoordinates[0] : officeCoordinate,
         zoom: 15,
         attributionControl: { compact: false },
         style: "https://tiles.openfreemap.org/styles/positron",
@@ -61,72 +61,34 @@ export default function CarpoolDemoMap({
     } catch {
       queueMicrotask(() => setFailed(true));
     }
-  }, []);
+  }, [shuttle]);
   useEffect(() => {
     const instance = map.current;
     if (!instance) return;
     const update = () => {
-      const points = shuttle ? demoStopCoordinates : demoCoordinates;
+      const points = shuttle ? shuttleCoordinates : demoCoordinates;
       const from = points[pickup],
         to = points[destination];
       const data = {
         type: "FeatureCollection" as const,
         features:
-          from && to
+          !shuttle && from && to
             ? [
                 {
                   type: "Feature" as const,
                   properties: {},
                   geometry: {
                     type: "LineString" as const,
-                    coordinates: shuttle
-                      ? demoRoadRoute.slice(
-                          demoStopRouteIndices[Math.min(pickup, destination)],
-                          demoStopRouteIndices[Math.max(pickup, destination)] +
-                            1,
-                        )
-                      : demoRoadRoute.slice(
-                          demoCarpoolRouteIndices[
-                            Math.min(pickup, destination)
-                          ],
-                          demoCarpoolRouteIndices[
-                            Math.max(pickup, destination)
-                          ] + 1,
-                        ),
+                    coordinates: demoRoadRoute.slice(
+                      demoCarpoolRouteIndices[Math.min(pickup, destination)],
+                      demoCarpoolRouteIndices[Math.max(pickup, destination)] +
+                        1,
+                    ),
                   },
                 },
               ]
             : [],
       };
-      if (shuttle && !instance.getSource("demo-stop-sequence")) {
-        instance.addSource("demo-stop-sequence", {
-          type: "geojson",
-          data: {
-            type: "Feature",
-            properties: {},
-            geometry: { type: "LineString", coordinates: demoRoadRoute },
-          },
-        });
-        instance.addLayer({
-          id: "demo-stop-sequence-halo",
-          type: "line",
-          source: "demo-stop-sequence",
-          layout: { "line-join": "round", "line-cap": "round" },
-          paint: { "line-color": "#ffffff", "line-width": 9 },
-        });
-        instance.addLayer({
-          id: "demo-stop-sequence",
-          type: "line",
-          source: "demo-stop-sequence",
-          layout: { "line-join": "round", "line-cap": "round" },
-          paint: {
-            "line-color": "#8b002b",
-            "line-width": 4,
-            "line-opacity": 0.5,
-            "line-dasharray": shuttle ? [1, 0] : [2, 2],
-          },
-        });
-      }
       const source = instance.getSource("demo-route") as
         maplibregl.GeoJSONSource | undefined;
       if (source) source.setData(data);
@@ -145,14 +107,16 @@ export default function CarpoolDemoMap({
       }
       markers.current.forEach((marker) => marker.remove());
       markers.current = [];
-      const office = document.createElement("div");
-      office.className = styles.officePin;
-      office.textContent = "Sales office - approximate";
-      markers.current.push(
-        new maplibregl.Marker({ element: office })
-          .setLngLat(officeCoordinate)
-          .addTo(instance),
-      );
+      if (!shuttle) {
+        const office = document.createElement("div");
+        office.className = styles.officePin;
+        office.textContent = "Sales office - approximate";
+        markers.current.push(
+          new maplibregl.Marker({ element: office })
+            .setLngLat(officeCoordinate)
+            .addTo(instance),
+        );
+      }
       const indices = shuttle
         ? points.map((_, index) => index)
         : [pickup, destination];
@@ -161,7 +125,15 @@ export default function CarpoolDemoMap({
         element.className = styles.pin;
         if (element instanceof HTMLButtonElement) {
           element.type = "button";
-          element.setAttribute("aria-label", `Select demo stop ${index + 1}`);
+          element.setAttribute(
+            "aria-label",
+            `Select ${shuttleStopLocations[index].label}`,
+          );
+          element.setAttribute(
+            "aria-pressed",
+            String(index === pickup || index === destination),
+          );
+          element.title = shuttleStopLocations[index].label;
           element.onclick = () => onStopRef.current?.(index);
         }
         element.textContent = shuttle
@@ -177,10 +149,8 @@ export default function CarpoolDemoMap({
             .addTo(instance),
         );
       });
-      const bounds = new maplibregl.LngLatBounds(
-        officeCoordinate,
-        officeCoordinate,
-      );
+      const anchor = shuttle ? shuttleCoordinates[0] : officeCoordinate;
+      const bounds = new maplibregl.LngLatBounds(anchor, anchor);
       (shuttle
         ? points
         : demoRoadRoute.slice(
@@ -206,7 +176,7 @@ export default function CarpoolDemoMap({
         role="region"
         aria-label={
           shuttle
-            ? "Demo stop map around the approximate sales office pin"
+            ? "Seven shuttle stops supplied by the association"
             : "Carpool demo map around the approximate sales office pin"
         }
       />

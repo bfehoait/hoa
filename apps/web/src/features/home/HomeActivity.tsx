@@ -72,7 +72,8 @@ export function HomeBookings() {
     queryKey: ["home-bookings", auth.userId],
     enabled:
       !!auth.userId && !auth.checking && !auth.preview && !auth.rolePreview,
-    gcTime: 0,
+    gcTime: 300_000,
+    staleTime: 10000,
     retry: false,
     refetchInterval: 30000,
     queryFn: async () =>

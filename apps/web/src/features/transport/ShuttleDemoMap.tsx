@@ -2,6 +2,7 @@ import { lazy, Suspense, useState } from "react";
 import { officeAddress } from "./carpool-demo-data";
 import { Button } from "../../components/UI";
 import styles from "./CarpoolDemo.module.css";
+import { shuttleStopLocations } from "./shuttle-stop-data";
 const Map = lazy(() => import("./CarpoolDemoMap"));
 export default function ShuttleDemoMap({
   pickup,
@@ -10,36 +11,23 @@ export default function ShuttleDemoMap({
 }: {
   pickup: string;
   destination: string;
-  onChange: (from: string, to: string) => void;
+  onChange: (pickup: string, destination: string) => void;
 }) {
-  const [endpoint, setEndpoint] = useState<"pickup" | "destination">("pickup"),
-    [key, setKey] = useState(0);
-  const labels = Array.from(
-    { length: 12 },
-    (_, index) =>
-      `${index + 1}${index === 0 ? "st" : index === 1 ? "nd" : index === 2 ? "rd" : "th"} stop`,
-  );
+  const [key, setKey] = useState(0);
+  const [endpoint, setEndpoint] = useState<"pickup" | "destination">("pickup");
+  const labels = shuttleStopLocations.map((stop) => stop.label);
   return (
-    <section
-      className={styles.shuttleMap}
-      aria-label="Interactive shuttle stop demonstration"
-    >
-      <div className={styles.demoNotice}>
-        <strong>Interactive demo</strong>
-        <span>
-          Real basemap, approximate office pin and 12 unverified sample stops.
-          Existing shuttle request controls still connect to the service.
-        </span>
-      </div>
-      <h2>Explore the 12 demo stops</h2>
+    <section className={styles.shuttleMap} aria-label="Shuttle area map">
+      <h2>Shuttle stops</h2>
+      <p className={styles.note}>{officeAddress}</p>
       <p className={styles.note}>
-        {officeAddress} · Approximate pin. Stop positions are illustrative and
-        unverified.
+        Tap one of the 7 numbered stops to choose your pickup or destination.
+        Live vehicle location and route estimates are unavailable.
       </p>
       <div
         className={styles.modes}
         role="group"
-        aria-label="Map stop selection"
+        aria-label="Choose what the map selects"
       >
         <button
           type="button"
@@ -56,6 +44,10 @@ export default function ShuttleDemoMap({
           Select destination
         </button>
       </div>
+      <p className={styles.note} role="status">
+        Pickup: {pickup || "Choose a stop"} · Destination:{" "}
+        {destination || "Choose a stop"}
+      </p>
       <div className={styles.shuttleMapCanvas}>
         <Suspense fallback={<p>Loading map…</p>}>
           <Map
@@ -64,13 +56,14 @@ export default function ShuttleDemoMap({
             pickup={labels.indexOf(pickup)}
             destination={labels.indexOf(destination)}
             onStop={(index) => {
-              if (endpoint === "pickup") {
-                if (labels[index] !== destination) {
-                  onChange(labels[index], destination);
-                  setEndpoint("destination");
-                }
-              } else if (labels[index] !== pickup)
-                onChange(pickup, labels[index]);
+              const label = labels[index];
+              if (!label) return;
+              if (endpoint === "pickup" && label !== destination) {
+                onChange(label, destination);
+                setEndpoint("destination");
+              } else if (endpoint === "destination" && label !== pickup) {
+                onChange(pickup, label);
+              }
             }}
           />
         </Suspense>
@@ -82,11 +75,6 @@ export default function ShuttleDemoMap({
           Reset map
         </Button>
       </div>
-      <p className={styles.note}>
-        Tap numbered markers to select. The sample route follows mapped roads;
-        stops are not approved pickup points. The buttons below work without a
-        map. Route geometry: OSRM / OpenStreetMap.
-      </p>
     </section>
   );
 }

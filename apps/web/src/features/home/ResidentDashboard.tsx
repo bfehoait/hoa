@@ -3,10 +3,9 @@ import {
   MessageSquare,
   UserRound,
   ChevronRight,
-  Phone,
   Store,
   Bus,
-  FileText,
+  CarFront,
 } from "lucide-react";
 import { useAuth } from "../../data/auth";
 import { usePermissions } from "../../data/permissions";
@@ -15,6 +14,7 @@ import { Link } from "../../components/AccessLink";
 import CommunityHighlights from "./CommunityHighlights";
 import DailyScripture from "./DailyScripture";
 import HomeownerSummary from "./HomeownerSummary";
+import HomeHotlines from "./HomeHotlines";
 import { HomeRequests, HomeBookings } from "./HomeActivity";
 import styles from "./ResidentHome.module.css";
 const shortcuts = [
@@ -25,7 +25,7 @@ const shortcuts = [
   },
   { to: "/services/bookings", label: "Amenities", icon: CalendarDays },
   { to: "/services/requests", label: "Helpdesk", icon: MessageSquare },
-  { to: "/more/hotlines", label: "Hotlines", icon: Phone },
+  { to: "/more/transport", label: "Shuttle", icon: Bus },
 ];
 const community = [
   {
@@ -41,10 +41,10 @@ const community = [
     icon: Bus,
   },
   {
-    to: "/more/documents",
-    title: "Community documents",
-    detail: "Find forms and association information",
-    icon: FileText,
+    to: "/directory/transport",
+    title: "Carpool",
+    detail: "Share a ride with neighbours",
+    icon: CarFront,
   },
 ];
 export default function ResidentDashboard() {
@@ -59,14 +59,15 @@ export default function ResidentDashboard() {
   return (
     <div className={styles.home} data-home-dashboard>
       <h1 className={styles.homeTitle}>Home</h1>
-      <DailyScripture />
+      {allowed("/account") && (
+        <div className={styles.homeAccount}>
+          <HomeownerSummary />
+        </div>
+      )}
+      <div className={styles.homeContentStart}>
+        <DailyScripture />
+      </div>
       <div className={styles.homeColumns}>
-        {allowed("/account") && (
-          <div className={styles.homeAccount}>
-            <HomeownerSummary />
-          </div>
-        )}
-
         <section
           className={styles.serviceSection}
           aria-labelledby="home-services"
@@ -98,6 +99,7 @@ export default function ResidentDashboard() {
             <CommunityHighlights />
           </div>
         )}
+        {allowed("/more/hotlines") && <HomeHotlines />}
         {(allowed("/services/requests") || allowed("/services/bookings")) && (
           <div className={styles.activity}>
             {allowed("/services/requests") && <HomeRequests />}

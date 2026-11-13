@@ -4,18 +4,54 @@ import { useAuth } from "../../data/auth";
 import { useReceipts } from "../../data/registry";
 import { useLinkedPropertyAddress } from "../../data/linked-properties";
 import { Link } from "../../components/AccessLink";
-import { Button, Feedback, Skeleton } from "../../components/UI";
+import { Button, Feedback, PageIntro, Skeleton } from "../../components/UI";
+import {
+  ChevronRight,
+  House,
+  Wallet,
+  Droplet,
+  CircleDollarSign,
+  Check,
+  ReceiptText,
+} from "lucide-react";
 import { money } from "../../../../../packages/shared/src";
-import LotRegister from "../registry/LotRegister";
+import LotRegister, { LotLinkButton } from "../registry/LotRegister";
 import PayDues from "./PayDues";
 import MonthlyHoaCharges from "./MonthlyHoaCharges";
 import { useAccountBalance } from "../../data/hoa-balance";
 import AmenityCharges from "./AmenityCharges";
 import { balanceMoney } from "../../../../../packages/shared/src/hoa-balance";
 import styles from "./HouseholdAccount.module.css";
+import { memberRoles } from "../../../../../packages/shared/src/auth";
 
 export default function HouseholdAccount() {
+  const path = useParams()["*"] ?? "";
+  if (path === "bills" || path === "amenity-charges")
+    return (
+      <div className={styles.page}>
+        <PageIntro title={path === "bills" ? "HOA bills" : "Amenity charges"} />
+        <section
+          className={styles.chargeContent}
+          aria-label={
+            path === "bills"
+              ? "HOA bills and payments applied"
+              : "Amenity charge details"
+          }
+        >
+          {path === "bills" ? <MonthlyHoaCharges /> : <AmenityCharges />}
+        </section>
+      </div>
+    );
+  return <HouseholdOverview />;
+}
+
+function HouseholdOverview() {
   const { member } = useAuth();
+  const householdRole = member
+    ? memberRoles(member).find(
+        (role) => role === "homeowner" || role === "renter",
+      )
+    : undefined;
   const links = useLinkedPropertyAddress();
   const balance = useAccountBalance();
   const hoa = balance.data?.hoa;
@@ -28,74 +64,84 @@ export default function HouseholdAccount() {
   if (path.startsWith("lots/")) return <LotRegister account />;
   return (
     <div className={styles.page}>
+      <h1 className={styles.pageTitle}>Account</h1>
       <header className={styles.accountHeader}>
         <div className={styles.heroTop}>
-          <h1>My account</h1>
-          <Link to="/more/profile">Profile details</Link>
+          <p className={styles.accountLabel}>My account</p>
+          <Link to="/more/profile">
+            Profile details <ChevronRight size={16} aria-hidden="true" />
+          </Link>
         </div>
-        <p className={styles.holder}>
-          {member?.name?.trim() || "Account holder"}
-        </p>
-        <p className={styles.address}>
-          <span>
-            {links.properties.length
-              ? "Linked household address: "
-              : "Household address: "}
+        <div className={styles.memberIdentity}>
+          <span className={styles.avatar} aria-hidden="true">
+            {(member?.name?.trim() || "A").slice(0, 1).toUpperCase()}
           </span>
-          {links.address}
-        </p>
-        {links.isError && (
-          <Button secondary onClick={() => void links.refetch()}>
-            Refresh linked properties
+          <div>
+            <h2 className={styles.holder}>
+              {member?.name?.trim() || "Account holder"}
+            </h2>
+            <p className={styles.memberRole}>
+              {householdRole === "renter"
+                ? "Renter"
+                : householdRole === "homeowner"
+                  ? "Homeowner"
+                  : "Member"}
+            </p>
+          </div>
+        </div>
+        <div className={styles.address}>
+          <House size={24} aria-hidden="true" />
+          <div>
+            <span>
+              {links.properties.length
+                ? "Linked household address"
+                : "Household address"}
+            </span>
+            <strong>{links.address}</strong>
+          </div>
+        </div>
+        {links.isError && section === "payments" && (
+          <Button
+            secondary
+            pending={links.isFetching}
+            onClick={() => void links.refetch()}
+          >
+            Retry property links
           </Button>
         )}
       </header>
       <section className={styles.balance} aria-labelledby="account-balance">
-        <h2 id="account-balance">Total balance</h2>
+        <div className={styles.balanceHeading}>
+          <h2 id="account-balance">Total balance</h2>
+          {balance.data && !hoa?.needs_review && !hasCharges && (
+            <span className={styles.balanceStatus}>
+              <Check size={16} aria-hidden="true" />
+              No posted charges
+            </span>
+          )}
+        </div>
         <strong>
-          {hasCharges && balance.data
-            ? balanceMoney(balance.data.total_balance_centavos)
-            : hoa?.needs_review
-              ? "Under review"
+          {hoa?.needs_review
+            ? "Under review"
+            : balance.data
+              ? balanceMoney(balance.data.total_balance_centavos)
               : balance.isPending && balance.allowed
                 ? "Loading…"
-                : balance.data
-                  ? "No bills yet"
-                  : "Unavailable"}
+                : "Unavailable"}
         </strong>
         <p>
-          {hasCharges
-            ? "HOA dues for linked properties and confirmed charges for your amenity bookings. Water dues are unavailable."
-            : balance.isError
-              ? "Your balance could not be loaded."
-              : "Charges appear after Office verification. Unbilled months are not automatically treated as debt. Water dues are unavailable."}
+          {balance.isError
+            ? "Your balance could not be loaded."
+            : hoa?.needs_review
+              ? "Your charges need Office review before a balance can be confirmed."
+              : balance.data
+                ? hasCharges
+                  ? "HOA dues for linked properties and confirmed charges for your amenity bookings. Water dues are unavailable."
+                  : "No charges have been posted yet. Unbilled months are not counted as debt."
+                : balance.isPending && balance.allowed
+                  ? "Loading your confirmed charges."
+                  : "Your balance is currently unavailable."}
         </p>
-        <dl className={styles.balanceBreakdown} aria-label="Balance breakdown">
-          <div>
-            <dt>HOA dues</dt>
-            <dd>
-              {billed && hoa
-                ? balanceMoney(hoa.hoa_balance_centavos)
-                : hoa?.needs_review
-                  ? "Under review"
-                  : balance.data
-                    ? "No bills yet"
-                    : "No data"}
-            </dd>
-          </div>
-          <div>
-            <dt>Water dues</dt>
-            <dd>No data</dd>
-          </div>
-          <div>
-            <dt>Other</dt>
-            <dd>
-              {balance.data
-                ? balanceMoney(balance.data.other_balance_centavos)
-                : "No data"}
-            </dd>
-          </div>
-        </dl>
         {billed && hoa && (
           <p>
             {hoa.unpaid_months} month
@@ -107,6 +153,63 @@ export default function HouseholdAccount() {
               : ""}
           </p>
         )}
+        <nav className={styles.accountActions} aria-label="Account actions">
+          <button
+            type="button"
+            onClick={() =>
+              document
+                .getElementById("account-payment-options")
+                ?.scrollIntoView({ behavior: "instant", block: "start" })
+            }
+          >
+            <Wallet size={20} aria-hidden="true" />
+            Pay dues
+          </button>
+          <Link to="/account/payments">
+            <ReceiptText size={20} aria-hidden="true" />
+            History
+          </Link>
+          <Link to="/account/bills">
+            <ReceiptText size={20} aria-hidden="true" />
+            HOA bills
+          </Link>
+        </nav>
+      </section>
+      <section className={styles.duesPanel} aria-label="Breakdown of dues">
+        <p className={styles.breakdownLabel}>Breakdown of dues</p>
+        <dl className={styles.balanceBreakdown} aria-label="Balance breakdown">
+          <div>
+            <dt>
+              <Wallet size={20} aria-hidden="true" />
+              HOA dues
+            </dt>
+            <dd>
+              {hoa && !hoa.needs_review
+                ? balanceMoney(hoa.hoa_balance_centavos)
+                : hoa?.needs_review
+                  ? "Under review"
+                  : "No data"}
+            </dd>
+          </div>
+          <div>
+            <dt>
+              <Droplet size={20} aria-hidden="true" />
+              Water dues
+            </dt>
+            <dd>Unavailable</dd>
+          </div>
+          <div>
+            <dt>
+              <CircleDollarSign size={20} aria-hidden="true" />
+              Other
+            </dt>
+            <dd>
+              {balance.data
+                ? balanceMoney(balance.data.other_balance_centavos)
+                : "No data"}
+            </dd>
+          </div>
+        </dl>
       </section>
       {balance.isError && (
         <>
@@ -116,18 +219,31 @@ export default function HouseholdAccount() {
           </Button>
         </>
       )}
-      <details className={styles.billingDetails}>
-        <summary>Monthly HOA charges & payments applied</summary>
-        <MonthlyHoaCharges />
-      </details>
-      <details className={styles.billingDetails}>
-        <summary>Other charges · amenities</summary>
-        <AmenityCharges />
-      </details>
-      <div aria-label="HOA dues and payment method">
+      {!!(hoa?.invoice_count || balance.data?.amenity_charge_count) && (
+        <nav className={styles.chargeLinks} aria-label="Charge details">
+          {!!hoa?.invoice_count && (
+            <Link to="/account/bills">
+              <span>View HOA bills</span>
+              <ChevronRight size={20} aria-hidden="true" />
+            </Link>
+          )}
+          {!!balance.data?.amenity_charge_count && (
+            <Link to="/account/amenity-charges">
+              <span>View amenity charges</span>
+              <ChevronRight size={20} aria-hidden="true" />
+            </Link>
+          )}
+        </nav>
+      )}
+      <div
+        id="account-payment-options"
+        aria-label="HOA dues and payment method"
+      >
+        <h2 className={styles.mobileSectionTitle}>Your property</h2>
         {links.properties.map((property) => (
           <PayDues
             key={property.lot_id}
+            lotId={property.lot_id}
             phase={property.phase}
             block={property.block}
             lot={property.lot}
@@ -137,27 +253,66 @@ export default function HouseholdAccount() {
         ))}
         {!links.properties.length && !links.isPending && <PayDues />}
       </div>
+      <section className={styles.mobileRecords} aria-label="Account records">
+        <h2>Records</h2>
+        <nav>
+          {!!hoa?.invoice_count && (
+            <Link to="/account/bills">
+              <ReceiptText size={20} aria-hidden="true" />
+              <span>
+                HOA bills<small>Posted monthly invoices</small>
+              </span>
+              <ChevronRight size={18} aria-hidden="true" />
+            </Link>
+          )}
+          {!!balance.data?.amenity_charge_count && (
+            <Link to="/account/amenity-charges">
+              <ReceiptText size={20} aria-hidden="true" />
+              <span>
+                Amenity charges<small>Confirmed booking fees</small>
+              </span>
+              <ChevronRight size={18} aria-hidden="true" />
+            </Link>
+          )}
+          <Link to="/account/payments">
+            <ReceiptText size={20} aria-hidden="true" />
+            <span>
+              Payment history<small>Receipts available to your account</small>
+            </span>
+            <ChevronRight size={18} aria-hidden="true" />
+          </Link>
+        </nav>
+        {links.isSuccess && links.properties.length > 0 && (
+          <LotLinkButton another />
+        )}
+      </section>
       <nav className={styles.tabs} aria-label="Account sections">
         <Link
           to="/account/lots"
+          preventScrollReset
           aria-current={section === "properties" ? "page" : undefined}
         >
           Properties
         </Link>
         <Link
           to="/account/payments"
+          preventScrollReset
           aria-current={section === "payments" ? "page" : undefined}
         >
           Payments
         </Link>
       </nav>
-      {section === "properties" ? (
-        <div className={styles.properties}>
-          <LotRegister account embedded />
-        </div>
-      ) : (
-        <AccountPayments />
-      )}
+      <div className={styles.tabContent}>
+        {section === "properties" ? (
+          <div
+            className={`${styles.properties} ${links.isSuccess && links.properties.length > 0 ? styles.linkedPropertiesOverview : ""}`}
+          >
+            <LotRegister account embedded />
+          </div>
+        ) : (
+          <AccountPayments />
+        )}
+      </div>
     </div>
   );
 }
@@ -245,27 +400,28 @@ function AccountPayments() {
             </p>
             {query.data.rows.length ? (
               <>
-                <div className={styles.receiptHead} aria-hidden="true">
-                  <span>Receipt</span>
-                  <span>Property</span>
-                  <span>Date recorded</span>
-                  <span>Amount</span>
-                </div>
                 <ul className={styles.receipts} aria-label="Recorded receipts">
                   {query.data.rows.map((receipt) => (
                     <li key={receipt.id}>
-                      <h3>Receipt {receipt.or_number}</h3>
-                      <p>Lot {receipt.physical_id}</p>
-                      <time dateTime={receipt.receipt_date}>
-                        {new Date(
-                          receipt.receipt_date + "T00:00:00+08:00",
-                        ).toLocaleDateString("en-PH", {
-                          timeZone: "Asia/Manila",
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </time>
+                      <span className={styles.receiptIcon} aria-hidden="true">
+                        <ReceiptText size={20} />
+                      </span>
+                      <div className={styles.receiptDetails}>
+                        <h3>Receipt {receipt.or_number}</h3>
+                        <p>
+                          Lot {receipt.physical_id} ·{" "}
+                          <time dateTime={receipt.receipt_date}>
+                            {new Date(
+                              receipt.receipt_date + "T00:00:00+08:00",
+                            ).toLocaleDateString("en-PH", {
+                              timeZone: "Asia/Manila",
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </time>
+                        </p>
+                      </div>
                       <strong>{money(receipt.amount_centavos)}</strong>
                     </li>
                   ))}

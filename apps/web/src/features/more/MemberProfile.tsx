@@ -22,9 +22,9 @@ import {
   ButtonLink,
   Feedback,
   Field,
-  Modal,
   PageIntro,
 } from "../../components/UI";
+import Sheet from "../../components/Sheet";
 import { useOwnProfile, useAccountActions } from "../../data/accounts";
 import { useInstall } from "../../data/install";
 import {
@@ -238,7 +238,7 @@ function ProfileEditor({
     }
   }
   return (
-    <Modal
+    <Sheet
       busy={actions.saveProfile.isPending}
       title="Edit your profile"
       presentation="task"
@@ -298,6 +298,6 @@ function ProfileEditor({
           </Button>
         </div>
       </form>
-    </Modal>
+    </Sheet>
   );
 }

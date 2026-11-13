@@ -8,12 +8,17 @@ import {
   Button,
   Empty,
   Feedback,
-  Modal,
   PageIntro,
   Skeleton,
 } from "../../components/UI";
+import Sheet from "../../components/Sheet";
 import styles from "./LiveFeature.module.css";
 import { Link } from "../../components/AccessLink";
+import {
+  useNotificationTarget,
+  useReadOpenedNotification,
+} from "../../data/notification-target";
+import NotificationTargetFeedback from "../../components/NotificationTargetFeedback";
 const response = z.object({
   total: z.number(),
   can_create: z.boolean(),
@@ -46,21 +51,39 @@ export default function ParticipationDesk({
   office = false,
   pendingOnly = false,
   initialActivity,
+  embedded = false,
 }: {
   module: "booth-events" | "workshops" | "carpools";
   office?: boolean;
   pendingOnly?: boolean;
   initialActivity?: string;
+  embedded?: boolean;
 }) {
   const auth = useAuth(),
     cache = useQueryClient();
   const [page, setPage] = useState(0),
-    [form, setForm] = useState(false),
-    [review, setReview] = useState<
+    [form, setForm] = useState(!!initialActivity),
+    [selection, setReview] = useState<
       z.infer<typeof response>["rows"][number] | null
     >(null),
     [client, setClient] = useState(() => crypto.randomUUID()),
     [notice, setNotice] = useState("");
+  const target = useNotificationTarget(
+    "participation",
+    response.shape.rows.element,
+    module,
+    !office,
+  );
+  const review = target.requested
+    ? target.isSuccess
+      ? target.data
+      : null
+    : selection;
+  const closeDetails = () => {
+    setReview(null);
+    target.clear();
+  };
+  useReadOpenedNotification(target.requested && !!review);
   const query = useQuery({
     queryKey: ["participation", auth.userId, module, office, page, pendingOnly],
     retry: false,
@@ -96,6 +119,7 @@ export default function ParticipationDesk({
           "marketplace",
           "office-review-inbox",
           "notifications",
+          "notification-target",
         ].map((key) => cache.invalidateQueries({ queryKey: [key] })),
       );
     },
@@ -103,6 +127,7 @@ export default function ParticipationDesk({
   const data = query.isError ? undefined : query.data;
   return (
     <div className={styles.participation}>
+      <NotificationTargetFeedback target={target} />
       {office && (
         <Link
           className="text-link"
@@ -117,18 +142,20 @@ export default function ParticipationDesk({
             : "Pending applications only"}
         </Link>
       )}
-      <PageIntro
-        eyebrow="ACTIVITY PARTICIPATION"
-        title={
-          module === "booth-events"
-            ? "Booth applications"
-            : module === "workshops"
-              ? "Workshop participation"
-              : "Private carpool interests"
-        }
-        description="Apply for an approved activity and follow the organizer’s decision. Payments are arranged separately."
-      />
-      {data?.can_create && !office && (
+      {!embedded && (
+        <PageIntro
+          eyebrow="ACTIVITY PARTICIPATION"
+          title={
+            module === "booth-events"
+              ? "Booth applications"
+              : module === "workshops"
+                ? "Workshop participation"
+                : "Private carpool interests"
+          }
+          description="Apply for an approved activity and follow the organizer’s decision. Payments are arranged separately."
+        />
+      )}
+      {data?.can_create && !office && !embedded && (
         <Button
           onClick={() => {
             mutation.reset();
@@ -140,32 +167,43 @@ export default function ParticipationDesk({
       )}
       {notice && <p role="status">{notice}</p>}
       <Feedback error={query.error ?? mutation.error} />
+      {query.isError && (
+        <Button secondary onClick={() => void query.refetch()}>
+          Try again
+        </Button>
+      )}
       {query.isPending ? (
         <Skeleton />
       ) : (
         data && (
           <>
-            <h2 className={styles.sectionTitle}>Open activities</h2>
-            {!data.activities.length && (
-              <p className={styles.sectionNote}>
-                No open activities right now. Published activities accepting
-                applications will appear here.
-              </p>
-            )}
-            <div className={styles.stack}>
-              {data.activities.map((a) => (
-                <article className={styles.card} key={a.id}>
-                  <h3>{a.title}</h3>
-                  <p>
-                    {a.confirmed} confirmed of {a.capacity} places. Pending
-                    applications do not guarantee a place.
+            {!embedded && (
+              <>
+                <h2 className={styles.sectionTitle}>Open activities</h2>
+                {!data.activities.length && (
+                  <p className={styles.sectionNote}>
+                    No open activities right now. Published activities accepting
+                    applications will appear here.
                   </p>
-                </article>
-              ))}
-            </div>
-            <h2 className={styles.sectionTitle}>
-              {office ? "Applications for review" : "My applications"}
-            </h2>
+                )}
+                <div className={styles.stack}>
+                  {data.activities.map((a) => (
+                    <article className={styles.card} key={a.id}>
+                      <h3>{a.title}</h3>
+                      <p>
+                        {a.confirmed} confirmed of {a.capacity} places. Pending
+                        applications do not guarantee a place.
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              </>
+            )}
+            {!embedded && (
+              <h2 className={styles.sectionTitle}>
+                {office ? "Applications for review" : "My applications"}
+              </h2>
+            )}
             <div className={styles.stack}>
               {data.rows.map((r) => (
                 <article className={styles.card} key={r.id}>
@@ -227,7 +265,9 @@ export default function ParticipationDesk({
             </div>
             {!data.rows.length && (
               <Empty title="No applications yet.">
-                Your server-confirmed applications appear here.
+                {embedded
+                  ? "Apply from an event in Browse. Your submitted applications appear here."
+                  : "Your submitted applications appear here."}
               </Empty>
             )}
             {data.total > 20 && (
@@ -251,167 +291,240 @@ export default function ParticipationDesk({
           </>
         )
       )}
-      {form && data && (
-        <Modal
-          title="Apply for an activity"
-          busy={mutation.isPending}
-          onClose={() => setForm(false)}
-        >
-          <form
-            className={styles.form}
-            onSubmit={(e) => {
-              e.preventDefault();
-              const f = new FormData(e.currentTarget);
-              mutation.mutate(
-                {
-                  name: "bfe_request_business_participation",
-                  args: {
-                    p_client: client,
-                    p_activity: f.get("activity"),
-                    p_places: Number(f.get("places")),
-                    p_details: f.get("details"),
-                    p_answers: Object.fromEntries(
-                      [
-                        "participant",
-                        "phone",
-                        ...(module === "booth-events"
-                          ? ["business", "products"]
-                          : []),
-                      ].map((key) => [key, String(f.get(key) ?? "")]),
-                    ),
-                  },
-                },
-                {
-                  onSuccess: () => {
-                    setClient(crypto.randomUUID());
-                    setForm(false);
-                    setNotice("Application saved. Confirmation is pending.");
-                  },
-                },
-              );
-            }}
-          >
-            <label>
-              Activity
-              <select
-                required
-                name="activity"
-                defaultValue={
-                  data.activities.some((a) => a.id === initialActivity)
-                    ? initialActivity
-                    : ""
-                }
-              >
-                <option value="">Choose an open activity</option>
-                {data.activities.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.title}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              {module === "booth-events"
-                ? "Booths (one per application)"
-                : "Places"}
-              <input
-                required
-                type="number"
-                name="places"
-                min={1}
-                max={module === "booth-events" ? 1 : 50}
-                defaultValue={1}
-              />
-            </label>
-            <label>
-              {module === "booth-events" ? "Vendor name" : "Participant name"}
-              <input name="participant" required maxLength={120} />
-            </label>
-            <label>
-              Contact phone
-              <input name="phone" type="tel" required maxLength={40} />
-            </label>
-            {module === "booth-events" && (
-              <>
-                <label>
-                  Business name
-                  <input name="business" required maxLength={120} />
-                </label>
-                <label>
-                  Products or services
-                  <textarea name="products" required maxLength={1000} />
-                </label>
-              </>
-            )}
-            <label>
-              Application details
-              <textarea
-                required
-                name="details"
-                minLength={5}
-                maxLength={1000}
-              />
-            </label>
-            <Feedback error={mutation.error} />
-            <Button type="submit" pending={mutation.isPending}>
-              Submit application
-            </Button>
-          </form>
-        </Modal>
+      {form && data && !data.can_create && initialActivity && (
+        <Feedback
+          error={
+            new Error(
+              "Activity applications are not available for your account. Please contact the HOA office for help.",
+            )
+          }
+        />
       )}
-      {review && (
-        <Modal
-          title="Application decision"
-          busy={mutation.isPending}
-          onClose={() => setReview(null)}
-        >
-          <form
-            className={styles.form}
-            onSubmit={(e) => {
-              e.preventDefault();
-              const f = new FormData(e.currentTarget);
-              mutation.mutate(
-                {
-                  name: "bfe_decide_participation",
-                  args: {
-                    p_id: review.id,
-                    p_version: review.version,
-                    p_status: f.get("status"),
-                    p_note: f.get("note"),
-                  },
-                },
-                {
-                  onSuccess: () => {
-                    setReview(null);
-                    setNotice("Decision confirmed by the server.");
-                  },
-                },
-              );
-            }}
+      {form &&
+        data?.can_create &&
+        !office &&
+        initialActivity &&
+        !data.activities.some(
+          (activity) => activity.id === initialActivity,
+        ) && (
+          <Feedback
+            error={
+              new Error(
+                "This activity is no longer accepting applications. Choose another event in Browse.",
+              )
+            }
+          />
+        )}
+      {form &&
+        data?.can_create &&
+        !office &&
+        (!initialActivity ||
+          data.activities.some(
+            (activity) => activity.id === initialActivity,
+          )) && (
+          <Sheet
+            title="Apply for an activity"
+            busy={mutation.isPending}
+            onClose={() => setForm(false)}
           >
-            <label>
-              Decision
-              <select name="status">
-                {office ? (
-                  <>
-                    <option>Confirmed</option>
-                    <option>Rejected</option>
-                  </>
-                ) : (
-                  <option>Withdrawn</option>
-                )}
-              </select>
-            </label>
-            <label>
-              Reason
-              <textarea required name="note" minLength={5} maxLength={500} />
-            </label>
-            <Feedback error={mutation.error} />
-            <Button type="submit" pending={mutation.isPending}>
-              Confirm decision
-            </Button>
-          </form>
-        </Modal>
+            <form
+              className={styles.form}
+              onSubmit={(e) => {
+                e.preventDefault();
+                const f = new FormData(e.currentTarget);
+                mutation.mutate(
+                  {
+                    name: "bfe_request_business_participation",
+                    args: {
+                      p_client: client,
+                      p_activity: f.get("activity"),
+                      p_places: Number(f.get("places")),
+                      p_details: f.get("details"),
+                      p_answers: Object.fromEntries(
+                        [
+                          "participant",
+                          "phone",
+                          ...(module === "booth-events"
+                            ? ["business", "products"]
+                            : []),
+                        ].map((key) => [key, String(f.get(key) ?? "")]),
+                      ),
+                    },
+                  },
+                  {
+                    onSuccess: () => {
+                      setClient(crypto.randomUUID());
+                      setForm(false);
+                      setNotice("Application saved. Confirmation is pending.");
+                    },
+                  },
+                );
+              }}
+            >
+              <p className={styles.sectionNote}>
+                Applications need organizer approval. Payments are arranged
+                separately.
+              </p>
+              <label>
+                Activity
+                <select
+                  required
+                  name="activity"
+                  defaultValue={
+                    data.activities.some((a) => a.id === initialActivity)
+                      ? initialActivity
+                      : ""
+                  }
+                >
+                  <option value="">Choose an open activity</option>
+                  {data.activities.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                {module === "booth-events"
+                  ? "Booths (one per application)"
+                  : "Places"}
+                <input
+                  required
+                  type="number"
+                  name="places"
+                  min={1}
+                  max={module === "booth-events" ? 1 : 50}
+                  defaultValue={1}
+                />
+              </label>
+              <label>
+                {module === "booth-events" ? "Vendor name" : "Participant name"}
+                <input name="participant" required maxLength={120} />
+              </label>
+              <label>
+                Contact phone
+                <input name="phone" type="tel" required maxLength={40} />
+              </label>
+              {module === "booth-events" && (
+                <>
+                  <label>
+                    Business name
+                    <input name="business" required maxLength={120} />
+                  </label>
+                  <label>
+                    Products or services
+                    <textarea name="products" required maxLength={1000} />
+                  </label>
+                </>
+              )}
+              <label>
+                Application details
+                <textarea
+                  required
+                  name="details"
+                  minLength={5}
+                  maxLength={1000}
+                />
+              </label>
+              <Feedback error={mutation.error} />
+              <Button type="submit" pending={mutation.isPending}>
+                Submit application
+              </Button>
+            </form>
+          </Sheet>
+        )}
+      {review && (
+        <Sheet
+          title={office ? "Application decision" : "Application details"}
+          busy={mutation.isPending}
+          onClose={closeDetails}
+        >
+          <Badge>{review.status}</Badge>
+          <h3>{review.activity_title || "Activity unavailable"}</h3>
+          <p>
+            {review.places} place(s) · {review.details}
+          </p>
+          {review.answers && (
+            <dl className="detail-list">
+              {Object.entries(review.answers)
+                .filter(([, value]) => value)
+                .map(([key, value]) => (
+                  <div key={key}>
+                    <dt>
+                      {(
+                        {
+                          participant: "Applicant",
+                          phone: "Contact phone",
+                          business: "Business",
+                          products: "Products or services",
+                        } as Record<string, string>
+                      )[key] ?? key}
+                    </dt>
+                    <dd>{value}</dd>
+                  </div>
+                ))}
+            </dl>
+          )}
+          {review.history.length > 0 && (
+            <details className={styles.applicationHistory}>
+              <summary>Application history</summary>
+              {review.history.map((entry, index) => (
+                <p key={`${entry.at}-${index}`}>
+                  {entry.action} · {entry.note}
+                </p>
+              ))}
+            </details>
+          )}
+          {((office && data?.can_approve && review.status === "Pending") ||
+            (!office && ["Pending", "Confirmed"].includes(review.status))) && (
+            <form
+              className={styles.form}
+              onSubmit={(e) => {
+                e.preventDefault();
+                const f = new FormData(e.currentTarget);
+                mutation.mutate(
+                  {
+                    name: "bfe_decide_participation",
+                    args: {
+                      p_id: review.id,
+                      p_version: review.version,
+                      p_status: f.get("status"),
+                      p_note: f.get("note"),
+                    },
+                  },
+                  {
+                    onSuccess: () => {
+                      closeDetails();
+                      setNotice("Application updated.");
+                    },
+                  },
+                );
+              }}
+            >
+              <label>
+                Decision
+                <select name="status">
+                  {office ? (
+                    <>
+                      <option>Confirmed</option>
+                      <option>Rejected</option>
+                    </>
+                  ) : (
+                    <option>Withdrawn</option>
+                  )}
+                </select>
+              </label>
+              <label>
+                Reason
+                <textarea required name="note" minLength={5} maxLength={500} />
+              </label>
+              <Feedback error={mutation.error} />
+              <Button type="submit" pending={mutation.isPending}>
+                {office ? "Confirm decision" : "Withdraw application"}
+              </Button>
+            </form>
+          )}
+        </Sheet>
       )}
     </div>
   );

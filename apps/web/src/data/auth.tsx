@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -20,41 +21,15 @@ import {
 } from "../../../../packages/shared/src/auth";
 import { authConfig } from "./auth-config";
 import { readOnlyPreviewClient } from "./account-preview-client";
+import { authStorage, authStorageKey } from "./auth-storage";
+import {
+  readSessionPolicy,
+  SessionExpiredError,
+  useSessionActivity,
+} from "./session-policy";
 
-const memoryStorage = new Map<string, string>();
-const tabStorage = {
-  getItem(key: string) {
-    try {
-      return sessionStorage.getItem(key);
-    } catch {
-      return memoryStorage.get(key) ?? null;
-    }
-  },
-  setItem(key: string, value: string) {
-    try {
-      sessionStorage.setItem(key, value);
-    } catch {
-      memoryStorage.set(key, value);
-    }
-  },
-  removeItem(key: string) {
-    memoryStorage.delete(key);
-    try {
-      sessionStorage.removeItem(key);
-    } catch {
-      /* Memory-only session. */
-    }
-  },
-};
-// True when a Supabase session is still persisted for this tab. Used to tell a
-// transient expired-token failure (refresh pending) from a real signed-out
-// state, so the loader does not flash the sign-in page on reload.
 function hasStoredSession() {
-  try {
-    return !!sessionStorage.getItem("bellefort-auth-session");
-  } catch {
-    return false;
-  }
+  return !!authStorage.getItem(authStorageKey);
 }
 function clearSampleDrafts() {
   for (const key of [
@@ -63,7 +38,11 @@ function clearSampleDrafts() {
     "bellefort-preview-entry",
     "bellefort-request-samples-v1",
   ])
-    tabStorage.removeItem(key);
+    try {
+      sessionStorage.removeItem(key);
+    } catch {
+      /* Preview storage unavailable. */
+    }
   try {
     for (let index = sessionStorage.length - 1; index >= 0; index--) {
       const key = sessionStorage.key(index);
@@ -86,8 +65,8 @@ export function makeRealClient() {
       autoRefreshToken: true,
       detectSessionInUrl: true,
       flowType: "pkce",
-      storage: tabStorage,
-      storageKey: "bellefort-auth-session",
+      storage: authStorage,
+      storageKey: authStorageKey,
     },
   });
   return singleton;
@@ -131,6 +110,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [revision, setRevision] = useState(0);
   const previousUser = useRef<string | null>(null);
   const failureTimer = useRef<number | null>(null);
+  const expireSession = useCallback(() => {
+    setUserId(null);
+    setAccountEmail(null);
+    setSession(null);
+    setVerifiedAt(null);
+    setChecking(false);
+    setRecovering(false);
+    setIdentityError(false);
+    previousUser.current = null;
+    clearSampleDrafts();
+    void cache.cancelQueries().then(() => cache.clear());
+    // Supabase removes the shared persisted session and broadcasts SIGNED_OUT.
+    // Server enforcement already rejects an expired bearer token.
+    void client?.auth
+      .signOut({ scope: "local" })
+      .then(({ error }) => {
+        if (error) authStorage.removeItem(authStorageKey);
+      })
+      .catch(() => authStorage.removeItem(authStorageKey));
+  }, [client, cache]);
+  const sessionUnavailable = useCallback(() => setIdentityError(true), []);
+  const sessionVerified = useCallback(() => setIdentityError(false), []);
+  useSessionActivity(
+    client,
+    userId,
+    expireSession,
+    sessionUnavailable,
+    sessionVerified,
+  );
+  useEffect(() => {
+    // Backup for browser environments without Supabase BroadcastChannel support.
+    const changed = (event: StorageEvent) => {
+      if (
+        (event.key === authStorageKey || event.key === null) &&
+        !authStorage.getItem(authStorageKey)
+      ) {
+        setUserId(null);
+        setAccountEmail(null);
+        setSession(null);
+        setChecking(false);
+        setIdentityError(false);
+        setRecovering(false);
+        previousUser.current = null;
+        clearSampleDrafts();
+        void cache.cancelQueries().then(() => cache.clear());
+      }
+    };
+    window.addEventListener("storage", changed);
+    return () => window.removeEventListener("storage", changed);
+  }, [cache]);
 
   useEffect(() => {
     if (!client) return;
@@ -150,10 +179,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(next);
       if (event === "PASSWORD_RECOVERY") setRecovering(true);
       if (event === "SIGNED_OUT") {
+        previousUser.current = null;
+        setVerifiedAt(null);
         setRecovering(false);
         setIdentityError(false);
         clearSampleDrafts();
-        cache.clear();
+        void cache.cancelQueries().then(() => cache.clear());
       }
     });
     return () => data.subscription.unsubscribe();
@@ -187,12 +218,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     void client.auth
       .getUser()
-      .then(({ data, error }) => {
+      .then(async ({ data, error }) => {
         if (!live) return;
         if (error || !data.user || data.user.id !== session.user.id) {
           deferOrFail();
           return;
         }
+        try {
+          // Only first verification/resume counts as activity, not token refresh.
+          await readSessionPolicy(
+            client,
+            previousUser.current !== data.user.id,
+          );
+        } catch (cause) {
+          if (!live) return;
+          if (cause instanceof SessionExpiredError) expireSession();
+          else settleFailure();
+          return;
+        }
+        if (!live) return;
         if (previousUser.current && previousUser.current !== data.user.id)
           cache.clear();
         previousUser.current = data.user.id;
@@ -210,7 +254,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         failureTimer.current = null;
       }
     };
-  }, [client, session, revision, cache]);
+  }, [client, session, revision, cache, expireSession]);
 
   const membership = useQuery({
     queryKey: ["auth-member", userId],

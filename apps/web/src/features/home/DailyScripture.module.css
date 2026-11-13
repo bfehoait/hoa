@@ -67,6 +67,11 @@
   font-weight: 700;
   color: var(--accent);
 }
+@media (max-width: 767px) {
+  .box.box {
+    animation: none;
+  }
+}
 @media (prefers-reduced-motion: no-preference) {
   .box {
     animation: lift 0.5s cubic-bezier(0.2, 0.7, 0.25, 1) both;

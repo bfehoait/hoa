@@ -1,0 +1,59 @@
+.picker {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.picker legend {
+  margin-bottom: 8px;
+  padding: 0;
+  font-size: 16px;
+  font-weight: 650;
+}
+.picker.picker label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.picker input[type="checkbox"] {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  min-height: 24px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--accent);
+}
+.picker label:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.picker label:has(input:disabled) {
+  color: var(--muted);
+  cursor: default;
+}
+.picker small {
+  display: block;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+.picker p {
+  color: var(--red);
+  font-size: 14px;
+  margin: 8px 0 0;
+}

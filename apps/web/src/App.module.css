@@ -868,13 +868,27 @@
     min-height: 64px;
     padding-block: 6px;
     gap: 12px;
+    background: var(--brand);
+    border-bottom-color: transparent;
   }
-  .residentShell .residentBrand img {
-    width: 110px;
-    max-height: 48px;
+  /* Mobile uses one burgundy greeting header: the brand wordmark drops out and
+     the search icon + bell flip to the on-brand colour so they read on burgundy. */
+  .residentShell .residentBrand {
+    display: none;
+  }
+  .residentShell .topbar :global(.search) button,
+  .residentShell .topActions,
+  .residentShell .topActions > a,
+  .residentShell .topActions > button {
+    color: var(--on-brand);
   }
   .residentShell .main {
-    padding-top: 20px;
+    padding-top: 22px;
+    background: var(--bg);
+    border-radius: var(--radius-hero) var(--radius-hero) 0 0;
+    margin-top: 0;
+    position: relative;
+    z-index: 1;
   }
   .residentShell .mobileNav {
     padding-top: 6px;
@@ -914,6 +928,15 @@
   }
 }
 /* Rotating a phone should retain the customer app navigation, not a sidebar. */
+@media (max-width: 767px),
+  (min-width: 768px) and (max-width: 1023px) and (max-height: 500px) and (pointer: coarse) {
+  /* Only hide page-level returns when this customer screen has a header Back.
+     Keep desktop/staff returns, recovery actions and in-module controls. */
+  .residentShell:has(.topbar [data-customer-back]) .main :global(.back-link),
+  .residentShell:has(.topbar [data-customer-back]) .main [data-page-back] {
+    display: none;
+  }
+}
 @media (min-width: 768px) and (max-width: 1023px) and (max-height: 500px) and (pointer: coarse) {
   .residentShell .sidebar {
     display: none;
@@ -1104,4 +1127,28 @@
     padding: 8px var(--staff-content-padding);
     min-height: 40px;
   }
+}
+.residentWorkspaceSwitch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 12px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+  color: var(--muted);
+}
+.residentWorkspaceSwitch select {
+  flex: 1;
+  min-width: 0;
+  max-width: 320px;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
 }

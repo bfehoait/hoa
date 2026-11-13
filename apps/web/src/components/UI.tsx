@@ -11,6 +11,7 @@ import {
   type RefAttributes,
 } from "react";
 import type { LinkProps } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import {
   ArrowUpRight,
   Check,
@@ -21,6 +22,7 @@ import {
 } from "lucide-react";
 import { Link } from "./AccessLink";
 import styles from "./UI.module.css";
+import { customerMessage } from "../data/customer-message";
 
 // One action vocabulary for the whole portal. Visual weight states intent:
 // primary is the single thing a screen is for, secondary supports it, danger
@@ -224,6 +226,7 @@ export function Feedback({
   error?: Error | null;
   message?: string;
 }) {
+  const { pathname } = useLocation();
   if (!error && !message) return null;
   return (
     <div
@@ -231,7 +234,13 @@ export function Feedback({
       role={error ? "alert" : "status"}
     >
       {!error && <Check size={20} />}
-      <span>{error?.message ?? message}</span>
+      <span>
+        {error
+          ? /^\/(?:developer|office|admin)(?:\/|$)/.test(pathname)
+            ? error.message
+            : customerMessage(error.message)
+          : message}
+      </span>
     </div>
   );
 }

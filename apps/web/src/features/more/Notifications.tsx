@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation, useSearchParams } from "react-router-dom";
 import {
   Bell,
   CheckCheck,
@@ -11,6 +12,8 @@ import { Link } from "../../components/AccessLink";
 import { Button, Feedback, PageIntro, Skeleton } from "../../components/UI";
 import { useNotifications, useAccountActions } from "../../data/accounts";
 import { useAuth } from "../../data/auth";
+import { usePermissions } from "../../data/permissions";
+import { visibleDestination } from "../../components/AccessLink";
 import {
   notificationGroup,
   relativeNotificationTime,
@@ -25,6 +28,7 @@ export function NotificationList({
   compact?: boolean;
   onNavigate?: () => void;
 }) {
+  const [params] = useSearchParams();
   const auth = useAuth();
   const [unread, setUnread] = useState(false);
   const [page, setPage] = useState(0);
@@ -34,6 +38,15 @@ export function NotificationList({
   const rows = query.isError ? [] : (query.data?.rows ?? []);
   return (
     <div className={styles.center}>
+      {params.get("unavailable") === "1" && (
+        <Feedback
+          error={
+            new Error(
+              "This item is no longer available, or your account cannot view it.",
+            )
+          }
+        />
+      )}
       <div className={styles.toolbar}>
         <div role="group" aria-label="Notification filters">
           <button
@@ -153,6 +166,24 @@ function NotificationRow({
   markRead: () => void;
   onNavigate?: () => void;
 }) {
+  const auth = useAuth();
+  const permissions = usePermissions();
+  const location = useLocation();
+  const destination = new URL(item.path, "https://route.invalid");
+  const unavailable = destination.pathname === "/more/notifications";
+  const hasRecord = destination.searchParams.has("record");
+  if (hasRecord) destination.searchParams.set("notification", item.id);
+  const to = destination.pathname + destination.search;
+  const canOpen =
+    !unavailable &&
+    (auth.preview ||
+      (permissions.allowsPath(to) &&
+        visibleDestination(
+          auth.member,
+          to,
+          location.pathname,
+          !!auth.rolePreview,
+        )));
   const Icon =
     item.kind === "request"
       ? MessageSquare
@@ -170,16 +201,30 @@ function NotificationRow({
         <strong>{item.title}</strong>
         <p>{item.body}</p>
         <div className={styles.rowActions}>
-          <Link
-            to={item.path}
-            onClick={() => {
-              markRead();
-              onNavigate?.();
-            }}
-          >
-            Open update
-            <ChevronRight size={15} />
-          </Link>
+          {canOpen ? (
+            <Link
+              to={to}
+              onClick={(event) => {
+                if (
+                  event.ctrlKey ||
+                  event.metaKey ||
+                  event.shiftKey ||
+                  event.altKey ||
+                  event.button !== 0
+                )
+                  return;
+                if (!hasRecord) markRead();
+                onNavigate?.();
+              }}
+            >
+              Open update
+              <ChevronRight size={15} />
+            </Link>
+          ) : (
+            <span className={styles.unavailable}>
+              This item is unavailable for your account.
+            </span>
+          )}
           <time
             dateTime={item.created_at}
             title={new Date(item.created_at).toLocaleString()}

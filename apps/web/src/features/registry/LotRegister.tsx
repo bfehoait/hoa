@@ -9,6 +9,7 @@ import {
   Search,
   ShieldCheck,
   Users,
+  Plus,
 } from "lucide-react";
 import { z } from "zod";
 import {
@@ -81,6 +82,8 @@ export default function LotRegister({
   account?: boolean;
   embedded?: boolean;
 }) {
+  const auth = useAuth();
+  const sample = auth.preview || !!auth.rolePreview;
   const path = useParams()["*"] ?? "";
   const id = account ? (path.startsWith("lots/") ? path.slice(5) : "") : path;
   const root = office
@@ -89,8 +92,106 @@ export default function LotRegister({
       ? "/account/lots"
       : "/more/lots";
   if (id) return <LotProfile key={id} id={id} root={root} />;
+  if (!office && !sample)
+    return <LinkedLotList root={root} embedded={embedded} />;
   return <LotList root={root} office={office} embedded={embedded} />;
 }
+
+// Customer lists come only from the account's current approved links. A failed
+// link check must never become an unlinked state or a registry-search fallback.
+function LinkedLotList({
+  root,
+  embedded,
+}: {
+  root: string;
+  embedded: boolean;
+}) {
+  const links = useLinkedPropertyAddress(true, true);
+  const [claim, setClaim] = useState(false);
+  const ready = links.isSuccess && !links.isError;
+  return (
+    <>
+      {!embedded && (
+        <PageIntro
+          title="Your lots"
+          description="Your approved property links and permitted receipt history."
+          icon={<Building2 size={28} />}
+        />
+      )}
+      {links.isPending && <Skeleton />}
+      {links.isError && (
+        <>
+          <Feedback error={links.error} />
+          <Button
+            secondary
+            pending={links.isFetching}
+            onClick={() => void links.refetch()}
+          >
+            Try again
+          </Button>
+        </>
+      )}
+      {ready &&
+        (links.properties.length ? (
+          <>
+            <div className={`${styles.list} ${styles.linkedList}`}>
+              {links.properties.map((property) => (
+                <Link
+                  key={property.lot_id}
+                  to={`${root}/${property.lot_id}`}
+                  className={`${styles.card} ${styles.linkedCard}`}
+                >
+                  <div className={styles.identity}>
+                    <span className={styles.propertyIcon}>
+                      <House size={20} aria-hidden="true" />
+                    </span>
+                    <div>
+                      <h2>{property.physical_id}</h2>
+                      <p className={styles.note}>
+                        Phase {property.phase} · Block {property.block} · Lot{" "}
+                        {property.lot} ·{" "}
+                        {property.relationships
+                          .map(
+                            (relationship) =>
+                              ({
+                                owner: "Homeowner",
+                                renter: "Renter",
+                                household: "Household member",
+                              })[relationship],
+                          )
+                          .join(", ")}
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight size={20} aria-hidden="true" />
+                </Link>
+              ))}
+            </div>
+            <Button
+              secondary
+              className={styles.linkAnother}
+              onClick={() => setClaim(true)}
+            >
+              <Plus size={18} aria-hidden="true" />
+              Link another property
+            </Button>
+          </>
+        ) : (
+          <div className={`${styles.panel} ${styles.empty}`}>
+            <House size={36} aria-hidden="true" />
+            <h2>No linked property yet</h2>
+            <p>
+              Request a link to your lot. The office must verify it before
+              property records become available.
+            </p>
+            <Button onClick={() => setClaim(true)}>Request a lot link</Button>
+          </div>
+        ))}
+      {claim && <ClaimDialog onClose={() => setClaim(false)} />}
+    </>
+  );
+}
+
 function LotList({
   root,
   office,
@@ -346,6 +447,19 @@ function LotList({
     </>
   );
 }
+export function LotLinkButton({ another = false }: { another?: boolean }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button secondary onClick={() => setOpen(true)}>
+        <Plus size={18} aria-hidden="true" />
+        {another ? "Link another property" : "Request a lot link"}
+      </Button>
+      {open && <ClaimDialog onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
 function ClaimDialog({ onClose }: { onClose: () => void }) {
   const action = useRegistryAction();
   const [done, setDone] = useState(false);
@@ -466,7 +580,7 @@ function LotProfile({ id, root }: { id: string; root: string }) {
     );
   return (
     <article className={styles.profile}>
-      <Link to={root} className="text-link">
+      <Link to={root} className="text-link" data-page-back>
         ← Back to {root.startsWith("/office") ? "lot register" : "your lots"}
       </Link>
       <PageIntro

@@ -1,14 +1,9 @@
 import { useId, useState, type ReactNode } from "react";
 import { ArrowDown, BusFront } from "lucide-react";
 import styles from "./Shuttle.module.css";
+import { shuttleStopLocations } from "./shuttle-stop-data";
 
-// Owner-supplied numbered stop labels. No coordinates, fares or times inferred.
-export const shuttleStops = Array.from({ length: 12 }, (_, index) => {
-  const number = index + 1;
-  const suffix =
-    number === 1 ? "st" : number === 2 ? "nd" : number === 3 ? "rd" : "th";
-  return `${number}${suffix} stop`;
-});
+export const shuttleStops = shuttleStopLocations.map((stop) => stop.label);
 
 export default function ShuttleStops({
   pickup,

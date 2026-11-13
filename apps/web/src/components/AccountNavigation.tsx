@@ -14,7 +14,10 @@ import {
   Store,
   type LucideIcon,
 } from "lucide-react";
-import { memberWorkspaces } from "../../../../packages/shared/src/auth";
+import {
+  memberRoles,
+  memberWorkspaces,
+} from "../../../../packages/shared/src/auth";
 import { useAuth } from "../data/auth";
 import { usePermissions } from "../data/permissions";
 
@@ -114,7 +117,7 @@ export const areaNavigation: Record<
     ],
   },
   board: {
-    title: "Board",
+    title: "Board of Directors",
     links: [
       { to: "/board", label: "Overview", icon: House },
       {
@@ -159,11 +162,22 @@ export const areaNavigation: Record<
 export function useAccountNavigation() {
   const auth = useAuth();
   const permissions = usePermissions();
+  const householdRole = auth.member
+    ? memberRoles(auth.member).find(
+        (role) => role === "homeowner" || role === "renter",
+      )
+    : undefined;
   return auth.member
     ? memberWorkspaces(auth.member)
         .map((area) => ({
           id: area.id,
           ...areaNavigation[area.id],
+          title:
+            area.id === "resident"
+              ? householdRole === "renter"
+                ? "Renter"
+                : "Homeowner"
+              : areaNavigation[area.id].title,
           links: areaNavigation[area.id].links.filter((link) =>
             permissions.allowsPath(link.to),
           ),

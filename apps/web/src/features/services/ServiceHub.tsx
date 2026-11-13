@@ -1,14 +1,5 @@
 import { useState } from "react";
-import {
-  CalendarDays,
-  CarFront,
-  ClipboardCheck,
-  FileText,
-  MessageSquare,
-  Search,
-  ShieldCheck,
-  Wrench,
-} from "lucide-react";
+import { CalendarDays, FileText, Search, Wrench } from "lucide-react";
 import {
   DestinationGrid,
   DetailDisclosure,
@@ -25,54 +16,33 @@ import {
   Button,
 } from "../../components/UI";
 import { usePortal } from "../../data/usePortal";
+import { useAuth } from "../../data/auth";
+import { usePermissions } from "../../data/permissions";
+import { canOpenPath } from "../../../../../packages/shared/src/auth";
 import styles from "./ServiceHub.module.css";
+import { serviceGroups } from "./service-destinations";
 
-const actions: Destination[] = [
-  {
-    to: "/services/requests",
-    title: "Helpdesk",
-    detail: "Issues, complaints, concerns & ideas",
-    icon: Wrench,
-  },
-  {
-    to: "/services/bookings",
-    title: "Book an amenity",
-    detail: "Swimming pool, court & function hall",
-    icon: CalendarDays,
-  },
-  {
-    to: "/services/visitors?new=visitor",
-    title: "Invite a visitor",
-    detail: "Prepare a visitor request",
-    icon: ShieldCheck,
-  },
-  {
-    to: "/more/vehicles",
-    title: "Vehicles & stickers",
-    detail: "Registration requests",
-    icon: CarFront,
-  },
-  {
-    to: "/more/permits",
-    title: "Request a permit",
-    detail: "Work & clearances",
-    icon: ClipboardCheck,
-  },
-  {
-    to: "/services/inbox",
-    title: "Message the office",
-    detail: "Local conversations",
-    icon: MessageSquare,
-  },
-];
+const allServices = serviceGroups.flatMap((group) => group.items);
 export default function ServiceHub() {
   const [search, setSearch] = useState("");
+  const auth = useAuth();
+  const permissions = usePermissions();
+  const allowed = (item: Destination) =>
+    auth.preview ||
+    (!!auth.member &&
+      canOpenPath(auth.member, item.to) &&
+      permissions.allowsPath(item.to));
+  const visibleGroups = serviceGroups
+    .map((group) => ({ ...group, items: group.items.filter(allowed) }))
+    .filter((group) => group.items.length);
   const portal = usePortal();
-  const matches = actions.filter((item) =>
-    `${item.title} ${item.detail} ${item.to.includes("visitors") ? "gate pass guest delivery" : ""}`
-      .toLowerCase()
-      .includes(search.toLowerCase()),
-  );
+  const matches = allServices
+    .filter(allowed)
+    .filter((item) =>
+      `${item.title} ${item.detail} ${item.to.includes("visitors") ? "gate pass guest delivery" : ""}`
+        .toLowerCase()
+        .includes(search.toLowerCase()),
+    );
   const active = portal.data?.records.filter(
     (item) =>
       item.kind === "request" &&
@@ -91,52 +61,66 @@ export default function ServiceHub() {
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
-      <section
-        className={`${styles.section} ${styles.primary}`}
-        aria-labelledby="service-action-heading"
-      >
-        <h2 id="service-action-heading">Choose a service</h2>
-        <DestinationGrid items={matches} />
-        {!matches.length && (
-          <Empty
-            title="No matching service"
-            action={
-              search ? (
+      {search ? (
+        <section
+          className={`${styles.section} ${styles.primary}`}
+          aria-labelledby="service-action-heading"
+        >
+          <h2 id="service-action-heading">Matching services</h2>
+          {matches.length ? (
+            <DestinationGrid variant="rows" items={matches} />
+          ) : (
+            <Empty
+              title="No matching service"
+              action={
                 <Button secondary onClick={() => setSearch("")}>
                   Show all services
                 </Button>
-              ) : undefined
-            }
+              }
+            >
+              Try “visitor”, “permit”, “vehicle” or “concern”.
+            </Empty>
+          )}
+        </section>
+      ) : (
+        visibleGroups.map((group) => (
+          <section
+            key={group.title}
+            className={styles.section}
+            aria-label={group.title}
           >
-            Try “visitor”, “permit”, “vehicle” or “concern”.
-          </Empty>
-        )}
-      </section>
-      <section
-        className={`${styles.section} ${styles.planning}`}
-        aria-labelledby="service-tracking-heading"
-      >
-        <h2 id="service-tracking-heading">Track & plan</h2>
-        <DestinationGrid
-          compact
-          items={[
-            {
-              to: "/services/requests",
-              title: "My requests",
-              detail: "Follow your local updates",
-              icon: FileText,
-              badge:
-                active === undefined ? undefined : `${active} sample active`,
-            },
-            {
-              to: "/services/calendar",
-              title: "Community calendar",
-              detail: "Dates & sample requests",
-              icon: CalendarDays,
-            },
-          ]}
-        />
-      </section>
+            <h2>{group.title}</h2>
+            <DestinationGrid variant="rows" items={group.items} />
+          </section>
+        ))
+      )}
+      {!search && (
+        <section
+          className={`${styles.section} ${styles.planning}`}
+          aria-label="Track & plan"
+        >
+          <h2>Track &amp; plan</h2>
+          <DestinationGrid
+            variant="rows"
+            items={[
+              {
+                to: "/services/requests",
+                title: "My requests",
+                detail: "Follow your local updates",
+                icon: FileText,
+                badge:
+                  active === undefined ? undefined : `${active} sample active`,
+              },
+              {
+                to: "/services/calendar",
+                title: "Community calendar",
+                detail: "Dates & sample requests",
+                icon: CalendarDays,
+              },
+            ]}
+          />
+        </section>
+      )}
       <section className={`${styles.section} ${styles.latest}`}>
         <SectionTitle
           title="Your latest activity"

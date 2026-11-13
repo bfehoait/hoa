@@ -192,3 +192,7 @@
     flex-wrap: wrap;
   }
 }
+.unavailable {
+  color: var(--muted);
+  font-size: 14px;
+}

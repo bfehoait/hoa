@@ -12,7 +12,7 @@ Deno.serve(async (request: Request) => {
   // An environment override replaces these exact defaults for other sites.
   const allowed = (
     Deno.env.get("BFE_ACCOUNT_ALLOWED_ORIGINS") ??
-    "http://127.0.0.1:5173,http://localhost:5173,https://behoademo.hoa-system.com"
+    "http://127.0.0.1:5173,http://localhost:5173,https://behoademo.hoa-system.com,https://bfehoa.vercel.app"
   )
     .split(",")
     .map((value) => value.trim())
@@ -56,6 +56,30 @@ Deno.serve(async (request: Request) => {
     if (identityError || !identity.user || identity.user.is_anonymous)
       return reply(401, {
         message: "Sign in again before creating an account.",
+      });
+    // Service-role account operations must first validate the caller's portal
+    // session using their JWT. getUser alone does not enforce our role timeouts.
+    const browserKey = Deno.env.get("SUPABASE_ANON_KEY");
+    if (!browserKey)
+      return reply(503, {
+        message: "Account service is temporarily unavailable.",
+      });
+    const caller = createClient(url, browserKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
+    const policy = await caller.rpc("bfe_session_status", { p_touch: false });
+    if (policy.error?.code === "PT401")
+      return reply(401, {
+        message: "Your session expired. Please sign in again.",
+      });
+    if (policy.error)
+      return reply(503, {
+        message: "We could not verify your session. Please retry.",
+      });
+    if (policy.data?.valid !== true)
+      return reply(401, {
+        message: "Your session expired. Please sign in again.",
       });
     if (Number(request.headers.get("Content-Length")) > 8192)
       return reply(413, { message: "Account details are too long." });

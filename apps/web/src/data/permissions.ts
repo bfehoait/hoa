@@ -107,7 +107,7 @@ export function usePermissions() {
       if (error)
         throw new Error(
           ["42883", "PGRST202"].includes(error.code)
-            ? "Access permissions have not been installed. Ask the system owner to complete setup."
+            ? "Your account access is currently unavailable. Please contact the HOA office for help."
             : "Your access could not be verified. Refresh or contact the office.",
         );
       return effectiveAccessSchema.parse(data);

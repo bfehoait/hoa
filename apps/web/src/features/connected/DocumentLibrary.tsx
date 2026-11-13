@@ -6,10 +6,10 @@ import { featureRpc } from "../../data/feature-records";
 import {
   Button,
   Feedback,
-  Modal,
   PageIntro,
   Skeleton,
 } from "../../components/UI";
+import Sheet from "../../components/Sheet";
 import DocumentAttachment from "./DocumentAttachment";
 import styles from "./LiveFeature.module.css";
 const schema = z.object({
@@ -143,14 +143,14 @@ export default function DocumentLibrary() {
         </>
       )}
       {current && (
-        <Modal
+        <Sheet
           title={current.title}
           onClose={() => setSelected(null)}
           presentation="task"
         >
           <p>{current.summary}</p>
           <DocumentAttachment record={current.id} />
-        </Modal>
+        </Sheet>
       )}
     </>
   );

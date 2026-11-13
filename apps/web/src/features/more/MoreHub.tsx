@@ -1,27 +1,24 @@
 import { useAuth } from "../../data/auth";
+import { useState } from "react";
+import { useLinkedPropertyAddress } from "../../data/linked-properties";
+import { Link } from "../../components/AccessLink";
 import { usePermissions } from "../../data/permissions";
 import { canOpenPath } from "../../../../../packages/shared/src/auth";
 import { useAccountNavigation } from "../../components/AccountNavigation";
 
 import {
-  CalendarDays,
-  Building2,
-  CarFront,
   CircleHelp,
   ClipboardCheck,
-  GraduationCap,
   LayoutDashboard,
   LayoutGrid,
   LogOut,
-  MessageSquare,
   Settings2,
-  ShoppingBag,
   UserRound,
-  Users,
-  Vote,
   Bell,
-  Flag,
-  Wrench,
+  Moon,
+  ChevronRight,
+  Search,
+  FileText,
 } from "lucide-react";
 import {
   DestinationGrid,
@@ -32,84 +29,6 @@ import { ButtonLink, Empty, PageIntro } from "../../components/UI";
 import styles from "./MoreHub.module.css";
 
 const groups: { title: string; category: string; items: Destination[] }[] = [
-  {
-    title: "Your home",
-    category: "Home",
-    items: [
-      {
-        to: "/more/lots",
-        title: "Your lots",
-        detail: "Verified property links and receipts",
-        icon: Building2,
-      },
-      {
-        to: "/services/calendar",
-        title: "Calendar",
-        detail: "Dates & local requests",
-        icon: CalendarDays,
-      },
-    ],
-  },
-  {
-    title: "Raise it with the office",
-    category: "Raise",
-    items: [
-      {
-        to: "/services/requests?new=Complaint",
-        title: "File a complaint",
-        detail: "A private matter involving a neighbour",
-        icon: Flag,
-      },
-      {
-        to: "/services/requests?new=Concern",
-        title: "Raise a concern",
-        detail: "For the office, board or officers to review",
-        icon: MessageSquare,
-      },
-      {
-        to: "/services/requests?new=Maintenance",
-        title: "Report an issue",
-        detail: "Damage or maintenance in the community",
-        icon: Wrench,
-      },
-    ],
-  },
-  {
-    title: "Around the community",
-    category: "Community",
-    items: [
-      {
-        to: "/directory/market",
-        title: "Livelihood",
-        detail: "Businesses, jobs & nearby finds",
-        icon: ShoppingBag,
-      },
-      {
-        to: "/directory/learning",
-        title: "Training & workshops",
-        detail: "Browse upcoming sessions",
-        icon: GraduationCap,
-      },
-      {
-        to: "/more/transport",
-        title: "Shuttle",
-        detail: "Authorized vehicles & today’s requests",
-        icon: CarFront,
-      },
-      {
-        to: "/more/elections",
-        title: "Community elections",
-        detail: "Readiness & information",
-        icon: Vote,
-      },
-      {
-        to: "/directory/transport",
-        title: "Carpooling",
-        detail: "Share a ride with neighbours",
-        icon: Users,
-      },
-    ],
-  },
   {
     title: "Your account & support",
     category: "Account",
@@ -175,6 +94,10 @@ const tools: Destination[] = [
 ];
 export default function MoreHub() {
   const auth = useAuth();
+  const links = useLinkedPropertyAddress();
+  const [dark, setDark] = useState(
+    () => document.documentElement.dataset.theme === "dark",
+  );
   const permissions = usePermissions();
   const accessGroups = useAccountNavigation().filter(
     (area) => area.id !== "resident",
@@ -199,9 +122,105 @@ export default function MoreHub() {
   const matches = tools.filter(
     (item) => (auth.preview || !!auth.rolePreview) && allowed(item),
   );
+  const serviceGroups = visible.map((group) => (
+    <section
+      key={group.category}
+      className={`${styles.group} ${group.category === "Account" ? styles.accountExtras : ""}`}
+    >
+      <h2>{group.title}</h2>
+      <DestinationGrid items={group.items} variant="rows" />
+    </section>
+  ));
   return (
     <>
       <PageIntro title="More" />
+      {auth.member && (
+        <Link to="/more/profile" className={styles.memberCard}>
+          <span className={styles.memberAvatar} aria-hidden="true">
+            {Array.from(auth.member.name?.trim() || "")[0]?.toUpperCase() ||
+              "A"}
+          </span>
+          <span>
+            <strong>{auth.member.name || "Member"}</strong>
+            <span>{links.address}</span>
+          </span>
+          <ChevronRight size={20} aria-hidden="true" />
+        </Link>
+      )}
+      <section
+        className={styles.mobileAccount}
+        aria-label="Account preferences"
+      >
+        <h2>Account</h2>
+        <div className={styles.preferenceRows}>
+          <Link to="/more/profile">
+            <UserRound size={20} aria-hidden="true" />
+            <span>Profile details</span>
+            <ChevronRight size={18} aria-hidden="true" />
+          </Link>
+          <Link to="/more/notifications">
+            <Bell size={20} aria-hidden="true" />
+            <span>Notifications</span>
+            <ChevronRight size={18} aria-hidden="true" />
+          </Link>
+          <label>
+            <Moon size={20} aria-hidden="true" />
+            <span>
+              Dark appearance<small>Easier on the eyes at night</small>
+            </span>
+            <input
+              type="checkbox"
+              role="switch"
+              aria-label="Dark appearance"
+              checked={dark}
+              onChange={(event) => {
+                const next = event.target.checked;
+                setDark(next);
+                document.documentElement.dataset.theme = next
+                  ? "dark"
+                  : "light";
+                window.dispatchEvent(new Event("bellefort-theme-change"));
+                try {
+                  localStorage.setItem(
+                    "bellefort-theme",
+                    next ? "dark" : "light",
+                  );
+                } catch {
+                  /* Per-device preference can work without storage. */
+                }
+              }}
+            />
+          </label>
+          <Link to="/more/settings">
+            <Settings2 size={20} aria-hidden="true" />
+            <span>Settings</span>
+            <ChevronRight size={18} aria-hidden="true" />
+          </Link>
+          <Link to="/search">
+            <Search size={20} aria-hidden="true" />
+            <span>Search features</span>
+            <ChevronRight size={18} aria-hidden="true" />
+          </Link>
+        </div>
+      </section>
+      <section
+        className={styles.mobileAccount}
+        aria-label="Community information"
+      >
+        <h2>Community</h2>
+        <div className={styles.preferenceRows}>
+          <Link to="/more/documents">
+            <FileText size={20} aria-hidden="true" />
+            <span>Community documents</span>
+            <ChevronRight size={18} aria-hidden="true" />
+          </Link>
+          <Link to="/more/help">
+            <CircleHelp size={20} aria-hidden="true" />
+            <span>Help &amp; support</span>
+            <ChevronRight size={18} aria-hidden="true" />
+          </Link>
+        </div>
+      </section>
       {accessGroups.map((area) => {
         const items = area.links.map((link) => ({
           to: link.to,
@@ -214,12 +233,7 @@ export default function MoreHub() {
           </DetailDisclosure>
         ) : null;
       })}
-      {visible.map((group) => (
-        <section key={group.category} className={styles.group}>
-          <h2>{group.title}</h2>
-          <DestinationGrid items={group.items} variant="rows" />
-        </section>
-      ))}
+      <div className={styles.desktopServices}>{serviceGroups}</div>
       {!visible.length &&
         !matches.length &&
         !accessGroups.some((area) => area.links.length) && (

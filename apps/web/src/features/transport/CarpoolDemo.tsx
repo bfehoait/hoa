@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState } from "react";
 import { ArrowDownUp, CarFront, Clock3, MapPin, Users } from "lucide-react";
-import { Button, Feedback, Modal, PageIntro } from "../../components/UI";
+import { Button, Feedback, PageIntro } from "../../components/UI";
+import Sheet from "../../components/Sheet";
 import styles from "./CarpoolDemo.module.css";
 
 const DemoMap = lazy(() => import("./CarpoolDemoMap"));
@@ -239,7 +240,7 @@ export default function CarpoolDemo() {
         </section>
       </div>
       {selected !== null && (
-        <Modal
+        <Sheet
           title="Sample ride details"
           presentation="task"
           onClose={() => setSelected(null)}
@@ -284,7 +285,7 @@ export default function CarpoolDemo() {
               No payment, live tracking or actual reservation.
             </p>
           </div>
-        </Modal>
+        </Sheet>
       )}
     </div>
   );

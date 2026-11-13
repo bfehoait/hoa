@@ -64,3 +64,13 @@
     grid-column: 2;
   }
 }
+
+/* Resident phone spacing: section rhythm without reducing touch targets. */
+@media (max-width: 767px) {
+  :global([data-customer-ui="true"]) .section {
+    margin-block: var(--resident-section-gap);
+  }
+  :global([data-customer-ui="true"]) .section > h2 {
+    margin-bottom: 8px;
+  }
+}

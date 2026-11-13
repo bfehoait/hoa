@@ -7,6 +7,7 @@ import {
 } from "../../../../../packages/shared/src/baseline";
 import {
   liveFieldLabel,
+  featureRecordSchema,
   type FeatureRecord,
 } from "../../../../../packages/shared/src/feature-records";
 import {
@@ -18,10 +19,10 @@ import {
   Button,
   Empty,
   Feedback,
-  Modal,
   PageIntro,
   Skeleton,
 } from "../../components/UI";
+import Sheet from "../../components/Sheet";
 import styles from "./LiveFeature.module.css";
 import WorkflowHistory from "./WorkflowHistory";
 import GarageSaleItems from "./GarageSaleItems";
@@ -33,6 +34,13 @@ import { useAuth } from "../../data/auth";
 import DocumentAttachment from "./DocumentAttachment";
 import RequestIssuance from "./RequestIssuance";
 import HouseholdApplication from "./HouseholdApplication";
+import {
+  useNotificationTarget,
+  useReadOpenedNotification,
+} from "../../data/notification-target";
+import NotificationTargetFeedback from "../../components/NotificationTargetFeedback";
+import AudiencePicker from "../../components/AudiencePicker";
+import { publicationAudiencesSchema } from "../../../../../packages/shared/src/publication-audiences";
 
 const residentDescriptions: Record<string, string> = {
   publishing: "Updates and notices from your HOA.",
@@ -50,11 +58,13 @@ export default function LiveFeature({
   initialView = "mine",
   resident = false,
   pendingOnly = false,
+  embedded = false,
 }: {
   module: string;
   initialView?: string;
   resident?: boolean;
   pendingOnly?: boolean;
+  embedded?: boolean;
 }) {
   const definition = baselineModule(module);
   const isListing = listingModules.includes(module);
@@ -85,6 +95,7 @@ export default function LiveFeature({
     [review, setReview] = useState<FeatureRecord | null>(null),
     [notice, setNotice] = useState("");
   const [history, setHistory] = useState<string | null>(null);
+  const [audienceError, setAudienceError] = useState("");
   const [category, setCategory] = useState("");
   const [editing, setEditing] = useState<FeatureRecord | null>(null);
   const [submissionBusy, setSubmissionBusy] = useState(false);
@@ -101,9 +112,15 @@ export default function LiveFeature({
     mutation = useFeatureMutation();
   const [clientId, setClientId] = useState(() => crypto.randomUUID());
   const [opened, setOpened] = useState<string | null>(null);
-  const openedRecord = data.isSuccess
-    ? data.data.rows.find((row) => row.id === opened)
-    : undefined;
+  const target = useNotificationTarget("feature", featureRecordSchema, module);
+  const openedRecord = target.requested
+    ? target.isSuccess
+      ? target.data
+      : null
+    : data.isSuccess
+      ? data.data.rows.find((row) => row.id === opened)
+      : undefined;
+  useReadOpenedNotification(target.requested && !!openedRecord);
 
   const renderRecord = (r: FeatureRecord) => (
     <article className={styles.card} key={r.id}>
@@ -263,7 +280,7 @@ export default function LiveFeature({
                     },
                     {
                       onSuccess: () =>
-                        setNotice("Withdrawal confirmed by the server."),
+                        setNotice("Your submission was withdrawn."),
                     },
                   )
                 }
@@ -288,6 +305,7 @@ export default function LiveFeature({
                 secondary
                 onClick={() => {
                   mutation.reset();
+                  setAudienceError("");
                   setReview(r);
                 }}
               >
@@ -300,26 +318,28 @@ export default function LiveFeature({
   );
   return (
     <>
-      <PageIntro
-        eyebrow={
-          resident
-            ? undefined
-            : listingModules.includes(module)
-              ? "LIVELIHOOD"
-              : "COMMUNITY WORKFLOW"
-        }
-        title={
-          module === "publishing"
-            ? "Announcements"
-            : liveFieldLabel(definition.title)
-        }
-        description={
-          resident
-            ? (residentDescriptions[module] ??
-              "Community information and your submissions.")
-            : liveFieldLabel(definition.summary)
-        }
-      />
+      {!embedded && (
+        <PageIntro
+          eyebrow={
+            resident
+              ? undefined
+              : listingModules.includes(module)
+                ? "LIVELIHOOD"
+                : "COMMUNITY WORKFLOW"
+          }
+          title={
+            module === "publishing"
+              ? "Announcements"
+              : liveFieldLabel(definition.title)
+          }
+          description={
+            resident
+              ? (residentDescriptions[module] ??
+                "Community information and your submissions.")
+              : liveFieldLabel(definition.summary)
+          }
+        />
+      )}
       {auth.memberPreview && (
         <p className={styles.notice}>
           Read-only account preview. Sign in directly as this member to add or
@@ -336,22 +356,23 @@ export default function LiveFeature({
           </p>
         </details>
       )}
-      {["booth-events", "workshops", "carpools"].includes(module) && (
-        <Link
-          className="text-link"
-          to={
-            view === "review"
-              ? `/office/participation/${module}`
-              : module === "carpools"
-                ? "/explore/carpool-interests"
-                : `/directory/market?section=${module}&view=applications`
-          }
-        >
-          {view === "review"
-            ? "Review activity applications"
-            : "Apply or view my activity applications"}
-        </Link>
-      )}
+      {!embedded &&
+        ["booth-events", "workshops", "carpools"].includes(module) && (
+          <Link
+            className="text-link"
+            to={
+              view === "review"
+                ? `/office/participation/${module}`
+                : module === "carpools"
+                  ? "/explore/carpool-interests"
+                  : `/directory/market?section=${module}&view=applications`
+            }
+          >
+            {view === "review"
+              ? "Review activity applications"
+              : "Apply or view my activity applications"}
+          </Link>
+        )}
       <div className={styles.toolbar}>
         {resident && initialView === "published" && data.data?.can_create && (
           <div
@@ -442,18 +463,21 @@ export default function LiveFeature({
               </select>
             </label>
           )}
-        {!data.isError && data.data?.can_create && !auth.memberPreview && (
-          <Button
-            onClick={() => {
-              mutation.reset();
-              setEditing(null);
-              setRecordSaved(false);
-              setForm(true);
-            }}
-          >
-            {newLabel}
-          </Button>
-        )}
+        {!embedded &&
+          !data.isError &&
+          data.data?.can_create &&
+          !auth.memberPreview && (
+            <Button
+              onClick={() => {
+                mutation.reset();
+                setEditing(null);
+                setRecordSaved(false);
+                setForm(true);
+              }}
+            >
+              {newLabel}
+            </Button>
+          )}
       </div>
       {!data.isError &&
         data.data &&
@@ -605,8 +629,9 @@ export default function LiveFeature({
           </>
         )
       )}
-      {resident && openedRecord && (
-        <Modal
+      <NotificationTargetFeedback target={target} />
+      {(resident || target.requested) && openedRecord && (
+        <Sheet
           title={
             module === "publishing"
               ? "Announcement"
@@ -615,18 +640,21 @@ export default function LiveFeature({
                 : "Request details"
           }
           presentation="task"
-          onClose={() => setOpened(null)}
+          onClose={() => {
+            setOpened(null);
+            target.clear();
+          }}
         >
           {renderRecord(openedRecord)}
-        </Modal>
+        </Sheet>
       )}
       {history && (
-        <Modal title="Record history" onClose={() => setHistory(null)}>
+        <Sheet title="Record history" onClose={() => setHistory(null)}>
           <WorkflowHistory kind="feature" id={history} />
-        </Modal>
+        </Sheet>
       )}
       {form && data.data?.can_create && !auth.memberPreview && (
-        <Modal
+        <Sheet
           size="lg"
           presentation={resident ? "task" : "sheet"}
           protectChanges={resident && !recordSaved}
@@ -674,10 +702,10 @@ export default function LiveFeature({
               setNotice(message);
             }}
           />
-        </Modal>
+        </Sheet>
       )}
       {review && (
-        <Modal
+        <Sheet
           title="Review submission"
           busy={mutation.isPending}
           onClose={() => setReview(null)}
@@ -688,9 +716,23 @@ export default function LiveFeature({
               e.preventDefault();
               const f = new FormData(e.currentTarget);
               const expiry = String(f.get("expiry") ?? "");
+              const audiences = publicationAudiencesSchema.safeParse(
+                f.getAll("audience"),
+              );
+              if (f.get("status") === "Published" && !audiences.success) {
+                setAudienceError(
+                  audiences.error.issues[0]?.message ??
+                    "Select at least one audience.",
+                );
+                e.currentTarget
+                  .querySelector<HTMLInputElement>('input[name="audience"]')
+                  ?.focus();
+                return;
+              }
+              setAudienceError("");
               mutation.mutate(
                 {
-                  name: "bfe_review_feature",
+                  name: "bfe_review_feature_audiences",
                   args: {
                     p_id: review.id,
                     p_version: review.version,
@@ -698,14 +740,14 @@ export default function LiveFeature({
                     p_note: f.get("note"),
                     p_public_title: f.get("publicTitle"),
                     p_public_body: f.get("publicBody"),
-                    p_audience: f.get("audience"),
+                    p_audiences: audiences.success ? audiences.data : null,
                     p_expires: expiry ? manilaInstant(expiry) : null,
                   },
                 },
                 {
                   onSuccess: () => {
                     setReview(null);
-                    setNotice("Review confirmed by the server.");
+                    setNotice("Review saved.");
                   },
                 },
               );
@@ -793,21 +835,12 @@ export default function LiveFeature({
                       maxLength={5000}
                     />
                   </label>
-                  <label>
-                    Audience
-                    <select name="audience">
-                      {[
-                        "members",
-                        "homeowner",
-                        "renter",
-                        "board",
-                        "security",
-                        "driver",
-                      ].map((a) => (
-                        <option key={a}>{a}</option>
-                      ))}
-                    </select>
-                  </label>
+                  <AudiencePicker
+                    key={review.id}
+                    error={audienceError}
+                    disabled={mutation.isPending}
+                    onChange={() => setAudienceError("")}
+                  />
                   <label>
                     Publication expires
                     <input name="expiry" type="datetime-local" />
@@ -819,7 +852,7 @@ export default function LiveFeature({
               Save review
             </Button>
           </form>
-        </Modal>
+        </Sheet>
       )}
     </>
   );

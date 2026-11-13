@@ -1,13 +1,24 @@
 import { useEffect, useRef, useState } from "react";
 import { Pause, Play, ChevronRight } from "lucide-react";
 import { Link } from "../../components/AccessLink";
-import { Button, Feedback, Modal, Skeleton } from "../../components/UI";
+import { Button, Feedback, Skeleton } from "../../components/UI";
+import Sheet from "../../components/Sheet";
 import { useFeatureRecords } from "../../data/feature-records";
 import styles from "./ResidentHome.module.css";
 import ListingMedia from "../connected/ListingMedia";
 
 export default function CommunityHighlights() {
+  const [mobile, setMobile] = useState(
+    () => window.matchMedia("(max-width: 767px)").matches,
+  );
+  useEffect(() => {
+    const preference = window.matchMedia("(max-width: 767px)");
+    const update = () => setMobile(preference.matches);
+    preference.addEventListener("change", update);
+    return () => preference.removeEventListener("change", update);
+  }, []);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const slidesRef = useRef<HTMLDivElement>(null);
   const suppressClickUntil = useRef(0);
   const [paused, setPaused] = useState(false);
   const [interacting, setInteracting] = useState(false);
@@ -39,17 +50,42 @@ export default function CommunityHighlights() {
     )
       return;
     const timer = window.setInterval(() => {
-      if (document.visibilityState === "visible")
-        setIndex((value) => (value + 1) % rowCount);
+      if (document.visibilityState !== "visible") return;
+      if (mobile) {
+        const slides = slidesRef.current;
+        if (!slides) return;
+        const cards = Array.from(slides.children) as HTMLElement[];
+        const origin = cards[0]?.offsetLeft ?? 0;
+        const atEnd =
+          slides.scrollLeft >= slides.scrollWidth - slides.clientWidth - 4;
+        const next = cards.find(
+          (card) => card.offsetLeft - origin > slides.scrollLeft + 4,
+        );
+        slides.scrollTo({
+          left: atEnd ? 0 : (next?.offsetLeft ?? origin) - origin,
+          behavior: "smooth",
+        });
+      } else setIndex((value) => (value + 1) % rowCount);
     }, 5000);
     return () => window.clearInterval(timer);
-  }, [rowCount, paused, interacting, focused, opened, reducedMotion, index]);
+  }, [
+    rowCount,
+    paused,
+    interacting,
+    focused,
+    opened,
+    reducedMotion,
+    index,
+    mobile,
+  ]);
   return (
     <section
       className={styles.notices}
       aria-labelledby="community-notices"
-      onMouseEnter={() => setInteracting(true)}
-      onMouseLeave={() => setInteracting(false)}
+      onPointerEnter={(event) => {
+        if (event.pointerType === "mouse") setInteracting(true);
+      }}
+      onPointerLeave={() => setInteracting(false)}
       onFocusCapture={() => setFocused(true)}
       onBlurCapture={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget))
@@ -73,16 +109,44 @@ export default function CommunityHighlights() {
         </>
       ) : current ? (
         <>
-          <div className={styles.carouselSlides}>
+          <div
+            ref={slidesRef}
+            className={styles.carouselSlides}
+            role="region"
+            aria-label="Published announcements"
+            tabIndex={mobile ? 0 : undefined}
+            onScroll={(event) => {
+              if (!mobile) return;
+              const slides = event.currentTarget;
+              const cards = Array.from(slides.children) as HTMLElement[];
+              const origin = cards[0]?.offsetLeft ?? 0;
+              const maxScroll = slides.scrollWidth - slides.clientWidth;
+              let closest = 0;
+              let distance = Infinity;
+              cards.forEach((card, i) => {
+                const target = Math.min(card.offsetLeft - origin, maxScroll);
+                const delta = Math.abs(slides.scrollLeft - target);
+                if (delta < distance) {
+                  distance = delta;
+                  closest = i;
+                }
+              });
+              setIndex(closest);
+            }}
+          >
             {rows.map((notice, slideIndex) => (
               <article
                 key={notice.id}
                 data-active={slideIndex === currentIndex}
-                aria-hidden={slideIndex !== currentIndex}
-                inert={slideIndex !== currentIndex}
+                aria-hidden={!mobile && slideIndex !== currentIndex}
+                inert={!mobile && slideIndex !== currentIndex}
                 className={styles.announcement}
                 aria-label="Featured HOA announcement"
                 onPointerDown={(event) => {
+                  if (mobile) {
+                    setInteracting(true);
+                    return;
+                  }
                   if (event.pointerType === "touch") setInteracting(true);
                   touchStart.current =
                     event.pointerType === "touch"
@@ -94,6 +158,10 @@ export default function CommunityHighlights() {
                   setInteracting(false);
                 }}
                 onPointerUp={(event) => {
+                  if (mobile) {
+                    setInteracting(false);
+                    return;
+                  }
                   const start = touchStart.current;
                   touchStart.current = null;
                   setInteracting(false);
@@ -116,6 +184,11 @@ export default function CommunityHighlights() {
                     announcement
                     coverOnly
                     preload
+                    active={
+                      mobile ||
+                      slideIndex === currentIndex ||
+                      slideIndex === (currentIndex + 1) % rowCount
+                    }
                     alt={"Image for " + notice.title}
                   />
                 </div>
@@ -135,6 +208,7 @@ export default function CommunityHighlights() {
                       <ChevronRight size={18} aria-hidden="true" />
                     </button>
                   </h3>
+                  <p className={styles.announcementPreview}>{notice.detail}</p>
                 </div>
               </article>
             ))}
@@ -154,7 +228,23 @@ export default function CommunityHighlights() {
                       "Show announcement " + (i + 1) + ": " + notice.title
                     }
                     aria-pressed={i === currentIndex}
-                    onClick={() => setIndex(i)}
+                    onClick={() => {
+                      if (!mobile) {
+                        setIndex(i);
+                        return;
+                      }
+                      const slides = slidesRef.current;
+                      if (!slides) return;
+                      const cards = Array.from(
+                        slides.children,
+                      ) as HTMLElement[];
+                      slides.scrollTo({
+                        left:
+                          (cards[i]?.offsetLeft ?? 0) -
+                          (cards[0]?.offsetLeft ?? 0),
+                        behavior: reducedMotion ? "instant" : "smooth",
+                      });
+                    }}
                   >
                     <span />
                   </button>
@@ -189,11 +279,7 @@ export default function CommunityHighlights() {
         </div>
       )}
       {selected && (
-        <Modal
-          title={selected.title}
-          onClose={() => setOpened(null)}
-          presentation="task"
-        >
+        <Sheet title={selected.title} onClose={() => setOpened(null)}>
           <time
             className={styles.announcementMeta}
             dateTime={selected.created_at}
@@ -211,7 +297,7 @@ export default function CommunityHighlights() {
             alt={"Image for " + selected.title}
           />
           <p className={styles.fullNotice}>{selected.detail}</p>
-        </Modal>
+        </Sheet>
       )}
     </section>
   );

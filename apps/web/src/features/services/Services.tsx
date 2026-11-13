@@ -29,10 +29,10 @@ import {
   Feedback,
   Field,
   formValues,
-  Modal,
   PageIntro,
   Skeleton,
 } from "../../components/UI";
+import Sheet from "../../components/Sheet";
 import styles from "./Services.module.css";
 import ServiceHub from "./ServiceHub";
 import { BackLink, NavigationGroup } from "../../components/Navigation";
@@ -42,6 +42,7 @@ import { useAuth } from "../../data/auth";
 import OperationsDesk from "../connected/OperationsDesk";
 import BookingsCalendar from "../connected/BookingsCalendar";
 import AmenityGuidelines from "../connected/AmenityGuidelines";
+import ParticipationDesk from "../connected/ParticipationDesk";
 
 type Kind = "request" | "booking" | "visitor";
 const amenities = [
@@ -95,6 +96,20 @@ function PoolIcon({ size = 24 }: { size?: number }) {
 export default function Services() {
   const location = useLocation();
   const auth = useAuth();
+  const [params] = useSearchParams();
+  if (location.pathname === "/services/participation") {
+    const module = params.get("module");
+    return (
+      <ParticipationDesk
+        key={module}
+        module={
+          module === "booth-events" || module === "carpools"
+            ? module
+            : "workshops"
+        }
+      />
+    );
+  }
   if (location.pathname === "/services/requests") return <RequestDesk />;
   if (
     !auth.preview &&
@@ -167,7 +182,7 @@ function ServicesPage() {
     );
   return (
     <>
-      <div style={{ marginBottom: 20 }}>
+      <div data-page-back style={{ marginBottom: 20 }}>
         <BackLink to="/services">All services</BackLink>
       </div>
       <PageIntro
@@ -328,7 +343,7 @@ function ServicesPage() {
         />
       )}
       {detail && (
-        <Modal
+        <Sheet
           title={detail.title}
           description={`${detail.id} · sample record`}
           onClose={() => setDetail(null)}
@@ -381,7 +396,7 @@ function ServicesPage() {
                 </Button>
               )}
           </div>
-        </Modal>
+        </Sheet>
       )}
     </>
   );
@@ -454,7 +469,7 @@ function RecordForm({
     }
   }
   return (
-    <Modal
+    <Sheet
       title={
         result
           ? "Saved in your preview."
@@ -599,6 +614,6 @@ function RecordForm({
           </div>
         </form>
       )}
-    </Modal>
+    </Sheet>
   );
 }

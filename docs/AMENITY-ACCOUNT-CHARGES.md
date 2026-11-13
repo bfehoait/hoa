@@ -10,7 +10,7 @@ Apply **068** after 067 to replace the connected legacy choice. It deactivates a
 
 ## Fees and Total balance
 
-Implemented the conservative workflow presented in the clarification: **approved booking → Office quote → Finance draft → submit → independent posting**. Pending requests are not debts. The user has not yet confirmed the offered timing/name alternatives; this implementation does not assume permission to auto-charge unapproved requests. If a different business rule is intended, obtain the owner's instruction before changing posting eligibility.
+Implemented the workflow presented in the clarification: **approved booking → Office quote → Finance draft → submit → independent posting**. Pending requests are not debts. The owner subsequently confirmed that fees belong in Other after Office approves the booking and confirms the fee, and that Clubhouse should be replaced by the pool while Function Hall stays separate. Existing independent Finance posting remains the confirmation step; unapproved requests are not automatically charged.
 
 The booking detail shows an Office-confirmed fee or a pending-confirmation message. Authorized staff can open Prepare booking charge, which links to Finance / Accounting with the booking reference prefilled. Choose New draft there, enter the reviewed quote and source reference, submit, then have a different authorized reviewer post it. Existing draft/version/audit/permission rules remain server-owned.
 

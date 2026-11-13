@@ -558,3 +558,11 @@ a.row:active {
     margin-bottom: 16px;
   }
 }
+
+/* Resident phone spacing: section rhythm without reducing touch targets. */
+@media (max-width: 767px) {
+  :global([data-customer-ui="true"]) .dialogBody {
+    --dialog-body-pad: 16px;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+}

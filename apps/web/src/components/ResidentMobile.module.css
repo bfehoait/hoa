@@ -1,0 +1,177 @@
+@media (max-width: 767px) {
+  .resident[data-customer-ui="true"] {
+    --resident-section-gap: 16px;
+    --resident-card-gap: 12px;
+    --card-padding: 12px;
+    background: var(--brand);
+  }
+  .resident main :global(.page-intro) {
+    margin-bottom: var(--resident-section-gap);
+  }
+  .resident[data-customer-ui="true"]:has([data-request-conversation])
+    > div
+    > header[data-resident-header] {
+    display: none;
+  }
+  .resident[data-customer-ui="true"]:has([data-request-conversation]),
+  .resident[data-customer-ui="true"]:has([data-request-conversation]) > div {
+    background: var(--bg);
+  }
+  .resident[data-customer-ui="true"]:has([data-request-conversation])
+    > div
+    > footer {
+    display: none;
+  }
+  .resident[data-customer-ui="true"]
+    main:global(#content):has([data-request-conversation]) {
+    padding: 0;
+    border-radius: 0;
+    min-height: 0;
+    background: var(--bg);
+  }
+  .resident[data-customer-ui="true"] > div > header[data-resident-header] {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    height: auto;
+    min-height: 76px;
+    gap: 8px;
+    padding: max(16px, env(safe-area-inset-top)) 16px 20px;
+    background: var(--brand);
+    color: var(--on-brand);
+    border: 0;
+  }
+  .resident [data-resident-header] > a:has(img) {
+    display: none;
+  }
+  .resident [data-resident-header] > form:not(:focus-within) {
+    display: none;
+  }
+  .resident[data-resident-path="/search"] [data-resident-header] > form {
+    display: flex;
+  }
+  .resident [data-resident-header] > div:has(> button) {
+    margin-left: auto;
+  }
+  .resident [data-resident-header] > div > button {
+    color: var(--on-brand);
+  }
+  .resident [data-resident-header] [data-customer-back] {
+    color: var(--on-brand);
+  }
+  .resident [data-resident-header] [data-customer-back] svg {
+    color: inherit;
+  }
+  .resident [data-resident-header] > div > button:has(svg) {
+    background: var(--on-brand-panel);
+    border-radius: 50%;
+    min-width: 48px;
+    min-height: 48px;
+  }
+  .resident[data-customer-ui="true"] main:global(#content) {
+    background: var(--bg);
+    color: var(--ink);
+    border-radius: 24px 24px 0 0;
+    padding: 20px 16px 32px;
+    min-height: calc(100svh - 150px);
+  }
+  .resident[data-customer-ui="true"] main h1,
+  .resident[data-customer-ui="true"] main h2,
+  .resident[data-customer-ui="true"] main h3 {
+    font-family: var(--body-font);
+  }
+  .resident[data-resident-path="/"] main:global(#content) {
+    border-radius: 0;
+  }
+  .resident[data-resident-path="/directory/market"]
+    main:global(#content):has([data-market-browse="true"]) {
+    border-radius: 0;
+  }
+  .resident:is(
+      [data-resident-path="/services"],
+      [data-resident-path="/services/bookings"],
+      [data-resident-path="/services/calendar"],
+      [data-resident-path="/services/visitors"],
+      [data-resident-path="/services/requests"],
+      [data-resident-path="/services/inbox"],
+      [data-resident-path="/more"],
+      [data-resident-path="/more/transport"]
+    )
+    main
+    :global(.page-intro):first-child {
+    display: none;
+  }
+  .resident[data-customer-ui="true"] nav[aria-label="Mobile navigation"] {
+    background: var(--surface);
+  }
+  .resident nav[aria-label="Mobile navigation"] > a {
+    min-height: 56px;
+    padding: 4px 2px;
+  }
+  .resident nav[aria-label="Mobile navigation"] > a[aria-current="page"] {
+    background: transparent;
+    box-shadow: none;
+    color: var(--accent);
+  }
+  .resident nav[aria-label="Mobile navigation"] > a > svg {
+    box-sizing: content-box;
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+  }
+  .resident nav[aria-label="Mobile navigation"] > a[aria-current="page"] > svg {
+    background: var(--accent-soft);
+  }
+  .resident nav[aria-label="Mobile navigation"] > a span {
+    font-size: 14px;
+  }
+  .resident :focus-visible {
+    outline-color: var(--accent);
+  }
+  .resident [data-resident-header] > div > button:focus-visible,
+  .resident [data-resident-header] > a:focus-visible,
+  .resident [data-resident-header] > button:focus-visible {
+    outline-color: var(--on-brand);
+  }
+}
+
+@media (max-width: 767px) {
+  .resident[data-resident-path="/more"]
+    [data-resident-header]
+    > div:first-child {
+    order: 0;
+    flex-basis: auto;
+    flex: 1;
+    padding: 0;
+  }
+}
+
+/* Detail pages share Back/bell on the first row and title beneath. */
+@media (max-width: 767px) {
+  .resident[data-customer-ui="true"] > div > header[data-resident-detail] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+  }
+  .resident [data-resident-detail] > [data-customer-back] {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+  }
+  .resident [data-resident-detail] > [data-header-actions] {
+    grid-column: 2;
+    grid-row: 1;
+    margin-left: 0;
+  }
+  .resident [data-resident-detail] > [data-mobile-page-title] {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    padding: 0;
+  }
+  .resident [data-resident-detail] > [data-mobile-page-title] h1 {
+    font-size: 30px;
+  }
+  .resident [data-resident-detail] > [data-mobile-page-title] p {
+    margin-top: 12px;
+  }
+}

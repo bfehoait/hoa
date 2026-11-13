@@ -373,3 +373,13 @@
     max-width: calc(100% - 80px);
   }
 }
+
+/* Resident phone spacing: section rhythm without reducing touch targets. */
+@media (max-width: 767px) {
+  :global([data-customer-ui="true"]) .demoNotice {
+    margin-bottom: var(--resident-section-gap);
+  }
+  :global([data-customer-ui="true"]) .tripPanel {
+    padding: 12px;
+  }
+}

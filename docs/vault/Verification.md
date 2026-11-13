@@ -923,3 +923,233 @@ Owner clarified that ESV refers to verse wording, not a visible card label or po
 See [Amenity choices and account charges](../AMENITY-ACCOUNT-CHARGES.md). Replaced preview Clubhouse choice with Swimming pool without duplicates; retained Function Hall separately. Prepared 068 to retire the connected legacy choice while preserving history and refusing unresolved future reservations. Prepared 069 for approved-booking charges and verified payments through existing independent Finance posting/reversal. Other includes own confirmed amenity charges; Total balance combines these with linked-property HOA, with unavailable water explicitly disclosed. Owner has not answered the offered timing/name alternatives; no unapproved booking is automatically charged and no PDF pricing ambiguity is guessed.
 
 TypeScript, edited-source formatting and git diff --check passed. Isolated synthetic SQL used real 054/064 Finance services, 065 HOA read and 068/069. Valid charge/payment/HOA sums, reversals, no automatic cancellation waiver, own-account isolation and pending/duplicate/self-review/resident/overpayment/duplicate-receipt refusals passed. Role helpers and preview dispatcher were stubbed. No automated suite, browser run, live connection, SQL application, deployment or publication. Owner must install 068/069, review facility/quote policy, publish and verify actual roles/mobile/preview/receipt behavior.
+
+### 12 November 2026 - confirmed registration and optional edits undone
+
+Owner confirmed a new Pending application with canonical unit 1-02-003 is visible in the live Registration Inbox. This confirms delivery for that submission, not completed approval or sign-in. Codex did not connect to the live database or run live SQL.
+
+At the owner's request, reverted optional submission dates, registration polling, phone validation text/native minimum, success-copy changes and richer account errors; removed the helper and diagnostic files and rolled back the added local duplicate probe. Frontend/shared files match their prior HEAD versions. Retained the exact Vercel-origin CORS fix, generated Edge editor artifact and matching setup instructions. The Supabase deployment performed by the owner is unaffected. TypeScript and git diff --check passed after the rollback; no browser run, automated suite, deployment or publication performed.
+
+### 13 November 2026 - performance first pass
+
+Owner authorized the first optimization scope after assessment. Public access now loads separately from protected navigation/dashboard/preview modules; existing shell/helper bodies were compared via TypeScript AST and preserved. Short presentation caches cover own profile, published feeds, resident Helpdesk lists and Home booking summaries, with existing mutation invalidation and polling retained. Carousel media reads/preloading are enabled only for current/next slides, reusing fresh signed URLs inside the original 60-second lifetime and retaining authorization on renewal. No financial/auth/membership/permission polling changes or persistent private cache.
+
+TypeScript, production builds, targeted ESLint, shell-body comparison, isolated synthetic query-observer checks and git diff --check passed. Before/after initial HTML JavaScript: about 826 KB to 652 KB (21% smaller raw); full sign-in dependency set about 874 KB to 666 KB (24% smaller raw). Initial CSS about 108 KB to 33 KB. Resident Home cold-load JavaScript is roughly unchanged and its gzip slightly larger, so no Home cold-load speedup is claimed. No browser timing, automated suite, E2E, axe sweep, live database connection, SQL, publication or deployment. Existing dependency annotation/large map-chunk warnings remain. See [Performance first pass](../PERFORMANCE-FIRST-PASS.md) for scope, tradeoffs, cache windows, measurement method and owner acceptance checks. Unrelated CORS changes preserved.
+
+
+### 13 November 2026 - workspaces, account presentation and notification links
+
+Implemented the owner's approved workspace-selection approach using existing assigned roles and effective permissions; no self-assignment or public Office/BOD registration. Added the resident switcher, prominent member name/card, customer-facing help/error cleanup and exclusion of legacy Clubhouse from new booking choices. Function Hall and historical booking names remain separate. Owner-confirmed fee timing/name choices supersede the earlier pending clarification note; financial posting rules are unchanged.
+
+Added source-reviewed, unexecuted migration 070 for historical/future notification routes and exact owned-record reads that reuse current authorized dashboards. Connected booking/pass/submission/application details and Helpdesk can open their notification subject; deleted/inaccessible subjects have clear fallbacks and are not automatically marked read. Profile/property/accounting updates open the corresponding section. No live schema, records, hosting or publication state changed.
+
+Frontend TypeScript, targeted ESLint and git diff --check passed. No automated test suite, E2E, axe, browser verification, SQL execution, live database connection, commit, push or deployment in this pass. Owner acceptance steps and migration order are in [Account workspaces and notification destinations](../ACCOUNT-WORKSPACES-NOTIFICATIONS.md).
+
+
+### 13 November 2026 - My account mobile charge-section cleanup
+
+Owner approved replacing empty charge dropdowns with conditional links and dedicated details screens. Removed Monthly HOA charges & payments applied and Other charges disclosures from the connected overview. Each View link appears only when its corresponding verified count is positive, including fully paid records. Directly opened empty details routes still show the existing empty state; retries, paging and permissions remain in the original charge components. Existing account wildcard routing and mobile Back handling cover the new paths.
+
+Frontend TypeScript, targeted ESLint, formatting and git diff --check passed. No automated suites, browser checks, SQL, live connection, commit, push or deployment in this pass. Owner browser checks remain: neither category present, HOA-only, amenities-only, both categories, fully paid history, details/back/direct-link behavior and loading/error recovery on mobile. Existing unrelated workspace changes were preserved.
+
+
+### 13 November 2026 - duplicate customer Back links
+
+Reviewed page-level return links across the customer modules. Added explicit header/body markers and a resident-shell responsive rule so the top Back is the single page return on mobile, including the supplied lot-details example. Existing .back-link pages are covered centrally; desktop/staff returns, public sign-in navigation, unavailable-record recovery and necessary Livelihood view controls remain. Improved direct-link fallback parents for nested lots and feature pages. No role, financial, lot-link or database changes.
+
+Targeted ESLint and formatting passed. Production build (including frontend TypeScript and CSS Modules compilation) and git diff --check are recorded after completion in the task response. No automated suite, browser/E2E/axe check, live connection, SQL execution or publication in this pass. Owner checks remain: one visible Back on mobile lot/profile/help/community/service pages, correct list return from a directly opened lot, landscape navigation, retained desktop returns, error recovery and Livelihood view controls.
+
+Completed checks: production build (tsc -b and Vite/CSS Modules/PWA generation), targeted ESLint, formatting and git diff --check passed. Compiled CSS contains the intended header-dependent selectors. Build still reports the existing Zod annotation and large map-chunk warnings. Mobile/device acceptance remains unverified.
+
+
+### 13 November 2026 - linked/unlinked account property UI
+
+Implemented the approved property-state cleanup: linked accounts show confirmed property cards without Find a lot; successfully checked unlinked accounts get Request a lot link. Loading uses a skeleton; failed verification uses a read error and in-place Try again, without offering an unlinked fallback. A current member address string alone never counts as a verified lot link. The list uses the same authorized own-link read as the account header, removing its redundant bfe_list_lots dependency, and polls every 30 seconds while mounted. Existing Office search, synthetic labels and protected claim approval remain.
+
+Source tracing confirmed that generic registry read failures previously reused a save-related Refresh to check the saved record message. Read error copy is corrected; this does not establish the underlying cause of the owner's earlier live failure. No live request/response, browser check, SQL or migration was executed in this pass. If failures persist after deployment, the failed request's error code/message is still needed to diagnose the server or connection problem.
+
+TypeScript, targeted ESLint, formatting and git diff --check passed before final review; final checks are reported in the task response. No automated suites, E2E or axe were run. Owner checks remain: linked/unlinked/loading/error states, current approved links after Office review, opening each property and requesting another, the in-place retry, and unchanged Office search. No deployment, commit or push performed.
+
+
+### 13 November 2026 - numeric balance display
+
+Replaced count-dependent No bills yet amounts on connected My account with the actual confirmed total and HOA amounts, including formatted zero. Source review checked that failed reads expose no cached amount through useAccountBalance, needs_review retains Under review, zero counts retain the no-posted-charges explanation, and water remains No data. Loading and unavailable copy do not imply that zero charges were confirmed. No financial record, monthly rate, posting/approval rule or SQL changed.
+
+Targeted ESLint, formatting and git diff --check passed; final frontend TypeScript outcome is reported in the task response. Browser acceptance remains with the owner for confirmed zero, positive charges, fully paid charges, loading, failed reads and reconciliation review. No automated suites, browser run, live connection, SQL, commit, push or deployment in this pass.
+
+
+### 13 November 2026 - Livelihood in one place
+
+Implemented the approved persistent Browse / My listings / My applications views under one Livelihood heading. Removed Back to Livelihood transitions and repeated embedded workflow headings. Preserved all six listing types, own listing management, existing photo/publication workflow and permission-controlled + creation across views. Applications are initiated from a published workshop/booth event detail; My applications retains submitted records, statuses, history and existing withdrawal actions. Empty application views explain where to apply, without an empty Open activities section. Unavailable activity/access and query failures offer clear feedback/retry. Member preview remains read-only Browse.
+
+Frontend TypeScript, targeted ESLint and git diff --check passed. Edited-source formatting passed. No automated suites, browser/E2E/axe checks, live database connection, SQL, deployment, commit or push. Owner browser acceptance remains: mobile tab selection/history, all six categories in Browse and My listings, + creation and cancellation in each view, existing listing edit/withdraw, booth/workshop application from event details, submitted status/history, empty/error/closed-activity states and read-only account preview. My account redesign remains on hold.
+
+
+### 13 November 2026 - Account design implementation
+
+Implemented the supplied mobile Account design with approved adjustments: No posted charges rather than Nothing due, one total, stacked dues rows, one accessible 48px copy control, accurate account-reference wording and the existing owner-supplied payment destination. Name/address/amounts wrap; existing tokens retain theme support. Source review confirms real amounts and review/loading/failure states are preserved. Buyani reference generation and destination are unchanged; provider acceptance remains unverified.
+
+Frontend TypeScript, targeted ESLint, formatting and git diff --check passed. Production build result is reported after completion. No browser verification, automated suites, E2E, axe, live connection, SQL, payment submission or deployment. Owner mobile checks: long names/addresses/amounts, zero/positive/loading/error/review balances, unavailable water, monthly-rate warning, copy success/failure, external handoff and Properties/Payments navigation in light/dark themes.
+
+
+### 13 November 2026 - Account bottom-section design
+
+Applied the owner-supplied Properties/Payments examples: compact linked-property card with icon, lot/address/verified relationship and chevron; plus Link another property; receipt rows with icon, number, lot/date and right-aligned amount. Kept 48px link-request controls and date inputs, wrapping long metadata, and narrow-width fallbacks. Removed inherited property-panel padding so the tab content aligns with other Account cards. Existing recorded-payments disclaimer and server read/access behavior remain.
+
+Frontend TypeScript, targeted ESLint, formatting and git diff --check results are recorded in the task response. No automated suites, browser/E2E/axe checks, live database connection, SQL, commit, push or deployment. Owner acceptance remains: phone widths 320/360/390px, multiple relationship/property records, long receipt references and amounts, date filters including invalid ranges, pagination, empty/error/retry states and opening a linked lot.
+
+
+### 13 November 2026 - Properties/Payments scroll position
+
+Traced the reported jump to the shell pathname scroll reset rather than a document reload. Exempted only resident account-section switches, including the account overview alias, from scroll/focus resets and page-entry animation. Reserved content height beneath the tabs so empty/loading sections do not collapse the page above the tab position. Normal detail navigation still uses the existing reset/history behavior.
+
+Targeted ESLint, formatting and git diff --check passed; frontend TypeScript final result is in the task response. No browser verification or automated suites. Owner checks remain: toggle both directions while scrolled to the tabs; empty/loading/populated lists; keyboard focus; browser Back/Forward; and opening an individual property still starts at its detail top. No SQL, deployment, commit or push.
+
+
+### 13 November 2026 - Browse responsive grid
+
+Applied the requested automatic auto-fill grid to the existing Livelihood Browse cards: minimum 160px, gap 10px, square cover, compact price/title/pill anatomy and whole-card links using the existing listing URL/modal. Removed conflicting fixed-column grid breakpoints. Existing feed/query/RPC/schema and route definitions remain untouched. Shared media presentation adds neutral image-icon missing/error/loading fallbacks and hides failed image loads; lazy covers and signed asset behavior remain.
+
+Production build (including frontend TypeScript, Vite/CSS Modules and PWA generation), targeted ESLint, formatting and git diff --check passed. Build retains existing dependency-annotation and large map-chunk warnings. No automated suites, browser/E2E/axe checks, live connection, SQL, publication, commit or push. Owner browser checks remain for one/two/many published listings at 360/400px and wider widths, light/dark themes, missing/broken covers, two-line titles, keyboard focus, new-tab links, listing modal and preserved filters. No sample records presented as real listings.
+
+
+### 13 November 2026 - mobile Livelihood spacing/search follow-up
+
+Source tracing identified the empty mobile header-actions row contributing vertical space. Hid that empty row; reduced mobile gaps above Browse results, used pill views, compact card padding and explicit app-font headings. Rebuilt local search presentation as field plus separate submit, with one focus outline and no nested border. Header Search retains visible placeholder and one outline. No query/RPC/schema/route changes.
+
+Targeted ESLint, formatting and git diff --check passed; production build/TypeScript outcome is reported in the task response. No browser verification or automated suites; owner should check idle/focused listing and header search, typing/submitting, narrow widths, light/dark mode, visible focus and button target size. No SQL, live connection or deployment.
+
+
+### 13 November 2026 - approved hotline carousel and visitor sheet
+
+Implemented the two explicitly requested changes from the mobile references, not the entire screenshot redesign. Home uses the existing hotline arrays and tel normalization with Emergency/Community/Utilities headers, touch-scroll/snap, keyboard-scrollable contact bodies and a See all hotlines link. The source contact module, Hotlines page, staff names/emails, routes and SQL are untouched. Sheet reuses native Modal accessibility/dismissal and keyboard handling, with pinned header/footer and safe-area support. Existing Request a pass form fields, constraints, submit handler/RPC and disabled/busy rules remain; footer actions target the original form ID. Unsaved edits retain the existing dismissal confirmation.
+
+Production build including TypeScript, Vite/CSS Modules and PWA generation passed; targeted ESLint, edited-source formatting and git diff --check passed. Existing annotation/large map-chunk warnings remain. No automated suites, browser/E2E/axe checks, live backend access, SQL, actual pass submission, commit, push or deployment. Source verification cannot certify live end-to-end behavior. Owner should check carousel swipe, all contacts and tel links, light/dark contrast, See all hotlines, pass sheet focus loop/Escape/scrim/close/focus restoration, dirty confirmation, phone keyboard and pinned footer, required/invalid dates, pending double-submit prevention and actual Office-visible pass delivery.
+
+
+### 13 November 2026 - resident popups adopt the shared Sheet
+
+Extended the Request-a-pass bottom-sheet look to every resident-facing dialog so all forms and popups share one presentation. Sheet was made a safe drop-in for Modal (now also accepts description, size and a no-op presentation, and always presents as the bottom sheet). Converted dialogs: More (reset preview), Services, Helpdesk/RequestDesk, Home/CommunityHighlights, Livelihood (Marketplace, GarageSaleItems), Shuttle (request, arrival estimate, roster), Account (bill detail, payment options), ParticipationDesk, LiveFeature, Directory, DocumentLibrary, MemberProfile, CarpoolDemo and HouseholdApplication. Only the dialog wrapper changed: Modal itself, form fields, validation, submit handlers, queries, RPCs, schemas, routes, permissions, notification destinations and copy are untouched. Existing .form-actions footers stay pinned; the focus trap, Escape/scrim dismissal, unsaved-change confirmation, keyboard-viewport sizing, safe-area padding and focus restoration are reused from Modal. No gate-pass QR was added - none exists and the code keeps passes not valid at the gate.
+
+Frontend TypeScript (tsc -b) and the production build passed; git diff --check is clean apart from LF to CRLF normalization warnings. No automated suites, browser/E2E/axe checks, live backend access, SQL, actual submissions, commit, push or deployment. Compilation cannot certify live end-to-end behavior. Owner browser checks remain, per converted popup at 320/360/390px in light/dark: open and dismiss via the close button, Escape and the scrim; focus loop and restoration to the trigger; pinned footer/actions reachable with the on-screen keyboard open; unsaved-edit confirmation where applicable; and that body content, required/invalid validation, busy/disabled states and submit behavior are unchanged from before the swap.
+
+
+### 13 November 2026 - resident screenshot redesign and Sheet review
+
+Reviewed and preserved Claude's shared-Sheet conversion; implemented mobile shell/greetings, Home balance/actions/carousels, Account breakdown/property/records, Livelihood header/search, More preferences, numbered amenity booking choices, Helpdesk active/resolved/message presentation and shuttle status cards. Fixed theme synchronization, preserved global #content in compiled CSS Modules selectors and restricted header button styling so it cannot leak into the notification sheet. Existing backend contracts, field validation and server-owned actions remain.
+
+Production build including frontend TypeScript, Vite/CSS Modules and PWA generation passed; targeted ESLint, edited-source formatting and git diff --check passed. Compiled CSS inspection confirmed mobile header/navigation and unmodified global #content targeting. Existing dependency annotation/large map-chunk warnings remain. No automated suite, E2E, axe, browser screenshot/interaction run, live connection, SQL, payment/pass/request submission, commit, push or deployment. Pixel-level screenshot matching and live flows remain owner-unverified. [Resident mobile redesign](../RESIDENT-MOBILE-REDESIGN.md) records deliberate accuracy differences and a complete manual acceptance checklist.
+
+
+### 13 November 2026 - Claude handoff follow-up
+
+Reviewed the mobile handoff and corrected Livelihood duplicate-header spacing/search background plus notification dialog color leakage. Frontend TypeScript and production build passed, including PWA generation; targeted ESLint, edited CSS formatting and git diff --check passed. Existing dependency annotation and large map-chunk warnings remain. No browser rendering, automated suites, live backend, SQL, commit, push or deployment was performed. Owner phone checks remain necessary for the Livelihood curve/search, notification sheet contrast and shared Sheet interactions.
+
+
+### 13 November 2026 - Account curved content transition
+
+Matched the mobile Account breakdown surface to Home with 24px top corners over the burgundy balance area. Kept the existing action spacing and desktop layout; no account logic changed. Frontend TypeScript and git diff --check passed. Owner browser verification of the curve remains pending.
+
+
+### 13 November 2026 - Home curved content transition
+
+Added the matching 24px mobile content curve beneath Home balance and above Today's Verse. The neutral surface overlaps the burgundy area without changing balance or scripture logic; desktop layout is preserved. Frontend TypeScript, source formatting and git diff --check passed. Owner phone rendering verification remains pending.
+
+
+### 13 November 2026 - compact mobile announcements
+
+Matched the reference announcement card proportions with a colored header, single-line title and truncated real text preview. Swipe scrolling, whole-card reader action, keyboard focus and desktop presentation are preserved. TypeScript, targeted ESLint, source formatting and git diff --check passed. No automated suites or browser verification performed; owner should check narrow screens, long text, light/dark contrast and tap-to-read. No live data, SQL, commit, push or deployment.
+
+
+### 13 November 2026 - announcement covers and mobile autoplay
+
+Restored existing signed announcement covers on mobile cards, with a readable category overlay and colored fallback for posts without images. The horizontal carousel advances every five seconds, loops at the end and follows the current scroll position after manual swipes. It pauses during pointer interaction, keyboard focus, reader opening, hidden-page state or reduced-motion preference; an explicit play/pause control is available. Existing published query, media authorization and reader Sheet remain. TypeScript, targeted ESLint, formatting and git diff --check passed. Phone checks of image loading, autoplay, swiping, pause and reduced motion remain owner-pending; no automated suites or live backend operations performed.
+
+
+### 13 November 2026 - announcement image layout and pagination
+
+Restricted image-overlay selectors to desktop so mobile announcement title/detail stay in the card body below the cover. Replaced the visible mobile scrollbar with selectable dots, pause/play and a slide counter; scroll position updates the active dot for manual swipes and autoplay, including the clamped final card. Reduced-motion navigation is immediate. Removed obsolete text pause-control styles. TypeScript, targeted ESLint, formatting and git diff --check passed. Owner browser checks of image-backed cards, dot selection, swiping and autoplay remain pending. No automated suites, live backend operations, commit or push.
+
+
+### 13 November 2026 - unobstructed announcement covers
+
+Removed the Community overlay label and unused label styles from announcement cards. Titles and previews remain below images; carousel controls are unchanged. TypeScript and git diff --check passed. Owner visual verification remains pending.
+
+
+### 13 November 2026 - manual hotline carousel without scrollbars
+
+Home hotlines remain manual horizontal swipe navigation with no autoplay. Hid the carousel scrollbar and removed the inner contact-list height limit/scroll container so all numbers are visible through normal page scrolling. Removed the obsolete inner scroll-region focus stop; carousel keyboard focus and telephone links remain. Existing contact data is unchanged. TypeScript, source formatting and git diff --check passed. Owner phone checks of swipe and full contact visibility remain pending.
+
+
+### 13 November 2026 - five equal-height hotline cards
+
+Home hotlines now group the existing contact arrays into Admin Office; Security & Aqualink; Barangay Molino IV; Bacoor Emergency/Cavite Command/PNP; and Bureau of Fire/Metro South Medical. Names select existing records; numbers remain sourced from hotline-contacts and telephone normalization is unchanged. Shared grid-row stretching keeps all five cards the same natural height with a 360px minimum; longer content can grow without inner scrolling or clipping. Manual swipe, hidden scrollbar, keyboard access and See all remain. No staff names or emails were added. TypeScript, targeted ESLint, formatting and git diff --check passed. Owner mobile visual checks remain pending; no browser automation, live data changes, commit or push.
+
+
+### 13 November 2026 - hotline reference proportions
+
+Tightened Home hotline cards toward the supplied design: shorter colored headers, uppercase muted group labels, wider mobile cards and less vertical spacing. Removed the artificial minimum height; the grid stretches all cards to the tallest actual content. Consecutive same-label numbers and consecutive unlabelled landlines share a wrapping row while retaining separate normalized telephone links with 48px touch targets. All nine existing contact records and PNP remain included; no mockup staff names, emails or numbers were copied. TypeScript, targeted ESLint, formatting and git diff --check passed. Exact rendered sizing and phone interactions remain for owner browser verification; no browser automation, live backend, commit or push.
+
+
+### 13 November 2026 - hotline compact row correction
+
+Restored the existing Breighton Land admin office name beneath the first card header. Moved phone labels inside their 48px telephone targets instead of allocating a separate label row above every target, reduced group padding, and paired the Rescue 161 short code with its landline while retaining both labels and separate tel links. Cards still stretch equally to content height, without fixed tall minimums, clipping or inner scrolling. No private staff details were introduced. TypeScript, targeted ESLint, formatting and git diff --check passed. Rendered height and wrapping still require owner phone verification; no browser check was performed.
+
+
+### 13 November 2026 - paired fire and medical hotline rows
+
+The fire/medical card now shows shared Central station text once, pairs its two numbers with a separator, keeps Molino substation separate, and pairs the hospital landlines above its mobile number. Paired links share the available row width and allow number text to wrap within each link rather than moving a whole link into another 48px row. Each number retains its own telephone target and accessible label. Existing equal-height layout, all contact data and manual swiping are preserved. TypeScript, targeted ESLint, formatting and git diff --check passed. Actual mobile wrapping and shared card height remain owner-unverified; no browser automation or live operations performed.
+
+
+### 13 November 2026 - owner-authorized fixed office directory
+
+The owner explicitly replaced the managed-database choice with fixed office contact details and approved the source exception for the published staff directory shown in the reference. Added a dedicated Home office-contact data module and rendered the two staff sections, the existing office phone and four mailto links with wrapping email text. Other hotline arrays remain unchanged, and no database setup is required. Manual swipe, equal card heights and hidden scrollbars remain. TypeScript, targeted ESLint, formatting and git diff --check passed; owner browser checks for names, mail links, wrapping and card height remain pending. No SQL, backend connection, automated suites, commit or push.
+
+
+### 13 November 2026 - Livelihood mobile reference layout
+
+Implemented burgundy search, larger Livelihood title, curved content transition, pill views with Applications wording, tighter mobile listing text/tags and removal of duplicate business type headings. Actual cover images, all six category options, existing RPC/query/validation, permissions and destinations remain. Production build including TypeScript, Vite and PWA generation passed; targeted ESLint, edited-source formatting and git diff --check passed. Existing dependency annotation and large map-chunk warnings remain. No browser rendering, automated suites, live connections, SQL, commit, push or deployment. Owner phone checks remain for search via icon/keyboard, curved layout, tab changes, all category chips, two-column cards, dark theme, listing details and the create Sheet.
+
+
+### 13 November 2026 - owner-requested quiet marketplace priority
+
+Prepared migration 071 and an owner-run exact-UUID configuration script for the Multiply Talents business. The existing feed sorts configured priority before date/price and before pagination, while retaining its visibility, consent, expiry, audience, category, search and authorization rules. No badge or priority property is returned to the UI. Configuration uses a single-slot RLS-enabled table with client privileges revoked, no resident setter and no preselected record. No frontend or schema changes were needed. Reviewed both ordering clauses and preserved feed guards; git diff --check passed. SQL has not been executed or live-verified. Owner must apply 071 after 070, verify the official record UUID, configure it and browser-check ordering/filtering/pagination. No automated suites, live connection, commit or push.
+
+
+### 13 November 2026 - resident phone spacing pass
+
+Reduced accumulated Home announcement/hotline spacing and oversized section/card/form margins across resident tabs and modules. Source review confirmed all 20 appended spacing blocks use max-width 767px plus resident-only scope; shared token definitions and global page-intro targeting stay within that breakpoint. Existing 48px controls, text sizing, keyboard focus, safe areas, carousel actions, booking rules and bottom navigation were preserved. Production build including TypeScript, CSS Modules and PWA generation passed; source formatting, compiled-token inspection and git diff --check passed. Removed one unused selector during review. Existing dependency annotation/large map warnings remain. No automated suites, browser/E2E/axe run, live backend, SQL, commit, push or deployment. Owner must check actual 320/360/390px spacing, long text, dialogs/keyboard reachability, light/dark and desktop as documented in ../RESIDENT-MOBILE-SPACING.md.
+
+
+### 13 November 2026 - persistent sessions and server expiry preparation
+
+Frontend TypeScript, production Vite/PWA build, targeted ESLint, formatting and git diff --check passed. Reviewed expiry-before-touch, server role/assignment classification, server-clock deadline calculations, no heartbeat from background/token refresh, preview storage isolation, migration marker, cache cancellation/clearing and cross-tab sign-out. Regenerated account editor artifact from canonical sources; it includes the caller session guard. Existing dependency annotation and large map-chunk warnings remain. No automated suite, browser/E2E/axe run, live Auth/database connection, SQL execution, commit, push or deployment. Deno is absent, so Edge runtime typechecking/execution is unverified. SQL is source-reviewed only and needs staging validation before owner live installation. Required rollout: 072 after 071, redeploy account Edge function, then publish matching frontend. Existing idle sessions may require one login. Owner checks and signed-URL/Realtime/Auth-token limitations are documented in ../PERSISTENT-SESSIONS.md.
+
+
+### 13 November 2026 - move More services into Services
+
+Removed the More services disclosure and its unused CSS. More retains profile/preferences, community information, authorized workspace links and sign-out; Settings is directly reachable in mobile account preferences. Operational destinations now live in a shared Services definition used by both preview ServiceHub and signed-in ConnectedHome, including Transport (Community shuttle and Carpool), property links, office requests and elections. Calendar remains available; Livelihood keeps its existing tab. Permission filtering and original destination URLs remain, with Services tab highlighting and direct-link Back fallback updated for moved operational pages. TypeScript, targeted ESLint, source formatting and git diff --check passed. Owner browser checks remain for both service hubs, More, transport links, permission-limited accounts and Back/navigation. No automated suite or browser run, live connection, SQL, commit, push or deployment. This change needs no SQL or bfe-create-account redeployment.
+
+
+### 13 November 2026 - mobile Helpdesk conversation design
+
+Matched the requested full-page mobile conversation structure: burgundy title/status header, curved neutral body, dated Office/resident bubbles and accessible icon send action. Phone keyboard inset handling uses visualViewport; controls remain at least 48px and text 16px/14px. Details and original unit disclaimer remain accessible, and sample conversations remain labelled. TypeScript, production Vite/PWA build, targeted ESLint, formatting and git diff --check passed. Existing dependency annotation/large map-chunk warnings remain. No automated suites, browser/E2E/axe run, live request/reply submission, SQL, commit, push or deployment. Owner checks remain for list-to-thread and notification links, Back/browser history, unsent text navigation, older/newer pages, reply loading/error/resolved/read-only states, keyboard/composer placement at 320/360/390px, light/dark, and desktop/Office Sheet behavior. Browser-history navigation and resizing across the mobile breakpoint need particular attention for unsent drafts; this is not browser-verified. No SQL or bfe-create-account redeployment is required for this UI change.
+
+
+### 13 November 2026 - mobile conversation layout correction
+
+Corrected the owner-observed burgundy gap by making the conversation a viewport-height flex page with a growing neutral body, neutral surrounding workspace and no redundant shell footer on that view. Bubbles now use 88 percent width, and the composer stays at the body end. Increased send-button selector specificity so shared resident button styles cannot restore a rectangular shape. Reply input starts at one line, grows to 160px, resets after send and hides its resize/scrollbar chrome while retaining text scrolling. TypeScript, targeted ESLint, formatting and git diff --check passed. Owner phone rendering/keyboard checks remain pending; no browser automation, SQL, backend changes or deployment. No bfe-create-account redeployment required.
+
+
+### 13 November 2026 - automatic updates, consistent headers and pending shuttle pins
+
+TypeScript, production Vite/PWA build, targeted ESLint, edited-source formatting and git diff --check passed. Reviewed request polling scope, removed routine mobile refresh action, shared Back/title/bell placement, Home image retention and unchanged signed-media expiry gate. Cached covers may still require fresh authorization after their 60-second lifetime; no persistent private-data cache was introduced. Shuttle selectors now expose only seven stops; old records remain untouched. Map is displayed directly without misleading twelve demo markers, pending owner-supplied matched pins. Owner explicitly asked to wait while matching locations, so exact map placement remains outstanding. No browser/E2E/axe or automated suite, live backend, SQL, commit, push or deployment. Owner checks remain for five-second replies, header rows, Home return visits inside/outside signed-image lifetime, dark theme and shuttle selection/history. No SQL or bfe-create-account redeployment required for these frontend changes.
+
+
+### 13 November 2026 - seven matched stop pins and link removal
+
+Implemented all seven owner-provided locations in their supplied numbering and reversed coordinate order for MapLibre. Reviewed shared labels, pin-to-selector callbacks, selected-marker state, distinct endpoint checks, bounds excluding the obsolete office pin and preserved Carpool demo behavior. Removed Open Sales Office in Google Maps at owner request. TypeScript, production Vite/PWA build, targeted ESLint, formatting and git diff --check passed. Existing dependency annotation/large map-chunk warnings remain. No automated suites, browser map rendering/interaction, live backend, route geocoding, SQL, commit, push or deployment. Owner phone verification remains for all seven placements, marker/selector synchronization, reset map, keyboard focus and existing shuttle request submission/history. No SQL or bfe-create-account redeployment required.
+
+### 13 November 2026 - publication audiences and customer wiring review
+
+Added the reusable checkbox audience picker and shared validation. Migration 073 delegates review authority to the existing reviewer RPC and applies multi-audience visibility consistently across ten readers, preserving legacy publications and marketplace priority ordering. Static customer review matched 87 literal frontend BFE RPC names to prepared migrations and checked route destinations across Services, Home, More and Account. Found and corrected phase-specific lot limits in shared registration/account validation and input guides; migration 074 guards new resident inserts without rewriting history. Regenerated the complete bfe-create-account editor artifact. TypeScript and production Vite/PWA build passed; targeted lint and git diff --check passed. Existing Zod annotation and large map-chunk warnings remain. No automated suites, browser, live SQL/database or Edge runtime verification performed. Owner must run 073 then 074, redeploy bfe-create-account, and deploy the matching frontend. See docs/PUBLICATION-AUDIENCES.md and docs/CUSTOMER-WIRING-REVIEW.md for acceptance checks; source consistency does not certify live behavior.

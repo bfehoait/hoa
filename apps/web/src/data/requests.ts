@@ -104,6 +104,7 @@ export function useRequests(
   page: number,
   status: string,
   category: string,
+  recordId: string | null = null,
 ) {
   const auth = useAuth();
   const permissions = usePermissions();
@@ -129,9 +130,11 @@ export function useRequests(
       page,
       status,
       category,
+      recordId,
     ],
     enabled: sample || enabled,
     gcTime: 300_000,
+    staleTime: office ? 0 : 10000,
     retry: false,
     refetchOnWindowFocus: true,
     refetchInterval: 30_000,
@@ -140,12 +143,19 @@ export function useRequests(
         const rows = readRequestSamples()
           .requests.filter(
             (row) =>
-              (!status || row.status === status) &&
+              (!recordId || row.id === recordId) &&
+              (!status ||
+                (status === "Active"
+                  ? row.status !== "Resolved"
+                  : row.status === status)) &&
               (!category || row.category === category),
           )
           .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
         return {
-          records: rows.slice(page * pageSize, (page + 1) * pageSize),
+          records: rows.slice(
+            recordId ? 0 : page * pageSize,
+            recordId ? pageSize : (page + 1) * pageSize,
+          ),
           total: rows.length,
           sample: true,
         };
@@ -158,18 +168,27 @@ export function useRequests(
           .rpc("bfe_preview_requests", {
             p_office: office,
             p_page: page,
-            p_status: status,
+            p_status: status === "Active" ? "" : status,
             p_category: category,
           })
           .abortSignal(signal);
         requestError(error);
-        return z
+        const result = z
           .object({
             records: z.array(liveRequestSchema),
             total: z.number(),
             sample: z.literal(false),
           })
           .parse(data);
+        return status === "Active"
+          ? {
+              ...result,
+              records: result.records.filter(
+                (record) => record.status !== "Resolved",
+              ),
+              total: null,
+            }
+          : result;
       }
       let query = client
         .from("bfe_requests")
@@ -177,10 +196,15 @@ export function useRequests(
         .order("updated_at", { ascending: false })
         .order("id", { ascending: false });
       if (!office) query = query.eq("owner_id", auth.userId!);
-      if (status) query = query.eq("status", status);
+      if (recordId) query = query.eq("id", recordId);
+      if (status === "Active") query = query.neq("status", "Resolved");
+      else if (status) query = query.eq("status", status);
       if (category) query = query.eq("category", category);
       const { data, error, count } = await query
-        .range(page * pageSize, page * pageSize + pageSize - 1)
+        .range(
+          recordId ? 0 : page * pageSize,
+          recordId ? pageSize - 1 : page * pageSize + pageSize - 1,
+        )
         .abortSignal(signal);
       requestError(error);
       const parsed = z.array(liveRequestSchema).safeParse(data);
@@ -207,7 +231,7 @@ export function useRequestThread(id: string | null, page: number) {
     gcTime: 300_000,
     retry: false,
     refetchOnWindowFocus: true,
-    refetchInterval: 30_000,
+    refetchInterval: page === 0 ? 5_000 : 30_000,
     queryFn: async ({ signal }) => {
       if (sample) {
         const rows = readRequestSamples()
