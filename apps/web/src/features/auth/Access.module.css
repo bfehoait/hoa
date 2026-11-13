@@ -340,3 +340,8 @@
     display: block;
   }
 }
+.workspaceChoices {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+}

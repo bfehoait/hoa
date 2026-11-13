@@ -44,7 +44,8 @@ export const manualAccountSchema = z
       canonicalLotAddressSchema.safeParse(value.unit).success,
     {
       path: ["unit"],
-      message: "Choose phase 1–3, block 01–19 and lot 001–111.",
+      message:
+        "Enter a valid phase-block-lot address within the selected phase's limits.",
     },
   );
 export type ManualAccountInput = z.infer<typeof manualAccountSchema>;

@@ -17,14 +17,14 @@ export function registryError(
     ["PGRST202", "42883", "42P01"].includes(error.code ?? "")
   )
     throw new Error(
-      "Account balance services are not installed yet. Ask the owner to apply migration 069 after 068.",
+      "Your account balance is currently unavailable. Please contact the HOA office for help.",
     );
   if (
     readName === "bfe_my_hoa_balance" &&
     ["PGRST202", "42883", "42P01"].includes(error.code ?? "")
   )
     throw new Error(
-      "HOA balance services are not installed yet. Ask the owner to apply migrations 064 and 065.",
+      "Your HOA balance is currently unavailable. Please contact the HOA office for help.",
     );
   if (
     ["bfe_private_health_note", "bfe_staff_linked_properties"].includes(
@@ -33,23 +33,38 @@ export function registryError(
     ["PGRST202", "42883", "42P01"].includes(error.code ?? "")
   )
     throw new Error(
-      "Updated member services are not installed yet. Ask the owner to apply migrations 062 and 063.",
+      "Member details are currently unavailable. Please contact the HOA office for help.",
     );
   if (readName === "bfe_lot_receipts") {
-    const code = /^(?:[A-Z0-9]{5}|PGRST\d{3})$/.test(error.code ?? "")
-      ? ` (${error.code})`
-      : "";
     throw new Error(
       error.code === "42501"
-        ? `Payment history access could not be verified${code}. Contact the office.`
+        ? "Payment history access could not be verified. Contact the office."
         : error.code === "22023"
-          ? `Check the payment date range${code}.`
-          : `Existing payment records could not be loaded${code}. Ask the system owner to check the receipt service.`,
+          ? "Check the payment date range."
+          : "Payment records could not be loaded. Please contact the HOA office for help.",
     );
   }
   if (["42883", "42P01", "PGRST202", "PGRST205"].includes(error.code ?? ""))
     throw new Error(
-      "Lot services need migration 005. No sample data has been substituted.",
+      "Property details are currently unavailable. Please contact the HOA office for help.",
+    );
+  if (
+    ["bfe_my_linked_properties", "bfe_list_lots", "bfe_lot_detail"].includes(
+      readName ?? "",
+    )
+  )
+    throw new Error(
+      error.code === "42501"
+        ? "Your property access could not be verified. Please contact the HOA office for help."
+        : error.code === "22023" && readName === "bfe_list_lots"
+          ? "Check the lot search filters and try again."
+          : "Your property records could not be loaded. Try again or contact the HOA office for help.",
+    );
+  if (readName)
+    throw new Error(
+      error.code === "42501"
+        ? "Your account cannot view these records. Please contact the HOA office for help."
+        : "These records could not be loaded. Try again or contact the HOA office for help.",
     );
   if (error.code === "40001")
     throw new Error("This record changed. Refresh before saving.");

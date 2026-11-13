@@ -100,9 +100,10 @@ export function BackLink({
   children: ReactNode;
 }) {
   return (
-    <ActionLink to={to} icon={ArrowLeft}>
-      {children}
-    </ActionLink>
+    <Link to={to} className={styles.actionLink} data-page-back>
+      <ArrowLeft size={20} aria-hidden="true" />
+      <span>{children}</span>
+    </Link>
   );
 }
 

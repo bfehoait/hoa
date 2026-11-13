@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { ImagePlus, ExternalLink } from "lucide-react";
+import { ImagePlus, Image as ImageIcon, ExternalLink } from "lucide-react";
 import { useAuth, makeClient, makeRealClient } from "../../data/auth";
 import { featureRpc } from "../../data/feature-records";
 import { Button, Feedback } from "../../components/UI";
@@ -11,6 +11,61 @@ const assetSchema = z.object({
   cover_path: z.string().nullable(),
   links: z.array(z.object({ label: z.string(), url: z.string() })),
 });
+type SignedAsset = z.infer<typeof assetSchema> & {
+  url: string | null;
+  expiresAt: number;
+};
+function SignedCoverImage({
+  url,
+  expiresAt,
+  className,
+  alt,
+  preload,
+}: {
+  url: string;
+  expiresAt: number;
+  className: string;
+  alt: string;
+  preload: boolean;
+}) {
+  const ref = useRef<HTMLImageElement>(null);
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  // The image resource is assigned only after checking its lifetime. An old
+  // inactive slide can otherwise start loading an expired URL on reactivation.
+  useLayoutEffect(() => {
+    const image = ref.current;
+    if (!image) return;
+    if (!(expiresAt > Date.now())) {
+      image.hidden = true;
+      image.style.visibility = "hidden";
+      image.removeAttribute("src");
+      return;
+    }
+    image.hidden = false;
+    image.style.visibility = "visible";
+    if (image.getAttribute("src") !== url) image.src = url;
+  }, [url, expiresAt]);
+  if (failedUrl === url)
+    return (
+      <div
+        className={styles.placeholder}
+        role="img"
+        aria-label="Photo unavailable"
+      >
+        <ImageIcon size={32} aria-hidden="true" />
+      </div>
+    );
+  return (
+    <img
+      ref={ref}
+      className={className}
+      alt={alt}
+      loading={preload ? "eager" : "lazy"}
+      decoding="async"
+      onError={() => setFailedUrl(url)}
+    />
+  );
+}
 export const listingModules = [
   "businesses",
   "buy-sell",
@@ -191,6 +246,7 @@ export default function ListingMedia({
   coverOnly = false,
   hideEmpty = false,
   preload = false,
+  active = true,
 }: {
   id: string;
   editable?: boolean;
@@ -199,29 +255,48 @@ export default function ListingMedia({
   coverOnly?: boolean;
   hideEmpty?: boolean;
   preload?: boolean;
+  active?: boolean;
 }) {
   const auth = useAuth(),
     cache = useQueryClient();
   const [editing, setEditing] = useState(false),
     [links, setLinks] = useState<{ label: string; url: string }[]>([]),
     [message, setMessage] = useState("");
-  const query = useQuery({
+  const query = useQuery<SignedAsset>({
     queryKey: ["listing-media", auth.userId, id],
+    enabled: active,
     retry: false,
-    gcTime: 0,
+    // Retain Home covers for tab returns; expiresAt still gates every render.
+    gcTime: announcement ? 300_000 : 0,
+    // Reuse a signed cover inside its existing 60-second lifetime. Keep the
+    // metadata authorization and signing together on every renewal.
+    staleTime: (query) => {
+      const asset = query.state.data;
+      return asset?.url
+        ? Math.max(
+            0,
+            Math.min(
+              45000,
+              asset.expiresAt - query.state.dataUpdatedAt - 15000,
+            ),
+          )
+        : 45000;
+    },
     refetchInterval: 45000,
     queryFn: async () => {
       const asset = assetSchema.parse(
         await featureRpc("bfe_listing_media", { p_record: id }),
       );
-      if (!asset.cover_path) return { ...asset, url: null };
+      if (!asset.cover_path) return { ...asset, url: null, expiresAt: 0 };
       // Preview metadata was authorized for the target by the audited gateway.
       // Only sign that returned cover path; the real developer login stays active.
       const client = auth.memberPreview ? makeRealClient() : makeClient();
       if (!client) throw new Error("Sign in to view listing photos.");
+      const requestedAt = Date.now();
       const { data, error } = await client.storage
         .from("bfe-listing-covers")
         .createSignedUrl(asset.cover_path, 60);
+      const expiresAt = requestedAt + 60000;
       // Home keeps its few slides mounted. Decode ahead of displaying each
       // signed image so switching slides cannot expose a partially loaded photo.
       if (preload && !error && data.signedUrl) {
@@ -229,7 +304,7 @@ export default function ListingMedia({
         image.src = data.signedUrl;
         await image.decode();
       }
-      return { ...asset, url: error ? null : data.signedUrl };
+      return { ...asset, url: error ? null : data.signedUrl, expiresAt };
     },
   });
   const mutation = useMutation({
@@ -259,9 +334,18 @@ export default function ListingMedia({
       await cache.invalidateQueries({ queryKey: ["feature-records"] });
     },
   });
+  if (!active) return null;
   if (query.isPending)
     if (coverOnly)
-      return <div className={styles.placeholder}>Loading photo...</div>;
+      return (
+        <div
+          className={styles.placeholder}
+          role="img"
+          aria-label="Loading photo"
+        >
+          <ImageIcon size={32} aria-hidden="true" />
+        </div>
+      );
     else
       return (
         <p className={styles.note}>
@@ -276,15 +360,25 @@ export default function ListingMedia({
     return null;
   if (query.isError)
     return coverOnly ? (
-      <div className={styles.placeholder}>Photo unavailable</div>
+      <div
+        className={styles.placeholder}
+        role="img"
+        aria-label="Photo unavailable"
+      >
+        <ImageIcon size={32} aria-hidden="true" />
+      </div>
     ) : (
       <Feedback error={query.error} />
     );
   if (coverOnly && hideEmpty && !query.data?.url) return null;
   if (coverOnly && !query.data?.url)
     return (
-      <div className={styles.placeholder}>
-        {query.data?.cover_path ? "Photo unavailable" : "No photo"}
+      <div
+        className={styles.placeholder}
+        role="img"
+        aria-label={query.data?.cover_path ? "Photo unavailable" : "No photo"}
+      >
+        <ImageIcon size={32} aria-hidden="true" />
       </div>
     );
   if (announcement && !editable && !query.data?.cover_path) return null;
@@ -296,11 +390,12 @@ export default function ListingMedia({
       }
     >
       {query.data?.url && (
-        <img
+        <SignedCoverImage
           className={coverOnly ? styles.cardCover : styles.cover}
-          src={query.data.url}
+          url={query.data.url}
+          expiresAt={query.data.expiresAt}
           alt={alt}
-          loading={preload ? "eager" : "lazy"}
+          preload={preload}
         />
       )}
       {query.data?.cover_path && !query.data.url && (

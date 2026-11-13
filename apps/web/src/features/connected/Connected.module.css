@@ -526,3 +526,24 @@
 :global([data-customer-ui]) .grid {
   gap: 12px;
 }
+
+/* Resident phone spacing: section rhythm without reducing touch targets. */
+@media (max-width: 767px) {
+  :global([data-customer-ui="true"]) .hero {
+    padding: 12px;
+    margin-block: 16px;
+    gap: 12px;
+  }
+  :global([data-customer-ui="true"]) .toolbar {
+    margin-block: var(--resident-section-gap);
+  }
+  :global([data-customer-ui="true"]) .grid {
+    gap: var(--resident-card-gap);
+    margin-top: var(--resident-section-gap);
+  }
+  :global([data-customer-ui="true"]) .row {
+    min-height: 64px;
+    padding: 12px;
+    gap: 12px;
+  }
+}

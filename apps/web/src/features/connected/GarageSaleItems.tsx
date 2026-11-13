@@ -7,10 +7,10 @@ import {
   Badge,
   Button,
   Feedback,
-  Modal,
   PageIntro,
   Skeleton,
 } from "../../components/UI";
+import Sheet from "../../components/Sheet";
 import styles from "../office/MemberWorkspace.module.css";
 const itemSchema = z.object({
   id: z.uuid(),
@@ -114,7 +114,7 @@ export default function GarageSaleItems({
     },
     onSuccess: async () => {
       setDecision(null);
-      setNotice("Item decision saved by the server.");
+      setNotice("Item decision saved.");
       await refresh();
     },
   });
@@ -252,7 +252,7 @@ export default function GarageSaleItems({
         </>
       )}
       {editing !== false && (
-        <Modal
+        <Sheet
           title={editing ? "Edit sale item" : "Add sale item"}
           busy={save.isPending}
           protectChanges
@@ -357,10 +357,10 @@ export default function GarageSaleItems({
               <Feedback error={save.error} />
             </fieldset>
           </form>
-        </Modal>
+        </Sheet>
       )}
       {decision && (
-        <Modal
+        <Sheet
           title={
             decision.status === "Published"
               ? "Publish this item?"
@@ -396,7 +396,7 @@ export default function GarageSaleItems({
               </Button>
             </fieldset>
           </form>
-        </Modal>
+        </Sheet>
       )}
     </section>
   );

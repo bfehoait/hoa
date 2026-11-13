@@ -26,10 +26,10 @@ import {
   Feedback,
   Field,
   formValues,
-  Modal,
   PageIntro,
   Row,
 } from "../../components/UI";
+import Sheet from "../../components/Sheet";
 import Settings from "./Settings";
 import styles from "./More.module.css";
 import MoreHub from "./MoreHub";
@@ -255,7 +255,7 @@ export default function More() {
           />
         </section>
         {selected === 99 && (
-          <Modal
+          <Sheet
             title="Reset your preview?"
             description="Your local sample edits will be removed. This cannot affect a real HOA account."
             onClose={() => setSelected(null)}
@@ -279,7 +279,7 @@ export default function More() {
               </Button>
             </div>
             <Feedback error={reset.error} />
-          </Modal>
+          </Sheet>
         )}
       </>
     );
@@ -293,28 +293,52 @@ export default function More() {
           icon={<CircleHelp size={28} />}
         />
         <div className={styles.faq}>
-          {[
-            [
-              "Is this my real HOA account?",
-              "No. This is a local product preview with synthetic names, bills, and community updates. No production backend is connected.",
-            ],
-            [
-              "Where do my requests go?",
-              "They stay in session storage in this browser tab. They are not sent to the office. Closing the tab may remove your edits.",
-            ],
-            [
-              "Can I pay or reserve a real space?",
-              "No. Payments, confirmed bookings, invitations, voting, and gate approvals need approved rules and a secure backend.",
-            ],
-            [
-              "Can I put this on my phone?",
-              "The interface adapts to phones and supports a web app manifest. Install availability depends on the browser and hosting. Native store submissions require separate signed builds and review.",
-            ],
-            [
-              "What if I need urgent help?",
-              "Use your verified local emergency or HOA security contact. This preview does not receive emergency reports. Contact numbers are not invented here.",
-            ],
-          ].map(([q, a]) => (
+          {(auth.preview || auth.rolePreview
+            ? [
+                [
+                  "Is this my real HOA account?",
+                  "No. This is a local product preview with synthetic names, bills, and community updates. No production backend is connected.",
+                ],
+                [
+                  "Where do my requests go?",
+                  "They stay in session storage in this browser tab. They are not sent to the office. Closing the tab may remove your edits.",
+                ],
+                [
+                  "Can I pay or reserve a real space?",
+                  "No. Payments, confirmed bookings, invitations, voting, and gate approvals need approved rules and a secure backend.",
+                ],
+                [
+                  "Can I put this on my phone?",
+                  "The interface adapts to phones and supports a web app manifest. Install availability depends on the browser and hosting. Native store submissions require separate signed builds and review.",
+                ],
+                [
+                  "What if I need urgent help?",
+                  "Use your verified local emergency or HOA security contact. This preview does not receive emergency reports. Contact numbers are not invented here.",
+                ],
+              ]
+            : [
+                [
+                  "How do I update my details?",
+                  "Open Profile details from My account. Contact the HOA office to correct your membership or household address.",
+                ],
+                [
+                  "Where do my requests go?",
+                  "Submitted requests go to the HOA office. Open Services, then Helpdesk to view their status and replies.",
+                ],
+                [
+                  "When is an amenity booking confirmed?",
+                  "A booking request needs Office approval. Confirmed amenity fees appear under Other in My account after the office verifies the fee.",
+                ],
+                [
+                  "How do I switch to Office or Board?",
+                  "Use the workspace selector. Only the workspaces assigned to your account appear. Contact the HOA office if you need access.",
+                ],
+                [
+                  "What if I need urgent help?",
+                  "Open Emergency hotlines for contact details. For emergencies, call the appropriate service directly; portal requests are not an emergency response channel.",
+                ],
+              ]
+          ).map(([q, a]) => (
             <details key={q}>
               <summary>{q}</summary>
               <p>{a}</p>
@@ -324,7 +348,13 @@ export default function More() {
         <div className="notice-note">
           <Info size={20} />
           <p>
-            Official contact details: unavailable until verified by the HOA.
+            {auth.preview || auth.rolePreview ? (
+              "Official contact details: unavailable until verified by the HOA."
+            ) : (
+              <Link to="/more/hotlines">
+                View emergency hotlines and office contacts
+              </Link>
+            )}
           </p>
         </div>
       </>
@@ -337,7 +367,7 @@ export default function More() {
         title={destination?.title ?? "This page isn’t here."}
       />
       <Empty title="Information unavailable.">
-        Return to More to explore the preview.
+        Return to More to choose another section.
       </Empty>
     </>
   );

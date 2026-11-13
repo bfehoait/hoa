@@ -5,7 +5,8 @@ import { accountLotMatchSchema } from "../../../../../packages/shared/src/regist
 import type { FeatureRecord } from "../../../../../packages/shared/src/feature-records";
 import { useAuth } from "../../data/auth";
 import { featureRpc, useFeatureMutation } from "../../data/feature-records";
-import { Button, Feedback, Modal } from "../../components/UI";
+import { Button, Feedback } from "../../components/UI";
+import Sheet from "../../components/Sheet";
 import styles from "./LiveFeature.module.css";
 
 const outcomeSchema = z.object({
@@ -63,7 +64,7 @@ export default function HouseholdApplication({
         </Button>
       )}
       {open && (
-        <Modal
+        <Sheet
           title="Apply verified relationship"
           size="lg"
           busy={busy}
@@ -74,7 +75,7 @@ export default function HouseholdApplication({
             record={record}
             onSaved={() => setOpen(false)}
           />
-        </Modal>
+        </Sheet>
       )}
     </>
   );

@@ -17,15 +17,44 @@ export const notificationSchema = z.object({
   kind: z.enum(["request", "account", "access", "community", "shuttle"]),
   title: z.string(),
   body: z.string(),
-  path: z.enum([
-    "/services/requests",
-    "/office/requests",
-    "/more/profile",
-    "/developer/access",
-    "/more/notifications",
-    "/more/transport",
-    "/driver/dispatch",
-  ]),
+  path: z.string().refine((value) => {
+    if (
+      !value.startsWith("/") ||
+      value.startsWith("//") ||
+      /[\\\r\n%#]/.test(value)
+    )
+      return false;
+    const url = new URL(value, "https://route.invalid");
+    const allowed = [
+      "/services/requests",
+      "/office/requests",
+      "/more/profile",
+      "/developer/access",
+      "/more/notifications",
+      "/more/transport",
+      "/driver/dispatch",
+      "/services/bookings",
+      "/services/visitors",
+      "/services/participation",
+      "/more/vehicles",
+      "/more/permits",
+      "/account",
+      "/account/payments",
+      "/office/finance",
+    ];
+    if (
+      !allowed.includes(url.pathname) &&
+      !/^\/explore\/[a-z][a-z-]{0,50}$/.test(url.pathname)
+    )
+      return false;
+    return [...url.searchParams].every(([key, entry]) =>
+      key === "record" || key === "notification"
+        ? z.uuid().safeParse(entry).success
+        : key === "module"
+          ? ["booth-events", "workshops", "carpools"].includes(entry)
+          : key === "unavailable" && entry === "1",
+    );
+  }, "Unsupported notification destination."),
   created_at: z.string(),
   read_at: z.string().nullable(),
 });

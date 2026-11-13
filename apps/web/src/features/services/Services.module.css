@@ -143,3 +143,18 @@
     padding: 24px;
   }
 }
+
+/* Resident phone spacing: section rhythm without reducing touch targets. */
+@media (max-width: 767px) {
+  :global([data-customer-ui="true"]) .amenities {
+    gap: var(--resident-card-gap);
+    margin-bottom: var(--resident-section-gap);
+  }
+  :global([data-customer-ui="true"]) .amenities > article {
+    padding: 12px;
+  }
+  :global([data-customer-ui="true"]) .record {
+    padding: 12px;
+    gap: 12px;
+  }
+}

@@ -12,7 +12,7 @@ function serviceError(error: { code?: string } | null) {
   if (!error) return;
   throw new Error(
     ["PGRST202", "42883", "42P01"].includes(error.code ?? "")
-      ? "Account services need database migration 004. No sample data replaces your account records."
+      ? "Account services are temporarily unavailable. Please contact the HOA office for help."
       : error.code === "42501"
         ? "Your account is not allowed to perform this action. Refresh access."
         : "The operation could not be confirmed. Refresh and try again.",
@@ -73,6 +73,7 @@ export function useOwnProfile() {
       sample ||
       (!!auth.userId && !!auth.member && !auth.checking && !auth.memberError),
     gcTime: 300_000,
+    staleTime: 60000,
     retry: false,
     refetchOnWindowFocus: true,
     queryFn: async ({ signal }) => {

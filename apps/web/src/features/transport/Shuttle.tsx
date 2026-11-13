@@ -23,10 +23,10 @@ import {
   Badge,
   Button,
   Feedback,
-  Modal,
   PageIntro,
   Skeleton,
 } from "../../components/UI";
+import Sheet from "../../components/Sheet";
 import styles from "./Shuttle.module.css";
 import { usePermissions } from "../../data/permissions";
 import ShuttleStops, { shuttleStops } from "./ShuttleStops";
@@ -357,14 +357,22 @@ export default function Shuttle() {
         description="Choose your stops, check availability and follow your pickup."
       />
       {passengerView && (
-        <ShuttleDemoMap
-          pickup={pickupStop}
-          destination={destinationStop}
-          onChange={(pickup, destination) => {
-            setPickupStop(pickup);
-            setDestinationStop(destination);
-          }}
-        />
+        <p className={styles.trackingNote}>
+          Live vehicle location and arrival estimates are currently unavailable.
+          Follow your request status below.
+        </p>
+      )}
+      {passengerView && (
+        <div className={styles.stopMapSection}>
+          <ShuttleDemoMap
+            pickup={pickupStop}
+            destination={destinationStop}
+            onChange={(pickup, destination) => {
+              setPickupStop(pickup);
+              setDestinationStop(destination);
+            }}
+          />
+        </div>
       )}
       {passengerView && (
         <ShuttleStops
@@ -982,9 +990,8 @@ function NewShuttleRequest({
     }
   }
   return (
-    <Modal
+    <Sheet
       title="Request a shuttle"
-      presentation="task"
       protectChanges
       description={
         sample
@@ -1036,7 +1043,7 @@ function NewShuttleRequest({
           {sample ? "Save sample request" : "Send shuttle request"}
         </Button>
       </form>
-    </Modal>
+    </Sheet>
   );
 }
 function JourneyEstimate({ request }: { request: ShuttleRequest }) {
@@ -1068,7 +1075,7 @@ function JourneyEstimate({ request }: { request: ShuttleRequest }) {
         Update arrival estimate
       </Button>
       {open && (
-        <Modal
+        <Sheet
           title="Arrival estimate"
           description="Update only when safely parked. This does not extend the arrival deadline."
           busy={save.isPending}
@@ -1106,7 +1113,7 @@ function JourneyEstimate({ request }: { request: ShuttleRequest }) {
               </div>
             </fieldset>
           </form>
-        </Modal>
+        </Sheet>
       )}
     </>
   );
@@ -1144,7 +1151,7 @@ function Roster({
     }
   }
   return (
-    <Modal
+    <Sheet
       title="Authorized shuttle roster"
       description="Assign only accredited operator or approved BFE alternate vehicles. Display names and operational phone numbers are visible to signed-in members."
       busy={busy}
@@ -1204,6 +1211,6 @@ function Roster({
           Save roster
         </Button>
       </form>
-    </Modal>
+    </Sheet>
   );
 }

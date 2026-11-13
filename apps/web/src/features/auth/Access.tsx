@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { lazy, useState, type FormEvent } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { Link } from "../../components/AccessLink";
 import {
@@ -20,8 +20,8 @@ import {
 import { Button, Feedback, Field, formValues } from "../../components/UI";
 import { useAuth } from "../../data/auth";
 import { AuthFrame } from "./AuthFrame";
-import PreviewAccess from "./PreviewAccess";
-import Registration from "./Registration";
+const PreviewAccess = lazy(() => import("./PreviewAccess"));
+const Registration = lazy(() => import("./Registration"));
 import styles from "./Access.module.css";
 
 export default function Access() {
@@ -49,6 +49,7 @@ function SignIn() {
     !resetting &&
     !registering &&
     auth.userId &&
+    !auth.identityError &&
     !auth.memberPending &&
     !auth.checking
   )
@@ -260,10 +261,15 @@ function SignIn() {
             <Feedback
               error={
                 new Error(
-                  "Your session could not be verified. Please sign in again.",
+                  "We could not verify your saved session. Check your connection and retry verification.",
                 )
               }
             />
+          )}
+          {auth.identityError && (
+            <Button secondary type="button" onClick={auth.retry}>
+              Retry verification
+            </Button>
           )}
           <Button
             type="submit"
@@ -288,7 +294,7 @@ function SignIn() {
       <p className={styles.authFootnote}>
         <ShieldCheck size={18} />
         {recovery || resetting
-          ? "Recovery is handled by Supabase Auth."
+          ? "Use the recovery link sent to your email to reset your password."
           : "Access follows your active member record."}
       </p>
     </AuthFrame>

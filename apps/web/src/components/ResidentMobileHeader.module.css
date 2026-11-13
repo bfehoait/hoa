@@ -1,0 +1,66 @@
+.identity,
+.title {
+  display: none;
+}
+@media (max-width: 767px) {
+  .identity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--on-brand);
+    text-decoration: none;
+    min-width: 0;
+    min-height: 48px;
+  }
+  .identity > span:last-child {
+    min-width: 0;
+  }
+  .avatar {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--on-brand-panel);
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .greeting {
+    display: block;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .identity strong {
+    display: block;
+    font-size: 18px;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+  .title {
+    display: block;
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    color: var(--on-brand);
+  }
+  .title h1 {
+    font-family: var(--body-font);
+    font-size: 24px;
+    font-weight: 750;
+    margin: 0;
+    line-height: 1.2;
+  }
+  .title p {
+    margin: 3px 0 0;
+    font-size: 14px;
+    line-height: 1.45;
+    max-width: 60ch;
+  }
+  .marketTitle h1 {
+    font-size: 30px;
+  }
+  .marketTitle p {
+    margin-top: 12px;
+  }
+}

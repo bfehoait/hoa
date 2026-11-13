@@ -27,6 +27,21 @@ export function AuthGate({
   if (auth.preview) return children;
   if (!auth.configured) return <Navigate to="/sign-in" replace />;
   if (auth.recovering) return <Navigate to="/reset-password" replace />;
+  if (auth.identityError)
+    return (
+      <AuthFrame>
+        <h1>Connection interrupted</h1>
+        <p>
+          We could not verify your session. Check your connection and try again.
+        </p>
+        <div className="form-actions">
+          <Button onClick={auth.retry}>Retry verification</Button>
+          <ButtonLink tone="danger" to="/sign-out">
+            Sign out
+          </ButtonLink>
+        </div>
+      </AuthFrame>
+    );
   if (auth.checking || auth.memberPending)
     return (
       <AuthFrame>
@@ -147,7 +162,7 @@ export function AuthGate({
   }
   return children;
 }
-// Compatibility for bookmarked /workspaces URLs; no role selection screen.
+// Workspace selection changes navigation only; assigned roles stay server-owned.
 export function WorkspacePicker() {
   const auth = useAuth();
   const groups = useAccountNavigation();
@@ -164,5 +179,24 @@ export function WorkspacePicker() {
   const destination = permissions.allowsPath(preferred)
     ? preferred
     : (groups[0]?.links[0]?.to ?? "/more/profile");
-  return <Navigate to={destination} replace />;
+  if (groups.length < 2) return <Navigate to={destination} replace />;
+  return (
+    <AuthFrame>
+      <h1>Choose your workspace</h1>
+      <p>Open the account area you want to use.</p>
+      <div className={styles.workspaceChoices}>
+        {groups.map((group) => (
+          <ButtonLink
+            key={group.id}
+            to={group.links[0].to}
+            tone="secondary"
+            block
+          >
+            {group.title}
+            <ArrowRight size={20} aria-hidden="true" />
+          </ButtonLink>
+        ))}
+      </div>
+    </AuthFrame>
+  );
 }

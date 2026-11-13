@@ -50,6 +50,7 @@ export function useFeatureRecords(
       !!auth.userId && !auth.checking && !auth.preview && !auth.rolePreview,
     retry: false,
     gcTime: 300_000,
+    staleTime: view === "published" ? 15000 : 0,
     refetchInterval: 30000,
     queryFn: async () =>
       featureDashboardSchema.parse(
@@ -114,6 +115,7 @@ export function useFeatureMutation() {
           "registry",
           "office-people",
           "workflow-history",
+          "notification-target",
         ].map((key) => client.invalidateQueries({ queryKey: [key] })),
       );
     },

@@ -33,10 +33,10 @@ import {
   Button,
   Empty,
   Feedback,
-  Modal,
   PageIntro,
   Skeleton,
 } from "../../components/UI";
+import Sheet from "../../components/Sheet";
 import { DetailDisclosure } from "../../components/Navigation";
 import { WorkspaceNote } from "../../components/WorkspaceUI";
 import styles from "./Connected.module.css";
@@ -294,7 +294,7 @@ function DirectoryPage({ section: initial }: { section: string }) {
         participation services are not connected.
       </WorkspaceNote>
       {item && definition && (
-        <Modal
+        <Sheet
           title={item.title}
           description="Synthetic directory entry · not an HOA endorsement"
           onClose={() => setSelected(null)}
@@ -361,7 +361,7 @@ function DirectoryPage({ section: initial }: { section: string }) {
                 : undefined
             }
           />
-        </Modal>
+        </Sheet>
       )}
     </>
   );

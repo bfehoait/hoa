@@ -509,3 +509,101 @@
     justify-self: stretch;
   }
 }
+
+.trackingNote {
+  padding: 20px;
+  border: 1px solid var(--line);
+  background: var(--wash);
+  color: var(--muted);
+  border-radius: var(--radius-lg);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.stopMapSection {
+  margin: 12px 0 16px;
+}
+@media (max-width: 767px) {
+  .panel,
+  .request,
+  .availability {
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    background: var(--surface);
+  }
+  .serviceSummary {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+  }
+  .routeSummary {
+    padding: 16px 0;
+    gap: 14px 10px;
+  }
+  .routeSummary h3 {
+    font-size: 16px;
+    font-weight: 650;
+  }
+  .routeSummary > div + span {
+    margin-top: 12px;
+  }
+  .request .tripTimeline {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+    margin: 12px 0 20px;
+  }
+  .request .tripTimeline li {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    text-align: center;
+    min-width: 0;
+    font-size: 14px;
+  }
+  .request .tripTimeline li:not(:last-child)::after {
+    left: 50%;
+    right: -50%;
+    top: 8px;
+    bottom: auto;
+    width: auto;
+    height: 1px;
+  }
+  .request .tripTimeline small {
+    font-size: 14px;
+  }
+  .request button,
+  .tripAction button {
+    border-radius: var(--radius-pill);
+  }
+  .request button {
+    min-height: 48px;
+  }
+}
+
+/* Resident phone spacing: section rhythm without reducing touch targets. */
+@media (max-width: 767px) {
+  :global([data-customer-ui="true"]) .panel {
+    margin-block: var(--resident-section-gap);
+  }
+  :global([data-customer-ui="true"]) .panel,
+  :global([data-customer-ui="true"]) .request,
+  :global([data-customer-ui="true"]) .availability,
+  :global([data-customer-ui="true"]) .serviceSummary {
+    padding: 12px;
+  }
+  :global([data-customer-ui="true"]) .form {
+    gap: var(--resident-card-gap);
+  }
+  :global([data-customer-ui="true"]) .trackingNote {
+    padding: 12px;
+  }
+  :global([data-customer-ui="true"]) .routeSummary {
+    padding-block: 12px;
+  }
+  :global([data-customer-ui="true"]) .request .tripTimeline {
+    margin-bottom: 12px;
+  }
+}

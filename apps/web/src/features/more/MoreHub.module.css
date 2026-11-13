@@ -24,3 +24,170 @@
     max-width: 1000px;
   }
 }
+
+.memberCard,
+.mobileAccount {
+  display: none;
+}
+@media (max-width: 767px) {
+  .memberCard {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    min-height: 78px;
+    margin-bottom: 24px;
+  }
+  .memberCard > span:nth-child(2) {
+    flex: 1;
+    min-width: 0;
+  }
+  .memberCard strong,
+  .memberCard > span > span {
+    display: block;
+    overflow-wrap: anywhere;
+  }
+  .memberCard > span > span {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .memberCard > svg {
+    flex-shrink: 0;
+    color: var(--muted);
+  }
+  .memberAvatar {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 50%;
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+  .mobileAccount {
+    display: block;
+    margin-bottom: 24px;
+  }
+  .mobileAccount h2,
+  .group > h2 {
+    text-transform: uppercase;
+    font-size: 14px;
+    color: var(--muted);
+    letter-spacing: 0.03em;
+    margin: 0 4px 12px;
+    font-weight: 650;
+  }
+  .preferenceRows {
+    border: 1px solid var(--line);
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .preferenceRows > a,
+  .preferenceRows > label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    min-height: 64px;
+    text-decoration: none;
+  }
+  .preferenceRows > * + * {
+    border-top: 1px solid var(--line);
+  }
+  .preferenceRows > * > span {
+    flex: 1;
+    min-width: 0;
+  }
+  .preferenceRows svg {
+    flex-shrink: 0;
+    color: var(--accent);
+  }
+  .preferenceRows small {
+    display: block;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .preferenceRows input {
+    appearance: none;
+    width: 48px;
+    height: 48px;
+    min-height: 48px;
+    border: 0;
+    border-radius: 24px;
+    cursor: pointer;
+    background:
+      radial-gradient(
+        circle at 15px 50%,
+        var(--surface) 10px,
+        transparent 11px
+      ),
+      linear-gradient(var(--line), var(--line)) center / 46px 28px no-repeat;
+  }
+  .preferenceRows input:checked {
+    background:
+      radial-gradient(
+        circle at 33px 50%,
+        var(--surface) 10px,
+        transparent 11px
+      ),
+      linear-gradient(var(--accent), var(--accent)) center / 46px 28px no-repeat;
+  }
+  .accountExtras {
+    margin-top: 16px;
+  }
+  .accountExtras a[href$="/more/profile"],
+  .accountExtras a[href$="/more/notifications"] {
+    display: none;
+  }
+  .exit {
+    border: 0;
+    padding: 0;
+  }
+  .exit > a {
+    width: 100%;
+    background: var(--surface);
+    color: var(--red);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+  }
+  .exit > p {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .desktopServices {
+    display: none;
+  }
+}
+
+/* Resident phone spacing: section rhythm without reducing touch targets. */
+@media (max-width: 767px) {
+  :global([data-customer-ui="true"]) .group {
+    margin-block: var(--resident-section-gap);
+  }
+  :global([data-customer-ui="true"]) .memberCard,
+  :global([data-customer-ui="true"]) .mobileAccount {
+    margin-bottom: var(--resident-section-gap);
+  }
+  :global([data-customer-ui="true"]) .mobileAccount h2,
+  :global([data-customer-ui="true"]) .group > h2 {
+    margin-bottom: 8px;
+  }
+  :global([data-customer-ui="true"]) .preferenceRows > a,
+  :global([data-customer-ui="true"]) .preferenceRows > label {
+    padding: 12px;
+    min-height: 56px;
+  }
+  :global([data-customer-ui="true"]) .exit {
+    margin-top: var(--resident-section-gap);
+  }
+}

@@ -716,3 +716,26 @@
     white-space: normal;
   }
 }
+.applicationHistory > summary {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  cursor: pointer;
+}
+
+/* Resident phone spacing: section rhythm without reducing touch targets. */
+@media (max-width: 767px) {
+  :global([data-customer-ui="true"]) .sectionTitle {
+    margin: var(--resident-section-gap) 0 8px;
+  }
+  :global([data-customer-ui="true"]) .toolbar {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+  :global([data-customer-ui="true"]) .form {
+    gap: var(--resident-card-gap);
+  }
+  :global([data-customer-ui="true"]) .sections {
+    margin-block: var(--resident-card-gap);
+  }
+}

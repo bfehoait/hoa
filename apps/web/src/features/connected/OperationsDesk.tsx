@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import {
   bookingDashboardSchema,
   visitorDashboardSchema,
   manilaInstant,
+  bookingSchema,
+  visitorPassSchema,
   type Booking,
   type VisitorPass,
 } from "../../../../../packages/shared/src/operations";
@@ -37,6 +39,11 @@ import { Link } from "../../components/AccessLink";
 import { usePermissions } from "../../data/permissions";
 import { hasCapability } from "../../../../../packages/shared/src/permissions";
 import { useSearchParams } from "react-router-dom";
+import {
+  useNotificationTarget,
+  useReadOpenedNotification,
+} from "../../data/notification-target";
+import NotificationTargetFeedback from "../../components/NotificationTargetFeedback";
 const display = (s: string) =>
   new Intl.DateTimeFormat("en-PH", {
     dateStyle: "medium",
@@ -67,10 +74,27 @@ export default function OperationsDesk({
     small_delivery: "Small delivery pass",
   };
   const [page, setPage] = useState(0),
-    [form, setForm] = useState(kind === "booking" && !office),
+    [form, setForm] = useState(
+      kind === "booking" && !office && !params.has("record"),
+    ),
     [configure, setConfigure] = useState(false),
-    [selected, setSelected] = useState<Booking | VisitorPass | null>(null),
+    [selection, setSelected] = useState<Booking | VisitorPass | null>(null),
     [notice, setNotice] = useState("");
+  const target = useNotificationTarget(
+    kind,
+    bookingSchema.or(visitorPassSchema),
+    "",
+    !office,
+  );
+  const selected = target.requested
+    ? target.isSuccess
+      ? target.data
+      : null
+    : selection;
+  const closeDetails = () => {
+    setSelected(null);
+    target.clear();
+  };
   const [clientId, setClientId] = useState(() => crypto.randomUUID()),
     [validation, setValidation] = useState<Error | null>(null);
   const [facility, setFacility] = useState(""),
@@ -184,16 +208,19 @@ export default function OperationsDesk({
           "notifications",
           "booking-charge",
           "registry",
+          "notification-target",
         ].map((key) => cache.invalidateQueries({ queryKey: [key] })),
       );
     },
   });
   const data = query.isError ? undefined : query.data;
+  useReadOpenedNotification(target.requested && !!selected && !!data);
   const eligibleFacilities =
     data?.kind === "booking"
       ? data.facilities.filter(
           (f) =>
             f.active &&
+            f.name.trim().toLowerCase() !== "clubhouse" &&
             (officeBookingCreate
               ? !selectedMember ||
                 f.renters ||
@@ -232,16 +259,60 @@ export default function OperationsDesk({
           [auth.member.role, ...(auth.member.extra_roles ?? [])].some(
             (r) => r === "homeowner" || r === "renter",
           ));
+  const composerFormId = useId();
   const inlineBooking = kind === "booking" && !office;
+  const composerActions = (!inlineBooking || chosen) && (
+    <div className={schedule.footer} data-sheet-actions>
+      <Button
+        secondary
+        type="button"
+        form={composerFormId}
+        disabled={mutation.isPending}
+        onClick={(event) => {
+          if (inlineBooking) {
+            event.currentTarget.form?.reset();
+            setDate("");
+            setStartTime("");
+            setEndTime("");
+            setValidation(null);
+            mutation.reset();
+          } else setForm(false);
+        }}
+      >
+        {inlineBooking ? "Reset selection" : "Cancel"}
+      </Button>
+      <Button
+        type="submit"
+        form={composerFormId}
+        pending={mutation.isPending}
+        disabled={
+          auth.memberPreview ||
+          (office && kind === "booking" && !selectedMember) ||
+          (kind === "booking" &&
+            (selectionBusy ||
+              !chosen ||
+              !date ||
+              !startTime ||
+              !endTime ||
+              !slots.isSuccess))
+        }
+      >
+        {kind === "booking" ? "Request booking" : "Request pass"}
+      </Button>
+    </div>
+  );
   const composer =
     form && data && (office || canCreate) ? (
       <BookingComposerFrame
         inline={inlineBooking}
+        sheet={kind === "visitor"}
+        footer={kind === "visitor" ? composerActions : undefined}
         busy={mutation.isPending}
         title={kind === "booking" ? "Book an amenity" : "Request a pass"}
         onClose={() => setForm(false)}
       >
         <form
+          id={composerFormId}
           className={styles.form}
           onSubmit={(e) => {
             e.preventDefault();
@@ -316,7 +387,7 @@ export default function OperationsDesk({
                       setEndTime("");
                     }
                     setNotice(
-                      "Saved by the server. Office approval is pending.",
+                      "Your request was saved. Office approval is pending.",
                     );
                   },
                 },
@@ -414,6 +485,12 @@ export default function OperationsDesk({
                         Booking limit:{" "}
                         {amenityAttendeeLimit(f.name, f.capacity)} people
                       </span>
+                      <span
+                        className={schedule.selectionIndicator}
+                        aria-hidden="true"
+                      >
+                        {facility === f.id ? "✓" : ""}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -421,22 +498,25 @@ export default function OperationsDesk({
               <input type="hidden" name="facility" value={facility} />
               {chosen && (
                 <>
-                  <div className={schedule.amenityFacts}>
-                    <span>{chosen.slot_minutes}-minute intervals</span>
-                    <span>Up to {chosen.max_minutes / 60} hours</span>
-                    <span>
-                      Configured booking limit:{" "}
-                      {amenityAttendeeLimit(chosen.name, chosen.capacity)}{" "}
-                      people
-                    </span>
-                    <p>Policy: {chosen.policy_reference}</p>
-                  </div>
-                  <AmenityGuidelines name={chosen.name} />
-                  <p className="note">
-                    Office confirms the applicable price after reviewing the
-                    booking. Confirmed charges appear under Other in My account;
-                    submitting a request does not record payment.
-                  </p>
+                  <details className={schedule.amenityDetails}>
+                    <summary>Rates &amp; facility rules</summary>
+                    <div className={schedule.amenityFacts}>
+                      <span>{chosen.slot_minutes}-minute intervals</span>
+                      <span>Up to {chosen.max_minutes / 60} hours</span>
+                      <span>
+                        Configured booking limit:{" "}
+                        {amenityAttendeeLimit(chosen.name, chosen.capacity)}{" "}
+                        people
+                      </span>
+                      <p>Policy: {chosen.policy_reference}</p>
+                    </div>
+                    <AmenityGuidelines name={chosen.name} />
+                    <p className="note">
+                      Office confirms the applicable price after reviewing the
+                      booking. Confirmed charges appear under Other in My
+                      account; submitting a request does not record payment.
+                    </p>
+                  </details>
                   <div className={schedule.layout}>
                     <BookingDatePicker
                       value={date}
@@ -448,6 +528,7 @@ export default function OperationsDesk({
                       }}
                     />
                     <div>
+                      <h3 className={schedule.timeStep}>Choose your time</h3>
                       {chosen && date ? (
                         <>
                           <Feedback error={slots.error} />
@@ -482,6 +563,7 @@ export default function OperationsDesk({
                     </div>
                   </div>
                   <label>
+                    <span className={schedule.requestStep}>Your request</span>
                     Attendees
                     <input
                       required
@@ -628,49 +710,13 @@ export default function OperationsDesk({
               That time was just reserved. Choose another time.
             </p>
           )}
-          {(!inlineBooking || chosen) && (
-            <div className={schedule.footer}>
-              <Button
-                secondary
-                type="button"
-                disabled={mutation.isPending}
-                onClick={(event) => {
-                  if (inlineBooking) {
-                    event.currentTarget.form?.reset();
-                    setDate("");
-                    setStartTime("");
-                    setEndTime("");
-                    setValidation(null);
-                    mutation.reset();
-                  } else setForm(false);
-                }}
-              >
-                {inlineBooking ? "Reset selection" : "Cancel"}
-              </Button>
-              <Button
-                type="submit"
-                pending={mutation.isPending}
-                disabled={
-                  auth.memberPreview ||
-                  (office && kind === "booking" && !selectedMember) ||
-                  (kind === "booking" &&
-                    (selectionBusy ||
-                      !chosen ||
-                      !date ||
-                      !startTime ||
-                      !endTime ||
-                      !slots.isSuccess))
-                }
-              >
-                {kind === "booking" ? "Request booking" : "Request pass"}
-              </Button>
-            </div>
-          )}
+          {kind !== "visitor" && composerActions}
         </form>
       </BookingComposerFrame>
     ) : null;
   return (
     <>
+      <NotificationTargetFeedback target={target} />
       {office && kind === "booking" && (
         <Link className="text-link" to="/office/calendar">
           Calendar view
@@ -955,7 +1001,7 @@ export default function OperationsDesk({
           title={kind === "visitor" ? "Pass details" : "Booking details"}
           presentation={office ? "sheet" : "task"}
           busy={mutation.isPending}
-          onClose={() => setSelected(null)}
+          onClose={closeDetails}
         >
           <form
             className={styles.form}
@@ -977,8 +1023,8 @@ export default function OperationsDesk({
                 },
                 {
                   onSuccess: () => {
-                    setSelected(null);
-                    setNotice("Action confirmed by the server.");
+                    closeDetails();
+                    setNotice("Booking or pass updated.");
                   },
                 },
               );
@@ -1131,7 +1177,7 @@ export default function OperationsDesk({
                 {
                   onSuccess: () => {
                     setConfigure(false);
-                    setNotice("Amenity configuration saved by the server.");
+                    setNotice("Amenity configuration saved.");
                   },
                 },
               );

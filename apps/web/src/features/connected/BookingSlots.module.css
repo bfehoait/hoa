@@ -169,3 +169,41 @@
   border-style: dashed;
   cursor: not-allowed;
 }
+
+@media (max-width: 767px) {
+  .picker {
+    background: var(--surface);
+    padding: 14px;
+    border-radius: var(--radius-lg);
+    margin: 0;
+  }
+  .timeGrid {
+    max-height: none;
+    padding: 3px;
+  }
+  .picker .timeChoice {
+    border-color: var(--accent-line);
+    color: var(--accent);
+    border-radius: var(--radius-control);
+  }
+  .picker .timeChoice[aria-pressed="true"] {
+    color: var(--on-accent);
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .picker .timeChoice:disabled {
+    background: var(--wash);
+    color: var(--muted);
+  }
+}
+
+/* Resident phone spacing: section rhythm without reducing touch targets. */
+@media (max-width: 767px) {
+  :global([data-customer-ui="true"]) .timeLayout {
+    gap: var(--resident-card-gap);
+    margin-top: var(--resident-card-gap);
+  }
+  :global([data-customer-ui="true"]) .picker {
+    margin-block: var(--resident-card-gap);
+  }
+}

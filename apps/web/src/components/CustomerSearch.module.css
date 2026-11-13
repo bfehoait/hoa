@@ -22,6 +22,12 @@
   font: inherit;
   font-size: 16px;
   outline: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+.search input:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 .search button {
   display: grid;
@@ -54,11 +60,13 @@
     margin-left: 0;
     border: 1px solid var(--line);
     background: var(--wash);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
   }
   .searchPage input {
     display: block;
   }
   .searchPage input::placeholder {
-    color: transparent;
+    color: var(--muted);
   }
 }

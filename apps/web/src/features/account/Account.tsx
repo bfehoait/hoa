@@ -22,7 +22,8 @@ import {
 } from "../../../../../packages/shared/src";
 import { AS_OF, invoices } from "../../data/fixtures";
 import { downloadCsv } from "../../data/download";
-import { Badge, Button, Feedback, Modal, PageIntro } from "../../components/UI";
+import { Badge, Button, Feedback, PageIntro } from "../../components/UI";
+import Sheet from "../../components/Sheet";
 import { InvoiceVisual } from "../../components/RecordVisuals";
 import styles from "./Account.module.css";
 
@@ -236,7 +237,7 @@ function SampleAccount() {
         </div>
       </div>
       {invoice && (
-        <Modal
+        <Sheet
           title={invoice.period}
           description="Sample bill details · not an official statement"
           onClose={() => setSelected(null)}
@@ -272,10 +273,10 @@ function SampleAccount() {
             The sample amount does not establish the HOA’s dues policy. A real
             bill needs an approved breakdown and source records.
           </p>
-        </Modal>
+        </Sheet>
       )}
       {paymentOptions && (
-        <Modal
+        <Sheet
           title="Payment options"
           description="Buyani opens separately. Sample balances are not actual charges."
           onClose={() => setPaymentOptions(false)}
@@ -286,7 +287,7 @@ function SampleAccount() {
           }
         >
           <PayDues />
-        </Modal>
+        </Sheet>
       )}
     </div>
   );

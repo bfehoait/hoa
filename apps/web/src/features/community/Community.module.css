@@ -202,3 +202,18 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* Resident phone spacing: section rhythm without reducing touch targets. */
+@media (max-width: 767px) {
+  :global([data-customer-ui="true"]) .updates {
+    margin-block: var(--resident-section-gap);
+    gap: var(--resident-card-gap);
+  }
+  :global([data-customer-ui="true"]) .communityFooter {
+    padding: 12px;
+    margin-top: 16px;
+  }
+  :global([data-customer-ui="true"]) .articleMeta {
+    margin-bottom: var(--resident-section-gap);
+  }
+}

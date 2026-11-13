@@ -180,7 +180,7 @@ export default function FeatureSubmissionForm({
       onSaved(
         announcement && directPublish
           ? "Announcement published."
-          : "Submission saved by the server. Review is pending.",
+          : "Your submission was saved. Office review is pending.",
       );
     },
   });

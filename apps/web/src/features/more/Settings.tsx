@@ -28,6 +28,7 @@ export default function Settings() {
 
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? "dark" : "light";
+    window.dispatchEvent(new Event("bellefort-theme-change"));
     try {
       localStorage.setItem(THEME_KEY, dark ? "dark" : "light");
     } catch {

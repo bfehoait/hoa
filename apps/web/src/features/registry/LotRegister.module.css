@@ -133,6 +133,46 @@
 .panel p {
   margin: 6px 0;
 }
+.card.linkedCard {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 48px;
+}
+.linkedCard > svg {
+  color: var(--accent);
+}
+.linkedList {
+  margin-block: 12px;
+}
+.linkedList .linkedCard {
+  padding: 14px;
+}
+.linkedCard h2 {
+  font-family: inherit;
+  font-size: 16px;
+  margin: 0;
+}
+.linkedCard .identity > div {
+  min-width: 0;
+}
+.linkedCard p {
+  margin: 2px 0 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.propertyIcon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: var(--radius-control);
+  background: var(--accent-soft);
+}
+.linkAnother {
+  border-radius: var(--radius-pill);
+  color: var(--accent);
+}
 .identity {
   display: flex;
   align-items: center;
@@ -628,5 +668,21 @@ fieldset.form {
   }
   .toolbar:has(input[type="date"]) label {
     min-width: 0;
+  }
+}
+
+/* Resident phone spacing: section rhythm without reducing touch targets. */
+@media (max-width: 767px) {
+  :global([data-customer-ui="true"]) .toolbar,
+  :global([data-customer-ui="true"]) .tabs,
+  :global([data-customer-ui="true"]) .actions {
+    margin-block: var(--resident-card-gap);
+  }
+  :global([data-customer-ui="true"]) .empty {
+    padding: 16px 12px;
+  }
+  :global([data-customer-ui="true"]) .receiptDetail {
+    gap: var(--resident-card-gap);
+    margin-top: var(--resident-card-gap);
   }
 }

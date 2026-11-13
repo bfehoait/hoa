@@ -15,6 +15,7 @@ import { DestinationGrid, type Destination } from "../../components/Navigation";
 import { PageIntro } from "../../components/UI";
 import ResidentDashboard from "./ResidentDashboard";
 import styles from "./ServiceDirectory.module.css";
+import { serviceGroups as residentServiceGroups } from "../services/service-destinations";
 
 const services: Destination[] = [
   {
@@ -113,7 +114,27 @@ export default function ConnectedHome({
       icon: Building2,
     },
   ];
-  const items = (area === "board" ? board : services).filter(
+  const liveServiceGroups = [
+    ...residentServiceGroups,
+    {
+      title: "Track & plan",
+      items: [
+        {
+          to: "/services/calendar",
+          title: "Community calendar",
+          detail: "Bookings and community dates",
+          icon: CalendarDays,
+        },
+      ],
+    },
+  ];
+  const items = (
+    area === "board"
+      ? board
+      : area === "services"
+        ? liveServiceGroups.flatMap((group) => group.items)
+        : services
+  ).filter(
     (item) =>
       !(area === "home" && item.to === "/account") &&
       auth.member &&
@@ -131,17 +152,10 @@ export default function ConnectedHome({
             { title: "Contact the office", paths: ["/services/requests"] },
             { title: "Useful resources", paths: ["/more/documents"] },
           ]
-        : [
-            {
-              title: "Access & amenities",
-              paths: ["/services/visitors", "/services/bookings"],
-            },
-            {
-              title: "Requests & property",
-              paths: ["/services/requests", "/more/vehicles", "/more/permits"],
-            },
-            { title: "Community resources", paths: ["/more/documents"] },
-          ];
+        : liveServiceGroups.map((group) => ({
+            title: group.title,
+            paths: group.items.map((item) => item.to),
+          }));
     return (
       <div className={styles.page}>
         <PageIntro

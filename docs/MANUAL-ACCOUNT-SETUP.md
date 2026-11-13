@@ -14,7 +14,7 @@ You can deploy from the already signed-in Supabase dashboard instead of using th
 2. Replace all of the example `index.ts` content with the entire contents of [bfe-create-account.editor.txt](setup/bfe-create-account.editor.txt). This generated file includes the shared validator and pinned npm imports, so no additional editor files are needed. Do not paste the SQL migration here.
 3. Set **Function name** to exactly `bfe-create-account` and choose **Deploy function**.
 4. In that function's configuration, turn off **Verify JWT with legacy secret** if it is enabled, and save. The function itself validates the caller's session and database authority.
-5. No custom secret is needed for the known demo origins. The function defaults to `http://127.0.0.1:5173`, `http://localhost:5173` and `https://behoademo.hoa-system.com`. For different addresses, an authorized project administrator can optionally set `BFE_ACCOUNT_ALLOWED_ORIGINS` to an exact comma-separated origin list; it replaces those defaults. Do not add service keys to the source code; the hosted runtime supplies its server environment.
+5. No custom secret is needed for the known demo origins. The function defaults to `http://127.0.0.1:5173`, `http://localhost:5173`, `https://behoademo.hoa-system.com` and `https://bfehoa.vercel.app`. The latter is the request origin shown by the owner's embedded portal console on 12 November. For different addresses, an authorized project administrator can optionally set `BFE_ACCOUNT_ALLOWED_ORIGINS` to an exact comma-separated origin list; it replaces those defaults. If that override already exists, include the Vercel origin there as well. Do not add service keys to the source code; the hosted runtime supplies its server environment.
 6. Refresh the app and follow the manual verification steps below. Deployment success alone does not confirm account creation works.
 
 To refresh the generated editor file after changing the canonical function, shared schema or runtime import map, run `node scripts/prepare-manual-account-editor.mjs`. Edit those canonical sources rather than the generated artifact.
@@ -74,3 +74,9 @@ Auth access tokens may remain valid until expiry after deletion; the application
 `npx.cmd tsc --noEmit --incremental false` passed for the frontend/shared schema. Migration 025 compiled in an isolated PGlite database with stub dependencies; this was a syntax check, not a live Auth workflow check. The Edge source passed a separate TypeScript compiler check using a minimal declaration for `Deno.env.get` and `Deno.serve` and the installed SDK. Native Deno is not installed here, so Deno package resolution, function deployment, Auth-trigger ordering on the deployed version, email-free sign-in, password changes and browser interaction remain for owner verification. No test suites, E2E or live database connection were run.
 
 When Deno is available, run `deno check --config supabase/functions/bfe-create-account/deno.json supabase/functions/bfe-create-account/index.ts` before deployment. This resolves the pinned runtime imports; the frontend typecheck does not cover the Edge runtime.
+# Session policy dependency (migration 072)
+
+The current account Edge function also requires migration 072 before deployment.
+It checks the caller's portal session before creating or deleting accounts.
+Use the rollout order in [Persistent sessions](PERSISTENT-SESSIONS.md).
+The generated dashboard editor artifact includes this check.
