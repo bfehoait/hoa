@@ -1,3 +1,4 @@
+import PageIntro from "../office/OfficePage";
 import { lazy, Suspense, useState } from "react";
 import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import {
@@ -36,14 +37,7 @@ import {
 import { downloadCsv } from "../../data/download";
 import { useLinkedPropertyAddress } from "../../data/linked-properties";
 import { Link } from "../../components/AccessLink";
-import {
-  Badge,
-  Button,
-  Feedback,
-  Modal,
-  PageIntro,
-  Skeleton,
-} from "../../components/UI";
+import { Badge, Button, Feedback, Modal, Skeleton } from "../../components/UI";
 import styles from "./LotRegister.module.css";
 import PayDues from "../account/PayDues";
 const PropertyBusinessDetails = lazy(() => import("./PropertyBusinessDetails"));
@@ -373,7 +367,54 @@ function LotList({
               </Button>
             </nav>
           )}
-          <div className={styles.list}>
+          {office && (
+            <div
+              className={styles.officeLotTable}
+              role="region"
+              aria-label="Lot register results"
+              tabIndex={0}
+            >
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Lot ID</th>
+                    <th scope="col">Location</th>
+                    <th scope="col">Registry status</th>
+                    <th scope="col">Recorded homeowner</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.rows.map((l) => (
+                    <tr key={l.id}>
+                      <td>
+                        <Link to={`${root}/${l.id}`}>{l.physical_id}</Link>
+                      </td>
+                      <td>
+                        Phase {l.phase} · Block {l.block} · Lot {l.lot}
+                      </td>
+                      <td>
+                        <Badge>{l.registry_status}</Badge>
+                      </td>
+                      <td>
+                        {l.recorded_homeowner === null
+                          ? "Recorded name restricted"
+                          : l.recorded_homeowner ||
+                            "Homeowner name not supplied"}
+                        <small>{l.admin_unit}</small>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className={styles.note}>
+                Recorded names do not establish verified ownership. Open a lot
+                to review approved relationships.
+              </p>
+            </div>
+          )}
+          <div
+            className={`${styles.list} ${office ? styles.officeLotCards : ""}`}
+          >
             {data.rows.map((l) => (
               <Link className={styles.card} key={l.id} to={`${root}/${l.id}`}>
                 <div className={styles.identity}>
@@ -542,7 +583,15 @@ function auditValue(value: unknown): string {
   return typeof value === "object" ? JSON.stringify(value) : String(value);
 }
 
-function LotProfile({ id, root }: { id: string; root: string }) {
+export function LotProfile({
+  id,
+  root,
+  embedded = false,
+}: {
+  id: string;
+  root: string;
+  embedded?: boolean;
+}) {
   const { sample, can } = useAccess();
   const query = useLot(id);
   const [searchParams] = useSearchParams();
@@ -580,9 +629,12 @@ function LotProfile({ id, root }: { id: string; root: string }) {
     );
   return (
     <article className={styles.profile}>
-      <Link to={root} className="text-link" data-page-back>
-        ← Back to {root.startsWith("/office") ? "lot register" : "your lots"}
-      </Link>
+      {embedded && <h3>{data?.physical_id ?? "Property records"}</h3>}
+      {!embedded && (
+        <Link to={root} className="text-link" data-page-back>
+          ← Back to {root.startsWith("/office") ? "lot register" : "your lots"}
+        </Link>
+      )}
       <PageIntro
         eyebrow={sample ? "SYNTHETIC LOT PROFILE" : "LOT PROFILE"}
         title={data?.physical_id ?? "Property records"}
@@ -1035,7 +1087,7 @@ export function ReceiptPanel({
           all.total_centavos
       )
         throw new Error(
-          "Export reconciliation failed. Refresh before retrying.",
+          "The downloaded totals could not be checked. Refresh and try again.",
         );
       downloadCsv(
         `Bellefort-recorded-collections-${requestFrom || "start"}-${requestTo || "latest"}.csv`,
@@ -1066,8 +1118,8 @@ export function ReceiptPanel({
         {dashboard ? "Collections overview" : "Receipts & monthly totals"}
       </h2>
       <p className={styles.note}>
-        Imported receipts, not bills or bank-cleared payments. Visibility
-        follows your current household relationships and receipt permissions.
+        Imported receipts, not bills or bank-cleared payments. You can see only
+        the receipts allowed by your approved property links and permissions.
       </p>
       <fieldset disabled={exporting} className={styles.toolbar}>
         <label>

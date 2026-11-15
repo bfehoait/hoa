@@ -1,27 +1,17 @@
 import { useParams } from "react-router-dom";
 import { Link } from "../../components/AccessLink";
 import {
-  Activity,
   ArrowRight,
   Building2,
   CarFront,
-  Database,
   Eye,
-  HardDrive,
   House,
   MonitorCog,
-  RefreshCw,
   ShieldCheck,
   Users,
   Wrench,
 } from "lucide-react";
-import {
-  Badge,
-  Button,
-  ButtonLink,
-  Empty,
-  PageIntro,
-} from "../../components/UI";
+import { Badge, ButtonLink, Empty, PageIntro } from "../../components/UI";
 import { DetailDisclosure, NavigationGroup } from "../../components/Navigation";
 import { useAuth } from "../../data/auth";
 import { previewRoles } from "../../../../../packages/shared/src/auth";
@@ -31,6 +21,8 @@ import ModuleMonitor from "./ModuleMonitor";
 import AccessPlanning from "./AccessPlanning";
 import DeveloperHome from "./DeveloperHome";
 import MemberInspection from "./MemberAccountPicker";
+import DeveloperConnections from "./DeveloperConnections";
+import DeveloperAudit from "./DeveloperAudit";
 
 const roleInfo = {
   homeowner: {
@@ -90,17 +82,14 @@ export default function DeveloperConsole() {
   if (path === "modules" || path.startsWith("modules/"))
     return <ModuleMonitor />;
   if (!path) return <DeveloperHome />;
-  const checked = auth.verifiedAt
-    ? new Date(auth.verifiedAt).toLocaleString("en-PH", {
-        timeZone: "Asia/Manila",
-      })
-    : "Not verified";
+  if (path === "connections") return <DeveloperConnections />;
+  if (path === "activity") return <DeveloperAudit />;
   return (
     <div className={`${styles.console} ${!path ? styles.hasDashboard : ""}`}>
       <PageIntro
         eyebrow="TECHNICAL OVERSIGHT"
         title={
-          path === "roles"
+          path === "roles" || path === "previews"
             ? "Role previews"
             : path === "connections"
               ? "Connections"
@@ -120,71 +109,7 @@ export default function DeveloperConsole() {
           <Link to="/developer/activity">Activity</Link>
         </NavigationGroup>
       )}
-      {path === "connections" && (
-        <>
-          <div className="section-title">
-            <h2>Connection status</h2>
-            <Button secondary onClick={auth.retry}>
-              <RefreshCw size={20} />
-              Recheck access
-            </Button>
-          </div>
-          <div className={styles.grid}>
-            {[
-              {
-                title: "Supabase Auth",
-                icon: ShieldCheck,
-                status:
-                  auth.userId && !auth.preview
-                    ? "Identity verified"
-                    : "Not verified",
-                detail:
-                  "Current signed-in identity only. Passwords and tokens are never displayed.",
-                live: !!auth.userId && !auth.preview,
-              },
-              {
-                title: "Member lookup",
-                icon: Database,
-                status:
-                  auth.member && !auth.preview
-                    ? "Member loaded"
-                    : "Not verified",
-                detail:
-                  "Your own linked record. This does not verify all table policies.",
-                live: !!auth.member && !auth.preview,
-              },
-              {
-                title: "Operational monitoring",
-                icon: Activity,
-                status: "Check a module",
-                detail:
-                  "System modules use a developer-only read API. Availability is checked per source; this is not a global health probe.",
-                live: false,
-              },
-              {
-                title: "Files & delivery",
-                icon: HardDrive,
-                status: "Not checked",
-                detail:
-                  "Private storage, mail delivery and job health are not monitored yet.",
-                live: false,
-              },
-            ].map(({ title, icon: Icon, status, detail, live }) => (
-              <section key={title} className={styles.card}>
-                <div className={styles.cardHead}>
-                  <span className={styles.icon}>
-                    <Icon size={26} />
-                  </span>
-                  <Badge tone={live ? "green" : "neutral"}>{status}</Badge>
-                </div>
-                <h2>{title}</h2>
-                <p>{detail}</p>
-              </section>
-            ))}
-          </div>
-        </>
-      )}
-      {path === "roles" && (
+      {(path === "roles" || path === "previews") && (
         <>
           <Link className="text-link" to="/developer/members">
             View a real member — read-only
@@ -236,48 +161,15 @@ export default function DeveloperConsole() {
           </DetailDisclosure>
         </>
       )}
-      {path === "activity" && (
-        <>
+      {path &&
+        !["roles", "previews", "connections", "activity"].includes(path) && (
           <Empty
-            icon={<Activity size={32} />}
-            title="Unified activity stream is not connected"
-            action={
-              <ButtonLink tone="primary" to="/developer/modules/audit">
-                Open audit monitoring
-                <ArrowRight size={20} />
-              </ButtonLink>
-            }
+            title="This developer tool is not available yet"
+            icon={<Wrench size={32} />}
           >
-            Use the audit module to inspect available server history. Delivery
-            jobs and a unified event stream are not monitored here yet.
+            Return to the console to review connections or role previews.
           </Empty>
-          <section className={styles.card}>
-            <h2>Available now</h2>
-            <dl className={styles.facts}>
-              <div>
-                <dt>Current identity verification</dt>
-                <dd>{checked}</dd>
-              </div>
-              <div>
-                <dt>Membership</dt>
-                <dd>{auth.member?.status ?? "Unavailable"}</dd>
-              </div>
-              <div>
-                <dt>Unified event stream</dt>
-                <dd>Unavailable</dd>
-              </div>
-            </dl>
-          </section>
-        </>
-      )}
-      {path && !["roles", "connections", "activity"].includes(path) && (
-        <Empty
-          title="This developer tool is not available yet"
-          icon={<Wrench size={32} />}
-        >
-          Return to the console to review connections or role previews.
-        </Empty>
-      )}
+        )}
       <div className={styles.actions}>
         <ButtonLink tone="secondary" to="/workspaces">
           Back to home

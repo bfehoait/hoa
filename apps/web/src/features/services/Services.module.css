@@ -25,8 +25,8 @@
 }
 .amenities h2 {
   font-family: var(--heading-font);
-  font-size: var(--section-heading-size);
-  font-weight: 600;
+  font-size: var(--staff-section-heading-size, var(--section-heading-size));
+  font-weight: var(--staff-heading-weight, 600);
 }
 .amenities p {
   color: var(--muted);
@@ -73,7 +73,7 @@
   gap: 4px;
 }
 .record strong {
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
 }
 .record small {
   font-size: 14px;

@@ -70,7 +70,7 @@
   color: white;
   font-family: var(--body-font);
   font-size: 16px;
-  font-weight: 700;
+  font-weight: var(--staff-emphasis-weight, 700);
   box-shadow: 0 2px 10px #24212433;
 }
 .tripPanel {
@@ -84,7 +84,7 @@
   min-width: 0;
 }
 .tripPanel h2 {
-  font-size: 20px;
+  font-size: var(--staff-section-heading-size, 20px);
   margin: 20px 0 16px;
 }
 .modes {
@@ -108,7 +108,7 @@
   color: var(--muted);
   font: inherit;
   font-size: 14px;
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
   cursor: pointer;
 }
 .modes button[aria-pressed="true"] {
@@ -231,7 +231,7 @@
   color: var(--amber);
 }
 .ticket h2 {
-  font-size: 24px;
+  font-size: var(--staff-section-heading-size, 24px);
   margin: 16px 0;
 }
 .ticket dl > div {
@@ -303,7 +303,7 @@
   background: var(--surface);
 }
 .shuttleMap h2 {
-  font-size: 20px;
+  font-size: var(--staff-section-heading-size, 20px);
   margin: 0 0 8px;
 }
 .shuttleMap .modes {

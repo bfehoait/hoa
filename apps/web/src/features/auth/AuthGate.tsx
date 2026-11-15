@@ -1,13 +1,13 @@
 import type { ReactNode } from "react";
 import { Link, Navigate, useLocation } from "react-router-dom";
-import { ArrowRight, LoaderCircle, LogOut, ShieldCheck } from "lucide-react";
+import { ArrowRight, LogOut, ShieldCheck } from "lucide-react";
 import {
   canOpenPath,
   memberRoles,
   memberHomePath,
 } from "../../../../../packages/shared/src/auth";
 import { useAuth } from "../../data/auth";
-import { Button, ButtonLink } from "../../components/UI";
+import { Button, ButtonLink, Skeleton } from "../../components/UI";
 import { useAccountNavigation } from "../../components/AccountNavigation";
 import { AuthFrame } from "./AuthFrame";
 import styles from "./Access.module.css";
@@ -45,10 +45,10 @@ export function AuthGate({
   if (auth.checking || auth.memberPending)
     return (
       <AuthFrame>
-        <div role="status" className={styles.connectionNote}>
-          <LoaderCircle size={24} className="spin" />
-          <p>Checking your account and membership...</p>
-        </div>
+        <Skeleton
+          variant="section"
+          label="Checking your account and membership"
+        />
         <Button secondary onClick={auth.retry}>
           Retry verification
         </Button>
@@ -134,10 +134,7 @@ export function AuthGate({
     if (permissions.isPending)
       return (
         <AuthFrame>
-          <div role="status">
-            <LoaderCircle className="spin" size={24} />
-            <p>Checking your module permissions...</p>
-          </div>
+          <Skeleton variant="section" label="Checking your access" />
         </AuthFrame>
       );
     if (!permissions.allowsPath(location.pathname))

@@ -1,3 +1,157 @@
+.propertyLink {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.linkSteps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  list-style: none;
+  margin: 0;
+  padding: 0 0 12px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 14px;
+}
+.linkSteps li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.linkSteps li > span {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--wash);
+}
+.linkSteps [aria-current="step"] {
+  color: var(--accent);
+  font-weight: 600;
+}
+.linkSteps [aria-current="step"] > span {
+  background: var(--accent-soft);
+}
+.linkHeading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.linkHeading > svg {
+  flex: none;
+  color: var(--accent);
+  margin-top: 2px;
+}
+.linkHeading h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+.linkHeading p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.linkSearchActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.addressPreview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.addressPreview strong {
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.propertyChecking,
+.propertyResult {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--wash);
+}
+.propertyChecking {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 88px;
+}
+.propertyChecking strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+.propertyChecking p {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 4px 0 0;
+}
+.searchTrack {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 72px;
+  height: 48px;
+  color: var(--accent);
+}
+.searchTrack svg {
+  animation: propertySearch 1.8s linear infinite;
+}
+@keyframes propertySearch {
+  0%,
+  50%,
+  100% {
+    transform: translate(0, 0);
+  }
+  12.5% {
+    transform: translate(16px, -8px);
+  }
+  25% {
+    transform: translate(24px, 0);
+  }
+  37.5% {
+    transform: translate(16px, 8px);
+  }
+  62.5% {
+    transform: translate(-16px, -8px);
+  }
+  75% {
+    transform: translate(-24px, 0);
+  }
+  87.5% {
+    transform: translate(-16px, 8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .searchTrack svg {
+    animation: none;
+  }
+}
+@media (max-width: 600px) {
+  .propertyLink {
+    padding: 12px;
+  }
+  .linkSearchActions > button {
+    width: 100%;
+  }
+  .propertyChecking {
+    gap: 8px;
+    padding: 12px;
+  }
+}
 .tabs,
 .actions {
   display: flex;
@@ -183,10 +337,10 @@
 
 @media (min-width: 701px) {
   .workspace {
-    height: min(820px, 88dvh);
+    height: auto;
   }
   .workspace > div {
-    height: 100%;
+    height: auto;
   }
 }
 
@@ -204,4 +358,46 @@
   .form fieldset > button[type="submit"] {
     justify-self: stretch;
   }
+}
+
+:global([data-staff-ui="true"]) .tabs {
+  display: flex;
+  gap: 4px;
+  border: 0;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--wash);
+}
+:global([data-staff-ui="true"]) .tabs > button {
+  flex: 1;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  padding: 10px 14px;
+  min-height: 48px;
+}
+:global([data-staff-ui="true"]) .tabs > button[aria-pressed="true"] {
+  border-color: var(--line);
+  color: var(--accent);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  font-weight: var(--staff-emphasis-weight, 750);
+}
+:global([data-staff-ui="true"]) .record {
+  margin-block: 12px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+:global([data-staff-ui="true"]) .details {
+  padding: 16px 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+:global([data-staff-ui="true"]) .details > div:last-child {
+  border-bottom: 0;
+}
+:global([data-staff-ui="true"]) .footerBar {
+  gap: 12px;
 }

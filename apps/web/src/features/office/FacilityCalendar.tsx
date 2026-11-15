@@ -1,3 +1,5 @@
+import PageIntro from "../office/OfficePage";
+import BookingPrice from "../connected/BookingPrice";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
@@ -10,14 +12,7 @@ import {
 import { bookingSchema } from "../../../../../packages/shared/src/operations";
 import { useAuth, makeClient } from "../../data/auth";
 import { Link } from "../../components/AccessLink";
-import {
-  Badge,
-  Button,
-  Feedback,
-  Modal,
-  PageIntro,
-  Skeleton,
-} from "../../components/UI";
+import { Badge, Button, Feedback, Modal, Skeleton } from "../../components/UI";
 import styles from "./FacilityCalendar.module.css";
 
 const schema = z.object({
@@ -119,7 +114,7 @@ export default function FacilityCalendar() {
   return (
     <>
       <PageIntro
-        title="Facility calendar"
+        title="Facilities & calendar"
         description="All facility reservations available to your staff account. Dates and times use Philippine time."
         icon={<CalendarDays size={28} />}
         action={
@@ -200,9 +195,13 @@ export default function FacilityCalendar() {
               Today
             </Button>
             <span>
-              {query.isSuccess
-                ? `${query.data.month_total} reservations this month`
-                : "Checking month…"}
+              {query.isSuccess ? (
+                `${query.data.month_total} reservations this month`
+              ) : query.isPending ? (
+                <Skeleton variant="metric" label="Loading month totals" />
+              ) : (
+                "Month total unavailable"
+              )}
             </span>
           </div>
           <div className={styles.grid}>
@@ -348,6 +347,7 @@ export default function FacilityCalendar() {
               <dd>{selected.attendees}</dd>
             </div>
           </dl>
+          <BookingPrice id={selected.id} />
           <Link className="text-link" to="/office/bookings?queue=pending">
             Open booking approvals
           </Link>

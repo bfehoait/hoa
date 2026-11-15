@@ -28,7 +28,7 @@
   display: grid;
   gap: 8px;
   font-size: 14px;
-  font-weight: 650;
+  font-weight: var(--staff-label-weight, 650);
   flex: 1 1 140px;
   min-width: 0;
 }
@@ -171,7 +171,7 @@
     background: var(--wash);
   }
   .identity strong {
-    font-weight: 650;
+    font-weight: var(--staff-emphasis-weight, 650);
   }
   .avatar {
     border-radius: 50%;
@@ -223,7 +223,7 @@
   cursor: pointer;
   min-height: 48px;
   align-content: center;
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
 }
 .boundaries p {
   color: var(--muted);
@@ -345,4 +345,136 @@
   color: var(--muted);
   font-size: 14px;
   margin-top: 4px;
+}
+.statusChoices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.statusChoices button {
+  min-height: 48px;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+.statusChoices button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+
+:global([data-staff-ui="true"]) .filters {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+:global([data-staff-ui="true"]) .filters label {
+  font-weight: var(--staff-label-weight, 600);
+}
+:global([data-staff-ui="true"]) .filters input {
+  border-radius: var(--radius-control);
+}
+:global([data-staff-ui="true"]) .records {
+  box-shadow: var(--shadow-sm);
+}
+:global([data-staff-ui="true"]) .identity strong {
+  font-weight: var(--staff-emphasis-weight, 750);
+}
+:global([data-staff-ui="true"]) .avatar {
+  background: var(--accent-soft);
+  border-radius: 12px;
+  color: var(--accent);
+}
+:global([data-staff-ui="true"]) .resultsHeading h2 {
+  font-size: var(--staff-section-heading-size, 20px);
+  font-weight: var(--staff-heading-weight, 800);
+}
+:global([data-staff-ui="true"]) .columnLabels {
+  background: var(--wash);
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  border-radius: 16px 16px 0 0;
+  font-weight: var(--staff-emphasis-weight, 650);
+}
+@media (min-width: 1100px) {
+  :global([data-staff-ui="true"]) .columnLabels + .records {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+}
+@media (max-width: 767px) {
+  :global([data-staff-ui="true"]) .filters {
+    padding: 16px;
+  }
+}
+
+:global([data-office-ui="true"]) .filters {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  gap: 12px;
+}
+:global([data-office-ui="true"]) .avatar {
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-weight: var(--staff-emphasis-weight, 750);
+}
+@media (min-width: 1100px) {
+  :global([data-office-ui="true"]) .records {
+    gap: 0;
+    border: 1px solid var(--line);
+    border-top: 0;
+    border-radius: 0 0 20px 20px;
+    overflow: hidden;
+  }
+  :global([data-office-ui="true"]) .records > li {
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    padding: 16px 20px;
+  }
+  :global([data-office-ui="true"]) .records > li:last-child {
+    border-bottom: 0;
+  }
+  :global([data-office-ui="true"]) .columnLabels {
+    padding: 16px 20px;
+    border-radius: 20px 20px 0 0;
+    text-transform: uppercase;
+    font-size: 14px;
+  }
+}
+
+/* Compact desktop filters: one control band, without a second card shell. */
+@media (min-width: 768px) {
+  :global([data-staff-ui="true"]) .filters {
+    position: static;
+    padding: 0;
+    margin-block: 12px;
+    gap: 10px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    align-items: end;
+  }
+  :global([data-staff-ui="true"]) .filters > label {
+    flex: 0 1 280px;
+    min-width: min(180px, 100%);
+    gap: 4px;
+    font-size: 14px;
+  }
+  :global([data-staff-ui="true"]) .filters :is(input, select) {
+    min-height: 48px;
+    padding-block: 10px;
+    font-size: 16px;
+  }
 }

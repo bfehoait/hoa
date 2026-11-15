@@ -37,7 +37,7 @@
 .tileText strong {
   font-size: 16px;
   line-height: 1.4;
-  font-weight: 700;
+  font-weight: var(--staff-emphasis-weight, 700);
 }
 .tileText > span {
   font-size: 14px;
@@ -59,7 +59,7 @@
   font-size: 14px;
   color: var(--accent);
   background: var(--accent-soft);
-  font-weight: 700;
+  font-weight: var(--staff-emphasis-weight, 700);
   margin-top: auto;
 }
 .compact .destination {
@@ -96,7 +96,7 @@
   color: var(--accent);
   background: var(--surface);
   font-size: 14px;
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
   text-decoration: none;
 }
 .navigation {
@@ -159,7 +159,7 @@
   background: var(--wash);
   color: var(--ink);
   font-size: 14px;
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
 }
 .more > svg:last-child {
   margin-left: auto;
@@ -181,7 +181,7 @@
   padding: 16px;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
   list-style: none;
 }
 .disclosure summary::-webkit-details-marker {
@@ -440,5 +440,30 @@
   :global([data-customer-ui="true"]) .navigation,
   :global([data-customer-ui="true"]) .disclosure {
     margin-block: var(--resident-section-gap);
+  }
+}
+
+:global([data-staff-ui="true"]) .destination {
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+:global([data-staff-ui="true"]) .tileIcon {
+  border-radius: 12px;
+}
+:global([data-staff-ui="true"]) .tileText strong {
+  font-weight: var(--staff-emphasis-weight, 750);
+}
+
+@media (min-width: 768px) {
+  :global([data-staff-ui="true"]) .disclosure {
+    margin-block: 12px;
+  }
+  :global([data-staff-ui="true"]) .disclosure summary {
+    min-height: 48px;
+    padding: 10px 12px;
+  }
+  :global([data-staff-ui="true"]) .destination {
+    min-height: 120px;
+    gap: 10px;
   }
 }

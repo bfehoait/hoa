@@ -157,6 +157,9 @@
   border-top: 1px solid var(--line);
   z-index: 3;
 }
+:global(html[data-keyboard-open="true"]) .composer {
+  bottom: var(--app-keyboard-inset, 0px);
+}
 .page .composer form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 48px;

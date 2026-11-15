@@ -1,0 +1,542 @@
+.pageHeader {
+  margin-bottom: 14px;
+}
+.titleRow {
+  padding-right: 110px;
+}
+.titleRow h1 {
+  margin: 0;
+  font-size: var(--staff-page-heading-size, 32px);
+  font-weight: var(--staff-page-weight, 800);
+  line-height: 1.2;
+}
+.crumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 6px 0 14px;
+  font-size: 16px;
+  color: var(--muted);
+}
+.crumb a {
+  color: var(--accent);
+  font-weight: var(--staff-emphasis-weight, 750);
+  text-decoration: none;
+}
+.intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.intro > p {
+  max-width: 76ch;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.queueLayout {
+  display: grid;
+  grid-template-columns: minmax(230px, 300px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.queueList,
+.queueDetail {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.queueList h2 {
+  margin: 0;
+  padding: 16px 20px;
+  font-size: var(--staff-section-heading-size, 14px);
+  font-weight: var(--staff-heading-weight, 650);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  background: var(--wash);
+}
+.queueList ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.queueList li + li {
+  border-top: 1px solid var(--line);
+}
+.queueList > ul > li > button {
+  width: 100%;
+  min-height: 72px;
+  padding: 12px;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  border-left: 3px solid transparent;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.queueList > ul > li > button[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-left-color: var(--accent);
+}
+.queueList > ul > li > button:hover {
+  background: var(--wash);
+}
+.queueList > ul > li > button > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.queueList strong {
+  display: block;
+  font-weight: var(--staff-emphasis-weight, 750);
+}
+.queueList small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.queueCount {
+  border-radius: 999px;
+  padding: 4px 10px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: var(--staff-emphasis-weight, 750);
+}
+.queueDetail {
+  padding: 26px;
+}
+.queueDetail h2 {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: var(--staff-section-heading-size, 24px);
+  font-weight: var(--staff-heading-weight, 800);
+  margin: 0 0 20px;
+}
+.queueDetail dl {
+  padding: 20px;
+  margin: 0 0 20px;
+  border-radius: 14px;
+  background: var(--wash);
+  display: grid;
+  gap: 16px;
+}
+.queueDetail dl > div {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) minmax(0, 2fr);
+  gap: 16px;
+}
+.queueDetail dt {
+  color: var(--muted);
+}
+.queueDetail dd {
+  margin: 0;
+  font-weight: var(--staff-emphasis-weight, 700);
+}
+.queueDetail > p {
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 16px 0;
+}
+.queueIcon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.queueActions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+.reviewDesk {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.reviewDesk [hidden] {
+  display: none !important;
+}
+.reviewDesk > h2 {
+  font-size: var(--staff-section-heading-size, 22px);
+  margin: 0 0 14px;
+}
+.reviewDesk :global(.table-wrap) {
+  overflow-x: auto;
+}
+.reviewDesk :global(.table-wrap) table {
+  min-width: 600px;
+}
+.reviewDesk :global(.note) {
+  font-size: 14px;
+}
+.queueList button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+@media (max-width: 1100px) {
+  .queueLayout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 767px) {
+  .titleRow {
+    padding-right: 0;
+  }
+  .titleRow h1 {
+    font-size: var(--staff-page-heading-size, 28px);
+  }
+  .crumb {
+    margin-bottom: 16px;
+  }
+  .queueDetail {
+    padding: 18px;
+  }
+  .queueDetail h2 {
+    font-size: var(--staff-section-heading-size, 22px);
+  }
+}
+
+/* Compact page heading with a single, non-wrapping action group. */
+.pageHeader {
+  margin-bottom: 14px;
+}
+.titleRow h1 {
+  font-size: var(--staff-page-heading-size, 26px);
+}
+.intro {
+  gap: 8px 16px;
+}
+.intro > p {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  flex: 1 1 340px;
+}
+.actions {
+  flex: 0 0 auto;
+}
+.actions :global(.page-actions) {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 8px;
+  width: auto;
+}
+.actions :is(button, a) {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+@media (min-width: 768px) {
+  .pageHeader {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 16px;
+  }
+  .titleRow {
+    grid-column: 1;
+    padding-right: 120px;
+  }
+  .intro {
+    display: contents;
+  }
+  .intro > p {
+    grid-column: 1;
+  }
+  .intro > .actions {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: center;
+    padding-top: 0;
+  }
+}
+
+.inboxFilter {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 10px 0 14px;
+}
+.inboxFilter label {
+  display: grid;
+  gap: 4px;
+  font-size: 14px;
+  min-width: 220px;
+}
+.inboxFilter label select {
+  min-height: 48px;
+}
+.inboxFilter > span {
+  font-size: 14px;
+  color: var(--muted);
+  padding-bottom: 12px;
+}
+.queueError {
+  padding: 12px;
+}
+.queueLayout {
+  grid-template-columns: minmax(280px, 0.95fr) minmax(0, 1.85fr);
+}
+.queueList > ul > li > button {
+  align-items: flex-start;
+  min-height: 88px;
+}
+.queueList > ul > li > button strong {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.queueList > ul > li > button small {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.recordState {
+  flex: 0 0 auto;
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  max-width: 115px;
+  font-size: 14px;
+}
+.inboxPagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+.inboxPagination > button {
+  flex: 0 0 auto;
+  min-height: 48px;
+  padding: 10px 12px;
+  gap: 4px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.inboxPagination > span {
+  flex: 1;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.35;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.queueList {
+  scroll-margin-top: 16px;
+}
+
+/* Keep the queue and page controls available beside a long submission.
+   Only the rows scroll; the detail remains in normal document flow. */
+@media (min-width: 1200px) {
+  .queueList {
+    position: sticky;
+    top: 80px;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 96px);
+    max-height: calc(100dvh - 96px);
+  }
+  .queueList > ul {
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
+  .queueList > :not(ul) {
+    flex-shrink: 0;
+  }
+  .queueList > ul:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -3px;
+  }
+}
+.recordState time,
+.selectedMeta {
+  color: var(--muted);
+  font-size: 14px;
+}
+.reviewDesk > .selectedMeta {
+  margin: -8px 0 16px;
+}
+.reviewDesk :global(.detail-list) {
+  background: var(--wash);
+  padding: 14px;
+  border-radius: var(--radius-sm);
+}
+.reviewDesk :global(.detail-list) > div {
+  padding-block: 8px;
+}
+@media (min-width: 768px) {
+  .pageHeader {
+    row-gap: 8px;
+  }
+}
+@media (max-width: 1199px) {
+  .queueLayout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+:global([data-staff-ui="true"]) .titleRow h1 {
+  font-size: var(--staff-page-heading-size, 26px);
+  line-height: 1.2;
+}
+
+/* A single compact detail surface, shared by the inline review workflows. */
+.reviewHeading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.reviewHeading > div {
+  min-width: 0;
+}
+.reviewHeading h2 {
+  margin: 0;
+  font-size: var(--staff-section-heading-size, 22px);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.reviewHeading .selectedMeta {
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+.reviewBody > form {
+  gap: 12px;
+}
+.discardActions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 12px 20px 0;
+}
+.discardActions > button {
+  min-height: 48px;
+  padding: 10px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--accent);
+  font: inherit;
+  font-size: 14px;
+}
+.discardActions > button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.reviewBody > article {
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.reviewBody > form > :global(.detail-list) {
+  margin: 0;
+}
+.reviewDesk :global(.note) {
+  margin-block: 8px;
+}
+.reviewBody :is(p, dl, h3, h4) {
+  margin-block: 0;
+}
+.reviewBody > form > label {
+  gap: 4px;
+}
+.reviewBody > form > label > textarea {
+  min-height: 72px;
+}
+.reviewBody > form > :global(.btn-row) {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  margin-top: 0;
+  gap: 10px;
+}
+.reviewDesk :global(.detail-list) {
+  padding: 14px 16px;
+  margin: 0 0 12px;
+  border-radius: var(--radius-lg);
+}
+.reviewDesk :global(.detail-list) > div {
+  display: grid;
+  grid-template-columns: minmax(100px, 130px) minmax(0, 1fr);
+  justify-content: initial;
+  gap: 12px;
+  padding: 5px 0;
+  border: 0;
+  line-height: 1.5;
+  font-size: 16px;
+}
+.reviewDesk :global(.detail-list) dd {
+  text-align: left;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.reviewDesk :global(.detail-list) dt {
+  font-size: 14px;
+}
+.reviewBody :global(.note),
+.reviewBody > form > section[aria-label="Booking fee"] {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.reviewBody > form > section[aria-label="Booking fee"] {
+  padding: 10px 12px;
+  background: var(--wash);
+  border-radius: var(--radius-sm);
+}
+.reviewBody details > summary {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  gap: 8px;
+  font-size: 14px;
+}
+.reviewBody details > summary::before {
+  content: "+";
+  color: var(--accent);
+}
+.reviewBody details[open] > summary::before {
+  content: "−";
+}
+@media (max-width: 480px) {
+  .reviewHeading h2 {
+    font-size: var(--staff-section-heading-size, 20px);
+  }
+  .reviewDesk :global(.detail-list) {
+    padding: 12px;
+  }
+  .reviewDesk :global(.detail-list) > div {
+    grid-template-columns: minmax(82px, 100px) minmax(0, 1fr);
+    gap: 8px;
+  }
+}

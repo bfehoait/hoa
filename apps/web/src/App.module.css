@@ -1,6 +1,25 @@
 .app {
   min-height: 100dvh;
 }
+@media (max-width: 767px),
+  (max-width: 1023px) and (max-height: 500px) and (pointer: coarse) {
+  :global(html[data-keyboard-open="true"]) .residentShell .mobileNav,
+  :global(html[data-keyboard-open="true"]) .app .mobileNav {
+    display: none;
+  }
+  :global(html[data-keyboard-open="true"]) .app .workspace {
+    padding-bottom: calc(var(--app-keyboard-inset, 0px) + 16px);
+  }
+}
+.sampleChip {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 14px;
+  white-space: nowrap;
+}
 .developerProfile {
   display: none;
 }
@@ -26,7 +45,7 @@
 .brand > span {
   font-family: var(--heading-font);
   font-size: 32px;
-  font-weight: 800;
+  font-weight: var(--staff-emphasis-weight, 800);
   line-height: 1;
 }
 .brand small {
@@ -38,7 +57,7 @@
   line-height: 1.4;
   color: var(--muted);
 }
-.brand img {
+.brand :is(img, [data-image-frame]) {
   border-radius: var(--radius-sm);
 }
 .property {
@@ -85,6 +104,37 @@
   background: var(--accent-soft);
   color: var(--accent);
   font-weight: 600;
+}
+.actionCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-brand);
+  font-size: 14px;
+  font-weight: var(--staff-emphasis-weight, 700);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.countUnavailable {
+  margin: 8px 12px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.mobileNav > a:has(.mobileActionCount) {
+  position: relative;
+}
+.mobileNav .mobileActionCount {
+  position: absolute;
+  top: 0;
+  left: calc(50% + 4px);
+  z-index: 1;
+  font-size: 14px;
 }
 .count {
   font-size: 14px;
@@ -411,7 +461,7 @@
 @media (max-width: 767px) {
   .breadcrumb > span:last-child {
     font-size: 18px;
-    font-weight: 750;
+    font-weight: var(--staff-emphasis-weight, 750);
   }
   .topbar {
     background: var(--surface);
@@ -437,7 +487,7 @@
     gap: 12px;
     flex-shrink: 0;
   }
-  .brand img {
+  .brand :is(img, [data-image-frame]) {
     width: 36px;
     height: 36px;
   }
@@ -558,7 +608,7 @@
   .developer .brand {
     flex-shrink: 0;
   }
-  .developer .brand img {
+  .developer .brand :is(img, [data-image-frame]) {
     width: 124px;
   }
   .developer .property {
@@ -626,7 +676,7 @@
     min-height: 76px;
     border-bottom: 1px solid var(--line);
   }
-  .developer .brand img {
+  .developer .brand :is(img, [data-image-frame]) {
     width: 136px;
   }
   .developer .navigationBody {
@@ -714,7 +764,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-weight: 650;
+    font-weight: var(--staff-emphasis-weight, 650);
   }
   .developerProfile small {
     display: block;
@@ -744,7 +794,7 @@
   align-items: center;
   min-height: 48px;
 }
-.residentBrand img {
+.residentBrand :is(img, [data-image-frame]) {
   width: 124px;
   height: auto;
   max-height: 56px;
@@ -859,7 +909,7 @@
   border-radius: var(--radius-lg);
 }
 .residentShell :global(.page-intro h1) {
-  font-size: 32px;
+  font-size: var(--staff-page-heading-size, 32px);
   letter-spacing: -0.7px;
   line-height: 1.25;
 }
@@ -910,7 +960,7 @@
     padding-bottom: 0;
   }
   .residentShell :global(.page-intro h1) {
-    font-size: 28px;
+    font-size: var(--staff-page-heading-size, 28px);
   }
   .residentShell :global(.page-title-icon) {
     display: none;
@@ -954,7 +1004,7 @@
   .residentShell .residentBrand {
     display: inline-flex;
   }
-  .residentShell .residentBrand img {
+  .residentShell .residentBrand :is(img, [data-image-frame]) {
     max-height: 44px;
     width: 100px;
   }
@@ -1044,7 +1094,7 @@
   .app:not(.residentShell) .sidebar .brand {
     padding: 0 12px 16px;
   }
-  .app:not(.residentShell) .sidebar .brand img {
+  .app:not(.residentShell) .sidebar .brand :is(img, [data-image-frame]) {
     max-width: 156px;
   }
   .app:not(.residentShell) .sidebar .property {
@@ -1151,4 +1201,450 @@
   color: var(--ink);
   font: inherit;
   font-size: 16px;
+}
+
+/* Staff console shell. Resident geometry and navigation remain independent. */
+.staffShell {
+  --radius-lg: 16px;
+  --radius-sm: 11px;
+  --radius-control: 11px;
+  --card-padding: 22px;
+  --console-chart-0: var(--accent);
+  --console-chart-1: #238d83;
+  --console-chart-2: #bd841c;
+  --console-chart-3: #858ca2;
+}
+:global([data-theme="dark"]) .staffShell {
+  --console-chart-1: #74cfc0;
+  --console-chart-2: #e3bd70;
+  --console-chart-3: #b4b9cc;
+}
+.staffShell .breadcrumb {
+  gap: 8px;
+  min-width: 0;
+}
+.staffShell .desktopCrumb {
+  color: var(--accent);
+  font-weight: var(--staff-emphasis-weight, 700);
+  white-space: nowrap;
+}
+.staffShell .slash {
+  margin-left: 8px;
+}
+.staffShell .topActions {
+  flex-shrink: 0;
+}
+.staffShell .topActions > :global(.icon-button) {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+@media (min-width: 1024px) {
+  .app.staffShell .sidebar {
+    width: 264px;
+    padding: 24px 14px 16px;
+  }
+  .app.staffShell .workspace {
+    margin-left: 264px;
+  }
+  .app.staffShell .main {
+    max-width: 1340px;
+    padding: 28px 28px 40px;
+  }
+  .app.staffShell .topbar {
+    padding-inline: 28px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+  }
+  .app.staffShell .brand {
+    padding: 0 14px 20px;
+  }
+  .app.staffShell .brand :is(img, [data-image-frame]) {
+    max-width: 150px;
+  }
+  .app.staffShell .workspaceSwitch {
+    margin: 0 0 16px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface);
+  }
+  .app.staffShell .workspaceSwitch select {
+    background: var(--wash);
+    border-color: var(--line);
+    min-height: 48px;
+    font-weight: var(--staff-emphasis-weight, 700);
+  }
+  .app.staffShell .navLink {
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 600;
+    min-height: 48px;
+    padding: 12px 14px;
+    border-radius: 11px;
+  }
+  .app.staffShell .navLink.selected {
+    color: var(--accent);
+    background: var(--accent-soft);
+    font-weight: var(--staff-emphasis-weight, 800);
+    box-shadow: none;
+  }
+  .app.staffShell .navLink:hover {
+    color: var(--accent);
+    background: var(--wash);
+  }
+  .app.staffShell .navLabel {
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .app.staffShell .sidebarBottom {
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+    margin-top: 24px;
+  }
+  .app.staffShell .member {
+    margin-top: 8px;
+  }
+  .app.staffShell .footer {
+    padding: 20px 28px;
+  }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .app.staffShell .main {
+    padding: 24px;
+  }
+  .app.staffShell .topbar {
+    padding-inline: 24px;
+  }
+}
+@media (max-width: 767px) {
+  .app.staffShell .main {
+    padding: 20px 16px calc(100px + env(safe-area-inset-bottom));
+    min-width: 0;
+  }
+  .app.staffShell .topbar {
+    padding-inline: 16px;
+    gap: 8px;
+  }
+  .staffShell .sampleChip {
+    display: none;
+  } /* Existing persistent preview bar still identifies synthetic data. */
+  .staffShell .mobileWorkspaceSwitch {
+    max-width: min(50vw, 220px);
+  }
+  .staffShell .topActions {
+    gap: 4px;
+  }
+  .staffShell .breadcrumb > :last-child {
+    overflow-wrap: anywhere;
+  }
+}
+
+/* Developer reference layout; other staff workspaces keep their own shell. */
+.developerBrandMark {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  background: var(--brand-strong);
+  border-radius: 13px;
+  box-shadow: var(--shadow-sm);
+  flex: none;
+}
+.app.developer.staffShell
+  .brand
+  .developerBrandMark
+  :is(img, [data-image-frame]) {
+  width: 38px;
+  height: auto;
+  max-width: 38px;
+}
+.developerBrandText {
+  font-size: 20px;
+  font-weight: var(--staff-emphasis-weight, 800);
+  line-height: 1.25;
+  color: var(--ink);
+}
+.developerBrandText small {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+.app.officeShell .brand .developerBrandMark :is(img, [data-image-frame]) {
+  width: 38px;
+  height: auto;
+  max-width: 38px;
+}
+@media (min-width: 1024px) {
+  .app.officeShell .sidebar {
+    width: 264px;
+    padding: 14px 12px 12px;
+  }
+  .app.officeShell .workspace {
+    margin-left: 264px;
+    position: relative;
+  }
+  .app.officeShell .brand {
+    min-height: 52px;
+    padding: 0 6px 10px;
+    border: 0;
+    gap: 12px;
+  }
+  .app.officeShell .workspaceSwitch {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0;
+    margin-bottom: 16px;
+    background: transparent;
+    border: 0;
+  }
+  .app.officeShell .workspaceSwitch select {
+    min-width: 0;
+    min-height: 48px;
+    padding: 10px 12px;
+    font-size: 16px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+  }
+  .app.officeShell .navLink {
+    min-height: 48px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-size: 16px;
+  }
+  .app.officeShell .navLink svg {
+    width: 20px;
+    height: 20px;
+  }
+  .app.officeShell .navLabel {
+    margin: 12px 12px 6px;
+  }
+  .app.officeShell .sidebarBottom {
+    margin-top: auto;
+    padding-top: 12px;
+  }
+  .app.officeShell .sidebar .member {
+    padding: 10px 0 0;
+    border: 0;
+  }
+  .app.officeShell .topbar {
+    position: absolute;
+    inset: 24px 28px auto auto;
+    width: auto;
+    min-height: 48px;
+    height: 48px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    gap: 8px;
+  }
+  .app.officeShell .topbar .breadcrumb,
+  .app.officeShell .developerProfile {
+    display: none;
+  }
+  .app.officeShell .main {
+    padding: 26px 28px 40px;
+    max-width: 1600px;
+  }
+}
+@media (min-width: 1024px) {
+  .app.developer.staffShell .sidebar {
+    width: 264px;
+    padding: 14px 12px 12px;
+    border-top: 0;
+  }
+  .app.developer.staffShell .workspace {
+    margin-left: 264px;
+    position: relative;
+  }
+  .app.developer.staffShell .brand {
+    min-height: 52px;
+    border-bottom: 0;
+    padding: 0 6px 10px;
+    gap: 12px;
+  }
+  .app.developer.staffShell .workspaceSwitch {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    padding: 0;
+    border: 0;
+    margin-bottom: 16px;
+    background: transparent;
+    font-size: 14px;
+  }
+  .app.developer.staffShell .workspaceSwitch select {
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    padding: 10px 12px;
+    min-width: 0;
+    min-height: 48px;
+    font-size: 16px;
+  }
+  .app.developer.staffShell .navLink {
+    font-size: 16px;
+    min-height: 48px;
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
+  .app.developer.staffShell .navLink svg {
+    width: 20px;
+    height: 20px;
+  }
+  .app.developer.staffShell .sidebarBottom {
+    margin-top: auto;
+    padding-top: 16px;
+  }
+  .app.developer.staffShell .sidebar .member {
+    padding: 12px 0 0;
+    border: 0;
+  }
+  .app.developer.staffShell .sidebar .member small {
+    color: var(--muted);
+  }
+  .app.developer.staffShell .topbar {
+    position: absolute;
+    inset: 24px 28px auto auto;
+    width: auto;
+    height: 48px;
+    min-height: 48px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    gap: 8px;
+  }
+  .app.developer.staffShell .developerProfile {
+    display: none;
+  }
+  .app.developer.staffShell .main {
+    padding: 26px 28px 40px;
+    max-width: 1440px;
+  }
+}
+@media (min-width: 1440px) {
+  .app.developer.staffShell .main {
+    padding-inline: 32px;
+  }
+}
+
+.boardShell {
+  min-width: 0;
+}
+@media (min-width: 1024px) {
+  .app.boardShell .main {
+    max-width: 1600px;
+  }
+}
+
+/* The staff header controls occupy a reserved corner, never the status strip. */
+@media (min-width: 1024px) {
+  .app.staffShell .topbar {
+    z-index: 5;
+  }
+  .app.staffShell .topActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+  }
+  .app.staffShell .topActions > :global(.icon-button) {
+    width: 48px;
+    height: 48px;
+    min-height: 48px;
+    padding: 0;
+    flex: 0 0 48px;
+  }
+  .app.staffShell .topbar .breadcrumb {
+    display: none;
+  }
+  .app.staffShell:has(.previewBar) .topbar {
+    position: static;
+    width: auto;
+    justify-content: flex-end;
+    padding-inline: 28px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .app.officeShell .topbar,
+  .app.developer.staffShell .topbar {
+    top: 16px;
+  }
+}
+/* A single compact navigation scale for every desktop staff workspace. */
+@media (min-width: 1024px) {
+  .app.staffShell .sidebar .brand > span {
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.15;
+  }
+  .app.staffShell .sidebar .brand small {
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+  .app.staffShell .sidebar .navLabel {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: 0.04em;
+    padding-block: 8px;
+  }
+  .app.staffShell .sidebar .navLink {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+    min-height: 48px;
+    padding-block: 8px;
+    gap: 10px;
+  }
+  .app.staffShell .sidebar .navLink.selected {
+    font-weight: 600;
+  }
+  .app.staffShell .sidebar .navLink > svg {
+    width: 18px;
+    height: 18px;
+  }
+  .app.staffShell .sidebar :is(input, select),
+  .app.staffShell .sidebar .workspaceSwitch select {
+    font-size: 14px;
+    font-weight: 500;
+    min-height: 48px;
+    line-height: 1.4;
+  }
+  .app.staffShell .sidebar .actionCount {
+    font-size: 14px;
+    font-weight: 600;
+    min-width: 24px;
+    height: 24px;
+  }
+  .app.developer.staffShell .sidebar {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .app.developer.staffShell .navigationBody {
+    flex: 0 0 auto;
+    min-height: auto;
+    padding-top: 0;
+    overflow: visible;
+  }
+  .app.developer.staffShell .workspaceSwitch {
+    gap: 6px;
+  }
+  .app.developer.staffShell .workspaceSwitch select {
+    border-color: var(--line);
+  }
+  .app.developer.staffShell .sidebar .navLabel {
+    margin: 12px 12px 6px;
+  }
+  .app.developer.staffShell .sidebar .navLink {
+    margin-bottom: 4px;
+  }
+  .app.developer.staffShell .help {
+    display: flex;
+  }
 }

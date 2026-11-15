@@ -1,3 +1,4 @@
+import PageIntro from "../office/OfficePage";
 import { useState } from "react";
 import { BarChart3, Download, FileSpreadsheet } from "lucide-react";
 import {
@@ -11,7 +12,7 @@ import { AS_OF, householdLedger } from "../../data/fixtures";
 import { downloadCsv } from "../../data/download";
 import { useAuth } from "../../data/auth";
 import { usePermissions } from "../../data/permissions";
-import { Badge, Button, Feedback, PageIntro } from "../../components/UI";
+import { Badge, Button, Feedback } from "../../components/UI";
 import styles from "./FinanceReports.module.css";
 import { financeReports } from "../../../../../packages/shared/src/finance-catalog";
 import registryStyles from "../registry/LotRegister.module.css";

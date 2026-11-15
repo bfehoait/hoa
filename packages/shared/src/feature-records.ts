@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { baselineModule, fieldVisible, type BaselineField } from "./baseline";
+import { publicationAudiencesSchema } from "./publication-audiences";
 export const featureRecordSchema = z.object({
   id: z.uuid(),
   owner_id: z.uuid().optional(),
@@ -17,6 +18,7 @@ export const featureRecordSchema = z.object({
   fields: z.record(z.string(), z.string()).optional(),
   version: z.number().int().optional(),
   publication_consent: z.boolean().optional(),
+  audiences: publicationAudiencesSchema.nullable().optional(),
   created_at: z.string(),
   expires_at: z.string().nullable().optional(),
 });

@@ -18,15 +18,15 @@
 .kicker {
   font-size: 14px;
   letter-spacing: 1.4px;
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
   margin: 0 0 14px;
 }
 .hero h1 {
   font-family: var(--heading-font);
-  font-size: 42px;
+  font-size: var(--staff-page-heading-size, 42px);
   line-height: 1.12;
   letter-spacing: -1px;
-  font-weight: 600;
+  font-weight: var(--staff-page-weight, 600);
   margin: 0 0 12px;
 }
 .hero p:not(.kicker) {
@@ -60,7 +60,7 @@
   background: var(--on-brand);
   color: var(--brand-strong);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: var(--staff-emphasis-weight, 700);
   text-decoration: none;
 }
 .heroActions a:last-child {
@@ -92,10 +92,10 @@
 }
 .metrics strong {
   display: block;
-  font-size: 30px;
+  font-size: var(--staff-kpi-size, 30px);
   margin: 10px 0 6px;
   line-height: 1;
-  font-weight: 750;
+  font-weight: var(--staff-emphasis-weight, 750);
 }
 .metrics em {
   font-style: normal;
@@ -114,7 +114,7 @@
   margin-bottom: 18px;
 }
 .sectionHeading h2 {
-  font-size: var(--section-heading-size);
+  font-size: var(--staff-section-heading-size, var(--section-heading-size));
   margin: 0 0 6px;
 }
 .sectionHeading p {
@@ -129,7 +129,7 @@
   gap: 8px;
   color: var(--accent);
   font-size: 14px;
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
   min-height: 48px;
   text-decoration: none;
   flex-shrink: 0;
@@ -163,9 +163,9 @@
   flex-shrink: 0;
 }
 .group h3 {
-  font-size: 16px;
+  font-size: var(--staff-card-heading-size, 16px);
   margin: 0 0 4px;
-  font-weight: 600;
+  font-weight: var(--staff-heading-weight, 600);
 }
 .group header p {
   font-size: 14px;
@@ -219,7 +219,7 @@
   min-width: 0;
 }
 .connection h2 {
-  font-size: 16px;
+  font-size: var(--staff-section-heading-size, 16px);
   margin: 0 0 4px;
 }
 .connection p,
@@ -239,7 +239,7 @@
     padding: 28px;
   }
   .hero h1 {
-    font-size: 36px;
+    font-size: var(--staff-page-heading-size, 36px);
   }
   .connection {
     flex-wrap: wrap;
@@ -261,7 +261,7 @@
     align-items: flex-start;
   }
   .group h2 {
-    font-size: 20px;
+    font-size: var(--staff-section-heading-size, 20px);
     margin: 0 0 6px;
   }
   .group > div {
@@ -288,7 +288,7 @@
     align-items: start;
   }
   .group h2 {
-    font-size: 18px;
+    font-size: var(--staff-section-heading-size, 18px);
   }
   .group p {
     margin: 6px 0 0;
@@ -296,4 +296,20 @@
   .group > div {
     padding: 8px 12px;
   }
+}
+
+:global([data-staff-ui="true"]) .groups {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 16px;
+}
+:global([data-staff-ui="true"]) .group {
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+:global([data-staff-ui="true"]) .groupIcon {
+  border-radius: 12px;
+}
+:global([data-staff-ui="true"]) .group h2 {
+  font-size: var(--staff-section-heading-size, 18px);
+  font-weight: var(--staff-heading-weight, 750);
 }

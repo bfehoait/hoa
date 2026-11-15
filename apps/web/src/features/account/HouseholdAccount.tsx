@@ -121,13 +121,15 @@ function HouseholdOverview() {
           )}
         </div>
         <strong>
-          {hoa?.needs_review
-            ? "Under review"
-            : balance.data
-              ? balanceMoney(balance.data.total_balance_centavos)
-              : balance.isPending && balance.allowed
-                ? "Loading…"
-                : "Unavailable"}
+          {hoa?.needs_review ? (
+            "Under review"
+          ) : balance.data ? (
+            balanceMoney(balance.data.total_balance_centavos)
+          ) : balance.isPending && balance.allowed ? (
+            <Skeleton variant="metric" label="Loading balance" />
+          ) : (
+            "Unavailable"
+          )}
         </strong>
         <p>
           {balance.isError

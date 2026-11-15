@@ -191,7 +191,7 @@ export default function AccessManager({
                   <span>
                     <strong>{item.name || "Unnamed member"}</strong>
                     <small>
-                      {item.unit || "No recorded unit"} ? {item.role}
+                      {item.unit || "No recorded unit"} · {item.role}
                     </small>
                   </span>
                   <Badge>{item.status}</Badge>
@@ -417,6 +417,19 @@ function MemberAccessEditor({
     JSON.stringify([...extra].sort()) !==
       JSON.stringify([...(snapshot.extra_roles ?? [])].sort());
   const unsaved = tabDirty || advancedFields !== savedFields;
+  // Action-specific confirmation copy: a destructive change should name itself
+  // and the account, rather than a generic "Confirm". Copy only — the server
+  // operation performed by confirm() is unchanged.
+  const deactivating =
+    intent === "roles" &&
+    status === "Suspended" &&
+    snapshot.status !== "Suspended";
+  const revoking = !!intent && intent !== "roles" && intent !== "grant";
+  const confirmTitle = deactivating
+    ? `Suspend ${snapshot.name || "this account"}?`
+    : revoking
+      ? "Revoke committee assignment?"
+      : "Confirm account access change";
   function resetAdvanced() {
     const [p, e, s, r, rr, c, m, a, sc, ef] = JSON.parse(savedFields) as [
       string,
@@ -837,7 +850,7 @@ function MemberAccessEditor({
             <Feedback error={assignments.error} />
           ) : assignments.isPending ? (
             <p className="note" role="status">
-              Loading assignments...
+              <Skeleton variant="section" label="Loading assignments" />
             </p>
           ) : !assignments.data?.length ? (
             <p className="note">No committee assignments recorded.</p>
@@ -888,14 +901,24 @@ function MemberAccessEditor({
       {intent && (
         <Modal
           busy={busy}
-          title="Confirm account access change"
+          title={confirmTitle}
           onClose={() => {
             if (!busy) setIntent(null);
           }}
         >
           <p>
-            This changes real access for{" "}
-            <strong>{snapshot.name || "this account"}</strong>.
+            {deactivating ? (
+              <>
+                Portal access for{" "}
+                <strong>{snapshot.name || "this account"}</strong> will be
+                suspended. Their sign-in account and records stay in the system.
+              </>
+            ) : (
+              <>
+                This changes real access for{" "}
+                <strong>{snapshot.name || "this account"}</strong>.
+              </>
+            )}
           </p>
           <dl className="detail-list">
             <div>
@@ -915,8 +938,16 @@ function MemberAccessEditor({
           </dl>
           <Feedback error={error} />
           <div className="form-actions">
-            <Button pending={busy} onClick={() => void confirm()}>
-              Confirm access change
+            <Button
+              tone={deactivating || revoking ? "danger" : undefined}
+              pending={busy}
+              onClick={() => void confirm()}
+            >
+              {deactivating
+                ? "Suspend portal access"
+                : revoking
+                  ? "Revoke assignment"
+                  : "Confirm access change"}
             </Button>
             <Button secondary disabled={busy} onClick={() => setIntent(null)}>
               Cancel

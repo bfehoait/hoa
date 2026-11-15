@@ -16,7 +16,7 @@
   display: grid;
   gap: 8px;
   font-size: 14px;
-  font-weight: 650;
+  font-weight: var(--staff-label-weight, 650);
   flex: 1 1 120px;
 }
 .toolbar select,
@@ -72,7 +72,7 @@
   color: var(--accent);
 }
 .empty h2 {
-  font-size: 22px;
+  font-size: var(--staff-card-heading-size, 22px);
 }
 .empty p {
   max-width: 55ch;
@@ -177,7 +177,7 @@
 }
 .threadTitle h2 {
   margin: 0;
-  font-size: var(--section-heading-size);
+  font-size: var(--staff-section-heading-size, var(--section-heading-size));
 }
 .messages {
   display: grid;
@@ -304,7 +304,7 @@
   color: var(--muted);
   font: inherit;
   font-size: 14px;
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
 }
 .requestViews button[aria-pressed="true"] {
   background: var(--surface);
@@ -441,5 +441,336 @@
   }
   :global([data-customer-ui="true"]) .conversationSheet .messages {
     gap: var(--resident-card-gap);
+  }
+}
+
+:global([data-staff-ui="true"]) .toolbar {
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+:global([data-staff-ui="true"]) .requests {
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+:global([data-staff-ui="true"]) .requests button {
+  padding: 18px 20px;
+}
+:global([data-staff-ui="true"]) .requests button:hover {
+  background: var(--accent-soft);
+}
+:global([data-staff-ui="true"]) .empty {
+  box-shadow: var(--shadow-sm);
+}
+
+.officeDesk {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(0, 1.8fr);
+  gap: 20px;
+  align-items: start;
+}
+.officeDesk > div {
+  min-width: 0;
+}
+.officeDesk .requests {
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.officeDesk .requests li + li {
+  border-top: 1px solid var(--line);
+}
+.officeDesk .requests button {
+  border: 0;
+  border-left: 3px solid transparent;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  padding: 16px;
+  gap: 12px;
+}
+.officeDesk .requests button[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-left-color: var(--accent);
+}
+.officeDesk .requests button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.officeDesk .requestInfo strong {
+  font-weight: var(--staff-emphasis-weight, 750);
+}
+.officeDesk .requestInfo > span {
+  font-size: 14px;
+}
+.officeDesk .requests button > svg:last-child {
+  display: none;
+}
+.officeThread,
+.officeThreadEmpty {
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.officeThread > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.officeThread h2 {
+  font-size: var(--staff-section-heading-size, 24px);
+  font-weight: var(--staff-heading-weight, 800);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.officeThread header p {
+  color: var(--muted);
+  font-size: 16px;
+  margin-top: 8px;
+}
+.officeThread .description {
+  background: var(--wash);
+  padding: 18px;
+  border-radius: 14px;
+}
+.officeThread .messages {
+  gap: 16px;
+  margin: 20px 0;
+}
+.officeThread .messages li {
+  max-width: 88%;
+  width: fit-content;
+  padding: 14px;
+  border-radius: 16px 16px 16px 4px;
+  background: var(--wash);
+}
+.officeThread .messages .officeReply {
+  justify-self: end;
+  border-radius: 16px 16px 4px 16px;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.officeThread .officeReply time {
+  color: inherit;
+  opacity: 0.85;
+}
+.officeThread .messages p {
+  line-height: 1.6;
+}
+.officeThread .form {
+  margin-top: 20px;
+}
+.officeThread .form textarea {
+  min-height: 64px;
+}
+.officeThread .statusActions {
+  padding: 12px 0;
+}
+.requestFacts {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+.requestFacts > div {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(0, 3fr);
+  gap: 12px;
+}
+.requestFacts dt,
+.handlingSummary dt {
+  color: var(--muted);
+  font-size: 14px;
+}
+.requestFacts dd,
+.handlingSummary dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.handlingSummary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 32px;
+  margin: 16px 0 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.handlingSummary dd {
+  margin-top: 4px;
+}
+@media (min-width: 768px) {
+  .officeThread {
+    padding: 20px;
+  }
+  .officeThread > header {
+    align-items: center;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 16px;
+  }
+  .officeThread header p {
+    margin-bottom: 0;
+    font-size: 14px;
+  }
+  .officeThread .description {
+    margin-block: 0 12px;
+    padding: 14px 16px;
+    white-space: pre-wrap;
+  }
+  .officeThread .requestMeta {
+    font-size: 14px;
+    color: var(--muted);
+    margin: 0 0 16px;
+  }
+  .officeThread .businessDetails {
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+  }
+  .officeThread .statusActions {
+    margin: 12px 0;
+    padding: 0;
+  }
+  .officeThread .threadTitle {
+    margin: 20px 0 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+  }
+  .officeThread .messages {
+    gap: 12px;
+    margin-block: 16px;
+  }
+  .officeThread .messages li {
+    padding: 12px 14px;
+  }
+  .officeThread .messages p {
+    margin-top: 8px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .officeThread .officeComposer {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+  }
+  .officeComposer > :global(.form-actions) {
+    margin: 0;
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .officeComposer > :global([role="alert"]) {
+    grid-column: 1/-1;
+  }
+  .officeThread .officeComposer textarea {
+    min-height: 80px;
+    max-height: 200px;
+  }
+}
+@media (max-width: 480px) {
+  .requestFacts > div {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
+.officeThreadEmpty {
+  color: var(--muted);
+  text-align: center;
+  padding-block: 80px;
+}
+.officeThreadEmpty h2 {
+  color: var(--ink);
+  font-size: var(--staff-section-heading-size, 22px);
+  margin: 16px 0 8px;
+}
+@media (max-width: 1100px) {
+  .officeDesk {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Desktop reading panes: keep the request list in reach and let messages
+   scroll without pushing the reply composer down an ever-longer page. */
+@media (min-width: 1101px) {
+  .officeDesk > .requestListPanel {
+    position: sticky;
+    top: 80px;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 96px);
+    max-height: calc(100dvh - 96px);
+  }
+  .requestListPanel > .source {
+    margin-block: 0 12px;
+    flex-shrink: 0;
+  }
+  .officeDesk .requestListPanel > .requests {
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
+  .requestListPanel > .pagination {
+    flex-shrink: 0;
+    margin-block: 12px 0;
+  }
+  .officeThread .messages {
+    max-height: min(480px, 55vh);
+    max-height: min(480px, 55dvh);
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    align-content: start;
+    padding: 4px;
+  }
+  .officeDesk .requests:focus-visible,
+  .officeThread .messages:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -3px;
+  }
+}
+
+/* Compact desktop filters: one control band, without a second card shell. */
+@media (min-width: 768px) {
+  :global([data-staff-ui="true"]) .toolbar {
+    position: static;
+    padding: 0;
+    margin-block: 12px;
+    gap: 10px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    align-items: end;
+  }
+  :global([data-staff-ui="true"]) .toolbar > label {
+    flex: 0 1 280px;
+    min-width: min(180px, 100%);
+    gap: 4px;
+    font-size: 14px;
+  }
+  :global([data-staff-ui="true"]) .toolbar :is(input, select) {
+    min-height: 48px;
+    padding-block: 10px;
+    font-size: 16px;
+  }
+}
+
+@media (min-width: 768px) {
+  :global([data-review-surface]) .officeDesk {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+  :global([data-staff-ui="true"]) .requests button {
+    padding: 12px 14px;
   }
 }

@@ -1,6 +1,6 @@
-﻿import { NavLink, useSearchParams } from "react-router-dom";
+import PageIntro from "../office/OfficePage";
+import { NavLink, useSearchParams } from "react-router-dom";
 import { NavigationGroup } from "../../components/Navigation";
-import { PageIntro } from "../../components/UI";
 import { ReceiptPanel } from "../registry/LotRegister";
 import { financeReports } from "../../../../../packages/shared/src/finance-catalog";
 import styles from "../registry/LotRegister.module.css";
@@ -19,19 +19,18 @@ export default function RecordedFinance({ section }: { section: string }) {
       <PageIntro
         eyebrow="FINANCE RECORDS"
         title="Finance"
-        description="Recorded collections are connected. Accounting statements require verified accounting records."
+        description="View past receipts and manage approved financial records."
       />
       <NavigationGroup aria-label="Finance workspace">
-        <NavLink to="/office/finance">Imported receipts</NavLink>
+        <NavLink to="/office/finance">Past receipts</NavLink>
         <NavLink to="/office/finance/accounting">Accounting records</NavLink>
       </NavigationGroup>
       {legacyExpenses ? (
         <section className={styles.panel}>
           <h2>Expense records</h2>
           <p>
-            Record expenses in Accounting records, then submit them for
-            independent finance review. Imported collection receipts remain
-            separate.
+            Enter expenses in Accounting records and send them for a separate
+            review. Past collection receipts are kept separately.
           </p>
           <NavLink
             className="text-link"
@@ -58,9 +57,8 @@ export default function RecordedFinance({ section }: { section: string }) {
               </select>
             </label>
             <p className={layout.availability}>
-              Imported receipts are historical evidence. New billing runs,
-              payment allocations and expense postings are managed in Accounting
-              records.
+              Past receipts show earlier collections. Use Accounting records to
+              create bills, apply payments to bills and record expenses.
             </p>
           </div>
           {report.available ? (
@@ -73,16 +71,16 @@ export default function RecordedFinance({ section }: { section: string }) {
                 <div>
                   <h2 id="finance-accounting-title">Accounting workspace</h2>
                   <p>
-                    Prepare drafts and review submissions separately from
-                    imported collections.
+                    Create and review financial records. Past receipts stay in
+                    their own list.
                   </p>
                 </div>
                 <nav aria-label="Accounting tasks">
                   <NavLink to="/office/finance/accounting?kind=receipt-allocation">
-                    Allocate imported receipts
+                    Apply past receipts to bills
                   </NavLink>
                   <NavLink to="/office/finance/accounting?kind=payment&status=Draft">
-                    Draft payments
+                    Payment drafts
                   </NavLink>
                   <NavLink to="/office/finance/accounting?kind=payment&status=Submitted">
                     Review payments
@@ -107,9 +105,8 @@ export default function RecordedFinance({ section }: { section: string }) {
               </p>
               <p>{report.needs}</p>
               <p>
-                No figures are estimated from receipt gaps or legacy test dues.
-                Financial reports will need the approved accounting source
-                before they can be calculated.
+                Missing receipts are not treated as unpaid bills. These reports
+                need approved financial records before totals can be shown.
               </p>
               <NavLink className="text-link" to="/office/finance">
                 View recorded collections
@@ -117,14 +114,14 @@ export default function RecordedFinance({ section }: { section: string }) {
             </section>
           )}
           <details className={styles.panel}>
-            <summary>Report readiness and required records</summary>
+            <summary>What each report needs</summary>
             <dl>
               {financeReports.map((r) => (
                 <div key={r.id}>
                   <dt>{r.title}</dt>
                   <dd>
                     {r.available
-                      ? "Connected: imported receipt evidence"
+                      ? "Available: past receipt records"
                       : "Unavailable"}
                     <p>{r.needs}</p>
                   </dd>

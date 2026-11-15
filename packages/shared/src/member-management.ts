@@ -29,6 +29,17 @@ export const memberWorkspaceSchema = z.object({
   auth_state: z.enum(["unlinked", "missing", "linked"]),
   can_edit: z.boolean(),
   can_link: z.boolean(),
+  link_block_reason: z
+    .enum([
+      "property_permission",
+      "self_review",
+      "no_sign_in_account",
+      "missing_sign_in_account",
+      "inactive_account",
+      "duplicate_account",
+    ])
+    .nullable()
+    .optional(),
   can_history: z.boolean(),
   can_view_properties: z.boolean(),
   profile: z

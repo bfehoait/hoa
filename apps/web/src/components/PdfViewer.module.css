@@ -1,0 +1,93 @@
+.viewer.viewer {
+  width: min(960px, 100%);
+  max-width: 960px;
+}
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+  padding-block: 4px 8px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.controls,
+.zoom {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.controls span,
+.zoom .reset {
+  font-size: 14px;
+  color: var(--muted);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.controls span {
+  min-width: 72px;
+}
+.zoom .reset {
+  min-width: 64px;
+  color: var(--ink);
+  font-weight: 600;
+}
+.controls button,
+.zoom button {
+  min-width: 48px;
+  min-height: 48px;
+  padding: 8px;
+  width: 48px;
+  border-radius: var(--radius-pill);
+}
+.zoom .reset {
+  display: flex;
+  flex-direction: column;
+  padding: 2px 4px;
+  gap: 0;
+  width: auto;
+}
+.reset small {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--muted);
+}
+.hint {
+  margin-block: 10px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.zoom {
+  margin-left: auto;
+}
+.page {
+  width: 100%;
+  overflow: auto;
+  background: var(--wash);
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+.page canvas {
+  display: block;
+  background: white;
+}
+.text {
+  margin-top: 12px;
+  font-size: 16px;
+}
+.text summary {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.text p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

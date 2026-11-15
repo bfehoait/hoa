@@ -4,6 +4,7 @@ import { usePermissions } from "../data/permissions";
 import { useAuth } from "../data/auth";
 import { Link } from "./AccessLink";
 import styles from "./RequestVisual.module.css";
+import { Skeleton } from "./UI";
 
 export function RequestVisual() {
   const auth = useAuth();
@@ -74,11 +75,11 @@ export function RequestVisual() {
           </ul>
           {!total && <p className={styles.empty}>No requests recorded yet.</p>}
         </>
+      ) : query.isPending ? (
+        <Skeleton variant="section" label="Loading request activity" />
       ) : (
         <p className={styles.empty}>
-          {query.isPending
-            ? "Loading request activity…"
-            : "Request activity is unavailable. No estimated counts are shown."}
+          Request activity is unavailable. No estimated counts are shown.
         </p>
       )}
     </section>

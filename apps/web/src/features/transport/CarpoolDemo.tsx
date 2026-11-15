@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from "react";
 import { ArrowDownUp, CarFront, Clock3, MapPin, Users } from "lucide-react";
-import { Button, Feedback, PageIntro } from "../../components/UI";
+import { Button, Feedback, PageIntro, Skeleton } from "../../components/UI";
 import Sheet from "../../components/Sheet";
 import styles from "./CarpoolDemo.module.css";
 
@@ -50,7 +50,9 @@ export default function CarpoolDemo() {
         >
           <Suspense
             fallback={
-              <div className={styles.mapFallback}>Loading sample map…</div>
+              <div className={styles.mapFallback}>
+                <Skeleton variant="section" label="Loading sample map" />
+              </div>
             }
           >
             <DemoMap key={mapKey} pickup={pickup} destination={destination} />

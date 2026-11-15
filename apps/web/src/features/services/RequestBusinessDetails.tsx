@@ -83,7 +83,7 @@ export default function RequestBusinessDetails({
     return (
       <>
         {request.business_details && (
-          <dl>
+          <dl className={styles.requestFacts}>
             {requestBusinessFields
               .filter((f) => request.business_details?.[f.key])
               .map((f) => (
@@ -104,11 +104,14 @@ export default function RequestBusinessDetails({
       </p>
     );
   return (
-    <section aria-label="Request details and Office handling">
+    <section
+      className={styles.businessDetails}
+      aria-label="Request details and Office handling"
+    >
       <Feedback error={query.error} message={notice} />
       {query.data && (
         <>
-          <dl>
+          <dl className={styles.requestFacts}>
             {requestBusinessFields
               .filter((f) => query.data?.details[f.key])
               .map((f) => (
@@ -120,10 +123,20 @@ export default function RequestBusinessDetails({
           </dl>
           {!editing ? (
             <>
-              <p>
-                Priority: {query.data.priority} · Handler:{" "}
-                {query.data.assignee_name || "Unassigned"}
-              </p>
+              <dl className={styles.handlingSummary}>
+                <div>
+                  <dt>Priority</dt>
+                  <dd>
+                    {query.data.priority === "Untriaged"
+                      ? "Not set"
+                      : query.data.priority}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Assigned to</dt>
+                  <dd>{query.data.assignee_name || "Unassigned"}</dd>
+                </div>
+              </dl>
               {query.data.resolution && (
                 <>
                   <h3>Recorded resolution</h3>
@@ -140,7 +153,7 @@ export default function RequestBusinessDetails({
                       save.reset();
                     }}
                   >
-                    Edit Office handling
+                    Edit assignment & priority
                   </Button>
                 )}
             </>

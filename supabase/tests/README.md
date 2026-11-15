@@ -1,5 +1,7 @@
 # Local database refusal tests
 
+Account connection regression: `npm.cmd run check:account-integrity` runs the ten focused cases in `manual-account-integrity.test.ts` plus a read-only comparison of the generated BFE editor artifact with its source. It executes real migrations 025/077 in embedded PostgreSQL with synthetic Auth/member rows and a narrow developer-policy fixture, without accessing Supabase. Coverage and runtime limitations are documented in `docs/ACCOUNT-CONNECTION-INTEGRITY.md`.
+
 The suite now contains 27 PostgreSQL tests: the fifteen original request/module-monitoring cases below plus twelve committee-permission cases in permissions.test.ts. The latter execute migrations 001/002/003 and test exact action/scope grants, deny precedence, expiry/revocation, no self-provisioning, immutable provisioning audit and request read/write separation. No people are provisioned by the migrations; the 204 committee cells are nonpersonal planning metadata only. Legacy database policy hardening remains outstanding.
 
 Run `npm.cmd test` to execute the versioned request migration in an embedded PGlite PostgreSQL instance with invented Auth/member rows. These tests never read `.env.local`, contact Supabase or import legacy records. The dev-only test dependency is not imported by the application bundle.

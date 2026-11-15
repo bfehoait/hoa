@@ -1,3 +1,4 @@
+import PageIntro from "../office/OfficePage";
 import financeStyles from "./FinanceReports.module.css";
 import { DetailDisclosure, NavigationGroup } from "../../components/Navigation";
 import { lazy, useEffect, useState } from "react";
@@ -19,14 +20,7 @@ import { money } from "../../../../../packages/shared/src";
 import { householdLedger } from "../../data/fixtures";
 import { usePortal } from "../../data/usePortal";
 import { useWorkspace } from "../../data/workspace";
-import {
-  Badge,
-  Feedback,
-  Modal,
-  PageIntro,
-  Row,
-  Skeleton,
-} from "../../components/UI";
+import { Badge, Feedback, Modal, Row, Skeleton } from "../../components/UI";
 import {
   LinkedCard,
   MetricStrip,
@@ -68,6 +62,7 @@ export default function Office() {
       if (event.type === "updated" && event.action.type === "success") {
         void cache.invalidateQueries({ queryKey: ["office-review-inbox"] });
         void cache.invalidateQueries({ queryKey: ["office-pending-lots"] });
+        void cache.invalidateQueries({ queryKey: ["office-inbox-records"] });
       }
     });
   }, [cache, auth.preview, auth.rolePreview, auth.memberPreview]);
@@ -284,9 +279,8 @@ function SampleOffice() {
         />
         <Queue kind="registration" title="Applications" allowReview />
         <WorkspaceNote>
-          Reviewing a local item cannot create an identity, grant membership or
-          send mail. Real approval needs one transactional server operation and
-          a retryable invitation outbox.
+          Sample preview only. Reviewing these items does not create a real
+          account, grant membership or send an email.
         </WorkspaceNote>
       </>
     );
@@ -354,7 +348,7 @@ function SampleOffice() {
                 },
                 {
                   label: "Approve a property change",
-                  detail: "Requires authorized server workflow",
+                  detail: "Requires an authorized Office review",
                 },
               ]}
             />
@@ -371,13 +365,13 @@ function SampleOffice() {
       <>
         <PageIntro
           eyebrow="PROPOSED POLICY · NO REAL GRANTS"
-          title="Roles & effective access"
+          title="Roles & permissions"
           description="A visual discussion matrix. These proposals are not enforced permissions."
         />
         <WorkspaceNote>
-          No control here can grant a role. Main roles, extra roles, view-only
-          precedence, overrides and super-admin authority need approval before
-          server implementation.
+          Sample preview only. These controls do not change anyone’s real role
+          or permissions. Changes to access rules need approval before they can
+          be used.
         </WorkspaceNote>
         <div
           className="table-wrap"
@@ -431,7 +425,7 @@ function SampleOffice() {
       },
       announcements: {
         kind: "announcement" as const,
-        title: "Announcement studio",
+        title: "Announcements",
         create: "New sample announcement",
       },
       documents: {
@@ -507,7 +501,7 @@ function SampleOffice() {
         <ProgressTimeline
           items={[
             {
-              label: "Define approved ledger scope",
+              label: "Confirm which financial records to include",
               detail: "Period, source, receipts and adjustments",
             },
             {
@@ -535,7 +529,7 @@ function SampleOffice() {
             path === "operations"
               ? "Operations desk"
               : path === "community"
-                ? "Community publishing"
+                ? "Announcements"
                 : "Office administration"
           }
         />
@@ -570,7 +564,7 @@ function SampleOffice() {
             : path === "community"
               ? [
                   {
-                    title: "Announcement studio",
+                    title: "Announcements",
                     to: "/office/announcements",
                     icon: FileText,
                     detail: "Draft and publish only into the local preview.",

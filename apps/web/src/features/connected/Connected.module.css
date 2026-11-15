@@ -178,7 +178,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  font-weight: 700;
+  font-weight: var(--staff-emphasis-weight, 700);
   padding: 16px 0;
 }
 .coverage ul {
@@ -216,7 +216,7 @@
   background: var(--surface);
 }
 .statement h2 {
-  font-size: 24px;
+  font-size: var(--staff-section-heading-size, 24px);
   margin: 12px 0;
 }
 @media (min-width: 700px) {
@@ -299,7 +299,7 @@
     padding: 16px;
   }
   .statement h2 {
-    font-size: var(--section-heading-size);
+    font-size: var(--staff-section-heading-size, var(--section-heading-size));
   }
   .statementTotals {
     grid-template-columns: 1fr 1fr;
@@ -312,7 +312,7 @@
     font-size: 20px;
   }
   .statementTotals > div:first-child strong {
-    font-size: 32px;
+    font-size: var(--staff-kpi-size, 32px);
     color: var(--accent);
   }
   .statementTable {
@@ -404,7 +404,7 @@
   background: var(--surface);
   color: var(--muted);
   font-size: 14px;
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
 }
 .directorySections button[aria-pressed="true"] {
   background: var(--accent-soft);
@@ -426,7 +426,7 @@
   min-width: 0;
 }
 .directorySamples h2 {
-  font-size: 16px;
+  font-size: var(--staff-section-heading-size, 16px);
 }
 .directorySamples p {
   font-size: 14px;
@@ -509,7 +509,7 @@
 }
 .recordRow strong {
   font-size: 16px;
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
   overflow-wrap: anywhere;
 }
 .recordRow > span:first-child > span {
@@ -545,5 +545,86 @@
     min-height: 64px;
     padding: 12px;
     gap: 12px;
+  }
+}
+
+/* One shared visual language for connected staff desks, not resident cards. */
+:global([data-staff-ui="true"]) .toolbar {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+:global([data-staff-ui="true"]) .card,
+:global([data-staff-ui="true"]) .statement {
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+:global([data-staff-ui="true"]) .card h2,
+:global([data-staff-ui="true"]) .card h3 {
+  font-weight: var(--staff-heading-weight, 750);
+}
+:global([data-staff-ui="true"]) .row {
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+}
+:global([data-staff-ui="true"]) .row strong {
+  font-weight: var(--staff-emphasis-weight, 750);
+}
+:global([data-staff-ui="true"]) .icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+}
+:global([data-staff-ui="true"]) .tableWrap {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  scrollbar-width: thin;
+}
+:global([data-staff-ui="true"]) .table th {
+  font-size: 14px;
+  font-weight: var(--staff-emphasis-weight, 650);
+}
+:global([data-staff-ui="true"]) .table :is(th, td) {
+  padding: 14px 18px;
+}
+:global([data-staff-ui="true"]) .bubble {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px 16px 16px 4px;
+  padding: 16px 18px;
+}
+:global([data-staff-ui="true"]) .bubble[data-own="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  border-radius: 16px 16px 4px 16px;
+}
+
+/* Compact desktop filters: one control band, without a second card shell. */
+@media (min-width: 768px) {
+  :global([data-staff-ui="true"]) .toolbar {
+    position: static;
+    padding: 0;
+    margin-block: 12px;
+    gap: 10px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    align-items: end;
+  }
+  :global([data-staff-ui="true"]) .toolbar > label {
+    flex: 0 1 280px;
+    min-width: min(180px, 100%);
+    gap: 4px;
+    font-size: 14px;
+  }
+  :global([data-staff-ui="true"]) .toolbar :is(input, select) {
+    min-height: 48px;
+    padding-block: 10px;
+    font-size: 16px;
   }
 }

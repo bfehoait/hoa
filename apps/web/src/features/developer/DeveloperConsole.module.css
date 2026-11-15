@@ -27,7 +27,7 @@
   min-width: 0;
 }
 .overview h2 {
-  font-size: 24px;
+  font-size: var(--staff-section-heading-size, 24px);
   margin-bottom: 8px;
 }
 .overview p {
@@ -51,7 +51,7 @@
   min-width: 0;
 }
 .card h2 {
-  font-size: var(--section-heading-size);
+  font-size: var(--staff-card-heading-size, var(--section-heading-size));
 }
 .card p {
   color: var(--muted);
@@ -90,7 +90,7 @@
 .facts dd {
   margin: 6px 0 0;
   overflow-wrap: anywhere;
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
 }
 .roleCard {
   text-decoration: none;
@@ -122,7 +122,7 @@
   background: var(--accent-soft);
   color: var(--accent);
   border-radius: var(--radius-sm);
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
   text-decoration: none;
 }
 .actions {
@@ -197,7 +197,7 @@
   border-radius: var(--radius-lg);
 }
 .profileHero h2 {
-  font-size: 24px;
+  font-size: var(--staff-section-heading-size, 24px);
   overflow-wrap: anywhere;
 }
 .profileHero p {
@@ -227,7 +227,7 @@
     align-items: flex-start;
   }
   .overview h2 {
-    font-size: var(--section-heading-size);
+    font-size: var(--staff-section-heading-size, var(--section-heading-size));
   }
   .card {
     padding: var(--card-padding);
@@ -252,7 +252,7 @@
     gap: 12px;
   }
   .profileHero h2 {
-    font-size: 22px;
+    font-size: var(--staff-section-heading-size, 22px);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -280,4 +280,60 @@
     padding: 10px 12px;
     font-size: 14px;
   }
+}
+
+:global([data-staff-ui="true"]) .card {
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+:global([data-staff-ui="true"]) .card h2 {
+  font-size: var(--staff-card-heading-size, 18px);
+  font-weight: var(--staff-heading-weight, 750);
+}
+:global([data-staff-ui="true"]) .icon {
+  border-radius: 12px;
+}
+
+.accessTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px;
+  margin-bottom: 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--wash);
+}
+.accessTabs button {
+  flex: 1 1 140px;
+  min-height: 48px;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 16px;
+  font-weight: var(--staff-emphasis-weight, 650);
+  cursor: pointer;
+}
+.accessTabs button[aria-selected="true"] {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+.accessTabs button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.accessTabs button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.accessPanel {
+  min-width: 0;
+}
+.accessPanel[hidden] {
+  display: none;
 }

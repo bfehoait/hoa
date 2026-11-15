@@ -5,14 +5,16 @@ import { balanceMoney } from "../../../../../packages/shared/src/hoa-balance";
 import { featureRpc } from "../../data/feature-records";
 import { useAuth } from "../../data/auth";
 import { Link } from "../../components/AccessLink";
-import { Feedback } from "../../components/UI";
+import { Feedback, Skeleton } from "../../components/UI";
 
 export default function BookingCharge({
   id,
   office,
+  status,
 }: {
   id: string;
   office: boolean;
+  status?: string;
 }) {
   const auth = useAuth();
   const query = useQuery({
@@ -28,7 +30,8 @@ export default function BookingCharge({
         })
         .parse(await featureRpc("bfe_booking_charge", { p_id: id })),
   });
-  if (query.isPending) return <p role="status">Checking booking fee…</p>;
+  if (query.isPending)
+    return <Skeleton variant="section" label="Loading booking fee" />;
   if (query.isError)
     return (
       <>
@@ -67,8 +70,10 @@ export default function BookingCharge({
         </>
       ) : (
         <p>
-          Fee awaiting Office confirmation. No charge has been added to your
-          account yet.
+          {status === "Approved"
+            ? "Booking approved. Fee not confirmed yet."
+            : "Fee awaiting Office confirmation."}{" "}
+          No charge has been added to your account yet.
         </p>
       )}
       {office && query.data?.can_create && (

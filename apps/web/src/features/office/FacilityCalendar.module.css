@@ -48,7 +48,7 @@
 }
 .monthHeading h2,
 .agenda h2 {
-  font-size: 20px;
+  font-size: var(--staff-section-heading-size, 20px);
   margin: 0;
 }
 .heading {
@@ -183,4 +183,98 @@
     grid-template-columns: repeat(7, minmax(48px, 1fr));
     overflow-x: auto;
   }
+}
+
+:global([data-staff-ui="true"]) .filters {
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+:global([data-staff-ui="true"]) .month,
+:global([data-staff-ui="true"]) .agenda {
+  padding: 22px;
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+:global([data-staff-ui="true"]) .monthHeading h2,
+:global([data-staff-ui="true"]) .agenda h2 {
+  font-weight: var(--staff-heading-weight, 800);
+}
+:global([data-staff-ui="true"]) .day {
+  border-radius: 10px;
+  min-width: 0;
+  min-height: 92px;
+}
+:global([data-staff-ui="true"]) .day[aria-current="date"] strong {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+  text-decoration: none;
+}
+@media (max-width: 767px) {
+  :global([data-staff-ui="true"]) .month {
+    padding: 12px;
+  }
+  :global([data-staff-ui="true"]) .grid {
+    gap: 2px;
+  }
+  :global([data-staff-ui="true"]) .day {
+    min-height: 64px;
+    padding: 8px 2px;
+  }
+  :global([data-staff-ui="true"]) .filters label {
+    min-width: 0;
+    flex-basis: 100%;
+  }
+}
+
+/* Compact desktop filters: one control band, without a second card shell. */
+@media (min-width: 768px) {
+  :global([data-staff-ui="true"]) .filters {
+    position: static;
+    padding: 0;
+    margin-block: 12px;
+    gap: 10px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    align-items: end;
+  }
+  :global([data-staff-ui="true"]) .filters > label {
+    flex: 0 1 280px;
+    min-width: min(180px, 100%);
+    gap: 4px;
+    font-size: 14px;
+  }
+  :global([data-staff-ui="true"]) .filters :is(input, select) {
+    min-height: 48px;
+    padding-block: 10px;
+    font-size: 16px;
+  }
+}
+
+/* Restore the paired month and selected-day agenda. */
+@media (min-width: 1200px) {
+  :global([data-office-ui="true"]) .layout {
+    grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr);
+    gap: 20px;
+  }
+}
+:global([data-office-ui="true"]) .day {
+  align-items: center;
+  border-radius: 10px;
+  box-shadow: none;
+}
+:global([data-office-ui="true"]) .day[aria-current="date"] strong {
+  width: auto;
+  height: auto;
+  background: transparent;
+  color: inherit;
+  text-decoration: underline;
 }

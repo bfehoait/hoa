@@ -154,7 +154,7 @@
   max-width: 560px;
 }
 .accountForm h3 {
-  font-size: 18px;
+  font-size: var(--staff-card-heading-size, 18px);
   margin-bottom: 8px;
 }
 .extraRoles {
@@ -269,7 +269,7 @@
   padding: 20px;
 }
 .forms h3 {
-  font-size: 18px;
+  font-size: var(--staff-card-heading-size, 18px);
   margin: 0 0 18px;
 }
 .pair {
@@ -351,5 +351,47 @@
   }
   .pair {
     grid-template-columns: 1fr;
+  }
+}
+
+:global([data-staff-ui="true"]) .manager,
+:global([data-staff-ui="true"]) .memberSummary {
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+:global([data-staff-ui="true"]) .memberSummary {
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+:global([data-staff-ui="true"]) .editorTabs {
+  gap: 4px;
+  padding: 4px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--wash);
+  flex-wrap: wrap;
+}
+:global([data-staff-ui="true"]) .editorTabs button {
+  flex: 1 1 auto;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  font-size: 14px;
+  font-weight: var(--staff-emphasis-weight, 650);
+}
+:global([data-staff-ui="true"]) .editorTabs button[aria-selected="true"],
+:global([data-staff-ui="true"]) .editorTabs button[aria-pressed="true"] {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+:global([data-staff-ui="true"]) .accessDrawer.accessDrawer {
+  border-radius: 18px 0 0 18px;
+}
+@media (max-width: 559px) {
+  :global([data-staff-ui="true"]) .accessDrawer.accessDrawer {
+    border-radius: 0;
   }
 }

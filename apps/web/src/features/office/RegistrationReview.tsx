@@ -4,6 +4,7 @@ import { z } from "zod";
 import { Button, Feedback, Field, Modal, Skeleton } from "../../components/UI";
 import { featureRpc } from "../../data/feature-records";
 import CreateAccount from "./CreateAccount";
+import { useReviewSurface } from "./ReviewSurface";
 const schema = z.object({
   application: z.object({
     id: z.uuid(),
@@ -23,6 +24,7 @@ const schema = z.object({
   can_approve: z.boolean(),
 });
 export default function RegistrationReview({ id }: { id: string }) {
+  const reviewSurface = useReviewSurface();
   const cache = useQueryClient(),
     [reject, setReject] = useState(false),
     [reason, setReason] = useState(""),
@@ -53,8 +55,33 @@ export default function RegistrationReview({ id }: { id: string }) {
     : [];
   return (
     <section>
-      <h3>Membership review</h3>
       <dl className="detail-list">
+        <div>
+          <dt>Name</dt>
+          <dd>{a.name}</dd>
+        </div>
+        <div>
+          <dt>Email</dt>
+          <dd>{a.email}</dd>
+        </div>
+        <div>
+          <dt>Mobile</dt>
+          <dd>{a.phone || "Not supplied"}</dd>
+        </div>
+        <div>
+          <dt>Lot</dt>
+          <dd>{a.unit}</dd>
+        </div>
+        <div>
+          <dt>Requested role</dt>
+          <dd>{a.role}</dd>
+        </div>
+        {!reviewSurface && (
+          <div>
+            <dt>Status</dt>
+            <dd>{a.status}</dd>
+          </div>
+        )}
         <div>
           <dt>Registered homeowner</dt>
           <dd>{a.owner_name || "Not supplied"}</dd>
@@ -118,7 +145,10 @@ export default function RegistrationReview({ id }: { id: string }) {
             account does not approve a lot link.
           </p>
           <div className="btn-row">
-            <CreateAccount application={a} />
+            <CreateAccount
+              application={a}
+              onCreated={() => reviewSurface?.clearRecord?.()}
+            />
             <Button secondary onClick={() => setReject(true)}>
               Reject application
             </Button>
@@ -155,6 +185,13 @@ export default function RegistrationReview({ id }: { id: string }) {
                   queryKey: ["registration-detail"],
                 });
                 void cache.invalidateQueries({ queryKey: ["office-people"] });
+                void cache.invalidateQueries({
+                  queryKey: ["office-review-inbox"],
+                });
+                void cache.invalidateQueries({
+                  queryKey: ["office-inbox-records"],
+                });
+                reviewSurface?.clearRecord?.();
               } catch (e) {
                 setError(
                   e instanceof Error

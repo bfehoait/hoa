@@ -1,4 +1,12 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import PageIntro from "../office/OfficePage";
+import { useReviewSurface, useReviewState } from "../office/ReviewSurface";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type ComponentProps,
+} from "react";
 import { useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { useReadOpenedNotification } from "../../data/notification-target";
@@ -13,14 +21,7 @@ import {
   Send,
   Wrench,
 } from "lucide-react";
-import {
-  Badge,
-  Button,
-  Feedback,
-  Field,
-  PageIntro,
-  Skeleton,
-} from "../../components/UI";
+import { Badge, Button, Feedback, Field, Skeleton } from "../../components/UI";
 import Sheet from "../../components/Sheet";
 import MobileRequestConversation from "./MobileRequestConversation";
 import {
@@ -53,6 +54,7 @@ function dateLabel(value: string) {
   });
 }
 export default function RequestDesk({ office = false }: { office?: boolean }) {
+  const reviewSurface = useReviewSurface();
   const [params, setParams] = useSearchParams();
   const [phone, setPhone] = useState(
     () => window.matchMedia("(max-width: 767px)").matches,
@@ -63,14 +65,29 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
-  const recordId = z.uuid().safeParse(params.get("record")).data ?? null;
+  const recordId =
+    reviewSurface?.recordId ??
+    z.uuid().safeParse(params.get("record")).data ??
+    null;
   const auth = useAuth();
   const sample = auth.preview || !!auth.rolePreview;
-  const [page, setPage] = useState(0);
-  const [status, setStatus] = useState(office ? "" : "Active");
-  const [category, setCategory] = useState("");
+  const [page, setPage] = useReviewState("requests.page", 0);
+  const [status, setStatus] = useReviewState(
+    "requests.status",
+    office ? "" : "Active",
+  );
+  const [category, setCategory] = useReviewState("requests.category", "");
   const [creating, setCreating] = useState(() => !office && params.has("new"));
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useReviewState<string | null>(
+    "requests.selected",
+    null,
+  );
+  const [conversationLocked, setConversationLocked] = useState(false);
+  const onReviewLockChange = reviewSurface?.onLockChange;
+  useEffect(() => {
+    onReviewLockChange?.(conversationLocked);
+    return () => onReviewLockChange?.(false);
+  }, [conversationLocked, onReviewLockChange]);
   const [notice, setNotice] = useState("");
   const query = useRequests(
     office,
@@ -81,9 +98,17 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
   );
   const records = query.isError ? [] : (query.data?.records ?? []);
   const showFilters = office;
-  const selected = records.find(
-    (record) => record.id === (recordId ?? selectedId),
-  );
+  const targeted = params.has("record") || !!reviewSurface?.recordId;
+  const firstRequestId = records[0]?.id;
+  useEffect(() => {
+    if (office && !phone && !targeted && !selectedId && firstRequestId)
+      setSelectedId(firstRequestId);
+  }, [office, phone, targeted, selectedId, firstRequestId, setSelectedId]);
+  const selected =
+    (targeted && !recordId
+      ? undefined
+      : records.find((record) => record.id === (recordId ?? selectedId))) ??
+    (office && !phone && !targeted && !selectedId ? records[0] : undefined);
   useReadOpenedNotification(!sample && !!selected && query.isSuccess);
   const clearTarget = () => {
     setSelectedId(null);
@@ -96,6 +121,26 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
     query.data?.total === null
       ? records.length === 20
       : (page + 1) * 20 < (query.data?.total ?? 0);
+  if (office && reviewSurface?.recordId)
+    return selected ? (
+      <Thread
+        key={selected.id}
+        request={selected}
+        office
+        inline
+        onClose={() => reviewSurface.clearRecord?.()}
+        onLockChange={setConversationLocked}
+      />
+    ) : (
+      <>
+        <Feedback error={query.error} />
+        {query.isPending ? (
+          <Skeleton />
+        ) : (
+          <p>This request is no longer available.</p>
+        )}
+      </>
+    );
   if (!office && phone && selected)
     return (
       <Thread
@@ -116,7 +161,7 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
               ? "OFFICE · RESIDENT SUPPORT"
               : "HELPDESK"
         }
-        title={office ? "Resident requests" : "How can we help?"}
+        title={office ? "Helpdesk" : "How can we help?"}
         description={
           office
             ? "Review requests, respond and keep residents informed."
@@ -178,6 +223,7 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
             Status
             <select
               value={status}
+              disabled={conversationLocked}
               onChange={(event) => {
                 setStatus(event.target.value);
                 setPage(0);
@@ -196,6 +242,7 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
             Category
             <select
               value={category}
+              disabled={conversationLocked}
               onChange={(event) => {
                 setCategory(event.target.value);
                 setPage(0);
@@ -213,6 +260,7 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
           <Button
             secondary
             pending={query.isFetching}
+            disabled={conversationLocked}
             onClick={() => void query.refetch()}
           >
             <RefreshCw size={20} />
@@ -231,120 +279,156 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
         />
       )}
       {params.has("record") && (
-        <Button secondary onClick={clearTarget}>
+        <Button secondary disabled={conversationLocked} onClick={clearTarget}>
           Show all requests
         </Button>
       )}
-      {query.isPending ? (
-        <Skeleton />
-      ) : query.isError ? (
-        <>
-          <Feedback error={query.error} />
-          <Button secondary onClick={() => void query.refetch()}>
-            Try again
-          </Button>
-        </>
-      ) : (
-        <>
-          {(office || sample) && (
-            <p className={styles.source}>
-              <CheckCircle2 size={18} />
-              <span>
-                {sample ? "Sample data · This tab only" : "Database records"} ·{" "}
-                {query.data?.total === null
-                  ? `${records.length} on this page`
-                  : `${query.data?.total ?? 0} matching`}{" "}
-                · Updated{" "}
-                {new Date(query.dataUpdatedAt).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </p>
+      <div className={office && !phone ? styles.officeDesk : undefined}>
+        <div className={styles.requestListPanel}>
+          {query.isPending ? (
+            <Skeleton />
+          ) : query.isError ? (
+            <>
+              <Feedback error={query.error} />
+              <Button secondary onClick={() => void query.refetch()}>
+                Try again
+              </Button>
+            </>
+          ) : (
+            <>
+              {(office || sample) && (
+                <p className={styles.source}>
+                  <CheckCircle2 size={18} />
+                  <span>
+                    {sample ? "Sample data · This tab only" : "Requests"} ·{" "}
+                    {query.data?.total === null
+                      ? `${records.length} on this page`
+                      : `${query.data?.total ?? 0} matching`}{" "}
+                    · Updated{" "}
+                    {new Date(query.dataUpdatedAt).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </p>
+              )}
+              {!records.length ? (
+                <section className={styles.empty}>
+                  <MessageSquare size={36} />
+                  <h2>
+                    {status || category
+                      ? "No matching requests"
+                      : "No requests yet"}
+                  </h2>
+                  <p>
+                    {office
+                      ? "Requests submitted through this app will appear here when your account is authorized to read them."
+                      : "Your submitted requests and office replies will appear here. Other residents’ requests stay outside this view."}
+                  </p>
+                </section>
+              ) : (
+                <ul
+                  className={styles.requests}
+                  tabIndex={office && !phone ? 0 : undefined}
+                  aria-label="Requests"
+                >
+                  {records.map((record) => (
+                    <li key={record.id}>
+                      <button
+                        disabled={
+                          conversationLocked && selected?.id !== record.id
+                        }
+                        aria-pressed={
+                          office ? selected?.id === record.id : undefined
+                        }
+                        onClick={() => {
+                          if (!office && phone) {
+                            const next = new URLSearchParams(params);
+                            next.set("record", record.id);
+                            setParams(next, { preventScrollReset: true });
+                          } else setSelectedId(record.id);
+                        }}
+                        aria-label={`Open ${record.title}`}
+                      >
+                        <span className={styles.requestIcon}>
+                          <Wrench size={24} />
+                        </span>
+                        <span className={styles.requestInfo}>
+                          <strong>{record.title}</strong>
+                          <span>
+                            {requestCategoryLabel(record.category)}
+                            {office && record.unit_snapshot
+                              ? ` · Recorded unit: ${record.unit_snapshot}`
+                              : ""}
+                          </span>
+                          <time dateTime={record.updated_at}>
+                            {dateLabel(record.updated_at)}
+                          </time>
+                        </span>
+                        <Badge
+                          tone={
+                            record.status === "Resolved"
+                              ? "green"
+                              : record.status === "In progress"
+                                ? "amber"
+                                : "neutral"
+                          }
+                        >
+                          {record.status}
+                        </Badge>
+                        <ChevronRight size={20} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {(page > 0 || canNext) && (
+                <nav className={styles.pagination} aria-label="Request pages">
+                  <Button
+                    secondary
+                    disabled={!page || query.isFetching || conversationLocked}
+                    onClick={() => setPage((value) => value - 1)}
+                  >
+                    <ArrowLeft size={18} />
+                    Previous
+                  </Button>
+                  <span>Page {page + 1}</span>
+                  <Button
+                    secondary
+                    disabled={
+                      !canNext || query.isFetching || conversationLocked
+                    }
+                    onClick={() => setPage((value) => value + 1)}
+                  >
+                    Next
+                    <ArrowRight size={18} />
+                  </Button>
+                </nav>
+              )}
+            </>
           )}
-          {!records.length ? (
-            <section className={styles.empty}>
-              <MessageSquare size={36} />
-              <h2>
-                {status || category
-                  ? "No matching requests"
-                  : "No requests yet"}
-              </h2>
+        </div>
+        {office &&
+          (selected ? (
+            <Thread
+              key={selected.id}
+              request={selected}
+              office
+              inline={!phone}
+              onLockChange={setConversationLocked}
+              onClose={clearTarget}
+            />
+          ) : !phone ? (
+            <section className={styles.officeThreadEmpty}>
+              <MessageSquare size={32} />
+              <h2>Select a request</h2>
               <p>
-                {office
-                  ? "Requests submitted through this app will appear here when your account is authorized to read them."
-                  : "Your submitted requests and office replies will appear here. Other residents’ requests stay outside this view."}
+                Open a conversation to review its details, reply or update its
+                status.
               </p>
             </section>
-          ) : (
-            <ul className={styles.requests}>
-              {records.map((record) => (
-                <li key={record.id}>
-                  <button
-                    onClick={() => {
-                      if (!office && phone) {
-                        const next = new URLSearchParams(params);
-                        next.set("record", record.id);
-                        setParams(next, { preventScrollReset: true });
-                      } else setSelectedId(record.id);
-                    }}
-                    aria-label={`Open ${record.title}`}
-                  >
-                    <span className={styles.requestIcon}>
-                      <Wrench size={24} />
-                    </span>
-                    <span className={styles.requestInfo}>
-                      <strong>{record.title}</strong>
-                      <span>
-                        {requestCategoryLabel(record.category)}
-                        {office && record.unit_snapshot
-                          ? ` · Recorded unit: ${record.unit_snapshot}`
-                          : ""}
-                      </span>
-                      <time dateTime={record.updated_at}>
-                        {dateLabel(record.updated_at)}
-                      </time>
-                    </span>
-                    <Badge
-                      tone={
-                        record.status === "Resolved"
-                          ? "green"
-                          : record.status === "In progress"
-                            ? "amber"
-                            : "neutral"
-                      }
-                    >
-                      {record.status}
-                    </Badge>
-                    <ChevronRight size={20} />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          {(page > 0 || canNext) && (
-            <nav className={styles.pagination} aria-label="Request pages">
-              <Button
-                secondary
-                disabled={!page || query.isFetching}
-                onClick={() => setPage((value) => value - 1)}
-              >
-                <ArrowLeft size={18} />
-                Previous
-              </Button>
-              <span>Page {page + 1}</span>
-              <Button
-                secondary
-                disabled={!canNext || query.isFetching}
-                onClick={() => setPage((value) => value + 1)}
-              >
-                Next
-                <ArrowRight size={18} />
-              </Button>
-            </nav>
-          )}
-        </>
-      )}
+          ) : null)}
+      </div>
       {creating && !!query.data && (
         <NewRequest
           initialCategory={
@@ -368,7 +452,7 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
           }}
         />
       )}
-      {selected && (
+      {selected && !office && (
         <Thread
           key={selected.id}
           request={selected}
@@ -565,11 +649,15 @@ function Thread({
   office,
   onClose,
   mobile = false,
+  inline = false,
+  onLockChange,
 }: {
   request: LiveRequest;
   office: boolean;
   onClose: () => void;
   mobile?: boolean;
+  inline?: boolean;
+  onLockChange?: (locked: boolean) => void;
 }) {
   const [page, setPage] = useState(0);
   const messages = useRequestThread(request.id, page);
@@ -605,6 +693,16 @@ function Thread({
   const [notice, setNotice] = useState("");
   const [handlingBusy, setHandlingBusy] = useState(false);
   const [handlingEditing, setHandlingEditing] = useState(false);
+  const locked =
+    actions.reply.isPending ||
+    actions.status.isPending ||
+    handlingBusy ||
+    handlingEditing ||
+    !!body.trim();
+  useEffect(() => {
+    onLockChange?.(inline && locked);
+  }, [inline, locked, onLockChange]);
+  useEffect(() => () => onLockChange?.(false), [onLockChange]);
   async function reply(event: FormEvent) {
     event.preventDefault();
     if (!body.trim()) return;
@@ -637,13 +735,16 @@ function Thread({
           Read-only access. Reply permission is required to send a message.
         </p>
       ) : (
-        <form className={styles.form} onSubmit={reply}>
+        <form
+          className={`${styles.form} ${inline ? styles.officeComposer : ""}`}
+          onSubmit={reply}
+        >
           <Field label="Your reply">
             <textarea
               id="request-reply"
               ref={replyInput}
               rows={mobile ? 1 : undefined}
-              placeholder={mobile ? "Type a reply..." : undefined}
+              placeholder="Type a reply..."
               value={body}
               maxLength={5000}
               onChange={(event) => {
@@ -711,8 +812,9 @@ function Thread({
         footer={replyComposer}
       />
     );
+  const Frame = inline ? OfficeThreadFrame : Sheet;
   return (
-    <Sheet
+    <Frame
       title={request.title}
       className={!office ? styles.conversationSheet : undefined}
       presentation={office ? "sheet" : "task"}
@@ -722,12 +824,12 @@ function Thread({
       onClose={onClose}
     >
       <p className={styles.description}>{request.description}</p>
-      <p className="note">
+      <p className={styles.requestMeta}>
         Submitted {dateLabel(request.created_at)}
         {request.unit_snapshot
           ? ` · Recorded unit: ${request.unit_snapshot}`
           : ""}
-        . Recorded unit text is not proof of property ownership.
+        . Recorded address only; ownership is checked separately.
       </p>
       <RequestBusinessDetails
         request={request}
@@ -744,7 +846,11 @@ function Thread({
             <Button
               secondary
               key={status}
-              disabled={status === request.status || actions.status.isPending}
+              disabled={
+                status === request.status ||
+                actions.status.isPending ||
+                (inline && !!body.trim())
+              }
               onClick={async () => {
                 try {
                   await actions.status.mutateAsync({ request, value: status });
@@ -784,7 +890,11 @@ function Thread({
       ) : (
         <>
           {!rows.length && <p className="note">No replies yet.</p>}
-          <ol className={styles.messages}>
+          <ol
+            className={styles.messages}
+            tabIndex={inline ? 0 : undefined}
+            aria-label="Conversation replies"
+          >
             {rows.map((message) => (
               <li
                 key={message.id}
@@ -829,6 +939,102 @@ function Thread({
         </>
       )}
       {replyComposer}
-    </Sheet>
+    </Frame>
+  );
+}
+
+function OfficeThreadFrame({
+  title,
+  description,
+  children,
+  onClose,
+  busy,
+  protectChanges,
+}: ComponentProps<typeof Sheet>) {
+  const panel = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!busy && !protectChanges) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    const confirmLeave = () =>
+      !busy &&
+      window.confirm("Leave this conversation and discard unsaved edits?");
+    const guardLink = (event: MouseEvent) => {
+      if (
+        event.button !== 0 ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey ||
+        event.altKey
+      )
+        return;
+      const anchor =
+        event.target instanceof Element
+          ? event.target.closest<HTMLAnchorElement>("a[href]")
+          : null;
+      if (
+        !anchor ||
+        anchor.download ||
+        (anchor.target && anchor.target !== "_self")
+      )
+        return;
+      const target = new URL(anchor.href, window.location.href);
+      if (
+        target.pathname === window.location.pathname &&
+        target.search === window.location.search
+      )
+        return;
+      if (!confirmLeave()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    const guardForm = (event: SubmitEvent) => {
+      if (
+        !(event.target instanceof HTMLFormElement) ||
+        event.target.getAttribute("role") !== "search"
+      )
+        return;
+      if (event.target instanceof Node && panel.current?.contains(event.target))
+        return;
+      if (!confirmLeave()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    window.addEventListener("beforeunload", warn);
+    document.addEventListener("click", guardLink, true);
+    document.addEventListener("submit", guardForm, true);
+    return () => {
+      window.removeEventListener("beforeunload", warn);
+      document.removeEventListener("click", guardLink, true);
+      document.removeEventListener("submit", guardForm, true);
+    };
+  }, [busy, protectChanges]);
+  return (
+    <section
+      ref={panel}
+      className={styles.officeThread}
+      aria-label="Selected request conversation"
+    >
+      <header>
+        <div>
+          <h2>{title}</h2>
+          <p>{description}</p>
+        </div>
+        <Button secondary disabled={busy || protectChanges} onClick={onClose}>
+          Close
+        </Button>
+      </header>
+      {protectChanges && (
+        <p className="note" role="status">
+          Send or clear your reply, and save or cancel any detail edits before
+          switching requests.
+        </p>
+      )}
+      {children}
+    </section>
   );
 }

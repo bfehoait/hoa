@@ -1,0 +1,452 @@
+.page {
+  min-width: 0;
+}
+.header {
+  margin-bottom: 20px;
+}
+.header h1 {
+  font-size: var(--staff-page-heading-size, 32px);
+  font-weight: var(--staff-page-weight, 800);
+  line-height: 1.2;
+  margin: 0;
+  padding-right: 100px;
+}
+.crumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 16px;
+  margin: 8px 0 24px;
+}
+.crumb a {
+  color: var(--accent);
+  font-weight: var(--staff-emphasis-weight, 750);
+  text-decoration: none;
+}
+.intro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.intro > p {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 72ch;
+}
+.actions,
+.toolLinks {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.section {
+  margin: 0 0 28px;
+}
+.section > h2 {
+  font-size: var(--staff-section-heading-size, 20px);
+  font-weight: var(--staff-heading-weight, 800);
+  margin: 0 0 16px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 20px;
+}
+.card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.card h3 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: var(--staff-card-heading-size, 18px);
+  font-weight: var(--staff-heading-weight, 750);
+  margin: 0;
+}
+.card p {
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.5;
+}
+.icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 12px;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.cardFooter {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+}
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 16px;
+}
+.status i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex: none;
+}
+.status i[data-live] {
+  background: var(--green);
+}
+.big {
+  font-size: var(--staff-kpi-size, 42px);
+  font-weight: var(--staff-emphasis-weight, 800);
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+.feed {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: var(--shadow-sm);
+}
+.feed > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 22px 0;
+}
+.feed > header h3 {
+  font-size: var(--staff-card-heading-size, 18px);
+  font-weight: var(--staff-heading-weight, 750);
+}
+.feed > header a {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+}
+.event {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px 22px;
+}
+.event + .event {
+  border-top: 1px solid var(--line);
+}
+.event > div {
+  flex: 1;
+  min-width: 0;
+}
+.event strong {
+  font-weight: var(--staff-emphasis-weight, 750);
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+.event p,
+.event time {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-top: 4px;
+}
+.event time {
+  text-align: right;
+  max-width: 160px;
+}
+.note,
+.notice {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-top: 12px;
+}
+.note a {
+  color: var(--accent);
+  text-underline-offset: 3px;
+}
+.result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 14px;
+  margin: 16px 0;
+}
+.disclosure {
+  margin-top: 24px;
+  padding: 0 20px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.disclosure summary {
+  min-height: 56px;
+  align-content: center;
+  font-weight: var(--staff-emphasis-weight, 700);
+  cursor: pointer;
+}
+.disclosure p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 8px 0 16px;
+}
+.toolLinks {
+  margin-top: 20px;
+}
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+}
+.modalNote {
+  margin-top: 20px;
+  line-height: 1.6;
+}
+.empty {
+  padding: 28px 22px;
+  color: var(--muted);
+}
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.table {
+  min-width: 680px;
+  width: 100%;
+}
+.table th {
+  background: var(--wash);
+  font-size: 14px;
+  font-weight: var(--staff-emphasis-weight, 650);
+  padding: 16px 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.table td {
+  padding: 18px 20px;
+}
+.table tr:last-child td {
+  border-bottom: 0;
+}
+.table td strong {
+  font-size: 16px;
+  font-weight: var(--staff-emphasis-weight, 750);
+}
+.table td small {
+  display: block;
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.table tr:focus-within,
+.table tbody tr:hover {
+  background: var(--accent-soft);
+}
+.table :is(a, button):focus-visible {
+  outline-offset: -2px;
+}
+.search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(100%, 440px);
+}
+.search svg {
+  position: absolute;
+  left: 16px;
+  color: var(--muted);
+  pointer-events: none;
+}
+.search input {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 16px 12px 44px;
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chips button {
+  min-height: 48px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font: inherit;
+  color: var(--muted);
+  cursor: pointer;
+}
+.chips button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+.person {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: var(--staff-emphasis-weight, 750);
+  flex: none;
+}
+@media (min-width: 1440px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 767px) {
+  .header h1 {
+    font-size: var(--staff-page-heading-size, 28px);
+    padding: 0;
+  }
+  .crumb {
+    margin-bottom: 16px;
+  }
+  .grid {
+    gap: 12px;
+  }
+  .card {
+    padding: 18px;
+  }
+  .event {
+    padding: 16px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .event time {
+    margin-left: 50px;
+    text-align: left;
+    max-width: none;
+  }
+  .intro .actions {
+    width: 100%;
+  }
+}
+
+.table tbody th {
+  background: var(--surface);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 16px;
+  font-weight: var(--staff-emphasis-weight, 750);
+}
+.search input[type="search"] {
+  padding-left: 16px;
+}
+.search:has(svg) input {
+  padding-left: 44px;
+}
+
+/* Compact desktop filters: one control band, without a second card shell. */
+@media (min-width: 768px) {
+  :global([data-staff-ui="true"]) .toolbar {
+    position: static;
+    padding: 0;
+    margin-block: 12px;
+    gap: 10px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    align-items: end;
+  }
+  :global([data-staff-ui="true"]) .toolbar > label {
+    flex: 0 1 280px;
+    min-width: min(180px, 100%);
+    gap: 4px;
+    font-size: 14px;
+  }
+  :global([data-staff-ui="true"]) .toolbar :is(input, select) {
+    min-height: 48px;
+    padding-block: 10px;
+    font-size: 16px;
+  }
+}
+
+@media (min-width: 768px) {
+  .header {
+    margin-bottom: 14px;
+  }
+  .crumb {
+    margin: 6px 0 14px;
+  }
+  .section {
+    margin-bottom: 20px;
+  }
+  .section > h2 {
+    margin-bottom: 12px;
+  }
+  .grid {
+    gap: 14px;
+  }
+  .card {
+    padding: 16px;
+    gap: 10px;
+  }
+}
+
+.header h1 {
+  font-size: var(--staff-page-heading-size, 26px);
+}
+.header .intro > p {
+  font-size: 14px;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+:global([data-staff-ui="true"]) .header h1 {
+  font-size: var(--staff-page-heading-size, 26px);
+  line-height: 1.2;
+}

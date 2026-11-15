@@ -1,0 +1,181 @@
+.section {
+  margin-block: 28px;
+  min-width: 0;
+}
+.heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.heading h2 {
+  margin: 0;
+  font-size: var(--staff-section-heading-size, 20px);
+  font-weight: var(--staff-heading-weight, 800);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 16px;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.card h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--staff-card-heading-size, 16px);
+  font-weight: var(--staff-heading-weight, 750);
+  margin: 0;
+}
+.card h3 svg {
+  color: var(--accent);
+}
+.card p,
+.caption,
+.note {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.value {
+  font-size: var(--staff-kpi-size, clamp(26px, 2.8vw, 36px));
+  font-weight: var(--staff-emphasis-weight, 800);
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.caption {
+  margin-top: auto;
+}
+.note {
+  margin-top: 12px;
+}
+.bars {
+  display: flex;
+  align-items: end;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 10px;
+}
+.bars > span {
+  display: grid;
+  grid-template-rows: 64px auto;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  align-items: end;
+}
+.bars i {
+  display: block;
+  width: 100%;
+  background: var(--wash);
+  border-radius: 5px 5px 0 0;
+}
+.bars > span:last-child i {
+  background: var(--accent);
+}
+.bars small {
+  font-size: 14px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+.breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  margin-block: auto;
+  padding-top: 8px;
+}
+.donut {
+  width: 132px;
+  height: 132px;
+  flex-shrink: 0;
+  overflow: visible;
+}
+.track,
+.segment {
+  fill: none;
+  stroke-width: 13px;
+  stroke: var(--wash);
+}
+.segment {
+  transform: rotate(-90deg);
+  transform-origin: 56px 56px;
+}
+.donutLabel {
+  font-size: 12px;
+  fill: var(--muted);
+  text-anchor: middle;
+}
+.donutCount {
+  font-size: 16px;
+  font-weight: var(--staff-emphasis-weight, 800);
+  fill: var(--ink);
+  text-anchor: middle;
+}
+.legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  flex: 1;
+  min-width: 130px;
+}
+.legend li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  font-size: 14px;
+}
+.legend li > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+.legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+.legend strong {
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.noData {
+  padding-block: 24px;
+}
+@media (max-width: 767px) {
+  .card {
+    padding: 18px;
+  }
+  .section {
+    margin-block: 24px;
+  }
+}
+
+:global([data-office-ui="true"]) .grid {
+  gap: 20px;
+}
+:global([data-office-ui="true"]) .card {
+  border-radius: 20px;
+}
+:global([data-office-ui="true"]) .card h3 {
+  font-size: var(--staff-card-heading-size, 18px);
+}

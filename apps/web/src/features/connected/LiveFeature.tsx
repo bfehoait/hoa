@@ -1,6 +1,15 @@
+import ReviewDetailFrame from "../office/ReviewDetailFrame";
+import {
+  useReviewState,
+  useReviewSurface,
+  useReviewRecord,
+} from "../office/ReviewSurface";
+import PageIntro from "../office/OfficePage";
+import AnnouncementCard from "./AnnouncementCard";
+import announcementStyles from "./AnnouncementCard.module.css";
 import { ChevronRight } from "lucide-react";
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import {
   fieldVisible,
   baselineModule,
@@ -14,14 +23,7 @@ import {
   useFeatureRecords,
   useFeatureMutation,
 } from "../../data/feature-records";
-import {
-  Badge,
-  Button,
-  Empty,
-  Feedback,
-  PageIntro,
-  Skeleton,
-} from "../../components/UI";
+import { Badge, Button, Empty, Feedback, Skeleton } from "../../components/UI";
 import Sheet from "../../components/Sheet";
 import styles from "./LiveFeature.module.css";
 import WorkflowHistory from "./WorkflowHistory";
@@ -59,13 +61,21 @@ export default function LiveFeature({
   resident = false,
   pendingOnly = false,
   embedded = false,
+  hideHeading = false,
+  reviewOnly = false,
+  reviewFollowup = false,
 }: {
   module: string;
   initialView?: string;
   resident?: boolean;
   pendingOnly?: boolean;
   embedded?: boolean;
+  hideHeading?: boolean;
+  reviewOnly?: boolean;
+  reviewFollowup?: boolean;
 }) {
+  const reviewSurface = useReviewSurface();
+  const DetailFrame = reviewSurface ? ReviewDetailFrame : Sheet;
   const definition = baselineModule(module);
   const isListing = listingModules.includes(module);
   const marketplaceListing = [
@@ -87,16 +97,25 @@ export default function LiveFeature({
             ? "Add document"
             : "Create request";
   const auth = useAuth();
+  const boardView = useLocation().pathname.startsWith("/board/");
+  const securityView = useLocation().pathname.startsWith("/security/");
+  const officeTable =
+    (useLocation().pathname.startsWith("/office") || securityView) &&
+    !resident &&
+    (initialView === "review" || securityView);
   const [params] = useSearchParams();
-  const [view, setView] = useState(initialView),
-    [page, setPage] = useState(0),
-    [search, setSearch] = useState("");
+  const [view, setView] = useReviewState("feature.view", initialView),
+    [page, setPage] = useReviewState(
+      `feature.${reviewSurface?.recordId ?? "list"}.page`,
+      reviewSurface?.page ?? 0,
+    ),
+    [search, setSearch] = useReviewState("feature.search", "");
   const [form, setForm] = useState(() => params.get("new") === "1"),
     [review, setReview] = useState<FeatureRecord | null>(null),
     [notice, setNotice] = useState("");
   const [history, setHistory] = useState<string | null>(null);
   const [audienceError, setAudienceError] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useReviewState("feature.category", "");
   const [editing, setEditing] = useState<FeatureRecord | null>(null);
   const [submissionBusy, setSubmissionBusy] = useState(false);
   const [recordSaved, setRecordSaved] = useState(false);
@@ -107,27 +126,36 @@ export default function LiveFeature({
       search,
       category,
       pendingOnly,
-      params.get("issuance") === "1" || params.get("application") === "1",
+      reviewFollowup ||
+        params.get("issuance") === "1" ||
+        params.get("application") === "1",
     ),
     mutation = useFeatureMutation();
   const [clientId, setClientId] = useState(() => crypto.randomUUID());
   const [opened, setOpened] = useState<string | null>(null);
   const target = useNotificationTarget("feature", featureRecordSchema, module);
+  const inboxRecord = useReviewRecord(data.data?.rows);
   const openedRecord = target.requested
     ? target.isSuccess
       ? target.data
       : null
-    : data.isSuccess
-      ? data.data.rows.find((row) => row.id === opened)
-      : undefined;
+    : reviewSurface?.recordId
+      ? inboxRecord
+      : data.isSuccess
+        ? data.data.rows.find((row) => row.id === opened)
+        : undefined;
   useReadOpenedNotification(target.requested && !!openedRecord);
 
   const renderRecord = (r: FeatureRecord) => (
-    <article className={styles.card} key={r.id}>
+    <article
+      className={`${styles.card} ${reviewSurface ? styles.reviewRecord : ""}`}
+      key={r.id}
+    >
       <div className={styles.cardHead}>
-        <Badge>{statusLabel(r.status, module)}</Badge>
+        {!reviewSurface && <Badge>{statusLabel(r.status, module)}</Badge>}
         {r.created_at && (
           <time className={styles.cardDate} dateTime={r.created_at}>
+            {reviewSurface && "Submitted "}
             {new Intl.DateTimeFormat("en-GB", {
               timeZone: "Asia/Manila",
               day: "numeric",
@@ -150,7 +178,7 @@ export default function LiveFeature({
             }
           />
         )}
-      <h2 className={styles.cardTitle}>{r.title}</h2>
+      {!reviewSurface && <h2 className={styles.cardTitle}>{r.title}</h2>}
       {isListing && view === "published" && r.fields?.price && (
         <strong className={styles.listingPrice}>
           {new Intl.NumberFormat("en-PH", {
@@ -159,13 +187,18 @@ export default function LiveFeature({
           }).format(Number(r.fields.price))}
         </strong>
       )}
-      <p className={styles.cardDetail}>{r.detail}</p>
+      <p
+        className={reviewSurface ? styles.reviewDescription : styles.cardDetail}
+      >
+        {r.detail}
+      </p>
       {(isListing ||
         module === "publishing" ||
         module === "election-candidates") &&
         view !== "published" && (
           <ListingMedia
             id={r.id}
+            hideEmpty={!!reviewSurface}
             announcement={module === "publishing"}
             alt={
               module === "publishing" ? `Image for ${r.title}` : "Listing cover"
@@ -211,20 +244,10 @@ export default function LiveFeature({
             </Link>
           </p>
         )}
-      {view !== "published" && (
-        <details>
-          <summary>Record reference</summary>
-          <p>{r.id}</p>
-        </details>
-      )}
-      {r.fields && !(isListing && view === "published") && (
-        <details>
-          <summary>{resident ? "Request details" : "Submitted fields"}</summary>
-          <dl className={styles.fields}>
-            {/* Only the questions this record was actually asked.
-                            Listing a field hidden by its showWhen condition
-                            reported "Not supplied" for something nobody was
-                            ever shown. */}
+      {r.fields &&
+        !(isListing && view === "published") &&
+        (reviewSurface ? (
+          <dl className={styles.reviewFields} aria-label="Submitted details">
             {definition.fields
               .filter((f) => fieldVisible(f, r.fields ?? {}))
               .map((f) => (
@@ -234,6 +257,31 @@ export default function LiveFeature({
                 </div>
               ))}
           </dl>
+        ) : (
+          <details>
+            <summary>
+              {resident ? "Request details" : "Submitted fields"}
+            </summary>
+            <dl className={styles.fields}>
+              {/* Only the questions this record was actually asked.
+                            Listing a field hidden by its showWhen condition
+                            reported "Not supplied" for something nobody was
+                            ever shown. */}
+              {definition.fields
+                .filter((f) => fieldVisible(f, r.fields ?? {}))
+                .map((f) => (
+                  <div key={f.key}>
+                    <dt>{liveFieldLabel(f.label)}</dt>
+                    <dd>{r.fields?.[f.key] || "Not supplied"}</dd>
+                  </div>
+                ))}
+            </dl>
+          </details>
+        ))}
+      {view !== "published" && (
+        <details>
+          <summary>Record reference</summary>
+          <p>{r.id}</p>
         </details>
       )}
       {r.version && !(resident && view === "published") && (
@@ -302,7 +350,7 @@ export default function LiveFeature({
               ...(!data.data?.publishable ? ["Reviewed"] : []),
             ].includes(r.status) && (
               <Button
-                secondary
+                secondary={!reviewSurface}
                 onClick={() => {
                   mutation.reset();
                   setAudienceError("");
@@ -318,336 +366,468 @@ export default function LiveFeature({
   );
   return (
     <>
-      {!embedded && (
-        <PageIntro
-          eyebrow={
-            resident
-              ? undefined
-              : listingModules.includes(module)
-                ? "LIVELIHOOD"
-                : "COMMUNITY WORKFLOW"
-          }
-          title={
-            module === "publishing"
-              ? "Announcements"
-              : liveFieldLabel(definition.title)
-          }
-          description={
-            resident
-              ? (residentDescriptions[module] ??
-                "Community information and your submissions.")
-              : liveFieldLabel(definition.summary)
-          }
-        />
-      )}
-      {auth.memberPreview && (
-        <p className={styles.notice}>
-          Read-only account preview. Sign in directly as this member to add or
-          change listings.
-        </p>
-      )}
-      {view === "review" && (
-        <details className={styles.notice}>
-          <summary>About submissions and approvals</summary>
-          <p>
-            A reviewed submission is a recorded review. Bookings, entry
-            permission, payments, ownership, account access and election
-            certification use their dedicated services.
-          </p>
-        </details>
-      )}
-      {!embedded &&
-        ["booth-events", "workshops", "carpools"].includes(module) && (
-          <Link
-            className="text-link"
-            to={
-              view === "review"
-                ? `/office/participation/${module}`
-                : module === "carpools"
-                  ? "/explore/carpool-interests"
-                  : `/directory/market?section=${module}&view=applications`
+      <div hidden={!!reviewSurface?.recordId}>
+        {!embedded && !hideHeading && (
+          <PageIntro
+            eyebrow={
+              resident
+                ? undefined
+                : listingModules.includes(module)
+                  ? "LIVELIHOOD"
+                  : "COMMUNITY WORKFLOW"
             }
-          >
-            {view === "review"
-              ? "Review activity applications"
-              : "Apply or view my activity applications"}
-          </Link>
-        )}
-      <div className={styles.toolbar}>
-        {resident && initialView === "published" && data.data?.can_create && (
-          <div
-            className={styles.readerViews}
-            role="group"
-            aria-label="Content view"
-          >
-            <Button
-              secondary
-              aria-pressed={view === "published"}
-              onClick={() => {
-                setView("published");
-                setPage(0);
-                setOpened(null);
-              }}
-            >
-              Browse
-            </Button>
-            <Button
-              secondary
-              aria-pressed={view === "mine"}
-              onClick={() => {
-                setView("mine");
-                setPage(0);
-                setOpened(null);
-              }}
-            >
-              {isListing ? "My listings" : "My submissions"}
-            </Button>
-          </div>
-        )}
-        {!resident && (
-          <label>
-            View
-            <select
-              value={view}
-              onChange={(e) => {
-                setView(e.target.value);
-                setPage(0);
-              }}
-            >
-              <option value="mine">
-                {module === "publishing"
-                  ? "Your announcements"
-                  : isListing
-                    ? "Your listings"
-                    : "Your requests"}
-              </option>
-              <option value="published">Published</option>
-              {(initialView === "review" ||
-                data.data?.can_review ||
-                data.data?.can_publish) && (
-                <option value="review">Office review</option>
-              )}
-            </select>
-          </label>
-        )}
-        <label>
-          Search
-          <input
-            type="search"
-            maxLength={100}
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(0);
-            }}
+            title={
+              securityView
+                ? module === "vehicles"
+                  ? "Vehicles"
+                  : "Incidents"
+                : boardView
+                  ? ({
+                      publishing: "Announcements",
+                      "election-candidates": "Elections",
+                      "board-reports": "Reports",
+                      "board-records": "Documents",
+                    }[module] ?? liveFieldLabel(definition.title))
+                  : module === "publishing"
+                    ? "Announcements"
+                    : liveFieldLabel(definition.title)
+            }
+            description={
+              boardView
+                ? ({
+                    publishing: "Read announcements shared with your account.",
+                    "election-candidates":
+                      "Published candidate information. Voting and certified turnout use their authorized election service.",
+                    "board-reports":
+                      "Published association reports available for board review. Financial totals are not inferred from report text.",
+                  }[module] ?? liveFieldLabel(definition.summary))
+                : resident
+                  ? (residentDescriptions[module] ??
+                    "Community information and your submissions.")
+                  : liveFieldLabel(definition.summary)
+            }
           />
-        </label>
-        {isListing &&
-          view === "published" &&
-          definition.fields.find((f) => f.key === "category")?.options && (
+        )}
+        {auth.memberPreview && (
+          <p className={styles.notice}>
+            Read-only account preview. Sign in directly as this member to add or
+            change listings.
+          </p>
+        )}
+        {view === "review" && (
+          <details className={styles.notice}>
+            <summary>About submissions and approvals</summary>
+            <p>
+              A reviewed submission is a recorded review. Bookings, entry
+              permission, payments, ownership, account access and election
+              certification use their dedicated services.
+            </p>
+          </details>
+        )}
+        {!embedded &&
+          ["booth-events", "workshops", "carpools"].includes(module) && (
+            <Link
+              className="text-link"
+              to={
+                view === "review"
+                  ? `/office/participation/${module}`
+                  : module === "carpools"
+                    ? "/explore/carpool-interests"
+                    : `/directory/market?section=${module}&view=applications`
+              }
+            >
+              {view === "review"
+                ? "Review activity applications"
+                : "Apply or view my activity applications"}
+            </Link>
+          )}
+        <div className={styles.toolbar}>
+          {resident && initialView === "published" && data.data?.can_create && (
+            <div
+              className={styles.readerViews}
+              role="group"
+              aria-label="Content view"
+            >
+              <Button
+                secondary
+                aria-pressed={view === "published"}
+                onClick={() => {
+                  setView("published");
+                  setPage(0);
+                  setOpened(null);
+                }}
+              >
+                Browse
+              </Button>
+              <Button
+                secondary
+                aria-pressed={view === "mine"}
+                onClick={() => {
+                  setView("mine");
+                  setPage(0);
+                  setOpened(null);
+                }}
+              >
+                {isListing ? "My listings" : "My submissions"}
+              </Button>
+            </div>
+          )}
+          {!resident && !reviewOnly && (
             <label>
-              Category
+              View
               <select
-                value={category}
+                value={view}
                 onChange={(e) => {
-                  setCategory(e.target.value);
+                  setView(e.target.value);
                   setPage(0);
                 }}
               >
-                <option value="">All categories</option>
-                {definition.fields
-                  .find((f) => f.key === "category")!
-                  .options!.map((value) => (
-                    <option key={value}>{value}</option>
-                  ))}
+                <option value="mine">
+                  {module === "publishing"
+                    ? "Your announcements"
+                    : isListing
+                      ? "Your listings"
+                      : "Your requests"}
+                </option>
+                <option value="published">Published</option>
+                {(initialView === "review" ||
+                  data.data?.can_review ||
+                  data.data?.can_publish) && (
+                  <option value="review">Office review</option>
+                )}
               </select>
             </label>
           )}
-        {!embedded &&
-          !data.isError &&
-          data.data?.can_create &&
-          !auth.memberPreview && (
-            <Button
-              onClick={() => {
-                mutation.reset();
-                setEditing(null);
-                setRecordSaved(false);
-                setForm(true);
+          <label>
+            Search
+            <input
+              type="search"
+              maxLength={100}
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(0);
               }}
-            >
-              {newLabel}
-            </Button>
-          )}
-      </div>
-      {!data.isError &&
-        data.data &&
-        !data.data.can_create &&
-        !auth.memberPreview &&
-        (view !== "review" || params.get("new") === "1") && (
-          <p className={styles.notice}>
-            Contact the office if you need help submitting something here.
-          </p>
-        )}
-      {notice && <p role="status">{notice}</p>}
-      <Feedback error={data.error ?? mutation.error} />
-      {data.isPending ? (
-        <Skeleton />
-      ) : (
-        !data.isError &&
-        data.data && (
-          <>
-            {!resident && (
-              <StatusStrip
-                total={data.data.total}
-                rows={data.data.rows}
-                module={module}
-              />
+            />
+          </label>
+          {isListing &&
+            view === "published" &&
+            definition.fields.find((f) => f.key === "category")?.options && (
+              <label>
+                Category
+                <select
+                  value={category}
+                  onChange={(e) => {
+                    setCategory(e.target.value);
+                    setPage(0);
+                  }}
+                >
+                  <option value="">All categories</option>
+                  {definition.fields
+                    .find((f) => f.key === "category")!
+                    .options!.map((value) => (
+                      <option key={value}>{value}</option>
+                    ))}
+                </select>
+              </label>
             )}
-            <div
-              className={
-                isListing && view === "published"
-                  ? styles.listingGrid
-                  : styles.stack
-              }
-            >
-              {data.data.rows.map((r) =>
-                resident && view === "published" ? (
-                  <article className={styles.browseRecord} key={r.id}>
-                    {(isListing ||
-                      module === "publishing" ||
-                      module === "election-candidates") && (
-                      <ListingMedia
-                        id={r.id}
-                        alt={`Image for ${r.title}`}
-                        coverOnly
-                        hideEmpty
-                      />
-                    )}
-                    <div>
-                      <p className={styles.cardDate}>
-                        {new Date(r.created_at).toLocaleDateString("en-PH", {
-                          timeZone: "Asia/Manila",
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </p>
-                      <h2>
-                        <button type="button" onClick={() => setOpened(r.id)}>
-                          {r.title}
-                          <ChevronRight size={20} aria-hidden="true" />
-                        </button>
-                      </h2>
-                      <p>{r.detail}</p>
-                    </div>
-                  </article>
-                ) : resident ? (
-                  <button
-                    type="button"
-                    key={r.id}
-                    className={styles.residentRecord}
-                    onClick={() => setOpened(r.id)}
-                  >
-                    <span className={styles.residentRecordText}>
-                      <strong>{r.title}</strong>
-                      <span>
-                        {new Date(r.created_at).toLocaleDateString("en-PH", {
-                          timeZone: "Asia/Manila",
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </span>
-                      <span>{r.detail}</span>
-                    </span>
-                    <span className={styles.residentRecordEnd}>
-                      <Badge>{statusLabel(r.status, module)}</Badge>
-                      <ChevronRight size={20} aria-hidden="true" />
-                    </span>
-                  </button>
-                ) : (
-                  renderRecord(r)
-                ),
+          {!embedded &&
+            !reviewOnly &&
+            !data.isError &&
+            data.data?.can_create &&
+            !auth.memberPreview && (
+              <Button
+                onClick={() => {
+                  mutation.reset();
+                  setEditing(null);
+                  setRecordSaved(false);
+                  setForm(true);
+                }}
+              >
+                {newLabel}
+              </Button>
+            )}
+        </div>
+        {!data.isError &&
+          data.data &&
+          !data.data.can_create &&
+          !auth.memberPreview &&
+          (view !== "review" || params.get("new") === "1") && (
+            <p className={styles.notice}>
+              Contact the office if you need help submitting something here.
+            </p>
+          )}
+        {notice && <p role="status">{notice}</p>}
+        <Feedback error={data.error ?? mutation.error} />
+        {data.isPending ? (
+          <Skeleton />
+        ) : (
+          !data.isError &&
+          data.data && (
+            <>
+              {!resident && (
+                <StatusStrip
+                  total={data.data.total}
+                  rows={data.data.rows}
+                  module={module}
+                />
               )}
-            </div>
-            {!data.data.rows.length && (
-              <Empty
-                title={emptyTitle(module, view)}
-                action={
-                  !resident && view === "review" && search ? (
-                    <Button
-                      secondary
-                      onClick={() => {
-                        setSearch("");
-                        setPage(0);
-                      }}
-                    >
-                      Clear search
-                    </Button>
-                  ) : !resident &&
-                    view === "mine" &&
-                    data.data.can_create &&
-                    !auth.memberPreview ? (
-                    <Button
-                      onClick={() => {
-                        mutation.reset();
-                        setEditing(null);
-                        setRecordSaved(false);
-                        setForm(true);
-                      }}
-                    >
-                      {newLabel}
-                    </Button>
-                  ) : undefined
+              {officeTable && (
+                <div
+                  className={styles.officeRecords}
+                  role="region"
+                  aria-label="Workflow submissions"
+                  tabIndex={0}
+                >
+                  {securityView && module === "incidents" ? (
+                    <div className={styles.securityIncidentFeed}>
+                      {data.data.rows.map((r) => (
+                        <button
+                          type="button"
+                          key={r.id}
+                          onClick={() => setOpened(r.id)}
+                          aria-label={`Open incident ${r.title}`}
+                        >
+                          <span
+                            className={styles.incidentDot}
+                            aria-hidden="true"
+                          />
+                          <span>
+                            <strong>{r.title}</strong>
+                            <small>{r.detail}</small>
+                            <Badge>{statusLabel(r.status, module)}</Badge>
+                          </span>
+                          <time dateTime={r.created_at}>
+                            {new Date(r.created_at).toLocaleString("en-PH", {
+                              timeZone: "Asia/Manila",
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </time>
+                          <ChevronRight size={18} />
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <table>
+                      <thead>
+                        <tr>
+                          <th scope="col">Request</th>
+                          <th scope="col">Details</th>
+                          <th scope="col">Submitted</th>
+                          <th scope="col">Status</th>
+                          <th scope="col">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.data.rows.map((r) => (
+                          <tr key={r.id}>
+                            <td>
+                              <strong>{r.title}</strong>
+                            </td>
+                            <td>
+                              <p className={styles.officeExcerpt}>{r.detail}</p>
+                            </td>
+                            <td>
+                              <time dateTime={r.created_at}>
+                                {new Date(r.created_at).toLocaleDateString(
+                                  "en-PH",
+                                  { timeZone: "Asia/Manila" },
+                                )}
+                              </time>
+                            </td>
+                            <td>
+                              <Badge>{statusLabel(r.status, module)}</Badge>
+                            </td>
+                            <td>
+                              <Button
+                                secondary
+                                onClick={() => setOpened(r.id)}
+                                aria-label={`Open ${r.title}`}
+                              >
+                                Open
+                                <ChevronRight size={18} />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              )}
+              <div
+                className={
+                  officeTable
+                    ? `${styles.stack} ${styles.officeCards}`
+                    : module === "publishing" && resident
+                      ? announcementStyles.grid
+                      : isListing && view === "published"
+                        ? styles.listingGrid
+                        : styles.stack
                 }
               >
-                {!resident && view === "review"
-                  ? search
-                    ? "No submissions match this search. Clear it or choose another Area or Workflow above."
-                    : "No submissions are waiting in this workflow. Choose another Area or Workflow above to check a different queue."
-                  : emptyBody(module, view)}
-              </Empty>
-            )}
-            {data.data.total > 20 && (
-              <div className={styles.actions}>
-                <Button
-                  secondary
-                  disabled={page === 0}
-                  onClick={() => setPage(page - 1)}
-                >
-                  Previous
-                </Button>
-                <Button
-                  secondary
-                  disabled={(page + 1) * 20 >= data.data.total}
-                  onClick={() => setPage(page + 1)}
-                >
-                  Next
-                </Button>
+                {data.data.rows.map((r) =>
+                  resident && module === "publishing" ? (
+                    <AnnouncementCard
+                      key={r.id}
+                      id={r.id}
+                      title={r.title}
+                      detail={r.detail}
+                      date={r.created_at}
+                      status={statusLabel(r.status, module)}
+                    />
+                  ) : resident && view === "published" ? (
+                    <article className={styles.browseRecord} key={r.id}>
+                      {(isListing ||
+                        module === "publishing" ||
+                        module === "election-candidates") && (
+                        <ListingMedia
+                          id={r.id}
+                          alt={`Image for ${r.title}`}
+                          coverOnly
+                          hideEmpty
+                        />
+                      )}
+                      <div>
+                        <p className={styles.cardDate}>
+                          {new Date(r.created_at).toLocaleDateString("en-PH", {
+                            timeZone: "Asia/Manila",
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </p>
+                        <h2>
+                          <button type="button" onClick={() => setOpened(r.id)}>
+                            {r.title}
+                            <ChevronRight size={20} aria-hidden="true" />
+                          </button>
+                        </h2>
+                        <p>{r.detail}</p>
+                      </div>
+                    </article>
+                  ) : resident ? (
+                    <button
+                      type="button"
+                      key={r.id}
+                      className={styles.residentRecord}
+                      onClick={() => setOpened(r.id)}
+                    >
+                      <span className={styles.residentRecordText}>
+                        <strong>{r.title}</strong>
+                        <span>
+                          {new Date(r.created_at).toLocaleDateString("en-PH", {
+                            timeZone: "Asia/Manila",
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </span>
+                        <span>{r.detail}</span>
+                      </span>
+                      <span className={styles.residentRecordEnd}>
+                        <Badge>{statusLabel(r.status, module)}</Badge>
+                        <ChevronRight size={20} aria-hidden="true" />
+                      </span>
+                    </button>
+                  ) : (
+                    renderRecord(r)
+                  ),
+                )}
               </div>
-            )}
-          </>
-        )
+              {!data.data.rows.length && (
+                <Empty
+                  title={emptyTitle(module, view)}
+                  action={
+                    !resident && view === "review" && search ? (
+                      <Button
+                        secondary
+                        onClick={() => {
+                          setSearch("");
+                          setPage(0);
+                        }}
+                      >
+                        Clear search
+                      </Button>
+                    ) : !resident &&
+                      view === "mine" &&
+                      data.data.can_create &&
+                      !auth.memberPreview ? (
+                      <Button
+                        onClick={() => {
+                          mutation.reset();
+                          setEditing(null);
+                          setRecordSaved(false);
+                          setForm(true);
+                        }}
+                      >
+                        {newLabel}
+                      </Button>
+                    ) : undefined
+                  }
+                >
+                  {!resident && view === "review"
+                    ? search
+                      ? "No submissions match this search. Clear it or choose another Area or Workflow above."
+                      : "No submissions are waiting in this workflow. Choose another Area or Workflow above to check a different queue."
+                    : emptyBody(module, view)}
+                </Empty>
+              )}
+              {data.data.total > 20 && (
+                <div className={styles.actions}>
+                  <Button
+                    secondary
+                    disabled={page === 0}
+                    onClick={() => setPage(page - 1)}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    secondary
+                    disabled={(page + 1) * 20 >= data.data.total}
+                    onClick={() => setPage(page + 1)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
+            </>
+          )
+        )}
+      </div>
+      {reviewSurface?.recordId && (
+        <Feedback error={data.error ?? mutation.error} message={notice} />
+      )}
+      {reviewSurface?.recordId && data.isPending && <Skeleton />}
+      {reviewSurface?.recordId && data.isSuccess && !openedRecord && (
+        <p role="status">
+          This submission has changed or is no longer in this queue.
+        </p>
       )}
       <NotificationTargetFeedback target={target} />
-      {(resident || target.requested) && openedRecord && (
-        <Sheet
-          title={
-            module === "publishing"
-              ? "Announcement"
-              : isListing
-                ? "Listing details"
-                : "Request details"
-          }
-          presentation="task"
-          onClose={() => {
-            setOpened(null);
-            target.clear();
-          }}
-        >
-          {renderRecord(openedRecord)}
-        </Sheet>
-      )}
+      {(resident || target.requested || officeTable || reviewSurface) &&
+        openedRecord &&
+        !review && (
+          <DetailFrame
+            title={
+              module === "publishing"
+                ? "Announcement"
+                : isListing
+                  ? "Listing details"
+                  : "Request details"
+            }
+            presentation="task"
+            onClose={() => {
+              setOpened(null);
+              target.clear();
+            }}
+          >
+            {renderRecord(openedRecord)}
+          </DetailFrame>
+        )}
       {history && (
         <Sheet title="Record history" onClose={() => setHistory(null)}>
           <WorkflowHistory kind="feature" id={history} />
@@ -705,7 +885,7 @@ export default function LiveFeature({
         </Sheet>
       )}
       {review && (
-        <Sheet
+        <DetailFrame
           title="Review submission"
           busy={mutation.isPending}
           onClose={() => setReview(null)}
@@ -748,6 +928,7 @@ export default function LiveFeature({
                   onSuccess: () => {
                     setReview(null);
                     setNotice("Review saved.");
+                    reviewSurface?.clearRecord?.();
                   },
                 },
               );
@@ -852,7 +1033,7 @@ export default function LiveFeature({
               Save review
             </Button>
           </form>
-        </Sheet>
+        </DetailFrame>
       )}
     </>
   );

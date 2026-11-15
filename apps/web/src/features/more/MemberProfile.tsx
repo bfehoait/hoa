@@ -1,5 +1,5 @@
 import { Link } from "../../components/AccessLink";
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import {
   ArrowLeft,
   KeyRound,
@@ -22,7 +22,6 @@ import {
   ButtonLink,
   Feedback,
   Field,
-  PageIntro,
 } from "../../components/UI";
 import Sheet from "../../components/Sheet";
 import { useOwnProfile, useAccountActions } from "../../data/accounts";
@@ -33,8 +32,15 @@ import {
 } from "../../../../../packages/shared/src/accounts";
 import styles from "./More.module.css";
 import PrivateHealthNote from "./PrivateHealthNote";
+import PageIntro from "../office/OfficePage";
 
-export default function MemberProfile() {
+export default function MemberProfile({
+  transport = false,
+  assignment,
+}: {
+  transport?: boolean;
+  assignment?: ReactNode;
+}) {
   const auth = useAuth();
   const preferences = useOwnProfile();
   const install = useInstall();
@@ -48,13 +54,16 @@ export default function MemberProfile() {
     "Member";
   return (
     <>
-      <Link className="text-link back-link" to="/workspaces">
+      <Link
+        className="text-link back-link"
+        to={transport ? "/driver" : "/workspaces"}
+      >
         <ArrowLeft size={20} />
         Back to home
       </Link>
       <PageIntro
         eyebrow={auth.rolePreview ? "SYNTHETIC ROLE PREVIEW" : "YOUR ACCOUNT"}
-        title="My profile"
+        title={transport ? "Profile" : "My profile"}
         icon={<Users size={28} />}
         description={
           auth.rolePreview
@@ -77,6 +86,7 @@ export default function MemberProfile() {
           )
         }
       />
+      {assignment}
       <section className={styles.profileHero}>
         <span className={styles.profileAvatar} aria-hidden="true">
           {name

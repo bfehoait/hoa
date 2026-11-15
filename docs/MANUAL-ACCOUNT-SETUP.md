@@ -80,3 +80,7 @@ The current account Edge function also requires migration 072 before deployment.
 It checks the caller's portal session before creating or deleting accounts.
 Use the rollout order in [Persistent sessions](PERSISTENT-SESSIONS.md).
 The generated dashboard editor artifact includes this check.
+
+## 14 November 2026 - connection integrity rollout
+
+Migration 077 strengthens the creation confirmation and deferred managed-account connection checks. Apply it after 075, redeploy bfe-create-account using the regenerated editor artifact, then deploy the matching frontend. The diagnostic-only 076 is not required. The new UI requires created=true and member_linked=true before reporting success; old Edge deployments must be updated first. Existing unconnected legacy records are not silently claimed. Follow docs/ACCOUNT-CONNECTION-INTEGRITY.md and the explicit reviewed repair script for those cases. No live deployment/SQL is performed by Codex.

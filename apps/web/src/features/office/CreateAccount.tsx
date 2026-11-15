@@ -53,7 +53,7 @@ export default function CreateAccount({
   if (!enabled || (!options.isError && !options.data?.enabled)) return null;
   return (
     <>
-      <Button onClick={() => setOpen(true)}>
+      <Button className={styles.createTrigger} onClick={() => setOpen(true)}>
         <Plus size={18} aria-hidden="true" />{" "}
         {application ? "Approve & create account" : "Create account"}
       </Button>
@@ -80,6 +80,8 @@ export default function CreateAccount({
             onCreated={() => {
               for (const queryKey of [
                 ["office-people"],
+                ["office-review-inbox"],
+                ["office-inbox-records"],
                 ["developer-monitor"],
                 ["access-control"],
               ])
@@ -201,7 +203,7 @@ function AccountForm({
         }
         throw new Error(message);
       }
-      if (result.data?.created !== true)
+      if (result.data?.created !== true || result.data?.member_linked !== true)
         throw new Error(
           "Account creation was not confirmed. Check the directory before retrying.",
         );

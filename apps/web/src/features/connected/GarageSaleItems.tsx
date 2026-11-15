@@ -1,3 +1,4 @@
+import { useReviewState, useReviewSurface } from "../office/ReviewSurface";
 import { useId, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
@@ -48,10 +49,14 @@ export default function GarageSaleItems({
   office?: boolean;
   readOnly?: boolean;
 }) {
+  const reviewSurface = useReviewSurface();
   const auth = useAuth(),
     cache = useQueryClient(),
     formId = useId();
-  const [page, setPage] = useState(0),
+  const [page, setPage] = useReviewState(
+      `garage.${reviewSurface?.recordId ?? "list"}.page`,
+      reviewSurface?.page ?? 0,
+    ),
     [editing, setEditing] = useState<Item | null | false>(false),
     [client, setClient] = useState(() => crypto.randomUUID()),
     [decision, setDecision] = useState<{ item: Item; status: string } | null>(
@@ -115,6 +120,7 @@ export default function GarageSaleItems({
     onSuccess: async () => {
       setDecision(null);
       setNotice("Item decision saved.");
+      reviewSurface?.clearRecord?.();
       await refresh();
     },
   });
@@ -162,74 +168,79 @@ export default function GarageSaleItems({
                 : "No separate published items to show. See the sale description for further details."}
             </p>
           )}
-          {query.data.rows.map((i) => (
-            <article className={styles.record} key={i.id}>
-              <strong>{i.title}</strong> <Badge>{i.status}</Badge>
-              {office && <p>{i.sale_title}</p>}
-              <p>
-                {i.condition} · Quantity {i.quantity} ·{" "}
-                {displayPrice(i.price_centavos)}
-              </p>
-              <p>{i.detail}</p>
-              {(i.can_edit || i.can_review) && i.review_note && (
-                <p>Review: {i.review_note}</p>
-              )}
-              <div className={styles.actions}>
-                {!readOnly && i.can_edit && (
-                  <Button
-                    secondary
-                    onClick={() => {
-                      setEditing(i);
-                      save.reset();
-                    }}
-                  >
-                    Edit item
-                  </Button>
+          {query.data.rows
+            .filter(
+              (i) =>
+                !reviewSurface?.recordId || i.id === reviewSurface.recordId,
+            )
+            .map((i) => (
+              <article className={styles.record} key={i.id}>
+                <strong>{i.title}</strong> <Badge>{i.status}</Badge>
+                {office && <p>{i.sale_title}</p>}
+                <p>
+                  {i.condition} · Quantity {i.quantity} ·{" "}
+                  {displayPrice(i.price_centavos)}
+                </p>
+                <p>{i.detail}</p>
+                {(i.can_edit || i.can_review) && i.review_note && (
+                  <p>Review: {i.review_note}</p>
                 )}
-                {!readOnly && i.can_review && (
-                  <>
-                    <Button
-                      disabled={!i.can_publish}
-                      onClick={() => {
-                        setDecision({ item: i, status: "Published" });
-                        decide.reset();
-                      }}
-                    >
-                      Approve & publish item
-                    </Button>
+                <div className={styles.actions}>
+                  {!readOnly && i.can_edit && (
                     <Button
                       secondary
                       onClick={() => {
-                        setDecision({ item: i, status: "Rejected" });
-                        decide.reset();
+                        setEditing(i);
+                        save.reset();
                       }}
                     >
-                      Reject item
-                    </Button>
-                  </>
-                )}
-                {!readOnly &&
-                  (i.can_edit || i.can_moderate) &&
-                  i.status !== "Withdrawn" && (
-                    <Button
-                      secondary
-                      onClick={() => {
-                        setDecision({ item: i, status: "Withdrawn" });
-                        decide.reset();
-                      }}
-                    >
-                      Withdraw item
+                      Edit item
                     </Button>
                   )}
-              </div>
-              {i.can_review && !i.can_publish && (
-                <p className="note">
-                  The sale must be published and unexpired before this item can
-                  be published.
-                </p>
-              )}
-            </article>
-          ))}
+                  {!readOnly && i.can_review && (
+                    <>
+                      <Button
+                        disabled={!i.can_publish}
+                        onClick={() => {
+                          setDecision({ item: i, status: "Published" });
+                          decide.reset();
+                        }}
+                      >
+                        Approve & publish item
+                      </Button>
+                      <Button
+                        secondary
+                        onClick={() => {
+                          setDecision({ item: i, status: "Rejected" });
+                          decide.reset();
+                        }}
+                      >
+                        Reject item
+                      </Button>
+                    </>
+                  )}
+                  {!readOnly &&
+                    (i.can_edit || i.can_moderate) &&
+                    i.status !== "Withdrawn" && (
+                      <Button
+                        secondary
+                        onClick={() => {
+                          setDecision({ item: i, status: "Withdrawn" });
+                          decide.reset();
+                        }}
+                      >
+                        Withdraw item
+                      </Button>
+                    )}
+                </div>
+                {i.can_review && !i.can_publish && (
+                  <p className="note">
+                    The sale must be published and unexpired before this item
+                    can be published.
+                  </p>
+                )}
+              </article>
+            ))}
           {query.data.total > 20 && (
             <div className={styles.actions}>
               <Button

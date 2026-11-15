@@ -15,7 +15,7 @@
   border: 2px solid var(--surface);
   border-radius: var(--radius-control);
   font-size: 14px;
-  font-weight: 750;
+  font-weight: var(--staff-emphasis-weight, 750);
 }
 @media (min-width: 768px) {
   .popup:modal {

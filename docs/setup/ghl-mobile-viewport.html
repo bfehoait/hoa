@@ -1,0 +1,36 @@
+<!-- Optional host-side helper for the GHL page embedding the portal.
+     Do not create a second iframe. Give the EXISTING portal iframe the id
+     bfe-portal, then place this script below it. Retain its existing src.
+     Owner applies and verifies this on GHL; Codex has not changed hosting. -->
+<script>
+  (() => {
+    const frame = document.getElementById("bfe-portal");
+    if (!(frame instanceof HTMLIFrameElement)) return;
+    const viewport = window.visualViewport;
+    let pending = 0;
+    function size() {
+      pending = 0;
+      const visibleBottom =
+        (viewport?.offsetTop ?? 0) + (viewport?.height ?? window.innerHeight);
+      const available = Math.max(
+        0,
+        visibleBottom -
+          Math.max(frame.getBoundingClientRect().top, viewport?.offsetTop ?? 0),
+      );
+      Object.assign(frame.style, {
+        height: `${available}px`,
+        width: "100%",
+        display: "block",
+        border: "0",
+      });
+    }
+    function schedule() {
+      if (!pending) pending = requestAnimationFrame(size);
+    }
+    viewport?.addEventListener("resize", schedule);
+    viewport?.addEventListener("scroll", schedule);
+    window.addEventListener("resize", schedule);
+    frame.addEventListener("load", schedule);
+    size();
+  })();
+</script>

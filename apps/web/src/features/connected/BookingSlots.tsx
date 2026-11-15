@@ -12,6 +12,16 @@ const time = (value: number) =>
   `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`;
 const label = (value: number) =>
   `${Math.floor(value / 60) % 12 || 12}:${String(value % 60).padStart(2, "0")} ${value < 720 ? "AM" : "PM"}`;
+const duration = (value: number) => {
+  const hours = Math.floor(value / 60),
+    remaining = value % 60;
+  return [
+    hours ? `${hours} ${hours === 1 ? "hour" : "hours"}` : "",
+    remaining ? `${remaining} minutes` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+};
 export default function BookingSlots({
   facility,
   date,
@@ -111,7 +121,9 @@ export default function BookingSlots({
         </div>
         <p id={instructionId} className={styles.legend} aria-live="polite">
           {choosingEnd
-            ? "Now choose a later time to finish your range."
+            ? end
+              ? "Tap a later end time to extend your booking. Tap Start above to change the start time."
+              : "Choose your end time. You can choose several time slots after your start."
             : start && end
               ? "Range selected. Tap a time to start a new range, or edit End above."
               : "Tap your start time, then tap your end time."}
@@ -139,7 +151,6 @@ export default function BookingSlots({
                 onClick={() => {
                   if (choosingEnd) {
                     onChange(start, time(at));
-                    setChoosing("start");
                   } else {
                     onChange(time(at), "");
                     setChoosing("end");
@@ -155,7 +166,7 @@ export default function BookingSlots({
       {start && end && (
         <p className={styles.summary} role="status">
           {label(minutes(start))} – {label(minutes(end))} ·{" "}
-          {minutes(end) - minutes(start)} minutes
+          {duration(minutes(end) - minutes(start))}
         </p>
       )}
       {!slots.some((s) => !s.blocked) && (
@@ -164,8 +175,8 @@ export default function BookingSlots({
         </p>
       )}
       <p>
-        Up to {facility.max_minutes / 60} hours, in {facility.slot_minutes}
-        -minute intervals.
+        Book up to {duration(facility.max_minutes)} when available. Choose a
+        start time and a later end time.
       </p>
     </section>
   );

@@ -1,4 +1,7 @@
-import { Navigate, useSearchParams } from "react-router-dom";
+import { Navigate, useSearchParams, useLocation } from "react-router-dom";
+import OfficePage from "../office/OfficePage";
+import { NavigationGroup } from "../../components/Navigation";
+import { Link } from "../../components/AccessLink";
 import LiveFeature from "./LiveFeature";
 import Marketplace from "./Marketplace";
 import CarpoolHub from "../transport/CarpoolHub";
@@ -66,6 +69,7 @@ export default function LiveFeatureDirectory({
       ? baselineModules.map((m) => [m.id, m.title])
       : (groups[section] ?? Object.values(groups).flat());
   const [params, setParams] = useSearchParams();
+  const officeOperations = useLocation().pathname === "/office/operations";
   const groupedReview = initialView === "review" && section === "All";
   const groupFor = (id: string) =>
     (groupedReview
@@ -95,7 +99,7 @@ export default function LiveFeatureDirectory({
   const setSelected = (value: string) => {
     const next = new URLSearchParams(params);
     next.set("section", value);
-    setParams(next);
+    setParams(next, { preventScrollReset: true });
   };
   if (section === "Learning" && initialView === "published") {
     const next = new URLSearchParams(params);
@@ -108,6 +112,20 @@ export default function LiveFeatureDirectory({
     return <CarpoolHub />;
   return (
     <>
+      {officeOperations && (
+        <>
+          <OfficePage
+            title="Operations"
+            description="Day-to-day requests, visitor passes, permits and vehicle stickers."
+          />
+          <NavigationGroup aria-label="Operations desks" limit={8}>
+            <Link to="/office/visitors">Visitor passes</Link>
+            <Link to="/office/permits">Permits</Link>
+            <Link to="/office/vehicles">Vehicles</Link>
+            <Link to="/office/bookings">Amenity bookings</Link>
+          </NavigationGroup>
+        </>
+      )}
       {choices.length <= 8 && (
         <div
           className={styles.sections}
@@ -146,7 +164,7 @@ export default function LiveFeatureDirectory({
                       !e.target.value || groupFor(id) === e.target.value,
                   );
                   if (first) next.set("section", first[0]);
-                  setParams(next);
+                  setParams(next, { preventScrollReset: true });
                 }}
               >
                 <option value="">All areas</option>
@@ -185,17 +203,12 @@ export default function LiveFeatureDirectory({
           </label>
         </div>
       )}
-      {groupedReview && (
-        <p className={styles.formHelp}>
-          Area narrows the workflow list. Choose a workflow to review its
-          submissions; each decision records the outcome available for that
-          service.
-        </p>
-      )}
       <LiveFeature
+        hideHeading={officeOperations}
         key={selected}
         module={selected}
         initialView={initialView}
+        reviewOnly={initialView === "review"}
         resident={initialView !== "review"}
       />
     </>

@@ -9,7 +9,7 @@
   border-radius: var(--radius-lg);
 }
 .sectionHeading h3 {
-  font-size: 18px;
+  font-size: var(--staff-card-heading-size, 18px);
   margin: 0 0 6px;
 }
 .sectionHeading p,
@@ -456,5 +456,48 @@
   }
   .footerButtons {
     align-items: center;
+  }
+}
+
+:global([data-staff-ui="true"]) .matrix {
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+:global([data-staff-ui="true"]) .matrixHead {
+  font-weight: var(--staff-emphasis-weight, 700);
+}
+:global([data-staff-ui="true"]) .permissionRow {
+  padding: 16px;
+}
+:global([data-staff-ui="true"]) .moduleName strong {
+  font-weight: var(--staff-emphasis-weight, 750);
+}
+:global([data-staff-ui="true"]) .ruleChoice {
+  border-radius: 10px;
+}
+
+/* Compact desktop filters: one control band, without a second card shell. */
+@media (min-width: 768px) {
+  :global([data-staff-ui="true"]) .filters {
+    position: static;
+    padding: 0;
+    margin-block: 12px;
+    gap: 10px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    align-items: end;
+  }
+  :global([data-staff-ui="true"]) .filters > label {
+    flex: 0 1 280px;
+    min-width: min(180px, 100%);
+    gap: 4px;
+    font-size: 14px;
+  }
+  :global([data-staff-ui="true"]) .filters :is(input, select) {
+    min-height: 48px;
+    padding-block: 10px;
+    font-size: 16px;
   }
 }

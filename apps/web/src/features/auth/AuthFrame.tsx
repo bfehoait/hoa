@@ -1,3 +1,4 @@
+import LoadingImage from "../../components/LoadingImage";
 import type { ReactNode } from "react";
 import { House, Newspaper, ShieldCheck } from "lucide-react";
 import styles from "./Access.module.css";
@@ -10,14 +11,14 @@ export function AuthFrame({ children }: { children: ReactNode }) {
         aria-label="Bellefort Estates"
       >
         <div className={styles.brand}>
-          <img
+          <LoadingImage
             className={`${styles.officialLogo} ${styles.authLogoWhite}`}
             src="/brand/bellefort-logo-white.png"
             alt="Bellefort Estates"
             width="479"
             height="212"
           />
-          <img
+          <LoadingImage
             className={`${styles.officialLogo} ${styles.authLogoLight}`}
             src="/brand/bellefort-logo.png"
             alt="Bellefort Estates"

@@ -31,7 +31,7 @@
 .metric > strong {
   display: block;
   margin-top: 12px;
-  font-size: clamp(22px, 2vw, 30px);
+  font-size: var(--staff-kpi-size, clamp(22px, 2vw, 30px));
   line-height: 1.3;
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
@@ -62,7 +62,7 @@
 }
 .heading h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: var(--staff-card-heading-size, 18px);
 }
 .heading > span {
   font-size: 14px;
@@ -95,7 +95,7 @@
 }
 .bars button[aria-pressed="true"] .month {
   color: var(--accent);
-  font-weight: 700;
+  font-weight: var(--staff-emphasis-weight, 700);
 }
 .bars button:focus-visible {
   outline: 2px solid var(--accent);
@@ -203,4 +203,45 @@
   .metric p {
     margin-top: 4px;
   }
+}
+
+:global([data-staff-ui="true"]) .metric,
+:global([data-staff-ui="true"]) .chart {
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  padding: 22px;
+}
+:global([data-staff-ui="true"]) .metricLabel {
+  color: var(--ink);
+  font-weight: var(--staff-emphasis-weight, 700);
+}
+:global([data-staff-ui="true"]) .metric > strong {
+  font-weight: var(--staff-emphasis-weight, 800);
+  letter-spacing: -0.025em;
+}
+:global([data-staff-ui="true"]) .heading h3 {
+  font-weight: var(--staff-heading-weight, 750);
+}
+:global([data-staff-ui="true"]) .bars .plot > span {
+  max-width: 24px;
+  margin-inline: auto;
+}
+
+:global([data-office-ui="true"]) .metric,
+:global([data-office-ui="true"]) .chart {
+  border-radius: 20px;
+  padding: 22px;
+  box-shadow: var(--shadow-sm);
+}
+:global([data-office-ui="true"]) .metric > strong {
+  font-size: var(--staff-finance-number-size, clamp(28px, 2.5vw, 38px));
+  font-weight: var(--staff-emphasis-weight, 800);
+}
+:global([data-office-ui="true"]) .metricLabel {
+  font-size: 16px;
+  font-weight: var(--staff-emphasis-weight, 700);
+  color: var(--ink);
+}
+:global([data-office-ui="true"]) .metrics {
+  gap: 20px;
 }

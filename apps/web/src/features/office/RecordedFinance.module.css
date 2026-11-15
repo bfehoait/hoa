@@ -16,7 +16,7 @@
   background: var(--surface);
 }
 .accountingTools h2 {
-  font-size: 18px;
+  font-size: var(--staff-section-heading-size, 18px);
   margin: 0 0 8px;
 }
 .accountingTools p {
@@ -63,4 +63,25 @@
     align-items: center;
     gap: 24px;
   }
+}
+
+:global([data-staff-ui="true"]) .context {
+  margin-block: 20px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+:global([data-staff-ui="true"]) .panel,
+:global([data-staff-ui="true"]) .accountingTools {
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+:global([data-staff-ui="true"]) .accountingTools a {
+  border-radius: 11px;
+  font-size: 14px;
+  font-weight: var(--staff-emphasis-weight, 650);
+}
+:global([data-staff-ui="true"]) .panel h2 {
+  font-weight: var(--staff-heading-weight, 750);
 }

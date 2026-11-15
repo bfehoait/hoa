@@ -71,7 +71,7 @@
 .carouselSlides .bannerImage > section {
   height: 100%;
 }
-.carouselSlides .bannerImage > section > img {
+.carouselSlides .bannerImage > section > :is(img, [data-image-frame]) {
   height: 100%;
   max-height: none;
   display: block;
@@ -93,7 +93,7 @@
 .bannerImage > section {
   margin: 0;
 }
-.bannerImage > section > img {
+.bannerImage > section > :is(img, [data-image-frame]) {
   width: 100%;
   max-height: none;
   aspect-ratio: 16 / 9;
@@ -109,12 +109,15 @@
 }
 /* Desktop image banners open the reader directly. Mobile keeps copy below. */
 @media (min-width: 768px) {
-  .announcement:has(.bannerImage img) .announcementBody {
+  .announcement:has(.bannerImage :is(img, [data-image-frame]))
+    .announcementBody {
     position: absolute;
     inset: 0;
     padding: 0;
   }
-  .announcement:has(.bannerImage img) .announcementLink > span {
+  .announcement:has(.bannerImage :is(img, [data-image-frame]))
+    .announcementLink
+    > span {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -123,7 +126,9 @@
     clip-path: inset(50%);
     white-space: nowrap;
   }
-  .announcement:has(.bannerImage img) .announcementLink > svg {
+  .announcement:has(.bannerImage :is(img, [data-image-frame]))
+    .announcementLink
+    > svg {
     display: none;
   }
 }
@@ -499,7 +504,7 @@
   .discoveryCards {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  .bannerImage > section > img {
+  .bannerImage > section > :is(img, [data-image-frame]) {
     max-height: 260px;
   }
   .announcementBody {
@@ -702,7 +707,7 @@
     aspect-ratio: 16 / 9;
     height: auto;
   }
-  .bannerImage > section > img {
+  .bannerImage > section > :is(img, [data-image-frame]) {
     max-height: none;
   }
 }
@@ -856,7 +861,7 @@
     inset: 0;
     height: 100%;
   }
-  .carouselSlides .bannerImage > section > img {
+  .carouselSlides .bannerImage > section > :is(img, [data-image-frame]) {
     height: 100%;
     aspect-ratio: auto;
     object-fit: cover;

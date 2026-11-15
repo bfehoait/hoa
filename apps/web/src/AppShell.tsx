@@ -1,8 +1,11 @@
+import LoadingImage from "./components/LoadingImage";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import CustomerBack from "./components/CustomerBack";
 import ResidentMobileHeader from "./components/ResidentMobileHeader";
 import mobileStyles from "./components/ResidentMobile.module.css";
 import CustomerSearch from "./components/CustomerSearch";
+import DeveloperSearch from "./features/developer/DeveloperSearch";
+import OfficeSearch from "./features/office/OfficeSearch";
 import {
   NavLink,
   Navigate,
@@ -37,6 +40,7 @@ const Home = lazy(() =>
 );
 import styles from "./App.module.css";
 import { useAuth } from "./data/auth";
+import { useNavigationBadges } from "./data/navigation-badges";
 
 import { NotificationBell } from "./components/NotificationBell";
 import Notifications from "./features/more/Notifications";
@@ -51,6 +55,7 @@ import {
 } from "../../../packages/shared/src/auth";
 
 const LotRegister = lazy(() => import("./features/registry/LotRegister"));
+const DriverProfile = lazy(() => import("./features/transport/DriverProfile"));
 const Shuttle = lazy(() => import("./features/transport/Shuttle"));
 const Account = lazy(() => import("./features/account/Account"));
 
@@ -114,6 +119,17 @@ export default function AppShell() {
     "/sign-out",
     "/reset-password",
   ].includes(location.pathname);
+  const actionCounts = useNavigationBadges(
+    !publicScreen &&
+      accountGroups.some((group) =>
+        ["office", "board", "security", "driver"].includes(group.id),
+      ),
+  );
+  const badgeFor = (path: string) =>
+    permissions.allowsPath(path) &&
+    (path === "/board/shuttle" || !permissions.readOnlyPath(path))
+      ? actionCounts.badges[path]
+      : undefined;
   const portal = usePortal(!publicScreen);
   const office = location.pathname.startsWith("/office");
   const security = location.pathname.startsWith("/security");
@@ -333,6 +349,7 @@ export default function AppShell() {
       ],
       "/directory/market": livelihoodPaths.slice(1),
       "/office/residents": ["/office/registry", "/office/registrations"],
+      "/developer/members": ["/developer/previews"],
       "/office/operations": [
         "/office/visitors",
         "/office/review",
@@ -342,7 +359,6 @@ export default function AppShell() {
       "/office/requests": ["/office/inbox"],
       "/office/calendar": ["/office/bookings"],
       "/office/community": ["/office/announcements", "/office/documents"],
-      "/security": ["/security/gate"],
       "/driver": ["/driver/dispatch"],
       "/board/documents": ["/more/documents", "/directory/governance"],
       "/board/elections": ["/more/elections"],
@@ -393,7 +409,11 @@ export default function AppShell() {
     );
   return (
     <div
-      className={`${styles.app} ${developer ? styles.developer : ""} ${residentShell ? `${styles.residentShell} ${mobileStyles.resident}` : ""}`}
+      className={`${styles.app} ${developer ? styles.developer : ""} ${office || board || security || driver ? styles.officeShell : ""} ${board ? styles.boardShell : ""} ${residentShell ? `${styles.residentShell} ${mobileStyles.resident}` : styles.staffShell}`}
+      data-office-ui={office ? "true" : undefined}
+      data-board-ui={board ? "true" : undefined}
+      data-security-ui={security ? "true" : undefined}
+      data-transport-ui={driver ? "true" : undefined}
       data-customer-ui={residentShell ? "true" : undefined}
       data-resident-path={residentShell ? location.pathname : undefined}
       data-staff-ui={!residentShell ? "true" : undefined}
@@ -404,22 +424,45 @@ export default function AppShell() {
       </a>
       <aside className={styles.sidebar} aria-label="Main navigation">
         <Link to={auth.preview ? "/" : "/workspaces"} className={styles.brand}>
-          <img
-            className={styles.wordmarkLight}
-            src="/brand/bellefort-logo.png"
-            alt="Bellefort Estates"
-            width="479"
-            height="212"
-          />
-          <img
-            className={styles.wordmarkDark}
-            src="/brand/bellefort-logo-white.png"
-            alt="Bellefort Estates"
-            width="479"
-            height="212"
-          />
+          {developer || office || board || security || driver ? (
+            <>
+              <span className={styles.developerBrandMark}>
+                <LoadingImage
+                  src="/brand/bellefort-logo-white.png"
+                  alt=""
+                  width="40"
+                  height="24"
+                />
+              </span>
+              <span className={styles.developerBrandText}>
+                Bellefort<small>ESTATES</small>
+              </span>
+            </>
+          ) : (
+            <>
+              <LoadingImage
+                className={styles.wordmarkLight}
+                src="/brand/bellefort-logo.png"
+                alt="Bellefort Estates"
+                width="479"
+                height="212"
+              />
+              <LoadingImage
+                className={styles.wordmarkDark}
+                src="/brand/bellefort-logo-white.png"
+                alt="Bellefort Estates"
+                width="479"
+                height="212"
+              />
+            </>
+          )}
         </Link>
         <div className={styles.navigationBody}>
+          {developer && <DeveloperSearch />}
+          {office && <OfficeSearch />}
+          {board && <OfficeSearch workspace="board" />}
+          {security && <OfficeSearch workspace="security" />}
+          {driver && <OfficeSearch workspace="driver" />}
           <div className={styles.property}>
             <Building2 size={20} />
             <span>
@@ -441,7 +484,15 @@ export default function AppShell() {
           </div>
           {workspaceOptions.length > 1 && (
             <label className={styles.workspaceSwitch}>
-              Workspace
+              <span
+                className={
+                  developer || office || board || security || driver
+                    ? "sr-only"
+                    : undefined
+                }
+              >
+                Workspace
+              </span>
               <select
                 aria-label="Switch workspace"
                 value={areaId}
@@ -473,12 +524,30 @@ export default function AppShell() {
               >
                 <Icon size={20} />
                 <span>{label}</span>
+                {!!badgeFor(to)?.count && (
+                  <span
+                    className={styles.actionCount}
+                    title={`${badgeFor(to)!.count} · ${badgeFor(to)!.label}`}
+                    aria-label={`${badgeFor(to)!.count} ${badgeFor(to)!.label}`}
+                  >
+                    {badgeFor(to)!.count > 99 ? "99+" : badgeFor(to)!.count}
+                  </span>
+                )}
                 {to === "/community" && (auth.preview || auth.rolePreview) && (
                   <span className={styles.count}>3</span>
                 )}
               </Link>
             ))}
           </nav>
+          {!residentShell && actionCounts.error && (
+            <p
+              className={styles.countUnavailable}
+              role="status"
+              title={actionCounts.error}
+            >
+              Pending counts unavailable
+            </p>
+          )}
           {auth.preview && (
             <div className={styles.adminLink}>
               <NavLink
@@ -516,7 +585,17 @@ export default function AppShell() {
               <strong>{name}</strong>
               <small>
                 {!auth.preview
-                  ? "Signed-in member"
+                  ? developer
+                    ? "Developer workspace"
+                    : office
+                      ? "Office workspace"
+                      : board
+                        ? "Board of Directors workspace"
+                        : security
+                          ? "Security workspace"
+                          : driver
+                            ? "Transport workspace"
+                            : "Signed-in member"
                   : office || security || driver || board
                     ? workspaceName
                     : "Demo resident"}
@@ -567,14 +646,14 @@ export default function AppShell() {
               className={styles.residentBrand}
               aria-label="Bellefort Estates home"
             >
-              <img
+              <LoadingImage
                 className={styles.wordmarkLight}
                 src="/brand/bellefort-logo.png"
                 alt="Bellefort Estates"
                 width="479"
                 height="212"
               />
-              <img
+              <LoadingImage
                 className={styles.wordmarkDark}
                 src="/brand/bellefort-logo-white.png"
                 alt="Bellefort Estates"
@@ -590,10 +669,21 @@ export default function AppShell() {
                 to={auth.preview ? "/" : "/workspaces"}
                 aria-label="Bellefort overview"
               >
-                <img src="/icon.svg" width="32" height="32" alt="" />
+                <LoadingImage src="/icon.svg" width="32" height="32" alt="" />
               </Link>
               <span className={styles.desktopCrumb}>
-                Your community<span className={styles.slash}>/</span>
+                {developer
+                  ? "Developer"
+                  : office
+                    ? "Office"
+                    : board
+                      ? "Board of Directors"
+                      : security
+                        ? "Security"
+                        : driver
+                          ? "Transport"
+                          : "Your community"}
+                <span className={styles.slash}>·</span>
               </span>
               <span>
                 {location.pathname === "/more/notifications"
@@ -609,6 +699,9 @@ export default function AppShell() {
           )}
           {residentShell && <CustomerSearch />}
           <div className={styles.topActions} data-header-actions>
+            {!residentShell && (auth.preview || auth.rolePreview) && (
+              <span className={styles.sampleChip}>Sample data</span>
+            )}
             {developer && (
               <Link to="/more/profile" className={styles.developerProfile}>
                 <span className="avatar">
@@ -657,20 +750,14 @@ export default function AppShell() {
             </select>
           </label>
         )}
-        {(!residentShell || auth.preview || auth.rolePreview) && (
+        {(auth.preview || auth.rolePreview) && (
           <div
             className={styles.previewBar}
             role="region"
             aria-label="Data status"
           >
             <ShieldCheck size={16} />
-            <span>
-              {auth.preview || auth.rolePreview
-                ? "Local preview · Sample data — not an HOA confirmation"
-                : developer
-                  ? "Signed in · Developer workspace"
-                  : `Signed in · ${areaId[0].toUpperCase() + areaId.slice(1)} workspace`}
-            </span>
+            <span>Local preview · Sample data — not an HOA confirmation</span>
             <Link to={auth.preview ? "/more/settings" : "/workspaces"}>
               {auth.preview ? "Data & settings" : "My account"}
               <ArrowUpRight size={16} />
@@ -813,6 +900,7 @@ export default function AppShell() {
                   element={<FlowDesk area="registry" />}
                 />
                 <Route path="/driver/dispatch" element={<Shuttle />} />
+                <Route path="/driver/profile" element={<DriverProfile />} />
                 <Route
                   path="/security/gate"
                   element={<FlowDesk area="gate" />}
@@ -891,6 +979,15 @@ export default function AppShell() {
           >
             <Icon size={24} />
             <span>{mobile ?? label}</span>
+            {!!badgeFor(to)?.count && (
+              <span
+                className={`${styles.actionCount} ${styles.mobileActionCount}`}
+                title={`${badgeFor(to)!.count} · ${badgeFor(to)!.label}`}
+                aria-label={`${badgeFor(to)!.count} ${badgeFor(to)!.label}`}
+              >
+                {badgeFor(to)!.count > 99 ? "99+" : badgeFor(to)!.count}
+              </span>
+            )}
           </Link>
         ))}
       </nav>

@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from "react";
 import { officeAddress } from "./carpool-demo-data";
-import { Button } from "../../components/UI";
+import { Button, Skeleton } from "../../components/UI";
 import styles from "./CarpoolDemo.module.css";
 import { shuttleStopLocations } from "./shuttle-stop-data";
 const Map = lazy(() => import("./CarpoolDemoMap"));
@@ -49,7 +49,7 @@ export default function ShuttleDemoMap({
         {destination || "Choose a stop"}
       </p>
       <div className={styles.shuttleMapCanvas}>
-        <Suspense fallback={<p>Loading map…</p>}>
+        <Suspense fallback={<Skeleton variant="section" label="Loading map" />}>
           <Map
             key={key}
             shuttle

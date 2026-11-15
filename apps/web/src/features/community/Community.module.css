@@ -22,8 +22,8 @@
 }
 .update h2 {
   font-family: var(--heading-font);
-  font-size: 32px;
-  font-weight: 400;
+  font-size: var(--staff-section-heading-size, 32px);
+  font-weight: var(--staff-heading-weight, 400);
   margin-bottom: 12px;
 }
 .update p {
@@ -71,7 +71,7 @@
 }
 @media (max-width: 767px) {
   .update h2 {
-    font-size: 24px;
+    font-size: var(--staff-section-heading-size, 24px);
   }
   .update {
     padding-right: 48px;
@@ -121,8 +121,8 @@
   top: 12px;
 }
 .update h2 {
-  font-size: 22px;
-  font-weight: 600;
+  font-size: var(--staff-section-heading-size, 22px);
+  font-weight: var(--staff-heading-weight, 600);
   line-height: 1.35;
   margin-bottom: 8px;
 }
@@ -138,7 +138,7 @@
   gap: 8px;
   color: var(--accent);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: var(--staff-emphasis-weight, 700);
   margin-top: 16px;
 }
 @media (max-width: 600px) {
@@ -150,7 +150,7 @@
     margin-bottom: 16px;
   }
   .update h2 {
-    font-size: var(--section-heading-size);
+    font-size: var(--staff-section-heading-size, var(--section-heading-size));
   }
   .updateMeta {
     padding-right: 20px;
@@ -181,7 +181,7 @@
     top: 8px;
   }
   .update h2 {
-    font-size: 19px;
+    font-size: var(--staff-section-heading-size, 19px);
   }
   .update p {
     max-width: none;

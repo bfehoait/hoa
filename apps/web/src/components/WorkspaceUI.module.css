@@ -16,10 +16,10 @@
 }
 .metrics strong {
   display: block;
-  font-size: 32px;
+  font-size: var(--staff-kpi-size, 32px);
   line-height: 1.2;
   margin: 12px 0;
-  font-weight: 750;
+  font-weight: var(--staff-emphasis-weight, 750);
   font-variant-numeric: tabular-nums;
 }
 .metrics span {
@@ -63,7 +63,7 @@
 }
 .timeline strong {
   font-size: 14px;
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
   overflow-wrap: anywhere;
 }
 .timeline p {
@@ -113,7 +113,7 @@
   min-width: 0;
 }
 .linkedCard h2 {
-  font-size: 16px;
+  font-size: var(--staff-card-heading-size, 16px);
 }
 .linkedCard p {
   color: var(--muted);
@@ -146,7 +146,7 @@
 .queue strong {
   display: block;
   font-size: 16px;
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
   overflow-wrap: anywhere;
 }
 .queue small {
@@ -254,7 +254,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: var(--section-heading-size);
+  font-size: var(--staff-section-heading-size, var(--section-heading-size));
 }
 .queueCount {
   display: inline-grid;
@@ -339,5 +339,33 @@
   :global([data-staff-ui="true"]) .linkedCard {
     min-height: 88px;
     padding: 16px;
+  }
+}
+
+:global([data-staff-ui="true"]) .linkedCard,
+:global([data-staff-ui="true"]) .metrics > div {
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+:global([data-staff-ui="true"]) .linkedCard h2 {
+  font-size: var(--staff-card-heading-size, 18px);
+  font-weight: var(--staff-heading-weight, 750);
+}
+:global([data-staff-ui="true"]) .metrics strong {
+  font-weight: var(--staff-emphasis-weight, 800);
+  letter-spacing: -0.025em;
+}
+
+@media (min-width: 768px) {
+  :global([data-staff-ui="true"]) .metrics {
+    gap: 12px;
+    margin-block: 16px;
+  }
+  :global([data-staff-ui="true"]) .metrics strong {
+    margin-block: 8px;
+  }
+  :global([data-staff-ui="true"]) .linkedCard {
+    min-height: 88px;
+    gap: 12px;
   }
 }

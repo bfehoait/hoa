@@ -1,9 +1,10 @@
+import PageIntro from "../office/OfficePage";
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { NavigationGroup } from "../../components/Navigation";
-import { Button, Feedback, PageIntro, Skeleton } from "../../components/UI";
+import { Button, Feedback, Skeleton } from "../../components/UI";
 import { featureRpc } from "../../data/feature-records";
 import { useAuth } from "../../data/auth";
 import styles from "./MemberWorkspace.module.css";
@@ -85,7 +86,7 @@ function Association() {
     },
     onSuccess: async () => {
       setEditing(false);
-      setNotice("Association details saved by the server.");
+      setNotice("Association details saved.");
       await cache.invalidateQueries({ queryKey: ["office-configuration"] });
     },
   });
@@ -210,7 +211,7 @@ function Contacts() {
     onSuccess: async () => {
       setEditing(false);
       setClient(crypto.randomUUID());
-      setNotice("Contact saved by the server.");
+      setNotice("Contact saved.");
       await Promise.all([
         cache.invalidateQueries({ queryKey: ["office-configuration"] }),
         cache.invalidateQueries({ queryKey: ["published-office-contacts"] }),

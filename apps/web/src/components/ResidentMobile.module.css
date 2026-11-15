@@ -42,7 +42,7 @@
     color: var(--on-brand);
     border: 0;
   }
-  .resident [data-resident-header] > a:has(img) {
+  .resident [data-resident-header] > a:has(:is(img, [data-image-frame])) {
     display: none;
   }
   .resident [data-resident-header] > form:not(:focus-within) {

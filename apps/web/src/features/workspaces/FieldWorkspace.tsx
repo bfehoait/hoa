@@ -1,14 +1,26 @@
 import { lazy } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { Link } from "../../components/AccessLink";
-import { ArrowRight, ClipboardCheck, KeyRound } from "lucide-react";
+import {
+  ArrowRight,
+  ClipboardCheck,
+  KeyRound,
+  FileText,
+  Vote,
+  Newspaper,
+  Wallet,
+  CarFront,
+  UsersRound,
+} from "lucide-react";
 import { usePortal } from "../../data/usePortal";
 import { useWorkspace } from "../../data/workspace";
 import { PageIntro, Row, Feedback, Skeleton } from "../../components/UI";
 import { useAuth } from "../../data/auth";
 import OperationsDesk from "../connected/OperationsDesk";
 import LiveFeature from "../connected/LiveFeature";
+import SecurityOverview from "./SecurityOverview";
 import {
+  LinkedCard,
   MetricStrip,
   ProgressTimeline,
   Queue,
@@ -21,6 +33,7 @@ const BoardUpdates = lazy(() => import("../community/Community"));
 export default function FieldWorkspace() {
   const auth = useAuth();
   const pathname = useLocation().pathname;
+  if (pathname === "/security") return <SecurityOverview />;
   if (
     !auth.preview &&
     !auth.rolePreview &&
@@ -94,8 +107,8 @@ function SampleFieldWorkspace() {
         <section className="panel">
           <h2>No verified reports connected yet</h2>
           <p>
-            Financial totals and private household drill-downs require an
-            approved board reporting endpoint. No amounts are shown as zero.
+            Financial totals and individual household records are not available
+            in this preview. Missing amounts are not shown as zero.
           </p>
         </section>
         <Link className="text-link" to="/board">
@@ -166,8 +179,8 @@ function SampleFieldWorkspace() {
                 ))
               ) : (
                 <p className="note">
-                  No local visitors yet. Create a synthetic request from the
-                  resident flow.
+                  No sample visitors yet. Add a sample visitor request from the
+                  resident preview.
                 </p>
               )}
               <Link className="text-link" to="/services/visitors">
@@ -176,9 +189,8 @@ function SampleFieldWorkspace() {
               </Link>
             </section>
             <WorkspaceNote>
-              No request is a valid gate pass. QR generation, entry/exit
-              confirmation, expiry validation and overrides stay unavailable
-              until approved server and guard workflows exist.
+              Sample requests cannot be used as gate passes. QR codes and real
+              entry or exit checks are not available in this preview.
             </WorkspaceNote>
           </>
         )}
@@ -248,10 +260,43 @@ function SampleFieldWorkspace() {
   return (
     <>
       <PageIntro
-        eyebrow="BOARD WORKSPACE · PREVIEW"
+        eyebrow="BOARD · OVERVIEW"
         title="Governance & oversight"
-        description="Approved oversight powers are still to be defined. This preview does not grant board authority."
+        icon={<UsersRound size={28} />}
+        description="Documents, elections, announcements and reports approved for board review."
       />
+      <div className="grid-2">
+        <LinkedCard
+          title="Documents"
+          to="/board/documents"
+          detail="Approved association files and meeting minutes."
+          icon={<FileText size={24} />}
+        />
+        <LinkedCard
+          title="Elections"
+          to="/board/elections"
+          detail="Board elections, open and past."
+          icon={<Vote size={24} />}
+        />
+        <LinkedCard
+          title="Announcements"
+          to="/board/updates"
+          detail="Board announcements and posts."
+          icon={<Newspaper size={24} />}
+        />
+        <LinkedCard
+          title="Reports"
+          to="/board/reports"
+          detail="Association reports for board review."
+          icon={<Wallet size={24} />}
+        />
+        <LinkedCard
+          title="Shuttle review"
+          to="/board/shuttle"
+          detail="Daily shuttle activity for oversight."
+          icon={<CarFront size={24} />}
+        />
+      </div>
       <section className="panel">
         <h2>Board information</h2>
         <Requirements

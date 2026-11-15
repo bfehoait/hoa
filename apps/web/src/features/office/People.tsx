@@ -1,3 +1,5 @@
+import PageIntro from "../office/OfficePage";
+import { useReviewSurface } from "./ReviewSurface";
 import { useState } from "react";
 import { NavLink, useSearchParams } from "react-router-dom";
 import {
@@ -8,7 +10,6 @@ import {
   Mail,
   RefreshCw,
   Search,
-  UserRound,
   Users,
 } from "lucide-react";
 import {
@@ -17,14 +18,7 @@ import {
   type DirectoryMember,
 } from "../../../../../packages/shared/src/people";
 import { NavigationGroup } from "../../components/Navigation";
-import {
-  Badge,
-  Button,
-  Feedback,
-  Modal,
-  PageIntro,
-  Skeleton,
-} from "../../components/UI";
+import { Badge, Button, Feedback, Modal, Skeleton } from "../../components/UI";
 import { usePeople, type PeopleFilter } from "../../data/people";
 import styles from "./People.module.css";
 import CreateAccount from "./CreateAccount";
@@ -50,9 +44,11 @@ export default function People({
   applications?: boolean;
 }) {
   const [params, setParams] = useSearchParams();
+  const reviewSurface = useReviewSurface();
   const requestedPage = Number(params.get("page") ?? 0);
   const field = params.get("field");
-  const status = params.get("status") ?? "";
+  const status =
+    params.get("status") ?? (reviewSurface && applications ? "Pending" : "");
   const filter: PeopleFilter = {
     page:
       Number.isInteger(requestedPage) &&
@@ -151,10 +147,12 @@ export default function People({
           </div>
         }
       />
-      <NavigationGroup aria-label="People workspace">
-        <NavLink to="/office/residents">Members</NavLink>
-        <NavLink to="/office/registrations">Registrations</NavLink>
-      </NavigationGroup>
+      {!reviewSurface && (
+        <NavigationGroup aria-label="People workspace">
+          <NavLink to="/office/residents">Members</NavLink>
+          <NavLink to="/office/registrations">Registrations</NavLink>
+        </NavigationGroup>
+      )}
       <form
         className={styles.filters}
         onSubmit={(event) => {
@@ -189,21 +187,27 @@ export default function People({
             />
           </span>
         </label>
-        <label>
-          Status
-          <select
-            value={filter.status}
-            onChange={(event) => updateFilter({ status: event.target.value })}
-          >
-            <option value="">All statuses</option>
-            {(applications
+        <div
+          className={styles.statusChoices}
+          role="group"
+          aria-label="Filter account status"
+        >
+          {[
+            "",
+            ...(applications
               ? ["Pending", "Approved", "Rejected"]
-              : ["Active", "Invited", "Suspended"]
-            ).map((status) => (
-              <option key={status}>{status}</option>
-            ))}
-          </select>
-        </label>
+              : ["Active", "Invited", "Suspended"]),
+          ].map((value) => (
+            <button
+              type="button"
+              key={value}
+              aria-pressed={filter.status === value}
+              onClick={() => updateFilter({ status: value })}
+            >
+              {value || "All"}
+            </button>
+          ))}
+        </div>
         <Button type="submit">
           <Search size={20} />
           Search
@@ -279,7 +283,7 @@ export default function People({
                   <li key={row.id}>
                     <div className={styles.identity}>
                       <span className={styles.avatar} aria-hidden="true">
-                        <UserRound size={22} />
+                        {(row.name?.trim() || "M").slice(0, 1).toUpperCase()}
                       </span>
                       <div>
                         <strong>{row.name || "Name not supplied"}</strong>
@@ -302,7 +306,17 @@ export default function People({
                     />
                     <span>
                       <Badge
-                        tone={row.status === "Active" ? "green" : "neutral"}
+                        tone={
+                          row.status === "Active" || row.status === "Approved"
+                            ? "green"
+                            : row.status === "Suspended" ||
+                                row.status === "Rejected"
+                              ? "red"
+                              : row.status === "Invited" ||
+                                  row.status === "Pending"
+                                ? "amber"
+                                : "neutral"
+                        }
                       >
                         {row.status}
                       </Badge>
@@ -470,13 +484,15 @@ function DirectoryProperty({
             ? unit
             : "Not recorded"}
         <small>
-          {matches.length
-            ? "Approved property link"
-            : row.user_id && pending
-              ? "Checking property links..."
-              : failed
-                ? "Linked addresses unavailable"
-                : "Recorded address"}
+          {matches.length ? (
+            "Approved property link"
+          ) : row.user_id && pending ? (
+            <Skeleton variant="metric" label="Loading property links" />
+          ) : failed ? (
+            "Linked addresses unavailable"
+          ) : (
+            "Recorded address"
+          )}
         </small>
       </span>
     </span>

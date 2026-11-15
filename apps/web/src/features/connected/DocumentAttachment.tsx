@@ -3,7 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { makeClient, useAuth } from "../../data/auth";
 import { featureRpc } from "../../data/feature-records";
-import { Button, Feedback } from "../../components/UI";
+import { Button, Feedback, Skeleton } from "../../components/UI";
+import PdfAttachment from "../../components/PdfAttachment";
 const schema = z.object({
   path: z.string().nullable(),
   name: z.string().nullable(),
@@ -25,33 +26,17 @@ export default function DocumentAttachment({ record }: { record: string }) {
         await featureRpc("bfe_document_attachment", { p_record: record }),
       ),
   });
-  async function open(download: boolean) {
-    const tab = window.open("about:blank", "_blank");
-    if (tab) tab.opener = null;
-    setBusy(true);
-    setError(null);
-    try {
-      const client = makeClient();
-      if (!client || !query.data?.path)
-        throw new Error("Document unavailable.");
-      const result = await client.storage
-        .from("bfe-documents")
-        .createSignedUrl(
-          query.data.path,
-          60,
-          download ? { download: query.data.name ?? true } : undefined,
-        );
-      if (result.error)
-        throw new Error("The file could not be opened. Try again.");
-      if (!tab)
-        throw new Error("Allow a new tab to view or download this document.");
-      tab.location.href = result.data.signedUrl;
-    } catch (e) {
-      tab?.close();
-      setError(e instanceof Error ? e : new Error("Document unavailable."));
-    } finally {
-      setBusy(false);
-    }
+  async function loadFile() {
+    const client = makeClient();
+    if (!client || !query.data?.path) throw new Error("Document unavailable.");
+    const result = await client.storage
+      .from("bfe-documents")
+      .createSignedUrl(query.data.path, 60);
+    if (result.error)
+      throw new Error("The file could not be opened. Try again.");
+    const response = await fetch(result.data.signedUrl, { cache: "no-store" });
+    if (!response.ok) throw new Error("Document unavailable.");
+    return response.blob();
   }
   if (auth.memberPreview)
     return (
@@ -61,16 +46,13 @@ export default function DocumentAttachment({ record }: { record: string }) {
     <div>
       <Feedback error={query.error ?? error} />
       {query.isPending ? (
-        <p className="note">Loading document...</p>
+        <Skeleton variant="section" label="Loading document" />
       ) : query.data?.ready ? (
-        <div className="btn-row">
-          <Button secondary disabled={busy} onClick={() => void open(false)}>
-            View PDF
-          </Button>
-          <Button secondary disabled={busy} onClick={() => void open(true)}>
-            Download PDF
-          </Button>
-        </div>
+        <PdfAttachment
+          title={query.data.name ?? "Document"}
+          filename={query.data.name ?? "document.pdf"}
+          loadFile={loadFile}
+        />
       ) : query.isError ? (
         <Button secondary onClick={() => void query.refetch()}>
           Try again

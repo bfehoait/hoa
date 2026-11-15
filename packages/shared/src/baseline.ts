@@ -833,6 +833,7 @@ export const baselineModules: BaselineModule[] = [
         "Renters",
         "Board",
         "Security",
+        "Drivers",
       ]),
       select("pinned", "Pin preference", ["Unpinned", "Pinned"]),
       field("date", "Proposed publication date", "date"),

@@ -1,6 +1,6 @@
+import PageIntro from "../office/OfficePage";
 import {
   ArrowRight,
-  Building2,
   FileText,
   Landmark,
   MessageSquare,
@@ -9,13 +9,13 @@ import {
   Users,
 } from "lucide-react";
 import { Link } from "../../components/AccessLink";
-import { PageIntro } from "../../components/UI";
 import styles from "./StaffHome.module.css";
 import { useAuth } from "../../data/auth";
 import { usePermissions } from "../../data/permissions";
 import { areaNavigation } from "../../components/AccountNavigation";
 import { unavailableService } from "../../../../../packages/shared/src/service-availability";
 import OfficeReviewInbox from "./OfficeReviewInbox";
+import StaffCollections from "./StaffCollections";
 
 const areas = [
   {
@@ -145,22 +145,27 @@ export default function StaffHome() {
   return (
     <>
       <PageIntro
-        eyebrow="OFFICE & ADMINISTRATION"
-        title="Your office, organized."
-        description="Submissions awaiting decisions and work that needs follow-up."
-        icon={<Building2 size={28} />}
+        title="Overview"
+        description="Administration, people, finance and the day's operations."
       />
       <OfficeReviewInbox compact />
+      <StaffCollections />
+      <OfficeReviewInbox worklistOnly />
       {sample && <p>These previews do not change real association records.</p>}
       {!!tools.length && (
-        <details className={styles.tools}>
-          <summary>More Office tools</summary>
+        <section className={styles.toolsSection}>
+          <h2 className={styles.toolsTitle}>Office tools</h2>
           <div className={styles.areas}>
             {tools.map((area) => (
               <section key={area.title} className={styles.area}>
                 <div className={styles.areaHeading}>
-                  <area.icon size={24} />
-                  <h2>{area.title}</h2>
+                  <span>
+                    <area.icon size={24} />
+                  </span>
+                  <div>
+                    <h3>{area.title}</h3>
+                    <p>{area.detail}</p>
+                  </div>
                 </div>
                 <ul>
                   {area.links.map((link) => (
@@ -175,7 +180,7 @@ export default function StaffHome() {
               </section>
             ))}
           </div>
-        </details>
+        </section>
       )}
     </>
   );

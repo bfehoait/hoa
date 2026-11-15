@@ -1,6 +1,76 @@
 .bookingDialog {
   max-width: 960px;
 }
+.policyLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+  background: var(--surface);
+  text-decoration: none;
+}
+.policyLink > div {
+  min-width: 0;
+  flex: 1;
+}
+.policyLink strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+.policyLink small {
+  display: block;
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 4px;
+}
+.policyLink svg {
+  flex: none;
+}
+.policyLink:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.price {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--wash);
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.price > * {
+  margin-block: 0;
+}
+.price h3 {
+  font-size: 18px;
+}
+.price p,
+.price li {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.price details summary {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.price ul {
+  padding-left: 20px;
+}
+.guestCounts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.guestCounts p {
+  grid-column: 1 / -1;
+}
 .layout {
   display: grid;
   gap: 24px;
@@ -16,7 +86,7 @@
 }
 .calendar > label {
   display: block;
-  font-weight: 700;
+  font-weight: var(--staff-label-weight, 700);
   margin-bottom: 12px;
 }
 .calendar input {
@@ -72,7 +142,7 @@
 .days button[aria-pressed="true"] {
   background: var(--accent);
   color: var(--on-accent);
-  font-weight: 700;
+  font-weight: var(--staff-emphasis-weight, 700);
 }
 .days button:disabled,
 .month button:disabled {
@@ -124,7 +194,7 @@
   background: var(--surface);
 }
 .panel h2 {
-  font-size: var(--section-heading-size);
+  font-size: var(--staff-section-heading-size, var(--section-heading-size));
   margin: 0 0 12px;
 }
 .panel p {
@@ -174,7 +244,7 @@
 }
 .facilityChoices legend {
   font-size: 16px;
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
   margin-bottom: 12px;
 }
 .facilityChoices > div {
@@ -278,7 +348,7 @@
   margin-bottom: 24px;
 }
 .composer > h2 {
-  font-size: var(--section-heading-size);
+  font-size: var(--staff-section-heading-size, var(--section-heading-size));
   margin-bottom: 16px;
 }
 .composer > form {
@@ -362,7 +432,7 @@
 .timeStep,
 .requestStep {
   font-size: 18px;
-  font-weight: 700;
+  font-weight: var(--staff-emphasis-weight, 700);
   margin: 0 0 12px;
 }
 .requestStep {
@@ -509,7 +579,7 @@
   font-size: 14px;
   color: var(--accent);
   cursor: pointer;
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
 }
 
 /* Resident phone spacing: section rhythm without reducing touch targets. */

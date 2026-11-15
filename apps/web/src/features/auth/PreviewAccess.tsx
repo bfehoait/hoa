@@ -1,3 +1,4 @@
+import LoadingImage from "../../components/LoadingImage";
 import { useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Link } from "../../components/AccessLink";
@@ -74,7 +75,7 @@ export default function Access() {
     <main className={styles.access}>
       <section className={styles.identity}>
         <Link to="/" className={styles.brand}>
-          <img src="/icon.svg" alt="" width="48" height="48" />
+          <LoadingImage src="/icon.svg" alt="" width="48" height="48" />
           <span>
             Bellefort<small>ESTATES · LOCAL PREVIEW</small>
           </span>

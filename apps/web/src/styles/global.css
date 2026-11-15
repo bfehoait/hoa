@@ -39,6 +39,9 @@ body {
   gap: 12px;
   margin-block: 20px;
 }
+.btn-row:has(> label) {
+  align-items: flex-end;
+}
 button,
 input,
 select,
@@ -152,19 +155,19 @@ p {
 }
 h1 {
   font-family: var(--heading-font);
-  font-size: var(--page-heading-size);
-  font-weight: 600;
+  font-size: var(--staff-page-heading-size, var(--page-heading-size));
+  font-weight: var(--staff-page-weight, 600);
   line-height: 1.15;
   letter-spacing: -0.025em;
 }
 h2 {
-  font-size: var(--section-heading-size);
+  font-size: var(--staff-section-heading-size, var(--section-heading-size));
   line-height: 1.4;
-  font-weight: 600;
+  font-weight: var(--staff-heading-weight, 600);
 }
 h3 {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: var(--staff-card-heading-size, 16px);
+  font-weight: var(--staff-heading-weight, 600);
 }
 svg {
   stroke-width: 1.6;
@@ -229,7 +232,7 @@ svg {
     height: 48px;
   }
   .page-title h1 {
-    font-size: 26px;
+    font-size: var(--staff-page-heading-size, 26px);
   }
 }
 .section-title {
@@ -422,21 +425,6 @@ svg {
     transform: rotate(360deg);
   }
 }
-.skeleton-layout {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 24px;
-}
-.skeleton-layout > div {
-  height: 240px;
-  background: var(--wash);
-  border-radius: var(--radius-lg);
-  animation: pulse 1.5s infinite;
-}
-.skeleton-layout > div:first-of-type {
-  grid-column: 1/-1;
-  height: 100px;
-}
 @keyframes pulse {
   50% {
     opacity: 0.45;
@@ -496,7 +484,7 @@ th:last-child {
 }
 .feature-number {
   font-family: var(--heading-font);
-  font-size: 48px;
+  font-size: var(--staff-kpi-size, 48px);
   line-height: 1;
   font-weight: 400;
 }
@@ -576,7 +564,7 @@ th:last-child {
     --section-heading-size: 18px;
   }
   h1 {
-    font-size: 32px;
+    font-size: var(--staff-page-heading-size, 32px);
     letter-spacing: -0.6px;
   }
   .page-intro {
@@ -601,9 +589,6 @@ th:last-child {
   }
   .form-actions > * {
     flex: 1;
-  }
-  .skeleton-layout {
-    grid-template-columns: 1fr;
   }
   .eyebrow {
     letter-spacing: 1px;
@@ -644,7 +629,7 @@ th:last-child {
 }
 .workspace-tabs > a[aria-current="page"] {
   color: var(--accent);
-  font-weight: 700;
+  font-weight: var(--staff-emphasis-weight, 700);
   border-bottom-color: var(--accent);
 }
 .workspace-row-button {
@@ -666,7 +651,7 @@ th:last-child {
 }
 .workspace-row-button strong {
   display: block;
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
 }
 .workspace-row-button small {
   display: block;
@@ -681,7 +666,7 @@ th:last-child {
 .control-label {
   display: block;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: var(--staff-label-weight, 600);
   margin: 16px 0 8px;
 }
 .standalone-control {
@@ -825,10 +810,142 @@ summary {
 
 @media (max-width: 767px) {
   [data-staff-ui="true"] .page-intro h1 {
-    font-size: 28px;
+    font-size: var(--staff-page-heading-size, 28px);
     line-height: 1.25;
   }
   [data-staff-ui="true"] .page-intro {
     gap: 12px;
+  }
+}
+
+/* --- Artifact-aligned surfaces: the admin/office console only. Resident
+   screens keep the flat hairline treatment (this is scoped to staff UI). The
+   draft's look gives cards soft elevation and 16px corners. --- */
+[data-staff-ui="true"] {
+  --shadow-sm: 0 1px 2px rgb(24 20 24 / 0.06), 0 2px 8px rgb(24 20 24 / 0.06);
+}
+[data-theme="dark"] [data-staff-ui="true"] {
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+}
+[data-staff-ui="true"] .panel {
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+[data-staff-ui="true"] .table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+}
+[data-staff-ui="true"] .table-wrap :is(th, td) {
+  padding: 14px 16px;
+}
+[data-staff-ui="true"] .table-wrap :is(th, td):first-child {
+  padding-left: 18px;
+}
+[data-staff-ui="true"] .table-wrap :is(th, td):last-child {
+  padding-right: 18px;
+}
+[data-staff-ui="true"] .table-wrap th {
+  background: var(--wash);
+}
+[data-staff-ui="true"] .table-wrap tr:last-child td {
+  border-bottom: 0;
+}
+
+/* Shared staff typography/state treatment. Keep control geometry accessible. */
+[data-staff-ui="true"] :is(h1, h2, h3) {
+  font-family: var(--body-font);
+  letter-spacing: -0.02em;
+}
+[data-staff-ui="true"] h1 {
+  font-weight: var(--staff-page-weight, 800);
+  font-size: var(--staff-page-heading-size, 32px);
+}
+[data-staff-ui="true"] h2 {
+  font-weight: var(--staff-heading-weight, 750);
+}
+[data-staff-ui="true"] .page-intro {
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+[data-staff-ui="true"] .page-title {
+  gap: 12px;
+}
+[data-staff-ui="true"] .page-title-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+[data-staff-ui="true"] .page-description {
+  margin-top: 10px;
+  font-size: 16px;
+  line-height: 1.6;
+  max-width: 72ch;
+}
+[data-staff-ui="true"] .page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+[data-staff-ui="true"] .page-intro .eyebrow {
+  margin-bottom: 8px;
+  letter-spacing: 0.06em;
+}
+[data-staff-ui="true"] .panel {
+  padding: 22px;
+}
+[data-staff-ui="true"] .search {
+  background: var(--surface);
+  border-radius: 11px;
+}
+[data-staff-ui="true"] .form-actions {
+  gap: 10px;
+}
+[data-staff-ui="true"] .table-wrap {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) var(--surface);
+  scroll-padding-inline: 12px;
+}
+[data-staff-ui="true"] .table-wrap thead th {
+  font-weight: var(--staff-emphasis-weight, 650);
+}
+[data-staff-ui="true"] .table-wrap tbody tr:focus-within {
+  background: var(--accent-soft);
+}
+[data-staff-ui="true"] :is(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+[data-staff-ui="true"] .table-wrap :is(button, a):focus-visible {
+  outline-offset: -2px;
+}
+@media (hover: hover) {
+  [data-staff-ui="true"] .table-wrap tbody tr:hover {
+    background: var(--wash);
+  }
+}
+@media (max-width: 767px) {
+  [data-staff-ui="true"] h1 {
+    font-size: var(--staff-page-heading-size, 28px);
+  }
+  [data-staff-ui="true"] .page-intro {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  [data-staff-ui="true"] .page-actions {
+    width: 100%;
+  }
+  [data-staff-ui="true"] .panel {
+    padding: 16px;
+  }
+  [data-staff-ui="true"] .page-title-icon {
+    width: 36px;
+    height: 36px;
   }
 }

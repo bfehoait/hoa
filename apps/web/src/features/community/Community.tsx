@@ -47,7 +47,7 @@ function SampleCommunity({ basePath = "/community" }: { basePath?: string }) {
   const slug = pathname.startsWith(basePath + "/")
     ? pathname.slice(basePath.length + 1)
     : "";
-  const [filter, setFilter] = useState("All updates");
+  const [filter, setFilter] = useState("All announcements");
   const [search, setSearch] = useState("");
   const [audience, setAudience] = useState("All members");
   const portal = usePortal();
@@ -122,7 +122,7 @@ function SampleCommunity({ basePath = "/community" }: { basePath?: string }) {
       <>
         <PageIntro eyebrow="COMMUNITY" title="That update isn’t here." />
         <Link to={basePath} className="text-link">
-          Back to updates
+          Back to announcements
           <ArrowUpRight size={20} />
         </Link>
       </>
@@ -132,7 +132,7 @@ function SampleCommunity({ basePath = "/community" }: { basePath?: string }) {
       <>
         <Link className="text-link back-link" to={basePath}>
           <ArrowLeft size={20} />
-          All community updates
+          All announcements
         </Link>
         <PageIntro
           eyebrow={`${selected.category} · ${selected.date}`}
@@ -197,20 +197,20 @@ function SampleCommunity({ basePath = "/community" }: { basePath?: string }) {
     <>
       <PageIntro
         eyebrow="LIFE AT BELLEFORT"
-        title="Community updates"
+        title="Announcements"
         description="News, notices and events in your neighborhood."
       />
       <div className="search">
         <Search size={20} />
         <input
-          aria-label="Search community updates"
+          aria-label="Search announcements"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Find an update…"
         />
       </div>
-      <div className="filters" aria-label="Filter updates">
-        {["All updates", "Advisories", "Saved"].map((f) => (
+      <div className="filters" aria-label="Filter announcements">
+        {["All announcements", "Advisories", "Saved"].map((f) => (
           <button
             key={f}
             className="filter"
@@ -262,10 +262,10 @@ function SampleCommunity({ basePath = "/community" }: { basePath?: string }) {
         ))}
       </div>
       {!visible.length && (
-        <Empty title="No updates here yet.">
+        <Empty title="No announcements here yet.">
           {search
             ? "Try a different word or clear your search."
-            : "Saved updates will appear here when you bookmark them."}
+            : "Saved announcements will appear here when you bookmark them."}
         </Empty>
       )}
       <Feedback error={portal.error ?? bookmark.error} />

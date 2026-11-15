@@ -8,7 +8,7 @@
   margin-bottom: 8px;
   padding: 0;
   font-size: 16px;
-  font-weight: 650;
+  font-weight: var(--staff-label-weight, 650);
 }
 .picker.picker label {
   display: flex;
@@ -56,4 +56,10 @@
   color: var(--red);
   font-size: 14px;
   margin: 8px 0 0;
+}
+.picker .help {
+  color: var(--muted);
+  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 1.5;
 }

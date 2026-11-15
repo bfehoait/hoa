@@ -6,6 +6,14 @@ export async function featureRpc(name: string, args: Record<string, unknown>) {
   if (!client) throw new Error("Sign in to connect to this service.");
   const { data, error } = await client.rpc(name, args);
   if (error) {
+    if (
+      name === "bfe_approve_booking_with_fee" &&
+      error.code === "23514" &&
+      error.message.includes("bfe_notifications_path_check")
+    )
+      throw new Error(
+        "Account notifications need a system update before this booking can be approved. Contact the system owner.",
+      );
     if (["42883", "PGRST202", "42P01"].includes(error.code))
       throw new Error(
         "This service is not available yet. Contact the HOA office for help.",

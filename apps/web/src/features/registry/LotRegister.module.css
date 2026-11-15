@@ -12,7 +12,7 @@
   min-width: 0;
 }
 .financePanel > h2 {
-  font-size: var(--section-heading-size);
+  font-size: var(--staff-section-heading-size, var(--section-heading-size));
   margin-bottom: 8px;
 }
 .financeRecordsHeading {
@@ -26,7 +26,7 @@
   margin-top: 20px;
 }
 .financeRecordsHeading h3 {
-  font-size: 18px;
+  font-size: var(--staff-card-heading-size, 18px);
   margin: 0;
 }
 .financeRecordsHeading p {
@@ -41,7 +41,7 @@
   border: 0;
   color: var(--accent);
   font: inherit;
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
   text-decoration: underline;
   text-underline-offset: 4px;
   cursor: pointer;
@@ -126,7 +126,7 @@
 }
 .card h2,
 .panel h2 {
-  font-size: var(--section-heading-size);
+  font-size: var(--staff-card-heading-size, var(--section-heading-size));
   margin: 0 0 8px;
 }
 .card p,
@@ -149,7 +149,7 @@
 }
 .linkedCard h2 {
   font-family: inherit;
-  font-size: 16px;
+  font-size: var(--staff-card-heading-size, 16px);
   margin: 0;
 }
 .linkedCard .identity > div {
@@ -385,7 +385,7 @@ fieldset.form {
   background: var(--surface);
   border-color: var(--line);
   color: var(--accent);
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
   box-shadow: var(--shadow-sm);
 }
 .profileTabs button:focus-visible {
@@ -684,5 +684,110 @@ fieldset.form {
   :global([data-customer-ui="true"]) .receiptDetail {
     gap: var(--resident-card-gap);
     margin-top: var(--resident-card-gap);
+  }
+}
+
+:global([data-staff-ui="true"]) .toolbar {
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+:global([data-staff-ui="true"]) .card,
+:global([data-staff-ui="true"]) .panel {
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+:global([data-staff-ui="true"]) .card strong {
+  font-weight: var(--staff-emphasis-weight, 750);
+}
+:global([data-staff-ui="true"]) .receiptTable {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+:global([data-staff-ui="true"]) .tabs {
+  gap: 6px;
+  padding: 5px;
+  background: var(--wash);
+  border-radius: 14px;
+}
+:global([data-staff-ui="true"]) .tabs > a {
+  border-radius: 10px;
+}
+
+.officeLotTable {
+  display: none;
+}
+@media (min-width: 1100px) {
+  .officeLotCards {
+    display: none;
+  }
+  .officeLotTable {
+    display: block;
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+  }
+  .officeLotTable table {
+    width: 100%;
+    min-width: 660px;
+  }
+  .officeLotTable th {
+    padding: 16px 20px;
+    background: var(--wash);
+    text-transform: uppercase;
+    font-size: 14px;
+    font-weight: var(--staff-emphasis-weight, 650);
+  }
+  .officeLotTable td {
+    padding: 20px;
+  }
+  .officeLotTable td a {
+    display: inline-flex;
+    min-height: 48px;
+    align-items: center;
+    font-weight: var(--staff-emphasis-weight, 750);
+    color: var(--ink);
+    text-underline-offset: 4px;
+  }
+  .officeLotTable td small {
+    display: block;
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .officeLotTable tr:hover {
+    background: var(--accent-soft);
+  }
+  .officeLotTable > p {
+    padding: 12px 20px;
+  }
+}
+
+/* Compact desktop filters: one control band, without a second card shell. */
+@media (min-width: 768px) {
+  :global([data-staff-ui="true"]) .toolbar {
+    position: static;
+    padding: 0;
+    margin-block: 12px;
+    gap: 10px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    align-items: end;
+  }
+  :global([data-staff-ui="true"]) .toolbar > label {
+    flex: 0 1 280px;
+    min-width: min(180px, 100%);
+    gap: 4px;
+    font-size: 14px;
+  }
+  :global([data-staff-ui="true"]) .toolbar :is(input, select) {
+    min-height: 48px;
+    padding-block: 10px;
+    font-size: 16px;
   }
 }

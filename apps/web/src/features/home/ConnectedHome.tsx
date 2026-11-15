@@ -2,6 +2,7 @@ import {
   Building2,
   CalendarDays,
   FileText,
+  Landmark,
   MessageSquare,
   Search,
   Store,
@@ -14,6 +15,7 @@ import { canOpenPath } from "../../../../../packages/shared/src/auth";
 import { DestinationGrid, type Destination } from "../../components/Navigation";
 import { PageIntro } from "../../components/UI";
 import ResidentDashboard from "./ResidentDashboard";
+import BoardOverview from "../workspaces/BoardOverview";
 import styles from "./ServiceDirectory.module.css";
 import { serviceGroups as residentServiceGroups } from "../services/service-destinations";
 
@@ -38,7 +40,7 @@ const services: Destination[] = [
   },
   {
     to: "/community",
-    title: "Community updates",
+    title: "Announcements",
     detail: "Read published announcements",
     icon: FileText,
   },
@@ -97,7 +99,7 @@ export default function ConnectedHome({
     },
     {
       to: "/board/updates",
-      title: "Community updates",
+      title: "Announcements",
       detail: "Read published announcements",
       icon: MessageSquare,
     },
@@ -145,6 +147,7 @@ export default function ConnectedHome({
         .includes(area === "board" ? search.toLowerCase() : ""),
   );
   if (area === "home") return <ResidentDashboard />;
+  if (area === "board") return <BoardOverview />;
   if (area === "services" || area === "help") {
     const serviceGroups =
       area === "help"
@@ -188,9 +191,10 @@ export default function ConnectedHome({
   return (
     <>
       <PageIntro
-        eyebrow={area === "board" ? "BOARD WORKSPACE" : "YOUR COMMUNITY"}
+        eyebrow="BOARD WORKSPACE"
         title="Board workspace"
-        description="Community notices and services for your household."
+        icon={<Landmark size={28} />}
+        description="Board records, elections, updates and reports approved for board review."
       />
       <div className="search">
         <Search size={20} aria-hidden="true" />

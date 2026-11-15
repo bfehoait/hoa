@@ -1,5 +1,7 @@
+import PageIntro from "../office/OfficePage";
 import { useState } from "react";
 import managerStyles from "./AnnouncementManager.module.css";
+import AnnouncementCard, { AnnouncementGrid } from "./AnnouncementCard";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import {
@@ -9,18 +11,27 @@ import {
 import { manilaInstant } from "../../../../../packages/shared/src/operations";
 import { useAuth } from "../../data/auth";
 import { featureRpc, useFeatureMutation } from "../../data/feature-records";
-import {
-  Badge,
-  Button,
-  Feedback,
-  Modal,
-  PageIntro,
-  Skeleton,
-} from "../../components/UI";
+import { Button, Feedback, Modal, Skeleton } from "../../components/UI";
 import ListingMedia from "./ListingMedia";
 import FeatureSubmissionForm from "./FeatureSubmissionForm";
 import WorkflowHistory from "./WorkflowHistory";
 import styles from "./LiveFeature.module.css";
+import { publicationAudienceOptions } from "../../../../../packages/shared/src/publication-audiences";
+
+function audienceLabel(record: FeatureRecord) {
+  return (
+    record.audiences
+      ?.map((value) =>
+        value === "members"
+          ? "All members"
+          : (publicationAudienceOptions.find((option) => option.value === value)
+              ?.label ?? value),
+      )
+      .join(", ") ||
+    record.fields?.audience ||
+    "Not provided"
+  );
+}
 
 export default function AnnouncementManager() {
   const auth = useAuth(),
@@ -33,6 +44,7 @@ export default function AnnouncementManager() {
     [busy, setBusy] = useState(false),
     [saved, setSaved] = useState(false),
     [requestId, setRequestId] = useState(() => crypto.randomUUID());
+  const [opened, setOpened] = useState<FeatureRecord | null>(null);
   const [publish, setPublish] = useState<FeatureRecord | null>(null),
     [unpublish, setUnpublish] = useState<FeatureRecord | null>(null),
     [history, setHistory] = useState<string | null>(null),
@@ -62,9 +74,9 @@ export default function AnnouncementManager() {
   return (
     <>
       <PageIntro
-        eyebrow="COMMUNITY"
+        eyebrow="ANNOUNCEMENTS"
         title="Announcements"
-        description="Post community notices or remove them from the customer view."
+        description="Create announcements and manage what members can see."
       />
       <div className={styles.toolbar}>
         <label>
@@ -118,7 +130,7 @@ export default function AnnouncementManager() {
               {query.data.total === 1 ? "announcement" : "announcements"}
               {search ? " matching your search" : ""}
             </p>
-            <div className={managerStyles.list}>
+            <AnnouncementGrid>
               {query.data.rows.map((record) => {
                 const own = record.owner_id === auth.userId;
                 const canPost =
@@ -127,85 +139,69 @@ export default function AnnouncementManager() {
                   !!record.publication_consent &&
                   record.status !== "Rejected";
                 return (
-                  <article
-                    className={`${styles.card} ${managerStyles.row}`}
+                  <AnnouncementCard
                     key={record.id}
-                  >
-                    <div className={styles.cardHead}>
-                      <Badge>
-                        {view === "published" ? "Published" : "Unpublished"}
-                      </Badge>
-                      <time
-                        className={styles.cardDate}
-                        dateTime={record.created_at}
-                      >
-                        {new Date(record.created_at).toLocaleDateString(
-                          "en-PH",
-                          { timeZone: "Asia/Manila" },
+                    id={record.id}
+                    title={record.title}
+                    detail={record.detail}
+                    date={record.created_at}
+                    status={view === "published" ? "Published" : "Unpublished"}
+                    audience={audienceLabel(record)}
+                    actions={
+                      <>
+                        {view === "unpublished" && canPost && (
+                          <Button onClick={() => setPublish(record)}>
+                            Publish
+                          </Button>
                         )}
-                      </time>
-                    </div>
-                    <h2 className={styles.cardTitle}>{record.title}</h2>
-                    <details className={managerStyles.preview}>
-                      <summary>Announcement text & image</summary>
-                      <p>{record.detail}</p>
-                      <ListingMedia
-                        id={record.id}
-                        announcement
-                        alt={"Image for " + record.title}
-                        editable={
-                          writable &&
+                        {view === "published" && writable && (
+                          <Button
+                            secondary
+                            onClick={() => {
+                              action.reset();
+                              setUnpublish(record);
+                            }}
+                          >
+                            Unpublish
+                          </Button>
+                        )}
+                        {writable &&
                           own &&
                           record.status === "Submitted" &&
-                          !!record.publication_consent
-                        }
-                      />
-                    </details>
-                    <div
-                      className={`${styles.actions} ${managerStyles.actions}`}
-                    >
-                      {view === "unpublished" && canPost && (
-                        <Button onClick={() => setPublish(record)}>
-                          Publish
+                          !!record.publication_consent && (
+                            <Button secondary onClick={() => setOpened(record)}>
+                              Edit image
+                            </Button>
+                          )}
+                        <Button secondary onClick={() => setHistory(record.id)}>
+                          History
                         </Button>
-                      )}
-                      {view === "published" && writable && (
-                        <Button
-                          secondary
-                          onClick={() => {
-                            action.reset();
-                            setUnpublish(record);
-                          }}
-                        >
-                          Unpublish
-                        </Button>
-                      )}
-                      <Button secondary onClick={() => setHistory(record.id)}>
-                        History
-                      </Button>
-                    </div>
-                    {view === "unpublished" && !own && writable && (
-                      <p className={styles.formHelp}>
-                        The author can publish this saved announcement.
-                      </p>
-                    )}
-                    {view === "unpublished" &&
-                      own &&
-                      !record.publication_consent && (
-                        <p className={styles.formHelp}>
-                          Publication consent is missing. This saved post cannot
-                          be published.
-                        </p>
-                      )}
-                    {view === "unpublished" && record.status === "Rejected" && (
-                      <p className={styles.formHelp}>
-                        This post was rejected. Its history is retained.
-                      </p>
-                    )}
-                  </article>
+
+                        {view === "unpublished" && !own && writable && (
+                          <p className={styles.formHelp}>
+                            The author can publish this saved announcement.
+                          </p>
+                        )}
+                        {view === "unpublished" &&
+                          own &&
+                          !record.publication_consent && (
+                            <p className={styles.formHelp}>
+                              Publication consent is missing. This saved post
+                              cannot be published.
+                            </p>
+                          )}
+                        {view === "unpublished" &&
+                          record.status === "Rejected" && (
+                            <p className={styles.formHelp}>
+                              This post was rejected. Its history is retained.
+                            </p>
+                          )}
+                      </>
+                    }
+                  />
                 );
               })}
-            </div>
+            </AnnouncementGrid>
             {!query.data.rows.length && (
               <p>
                 No {view} announcements{search ? " match your search" : " yet"}.
@@ -232,6 +228,27 @@ export default function AnnouncementManager() {
             )}
           </>
         )
+      )}
+      {opened && (
+        <Modal
+          title={opened.title}
+          className={managerStyles.detail}
+          onClose={() => setOpened(null)}
+        >
+          <p className={styles.formHelp}>Audience: {audienceLabel(opened)}</p>
+          <p className={managerStyles.fullText}>{opened.detail}</p>
+          <ListingMedia
+            id={opened.id}
+            announcement
+            alt={"Image for " + opened.title}
+            editable={
+              writable &&
+              opened.owner_id === auth.userId &&
+              opened.status === "Submitted" &&
+              !!opened.publication_consent
+            }
+          />
+        </Modal>
       )}
       {create && (
         <Modal
@@ -351,8 +368,7 @@ function PublishSaved({
         <strong>{record.title}</strong>
       </p>
       <p>
-        Audience: {record.fields?.audience || "Not provided"}. This post will
-        appear immediately.
+        Audience: {audienceLabel(record)}. This post will appear immediately.
       </p>
       <form
         className={styles.form}
@@ -392,7 +408,7 @@ function PublishSaved({
         }}
       >
         <label>
-          Show until (Philippine time)
+          Hide announcement after (Philippine time)
           <input name="expiry" type="datetime-local" required disabled={busy} />
           <span className={styles.formHelp}>
             Choose a future expiry within one year. Any image upload must be

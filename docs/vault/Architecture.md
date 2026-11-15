@@ -194,3 +194,139 @@ Replaced pending Shuttle placement with the owner-supplied seven numbered coordi
 ### 13 November 2026 - multi-audience publication and phase limits
 
 AudiencePicker submits either members alone or a set of specific existing roles. The new review RPC retains the original server reviewer checks and writes the audience set atomically; all related prepared content readers use one predicate with a legacy fallback. No audience selection grants permissions. Shared lot validation now follows Phase 1 (19 blocks/111 lots), Phase 2 (9/36), Phase 3 (1/54), with owner-run migration 074 protecting new resident registrations/member inserts. Account creation editor artifact regenerated for Edge redeployment. Customer wiring review and owner acceptance checklist are documented in docs/CUSTOMER-WIRING-REVIEW.md.
+
+### 13 November 2026 - linked owner receipt scope
+
+Migration 075 implements owner-approved automatic receipt history for approved current owner lot links, preserving existing household access. The internal bfe_household_receipt_lots legacy name remains for compatibility; its scope now includes owner/household links. The helper is not directly executable by browser roles. Receipt RLS, history pagination and own finance access already use this scope through migration 061. No entitlement seeding or payment/balance changes; owner-run rollout and negative access checks are documented in docs/LINKED-LOT-PAYMENT-HISTORY.md.
+
+### 14 November 2026 - verified account creation protocol
+
+Account creation success now requires explicit member_linked=true from the service-only preflight through Edge to the Office form. Migration 077 upgrades preflight to verify a unique active matching connected member rather than trusting only the creation receipt. Deferred Auth-insert/member-write guards protect exactly-one-member plus creation-receipt integrity for portal-managed accounts at transaction end; legacy Auth users without provisioning metadata/receipts are not automatically claimed. Authorized Auth deletion is compatible because the final Auth row is absent. Explicit owner-reviewed repair of existing member/Auth pairs writes a private connection-repair audit and preserves roles/password, without granting a lot relationship. Existing admin roles become effective when linked, so identity/role review is mandatory. The optional 076 adds an availability reason to workspace reads without changing link permissions. See docs/ACCOUNT-CONNECTION-INTEGRITY.md for deployment order and limitations.
+
+### 14 November 2026 - account workflow maintenance contract
+
+Account connection integrity has a dedicated local regression command, npm.cmd run check:account-integrity. It validates canonical/generated Edge artifact parity and runs ten embedded PostgreSQL cases against 025/077. Existing CI discovers the suite and now checks artifact parity explicitly. AGENTS.md requires the focused check for changes to this protected workflow; deployment order and independent server authorization remain required. The fixture narrows permission scope to a synthetic developer to test connection state; it does not certify live gateway behavior, wider policy or concurrency. No runtime feature or migration changed in this maintenance-only follow-up.
+
+### 14 November 2026 - staff console redesign
+
+Implemented staff-scoped shell, typography, card/table surfaces and module-level presentation from the artifact spec while keeping resident presentation separate. Office overview uses the existing review inbox projection for action cards and queue breakdowns. New StaffCollections reuses the existing authorized receipt service for all-date imported totals, latest recorded month, monthly magnitude bars and phase amounts; real association finance permission and route visibility gate rendering/fetching. No collection-rate denominator or debt aging is inferred from receipts. Native dialogs/Sheet now use an additive size attribute to retain form sizes while centering staff sheets on larger screens; resident sheets keep their existing presentation. Roles matrix, permissions, dirty-state, submit handlers, RPC contracts and notification destinations remain intact. All operational modules inherit the console surface system, with explicit styling for People, account workspace, review inbox, finance/accounting, facilities, connected operations/publishing, helpdesk, registry, access/developer, Board content and Transport. Corrected root dark selector, table overflow and misleading suspension copy. See docs/CONSOLE-REDESIGN-IMPLEMENTATION.md for coverage and owner browser acceptance. No backend schema/Edge changes in this pass.
+
+### 14 November 2026 - Developer screenshot refinement
+
+DeveloperPage and DeveloperScreens provide the screenshot-oriented Developer layout, isolated from other roles. Shared DeveloperServices exposes evidence-limited connection cards and diagnostic detail dialogs; DeveloperAudit consumes the existing request-audit module monitor. Account support preserves inspection mutations and workbook capability checks while adding presentation-only loaded-page status filtering. The defined-committee directory does not grant access or invent membership totals; existing full access editors remain below it. The Developer sidebar search now supports Ctrl/Cmd K, and role previews have a dedicated guarded destination. No RPC/schema or provisioning protocol changed. See docs/DEVELOPER-SCREENSHOT-IMPLEMENTATION.md for limitations and owner acceptance.
+
+### 14 November 2026 - discoverable access navigation
+
+Replaced Developer access-page disclosure wrappers with four visible tabs: Members (default), Group defaults, Committees and Access reference. Query-string selection preserves existing accountSearch deep links and avoids reload/scroll reset. Existing panels stay mounted; group-default dirty/pending callbacks lock tab switching until save/discard. Native member dialogs keep their existing guards. Office access presentation and all server authority remain unchanged. Developer sidebar stays 264px at desktop widths with a full-width labelled workspace selector and reduced spacing; accessible text/control sizes remain.
+
+### 14 November 2026 - Office screenshot refinement
+
+Added OfficePage as an Office-aware presentation adapter; shared features retain their prior PageIntro outside Office routes. Office shell gains compact branding/workspace selection and permission-filtered screen search. Existing inbox data drives attention cards, the current worklist and a queue/detail selection view using original review destinations. People status chips use the existing server filter, lot results gain a desktop semantic table, and shared feature reviews gain desktop tables opening full existing record/action dialogs. Announcement cards retain author/consent/version guards. The connected calendar retains all selection/filter/detail behavior with refreshed month styling. Desktop Helpdesk renders the original Thread beside its list, preserving queries, reply/status handlers and dirty/busy state protections; narrow views retain Sheet. Office access now shares visible guarded access tabs. No RPC/schema/provisioning contract changed. See docs/OFFICE-SCREENSHOT-IMPLEMENTATION.md for draft adaptations and owner acceptance.
+
+### 14 November 2026 - Board screenshot layout
+
+Board shell reuses the compact staff presentation with Board-specific navigation search and identity. OfficePage adapts headings for Board without changing resident headings. BoardOverview uses existing published feature readers for report/board-record totals and recent publishing rows; update links use existing exact record targeting. Missing verified election/finance metrics stay unavailable. Board document cards retain the document-library service/attachment reader; shared feature cards/feed preserve candidate/report/update actions. Shuttle review gains a per-page request summary table while keeping original details/actions and history. No backend contract or permission changed. See docs/BOARD-SCREENSHOT-IMPLEMENTATION.md.
+
+### 14 November 2026 - Security screenshot implementation
+
+Security now uses the compact staff shell with a dedicated Overview and an explicit Visitors destination at the existing /security/visitors path. Overview uses the existing community-pass reader and own-incident feature reader; unsupported live occupancy/movement/type totals are unavailable. Pass search/status filters are explicitly loaded-page only and apply to both desktop tables and narrow cards. Existing pass detail/history/versioned entry-exit actions remain authoritative. Shared feature presentation gives Security vehicle tables and own-incident feeds, opening original full records/actions. Gate desk remains the existing pass workflow, with its limits stated rather than pretending to be a complete movement log. No backend/permission/schema changes. See docs/SECURITY-SCREENSHOT-IMPLEMENTATION.md.
+
+### 14 November 2026 - Transport screenshot implementation
+
+Driver paths now use the compact staff shell with Transport search and headings. Shuttle adds a dispatch summary from the existing waiting count and reference-style fleet cards, while rider/average-wait aggregates remain unavailable. Original readiness, duty, capacity, expiry/versioned trip actions, history and manager roster are preserved. New /driver/profile reuses the existing MemberProfile editor and adds an Office-managed read-only assignment projection from the existing shuttle dashboard, filtered by the current Auth UUID. Personal profile display name and Office roster name remain separate. No database/Edge or permission contract changed. See docs/TRANSPORT-SCREENSHOT-IMPLEMENTATION.md.
+
+### 14 November 2026 - role-safe workspace metrics
+
+Prepared read-only migration 078 with bfe_workspace_metrics for Security, Board and Transport. Active role/capability checks are server-owned, with null-safe denial. Security summarizes recorded pass states and Entered/Exited audit actions using Manila-day boundaries. Board finance requires existing association-finance view access; YTD invoice coverage uses posted unreversed invoices and the 064 allocation helper, capped per invoice, while expenses use posted expense-date rows/category links. Transport summarizes today's Picked up passenger counts and recorded creation-to-arrival timing, restricted to own assigned trips unless existing reviewer access applies. No roles, transactions, permissions or sample figures are seeded. New frontend query preserves unavailable state if the function is missing or access is denied; existing published metrics remain. See docs/WORKSPACE-METRICS.md for formulas and rollout. Election turnout still has no verified voter source.
+
+### 14 November 2026 - role-based summary correction
+
+Owner clarified that matching real roles must receive their own workspace aggregates, not only Developer. Prepared corrective 079 after installed 078. A private summary-only helper authorizes active Board financial aggregates, Security gate/pass aggregates and Driver own-assigned aggregates while respecting hidden tab rules and active explicit view/summary deny grants at the relevant scope. Developer retains existing read authority, and Transport reviewers retain existing association scope. No raw ledger, pass detail, trip write, approval/export permission or role is granted. Metrics calculation bodies are unchanged from 078. Frontend now surfaces missing-function versus denied-access errors and explains zero invoice denominators separately. See docs/WORKSPACE-METRICS.md. Owner must run 079 and deploy frontend; no BFE redeployment.
+
+
+## 14 November 2026 - compact desktop and in-place review
+
+OfficeQueueReview now composes the existing authorized desks at /office/approvals under ReviewSurface. A dedicated review URL parameter identifies the queue. Only the current desk mounts; useReviewState remembers view filters/pages while the inbox remains mounted, without saving forms, permissions or decisions. PendingLotLinks reuses LotProfile inline. Standalone routes and server-owned mutation/version checks remain intact. See [implementation and owner checks](../DESKTOP-DENSITY-INBOX.md).
+
+
+## 14 November 2026 - individual-submission inbox refinement
+
+The owner clarified that Review inbox must list individual items and expose decisions in its right panel. OfficeQueueReview now reads display projections through existing authorized services (inbox-records.ts), identifies a selected item in URL state and renders its existing desk under ReviewSurface. Booking/pass, feature and activity forms reuse their handlers through ReviewDetailFrame inline. Optimistic versions are snapshotted during inspection; draft/pending/modal guards protect item switches. Registration/account setup, accounting posting, issuance and link confirmations retain their dedicated workflows. No new backend or SQL. See [final scope and limitations](../DESKTOP-DENSITY-INBOX.md). Shared console headers omit routine signed-in strips and repeated breadcrumbs; preview/security notices remain. Facilities restores the paired month and selected-day agenda.
+
+
+## 14 November 2026 - approval-only inbox scope
+
+The shared office-approval-queues predicate separates approval/review submissions from Helpdesk conversations/issues and shuttle dispatch. It drives the full inbox, approval workload counters and item reader guard. Operational readers are no longer imported by the approval item reader or rendered as inbox details. Existing Helpdesk/Transport routes and server authority remain unchanged. Old operational inbox filters fall back to approval types. See [scope correction](../DESKTOP-DENSITY-INBOX.md).
+
+
+## 14 November 2026 - compact inline approval details
+
+ReviewDetailFrame uses the shared reviewBody presentation. Inbox item headers show one icon/title/status group; OperationsDesk renders a compact labelled summary only inside ReviewSurface. Standalone operations dialogs remain unchanged. Shared inbox details align values left and reduce row/form spacing without shortening controls below 48px or removing required fields, notices or history. Registration details are merged into one block and feature details avoid repeated title/status/card shells. Backend and decision handlers are unchanged.
+
+## 14 November 2026 - visible review details and role action counts
+
+Feature review details expose existing conditionally visible submitted fields, retain media/links/errors, omit absent optional media sections and emphasize the existing review action. Navigation shares one authenticated navigation-action-badges query; counts refresh after successful mutations and every 30 seconds. Sidebar/mobile links and workspace selection use accessible destination counts; previews/inspection do not read them. Prepared migration 080 reuses Office/Transport readers and the Security gate capability guard for aggregate-only counts. It changes no decision or account authority. Approval-only classification is shared with the inbox; Helpdesk stays separate. See [count definitions and installation](../NAVIGATION-ACTION-BADGES.md).
+
+## 14 November 2026 - five-item inbox pages and desktop text scale
+
+OfficeQueueReview uses one infinite query under the office-inbox-records prefix to read existing authorized source pages on demand. Five-item UI pages retain original source page references for existing detail/decision readers, append new batches without reshuffling loaded pages, deduplicate rows, stop on partial failures and expose Retry. Page/type selection stays in the URL, with last-page clamping and the existing dirty/mutation/modal guards. A mutation-cache listener refreshes the list after successful actions. Pagination has its own horizontal layout; list-row button styles no longer affect navigation buttons.
+
+The owner removed workspace picker totals: labels now contain only the workspace name, while navigation destination badges remain. Desktop staff heading/KPI tokens reduce oversized text at 1024px and above without changing mobile typography, 16px body text or 48px controls. See [desktop and inbox implementation](../DESKTOP-DENSITY-INBOX.md). No additional SQL or Edge deployment is needed.
+
+## 14 November 2026 - shared desktop font sizes and weights
+
+Reviewed typography declarations across all 76 application stylesheets. Staff modules and shared components now consume desktop-only size/weight tokens with their original values as resident/mobile fallbacks. The scale is page 22px/700, section 18px/600, card 16px/600, dialog 20px/600, figures 28px/600 and regular body/input 16px. Labels use medium weight, supporting text remains at least 14px, and existing 48px controls remain. Finance's narrow summary cards use responsive 20–26px figures to address the reported broken decimal wrap. Lower-specificity heading defaults allow explicit card/dialog tokens to win. No authority, data or behavior changes. See [desktop typography guide](../DESKTOP-TYPOGRAPHY.md).
+
+## 15 November 2026 - plain staff wording and Developer sidebar layout
+
+Office, Board, Security and Transport wording now describes requests, permissions, unavailable information and financial/ride/gate totals in everyday English. Shared finance report requirements and summary errors follow the same wording, while report IDs, query keys, persisted statuses, routes, permissions and calculations remain unchanged. Important receipt/bill/bank-clearance, gate/headcount, preview and authority boundaries are retained. Shuttle average help text no longer displays a made-up zero sample count before the summary loads. See [plain staff wording](../PLAIN-STAFF-WORDING.md).
+
+Developer desktop navigation now scrolls in its outer sidebar rather than clipping controls inside an inner scrolling container. Selector border/spacing, menu spacing and the help row align with the common staff layout. Native select and workspace-switch handlers remain unchanged. Frontend-only changes; no SQL or BFE redeployment.
+
+### 15 November 2026 - Desktop forms and announcement audiences
+
+- Desktop Review inbox selects the first displayed submission through its existing URL state when no item was requested; locked forms, mutations, dialogs and specific record links take priority. Office Helpdesk retains its first selected request through refresh; phone conversation navigation stays unchanged.
+- Shared desktop dialogs and feature forms have tighter spacing and aligned labels. The image chooser uses the existing validation, conversion, preview and private upload/retry flow; phone controls remain native.
+- Direct announcements use the shared multi-audience picker. Prepared migration 081 saves audiences with the draft atomically and makes the existing author-only publisher honor that saved set on initial publication, retry and republish. Legacy single-audience records retain visibility; 073 readers enforce role matching. Drivers is included in the legacy validated labels. No account workflow or BFE source was changed.
+- Pass date labels are Pass starts / Pass ends; the existing server maximum remains 24 hours. Amenity rules deferred.
+- Rollout: owner SQL 081 after 080, then matching frontend deployment; no BFE Edge Function redeployment. See docs/DESKTOP-FORMS-AND-ANNOUNCEMENTS.md for scope and browser checks.
+
+### 15 November 2026 - Shared phone viewport and PDF booking estimates
+
+- MobileViewport mounts above the application, including public forms. Dialogs, phone keyboard navigation and Helpdesk replies share visible-height/inset variables, window/visual-viewport/focus/orientation listeners and cleanup. Navigation and listing FAB hide while a keyboard is detected; workspace bottom clearance lets final inline actions scroll above it. Phone native dialogs retain page scroll/body styles across nested locks. Focus, dirty protection and existing submission logic remain.
+- Booking estimates use only the owner-supplied 21 October 2025 PDF. New server RPCs calculate exact supported rates or return confirmation-needed notes; the client sends use/count/time choices, never a fee amount. Prepared 082 stores immutable per-booking price snapshots with the booking transaction and preserves the original resident/Office creator checks. Saved estimates render in resident details, Office approvals/details and calendar details. Earlier bookings are not repriced; confirmed accounting charges and account balances remain separate.
+- No daily/overnight rate, court cutoff, rounding, child-pricing age band or reservation-fee credit rule was invented. One booking remains one date; configured duration/eligibility and original hours/capacity/availability checks still apply.
+- Rollout: owner SQL 082 after 081; frontend deployment; no BFE Edge Function deployment. Optional GHL iframe helper is prepared only, not installed. See docs/MOBILE-BROWSER-AND-BOOKING-PRICES.md and docs/setup/ghl-mobile-viewport.html.
+
+### 15 November 2026 - Explicit booking price review and original PDF
+
+- Booking form first opens Review price & booking; only Request booking in the review sheet sends the Pending booking. Read-only recap uses the current server estimate and a fingerprint of form values, price snapshot, client reference and Office target. Changed values require review again. Back preserves form values; existing idempotent RPCs, permissions, Office approval and charge posting are unchanged.
+- Supplied Bellefort 21 October 2025 amenities PDF is copied unchanged to public/documents/bfe-amenities-guidelines-2025-10-21.pdf, linked from Amenities/rules and final price review with date/new-tab notice. Its exact path is added to PWA precache. No new policy, required consent or liability waiver was added.
+- Frontend/PWA update only after the already prepared 082; no new migration or BFE deployment. Details: docs/MOBILE-BROWSER-AND-BOOKING-PRICES.md.
+
+### 15 November 2026 - In-app PDF attachments
+Shared PdfAttachment/PdfViewer components provide in-app PDF pages, zoom, readable text and local downloads. PDF.js and its worker are bundled locally and the viewer is lazy loaded. Amenity guidelines and existing DocumentAttachment use this shared path. Private PDFs retain the existing signed-URL permission checks and use no-store fetches; only the public guidelines and renderer assets are precached. Booking time buttons retain End mode to extend ranges; configured limits are unchanged. Frontend deployment only; no new SQL or BFE redeployment.
+
+### 15 November 2026 - Shared loading skeletons
+UI Skeleton now provides page, section and inline metric variants with CSS Module tokens and reduced-motion support. Existing route/query loaders inherit it; text-only read loaders in balances, documents, booking details, availability, lookup, maps and dashboard metrics now use the same component. No cache, auth, permission or RPC behavior changed. See docs/LOADING-SKELETONS.md.
+
+### 15 November 2026 - Fee posting with booking approval
+Owner explicitly authorized automatic addition of the staff-confirmed booking fee to Other on approval. Migration 083 adds a narrow calendar-approver RPC that approves and posts one charge atomically, with accounting/booking audit, version checks and idempotent retries. Preserves installed booking decision logic privately and blocks fee-less approval through the old public RPC. Existing approved/unpriced bookings have an explicit confirm-fee path. Independent Finance rules remain for payments, reversals and other posting. See docs/BOOKING-APPROVAL-CHARGES.md. Owner-run SQL 083 after 082 plus frontend deployment required; no BFE redeploy.
+
+### 15 November 2026 - Property link lookup presentation
+MemberWorkspace PropertyLink now shows two steps, a canonical address preview, a lookup status panel and a review card. Search icon follows a CSS figure-eight with reduced-motion fallback. Owner-requested minimum display time is 2 seconds, awaited concurrently with the actual bfe_account_lot_match request via Promise.allSettled, including failures. No fake match, extra request or delayed typing/navigation; actual server confirmation and existing account/lot/version/relationship checks remain unchanged. No SQL/BFE change.
+
+### 15 November 2026 - Common popup content and button alignment
+Shared Modal/Sheet typography now uses 20px/600 titles, 16px/600 subsection headings and 16px normal body text. Reusable DialogSection groups popup content with 14px concise descriptions. Member properties, household occupants and history use it; desktop member popup height follows content instead of forcing an 820px canvas. Shared popup buttons use consistent dimensions and weights, and shared Button align-self now inherits the row alignment rather than forcing center. Labelled btn-row groups align actions to input baselines. No workflow/RPC/permission changes.
+
+- 2026-11-15: Desktop Inbox/Helpdesk master lists now stick alongside long details, with viewport-capped row scrolling and pagination outside the scroll area. Office Helpdesk replies have a bounded, keyboard-focusable scroll area; mobile/single-column flow and all request/decision logic remain unchanged. See docs/DESKTOP-DENSITY-INBOX.md.
+
+- 2026-11-15: Announcements is the common visible name for Office Community and Board Updates (URLs preserved). Both desks share AnnouncementCard/grid presentation while retaining independent readers and permission-gated actions. Office details/media open on demand. Helpdesk request facts/handling summary and desktop reply composer now use compact structured layouts. No database or authority changes.
+
+- 2026-11-15 announcement feed follow-up: shared cards now show text then authorized cover inline; desktop two-column grid, long-text expansion, contain images. Original detail/media reader and all publication actions retained. Frontend only.
+
+- 2026-11-15: LoadingImage centralizes rendered image skeletons, reveal/failure states and signed-image expiry gating. ListingMedia covers homeowner/staff photos and announcements; branding and upload previews also use it. Image selectors include the sizing frame. Redundant View announcement removed; published links remain inline and authorized image editing preserved. Frontend-only change.
+
+- 2026-11-15: BookingFeeApproval now owns its compact responsive form styles. Pending Office booking Reject and Approve share one footer via explicit native form association; their validation/handlers remain separate. Unknown amounts require explicit confirmation (including zero when applicable), with unchanged calculations and server approval authority. No new SQL or BFE change.
+
+- 2026-11-15 follow-up: prepared 084 to add /account to the existing notification path allowlist, resolving the concrete 083 notification failure found in supplied schema. Prepared 085 for the owner's dash-means-same-package-price clarification; unposted authorized reads recalculate, posted snapshots/charges stay unchanged. Discard changes right-aligns with review actions. Specific notification CHECK errors receive a safe readable frontend message. Owner runs SQL, no live connection made.

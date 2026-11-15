@@ -1,3 +1,5 @@
+import { useReviewState, useReviewSurface } from "../office/ReviewSurface";
+import PageIntro from "../office/OfficePage";
 import { useEffect, useState, type FormEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
@@ -19,18 +21,13 @@ import {
 } from "../../../../../packages/shared/src/shuttle";
 import { memberRoles } from "../../../../../packages/shared/src/auth";
 import { useAuth, makeClient } from "../../data/auth";
-import {
-  Badge,
-  Button,
-  Feedback,
-  PageIntro,
-  Skeleton,
-} from "../../components/UI";
+import { Badge, Button, Feedback, Skeleton } from "../../components/UI";
 import Sheet from "../../components/Sheet";
 import styles from "./Shuttle.module.css";
 import { usePermissions } from "../../data/permissions";
 import ShuttleStops, { shuttleStops } from "./ShuttleStops";
 import ShuttleDemoMap from "./ShuttleDemoMap";
+import { useWorkspaceMetrics } from "../../data/workspace-metrics";
 
 const exampleId = "78000000-0000-4000-8000-000000000001";
 const passengerId = "78000000-0000-4000-8000-000000000002";
@@ -81,8 +78,12 @@ async function rpc(
 }
 
 export default function Shuttle() {
+  const reviewSurface = useReviewSurface();
   const auth = useAuth();
   const location = useLocation();
+  const transportView =
+    location.pathname === "/driver" || location.pathname.startsWith("/driver/");
+  const metrics = useWorkspaceMetrics(transportView ? "transport" : null);
   const permissions = usePermissions();
   const readOnly = permissions.readOnlyPath(location.pathname);
   const sample = auth.preview || !!auth.rolePreview;
@@ -94,9 +95,15 @@ export default function Shuttle() {
     ((sample && !sampleDriver) ||
       roles.some((role) => role === "homeowner" || role === "renter"));
   const uid = auth.userId ?? exampleId;
-  const [history, setHistory] = useState(false);
-  const [outcomeFilter, setOutcomeFilter] = useState("");
-  const [page, setPage] = useState(0);
+  const [history, setHistory] = useReviewState("shuttle.history", false);
+  const [outcomeFilter, setOutcomeFilter] = useReviewState(
+    "shuttle.outcome",
+    "",
+  );
+  const [page, setPage] = useReviewState(
+    `shuttle.${reviewSurface?.recordId ?? "list"}.page`,
+    reviewSurface?.page ?? 0,
+  );
   const [form, setForm] = useState(false);
   const [pickupStop, setPickupStop] = useState("");
   const [destinationStop, setDestinationStop] = useState("");
@@ -158,7 +165,7 @@ export default function Shuttle() {
       );
       if (!parsed.success)
         throw new Error(
-          "The shuttle response could not be verified. Refresh or contact the office.",
+          "Shuttle information could not be loaded safely. Try again or contact Office.",
         );
       return parsed.data;
     },
@@ -263,12 +270,14 @@ export default function Shuttle() {
     "On the way",
     "Arrived",
   ];
-  const rows = effectiveRows.filter((r) =>
-    history
-      ? !activeStatuses.includes(r.status) &&
-        (!outcomeFilter || r.status === outcomeFilter)
-      : activeStatuses.includes(r.status),
-  );
+  const rows = effectiveRows
+    .filter((r) => !reviewSurface?.recordId || r.id === reviewSurface.recordId)
+    .filter((r) =>
+      history
+        ? !activeStatuses.includes(r.status) &&
+          (!outcomeFilter || r.status === outcomeFilter)
+        : activeStatuses.includes(r.status),
+    );
   const expiredOwn = effectiveRows.find(
     (r) => r.owner_id === uid && r.status === "Lapsed / Unserved",
   );
@@ -348,306 +357,446 @@ export default function Shuttle() {
     ) : null;
   return (
     <>
-      <PageIntro
-        eyebrow={
-          sample ? "SYNTHETIC SHUTTLE PREVIEW" : "AUTHORIZED SHUTTLE SERVICE"
-        }
-        title="Shuttle service"
-        icon={<BusFront size={28} />}
-        description="Choose your stops, check availability and follow your pickup."
-      />
-      {passengerView && (
-        <p className={styles.trackingNote}>
-          Live vehicle location and arrival estimates are currently unavailable.
-          Follow your request status below.
-        </p>
-      )}
-      {passengerView && (
-        <div className={styles.stopMapSection}>
-          <ShuttleDemoMap
+      <div hidden={!!reviewSurface?.recordId}>
+        <PageIntro
+          eyebrow={
+            sample ? "SYNTHETIC SHUTTLE PREVIEW" : "AUTHORIZED SHUTTLE SERVICE"
+          }
+          title={
+            transportView
+              ? "Shuttle"
+              : location.pathname.startsWith("/board/")
+                ? "Shuttle review"
+                : "Shuttle service"
+          }
+          icon={<BusFront size={28} />}
+          description={
+            location.pathname.startsWith("/board/")
+              ? "Review permitted shuttle activity and service history."
+              : location.pathname.startsWith("/driver")
+                ? "Accept ride requests and keep your shuttle status up to date."
+                : "Choose your stops, check availability and follow your pickup."
+          }
+        />
+        {passengerView && (
+          <p className={styles.trackingNote}>
+            Live vehicle location and arrival estimates are currently
+            unavailable. Follow your request status below.
+          </p>
+        )}
+        {passengerView && (
+          <div className={styles.stopMapSection}>
+            <ShuttleDemoMap
+              pickup={pickupStop}
+              destination={destinationStop}
+              onChange={(pickup, destination) => {
+                setPickupStop(pickup);
+                setDestinationStop(destination);
+              }}
+            />
+          </div>
+        )}
+        {passengerView && (
+          <ShuttleStops
             pickup={pickupStop}
+            action={requestAction}
             destination={destinationStop}
             onChange={(pickup, destination) => {
               setPickupStop(pickup);
               setDestinationStop(destination);
             }}
           />
-        </div>
-      )}
-      {passengerView && (
-        <ShuttleStops
-          pickup={pickupStop}
-          action={requestAction}
-          destination={destinationStop}
-          onChange={(pickup, destination) => {
-            setPickupStop(pickup);
-            setDestinationStop(destination);
-          }}
-        />
-      )}
-      <div className={`${styles.toolbar} ${styles.navigation}`}>
-        <Button
-          secondary
-          aria-pressed={!history}
-          onClick={() => {
-            setHistory(false);
-            setPage(0);
-          }}
-        >
-          Today’s requests
-        </Button>
-        {(data?.driver || data?.reviewer) && (
+        )}
+        <div className={`${styles.toolbar} ${styles.navigation}`}>
           <Button
             secondary
-            aria-pressed={history}
+            aria-pressed={!history}
             onClick={() => {
-              setHistory(true);
+              setHistory(false);
               setPage(0);
             }}
           >
-            Service history
+            Today’s requests
           </Button>
-        )}
-        {!sample && (
-          <Button
-            secondary
-            pending={query.isFetching}
-            onClick={() => void query.refetch()}
-          >
-            <RefreshCw size={18} />
-            Refresh
-          </Button>
-        )}
-        {data?.manager && (
-          <Button secondary onClick={() => setRoster(true)}>
-            Manage authorized shuttles
-          </Button>
-        )}
-        {data?.driver && (
-          <Button
-            secondary
-            pending={action.isPending}
-            disabled={readOnly}
-            onClick={async () => {
-              if (sample) {
-                setSampleDuty(!sampleDuty);
-                setMessage("Sample duty changed in this screen only.");
-                return;
-              }
-              try {
-                await action.mutateAsync({
-                  name: "bfe_shuttle_presence",
-                  args: { p_on_duty: !ownDuty },
-                });
-                setMessage(
-                  ownDuty
-                    ? "You are now off duty."
-                    : "You are on duty. Keep the shuttle screen connected; handle requests only when safely parked.",
-                );
-              } catch {
-                /* Visible action error. */
-              }
-            }}
-          >
-            {ownDuty ? "Go off duty" : "Go on duty"}
-          </Button>
-        )}
+          {(data?.driver || data?.reviewer) && (
+            <Button
+              secondary
+              aria-pressed={history}
+              onClick={() => {
+                setHistory(true);
+                setPage(0);
+              }}
+            >
+              Service history
+            </Button>
+          )}
+          {!sample && (
+            <Button
+              secondary
+              pending={query.isFetching}
+              onClick={() => void query.refetch()}
+            >
+              <RefreshCw size={18} />
+              Refresh
+            </Button>
+          )}
+          {data?.manager && (
+            <Button secondary onClick={() => setRoster(true)}>
+              Manage authorized shuttles
+            </Button>
+          )}
+          {data?.driver && (
+            <Button
+              secondary
+              pending={action.isPending}
+              disabled={readOnly}
+              onClick={async () => {
+                if (sample) {
+                  setSampleDuty(!sampleDuty);
+                  setMessage("Sample duty changed in this screen only.");
+                  return;
+                }
+                try {
+                  await action.mutateAsync({
+                    name: "bfe_shuttle_presence",
+                    args: { p_on_duty: !ownDuty },
+                  });
+                  setMessage(
+                    ownDuty
+                      ? "You are now off duty."
+                      : "You are on duty. Keep the shuttle screen connected; handle requests only when safely parked.",
+                  );
+                } catch {
+                  /* Visible action error. */
+                }
+              }}
+            >
+              {ownDuty ? "Go off duty" : "Go on duty"}
+            </Button>
+          )}
+        </div>
       </div>
       <Feedback message={message} error={query.error ?? action.error} />
       {!sample && query.isPending && <Skeleton />}
       {data && (
         <>
-          <div className={styles.serviceSummary}>
-            <span className={styles.serviceMark}>
-              <BusFront size={30} aria-hidden="true" />
-            </span>
-            <div>
-              <strong>Getting around Bellefort</strong>
-              <p>
-                {data.waiting_count} waiting today{" "}
-                <span aria-hidden="true">·</span> Philippine time
-              </p>
-            </div>
-            <span className={styles.waitLimit}>
-              <Clock3 size={18} aria-hidden="true" /> Arrival limit: 60 minutes
-            </span>
-          </div>
-          <section className={`${styles.panel} ${styles.availability}`}>
-            <h2 className={styles.sectionTitle}>
-              <BusFront size={24} aria-hidden="true" />
-              Shuttle availability
-            </h2>
-            {!data.shuttles.some((s) => s.active && s.available) && (
-              <div className={styles.unavailable}>
-                <BusFront size={28} aria-hidden="true" />
-                <div>
-                  <strong>No shuttle available right now</strong>
-                  <p>
-                    Contact the office for assistance, or check again later. A
-                    request can be made when a shuttle is available.
-                  </p>
-                </div>
-              </div>
-            )}
-            <div
-              className={styles.vehicleChoices}
-              role="group"
-              aria-label="Browse shuttles"
-            >
-              {activeVehicles.map((s) => (
-                <button
-                  key={s.code}
-                  type="button"
-                  aria-pressed={s.code === inspectedVehicle?.code}
-                  onClick={() => setSelectedShuttle(s.code)}
-                >
-                  <BusFront size={23} aria-hidden="true" />
-                  <span>
-                    {s.code}
-                    <small>
-                      {s.busy
-                        ? "On a trip"
-                        : !s.on_duty
-                          ? "Off duty"
-                          : !s.available
-                            ? "Not connected"
-                            : !s.ready
-                              ? "Preparing vehicle"
-                              : "Ready for pickup"}
-                    </small>
-                  </span>
-                </button>
-              ))}
-            </div>
-            <div className={styles.vehicleDetail}>
-              {activeVehicles
-                .filter((s) => s.code === inspectedVehicle?.code)
-                .map((s) => (
-                  <article key={s.code}>
-                    <h3>{s.code}</h3>
+          <div hidden={!!reviewSurface?.recordId}>
+            {transportView && (
+              <section
+                className={styles.dispatchSection}
+                aria-label="Dispatch summary"
+              >
+                <h2>Ride requests</h2>
+                {metrics.isError && <Feedback error={metrics.error} />}
+                <div className={styles.dispatchGrid}>
+                  <article
+                    className={`${styles.dispatchCard} ${styles.dispatchAction}`}
+                  >
+                    <h3>
+                      <BusFront size={22} aria-hidden="true" />
+                      Waiting requests
+                    </h3>
+                    <strong className={styles.dispatchValue}>
+                      {data.waiting_count}
+                    </strong>
                     <p>
-                      {s.driver_name} <span aria-hidden="true">·</span>{" "}
-                      {s.capacity} passengers maximum
+                      Ride requests waiting today. Check each request below
+                      before accepting it.
                     </p>
-                    <Badge>
-                      {s.busy
-                        ? "Serving a request"
-                        : !s.on_duty
-                          ? "Off duty"
-                          : !s.available
-                            ? "No recent connection"
-                            : !s.ready
-                              ? "Preparing vehicle"
-                              : "Available for requests"}
-                    </Badge>
-                    {s.contact && (
-                      <a className="text-link" href={`tel:${s.contact}`}>
-                        <Phone size={18} />
-                        Call shuttle
-                      </a>
-                    )}
+                    <a className="text-link" href="#transport-request-list">
+                      Review waiting requests
+                    </a>
                   </article>
-                ))}
-            </div>
-            <p className={styles.note}>
-              Your request joins the service queue. Browsing a vehicle does not
-              assign it to your trip.
-            </p>
-            <details className={styles.serviceNotes}>
-              <summary>Service information</summary>
-              <p className={styles.note}>
-                Availability is not a guaranteed arrival time. Calls do not
-                create a request. Drivers should respond only when safely
-                parked.{" "}
-                {sample
-                  ? "Sample vehicles are not verified."
-                  : `Last checked ${when(data.server_now)}. Updates refresh every 15 seconds while connected.`}
-                Arrival must be within 60 minutes of the request; acceptance
-                does not restart the clock.
-              </p>
-            </details>
-          </section>
-          {!passengerView && requestAction}
-          {!history &&
-            page === 0 &&
-            data.driver &&
-            ownDuty &&
-            ownShuttle?.ready === false &&
-            !rows.some((r) => r.driver_id === uid) && (
-              <section className={styles.panel}>
-                <h2>Vehicle readiness</h2>
+                  <article className={styles.dispatchCard}>
+                    <h3>Riders today</h3>
+                    <strong className={styles.dispatchUnavailable}>
+                      {metrics.isFetching && !metrics.data ? (
+                        <Skeleton
+                          variant="metric"
+                          label="Loading rider count"
+                        />
+                      ) : (
+                        (metrics.data?.riders_today ?? "Unavailable")
+                      )}
+                    </strong>
+                    <p>
+                      Passengers on requests marked Picked up today. Includes:{" "}
+                      {metrics.data?.association_scope
+                        ? "all shuttles"
+                        : "your assigned rides"}
+                      .
+                    </p>
+                  </article>
+                  <article className={styles.dispatchCard}>
+                    <h3>Average time to arrival</h3>
+                    <strong className={styles.dispatchUnavailable}>
+                      {metrics.isFetching && !metrics.data ? (
+                        <Skeleton
+                          variant="metric"
+                          label="Loading average arrival time"
+                        />
+                      ) : metrics.data?.average_pickup_minutes == null ? (
+                        "Unavailable"
+                      ) : (
+                        `${metrics.data.average_pickup_minutes} min`
+                      )}
+                    </strong>
+                    <p>
+                      Time from request to recorded shuttle arrival, based on{" "}
+                      {metrics.data?.timed_requests === undefined
+                        ? "completed rides today"
+                        : `${metrics.data.timed_requests} completed rides today`}
+                      . Rides without an arrival time are left out. This is a
+                      past average, not a current arrival estimate.
+                    </p>
+                  </article>
+                </div>
+              </section>
+            )}
+            <div className={styles.serviceSummary}>
+              <span className={styles.serviceMark}>
+                <BusFront size={30} aria-hidden="true" />
+              </span>
+              <div>
+                <strong>Getting around Bellefort</strong>
                 <p>
-                  Confirm only when your vehicle is free and safely parked.
-                  Pickup confirmation does not automatically free the shuttle.
+                  {data.waiting_count} waiting today{" "}
+                  <span aria-hidden="true">·</span> Philippine time
+                </p>
+              </div>
+              <span className={styles.waitLimit}>
+                <Clock3 size={18} aria-hidden="true" /> Arrival limit: 60
+                minutes
+              </span>
+            </div>
+            <section className={`${styles.panel} ${styles.availability}`}>
+              <h2 className={styles.sectionTitle}>
+                <BusFront size={24} aria-hidden="true" />
+                {transportView ? "Fleet" : "Shuttle availability"}
+              </h2>
+              {!data.shuttles.some((s) => s.active && s.available) && (
+                <div className={styles.unavailable}>
+                  <BusFront size={28} aria-hidden="true" />
+                  <div>
+                    <strong>No shuttle available right now</strong>
+                    <p>
+                      Contact the office for assistance, or check again later. A
+                      request can be made when a shuttle is available.
+                    </p>
+                  </div>
+                </div>
+              )}
+              <div
+                className={styles.vehicleChoices}
+                role="group"
+                aria-label="Browse shuttles"
+              >
+                {activeVehicles.map((s) => (
+                  <button
+                    key={s.code}
+                    type="button"
+                    aria-pressed={s.code === inspectedVehicle?.code}
+                    onClick={() => setSelectedShuttle(s.code)}
+                  >
+                    <BusFront size={23} aria-hidden="true" />
+                    <span>
+                      {s.code}
+                      <small>
+                        {s.busy
+                          ? "On a trip"
+                          : !s.on_duty
+                            ? "Off duty"
+                            : !s.available
+                              ? "Not connected"
+                              : !s.ready
+                                ? "Preparing vehicle"
+                                : "Ready for pickup"}
+                      </small>
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <div className={styles.vehicleDetail}>
+                {activeVehicles
+                  .filter((s) => s.code === inspectedVehicle?.code)
+                  .map((s) => (
+                    <article key={s.code}>
+                      <h3>{s.code}</h3>
+                      <p>
+                        {s.driver_name} <span aria-hidden="true">·</span>{" "}
+                        {s.capacity} passengers maximum
+                      </p>
+                      <Badge>
+                        {s.busy
+                          ? "Serving a request"
+                          : !s.on_duty
+                            ? "Off duty"
+                            : !s.available
+                              ? "No recent connection"
+                              : !s.ready
+                                ? "Preparing vehicle"
+                                : "Available for requests"}
+                      </Badge>
+                      {s.contact && (
+                        <a className="text-link" href={`tel:${s.contact}`}>
+                          <Phone size={18} />
+                          Call shuttle
+                        </a>
+                      )}
+                    </article>
+                  ))}
+              </div>
+              <p className={styles.note}>
+                Your request joins the service queue. Browsing a vehicle does
+                not assign it to your trip.
+              </p>
+              <details className={styles.serviceNotes}>
+                <summary>Service information</summary>
+                <p className={styles.note}>
+                  Availability is not a guaranteed arrival time. Calls do not
+                  create a request. Drivers should respond only when safely
+                  parked.{" "}
+                  {sample
+                    ? "Sample vehicles are not verified."
+                    : `Last checked ${when(data.server_now)}. Updates refresh every 15 seconds while connected.`}
+                  Arrival must be within 60 minutes of the request; acceptance
+                  does not restart the clock.
+                </p>
+              </details>
+            </section>
+            {!passengerView && requestAction}
+            {!history &&
+              page === 0 &&
+              data.driver &&
+              ownDuty &&
+              ownShuttle?.ready === false &&
+              !rows.some((r) => r.driver_id === uid) && (
+                <section className={styles.panel}>
+                  <h2>Vehicle readiness</h2>
+                  <p>
+                    Confirm only when your vehicle is free and safely parked.
+                    Pickup confirmation does not automatically free the shuttle.
+                  </p>
+                  <Button
+                    pending={action.isPending}
+                    disabled={readOnly}
+                    onClick={async () => {
+                      if (sample) {
+                        setSampleReady(true);
+                        setMessage("Sample vehicle ready for another pickup.");
+                        return;
+                      }
+                      try {
+                        await action.mutateAsync({
+                          name: "bfe_shuttle_ready",
+                          args: {},
+                        });
+                        setMessage("Vehicle marked ready for the next pickup.");
+                      } catch {
+                        /* Visible action error. */
+                      }
+                    }}
+                  >
+                    Ready for next pickup
+                  </Button>
+                </section>
+              )}
+            {!history && outcome && (
+              <p role="status">
+                Your latest closed request: <strong>{outcome}</strong>.{" "}
+                {outcome === "Lapsed / Unserved" &&
+                  "The shuttle did not arrive within the waiting limit. You can make a new request or contact the office."}
+              </p>
+            )}
+            {!history && data.prior_day_request && (
+              <section className={styles.panel}>
+                <h2>Earlier request needs resolution</h2>
+                <p>
+                  Your previous-day request is still{" "}
+                  {data.prior_day_request.status.toLowerCase()}. It is outside
+                  today’s queue. Contact the shuttle or cancel it before
+                  requesting again.
                 </p>
                 <Button
+                  secondary
                   pending={action.isPending}
                   disabled={readOnly}
                   onClick={async () => {
-                    if (sample) {
-                      setSampleReady(true);
-                      setMessage("Sample vehicle ready for another pickup.");
-                      return;
-                    }
+                    const previous = data.prior_day_request;
+                    if (!previous || sample) return;
                     try {
                       await action.mutateAsync({
-                        name: "bfe_shuttle_ready",
-                        args: {},
+                        name: "bfe_update_shuttle_request",
+                        args: {
+                          p_id: previous.id,
+                          p_version: previous.version,
+                          p_status: "Cancelled",
+                        },
                       });
-                      setMessage("Vehicle marked ready for the next pickup.");
+                      setMessage("Previous request cancelled.");
                     } catch {
-                      /* Visible action error. */
+                      /* Error displayed with the action state. */
                     }
                   }}
                 >
-                  Ready for next pickup
+                  Cancel earlier request
                 </Button>
               </section>
             )}
-          {!history && outcome && (
-            <p role="status">
-              Your latest closed request: <strong>{outcome}</strong>.{" "}
-              {outcome === "Lapsed / Unserved" &&
-                "The shuttle did not arrive within the waiting limit. You can make a new request or contact the office."}
-            </p>
-          )}
-          {!history && data.prior_day_request && (
-            <section className={styles.panel}>
-              <h2>Earlier request needs resolution</h2>
-              <p>
-                Your previous-day request is still{" "}
-                {data.prior_day_request.status.toLowerCase()}. It is outside
-                today’s queue. Contact the shuttle or cancel it before
-                requesting again.
-              </p>
-              <Button
-                secondary
-                pending={action.isPending}
-                disabled={readOnly}
-                onClick={async () => {
-                  const previous = data.prior_day_request;
-                  if (!previous || sample) return;
-                  try {
-                    await action.mutateAsync({
-                      name: "bfe_update_shuttle_request",
-                      args: {
-                        p_id: previous.id,
-                        p_version: previous.version,
-                        p_status: "Cancelled",
-                      },
-                    });
-                    setMessage("Previous request cancelled.");
-                  } catch {
-                    /* Error displayed with the action state. */
-                  }
-                }}
-              >
-                Cancel earlier request
-              </Button>
-            </section>
-          )}
+          </div>
           <section className={styles.panel}>
-            <h2>{history ? "Service history" : "Active requests today"}</h2>
+            <h2 id={transportView ? "transport-request-list" : undefined}>
+              {history ? "Service history" : "Active requests today"}
+            </h2>
+            {location.pathname.startsWith("/board/") && rows.length > 0 && (
+              <div
+                className={styles.boardTripTable}
+                role="region"
+                aria-label="Permitted shuttle requests on this page"
+                tabIndex={0}
+              >
+                <table>
+                  <thead>
+                    <tr>
+                      <th scope="col">Requested</th>
+                      <th scope="col">Route</th>
+                      <th scope="col">Passengers</th>
+                      <th scope="col">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((r) => (
+                      <tr key={r.id}>
+                        <td>
+                          <time dateTime={r.created_at}>
+                            {when(r.created_at)}
+                          </time>
+                        </td>
+                        <td>
+                          {r.pickup} → {r.destination}
+                        </td>
+                        <td>{r.passengers}</td>
+                        <td>
+                          <Badge
+                            tone={
+                              r.status === "Lapsed / Unserved"
+                                ? "red"
+                                : "neutral"
+                            }
+                          >
+                            {r.status}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p className="note">
+                  Individual permitted requests on this page. These are not
+                  daily trip totals. Details and available actions remain below.
+                </p>
+              </div>
+            )}
             {history && (
               <label className={styles.historyFilter}>
                 Outcome

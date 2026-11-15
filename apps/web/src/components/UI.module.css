@@ -1,7 +1,81 @@
-/* Shared shell for every action, whether it renders as a button or a link.
-   Tone carries the meaning; this block only carries the shape. */
+/* Read-loading placeholders share tokens across all role workspaces. */
+.skeleton {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  color: var(--muted);
+}
+.skeletonShape {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    100deg,
+    var(--wash) 20%,
+    var(--line) 50%,
+    var(--wash) 80%
+  );
+  background-size: 220% 100%;
+  animation: skeletonLoading 1.8s ease-in-out infinite;
+}
+.skeletonpage {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  padding-block: 12px;
+}
+.skeletonpage > .skeletonShape {
+  min-height: 180px;
+  border-radius: var(--radius-lg);
+}
+.skeletonpage > .skeletonShape:nth-child(2) {
+  grid-column: 1 / -1;
+  min-height: 72px;
+}
+.skeletonsection {
+  padding-block: 8px;
+}
+.skeletonsection > .skeletonShape {
+  height: 20px;
+}
+.skeletonsection > .skeletonShape:nth-last-child(2) {
+  width: 88%;
+}
+.skeletonsection > .skeletonShape:last-child {
+  width: 64%;
+}
+.skeletonmetric {
+  display: inline-grid;
+  width: min(7em, 100%);
+  vertical-align: middle;
+}
+.skeletonmetric > .skeletonShape {
+  height: 1em;
+  min-height: 24px;
+}
+@keyframes skeletonLoading {
+  to {
+    background-position: -220% 0;
+  }
+}
+@media (max-width: 600px) {
+  .skeletonpage {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .skeletonpage > .skeletonShape {
+    min-height: 120px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeletonShape {
+    animation: none;
+    background: var(--line);
+  }
+}
+/* Shared action shape; tone carries the meaning for buttons and links. */
 .button {
-  align-self: center;
+  /* Let filter rows align actions with inputs, and action rows center them.
+     A forced center here overrides the parent's align-items: end. */
+  align-self: auto;
   max-width: 100%;
   min-width: 0;
   min-height: 48px;
@@ -221,7 +295,7 @@ a.row:active {
   margin: 12px auto;
 }
 .empty h2 {
-  font-size: 24px;
+  font-size: var(--staff-card-heading-size, 24px);
 }
 .feedback {
   padding: 16px;
@@ -241,6 +315,9 @@ a.row:active {
   color: var(--red);
 }
 .dialog {
+  --staff-heading-weight: 600;
+  --staff-emphasis-weight: 600;
+  --staff-dialog-heading-size: 20px;
   padding: 0;
   /* The body is the single scroll container. Without this the dialog scrolls
      too and the viewer gets two scrollbars side by side. */
@@ -256,6 +333,25 @@ a.row:active {
 }
 .dialog::backdrop {
   background: var(--scrim);
+}
+@media (max-width: 767px),
+  (max-width: 1023px) and (max-height: 500px) and (pointer: coarse) {
+  :global(html[data-keyboard-open="true"]) .dialog.taskDialog {
+    inset: var(--app-visible-top, 0px) 0 auto;
+    height: var(--dialog-viewport-height, 100dvh);
+    max-height: var(--dialog-viewport-height, 100dvh);
+  }
+  :global(html[data-keyboard-open="true"]) .dialogHeader {
+    padding-block: 8px;
+  }
+  :global(html[data-keyboard-open="true"]) .dialogFooter {
+    flex-wrap: nowrap;
+  }
+  :global(html[data-keyboard-open="true"]) .dialogFooter > * {
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: normal;
+  }
 }
 /* A short rise tells people where the sheet came from. Distance is small so it
    never reads as a delay, and it is removed entirely under reduced motion. */
@@ -338,8 +434,8 @@ a.row:active {
 }
 .dialogHeader h2 {
   font-family: var(--heading-font);
-  font-weight: 600;
-  font-size: 22px;
+  font-weight: var(--staff-heading-weight, 600);
+  font-size: var(--staff-dialog-heading-size, 22px);
   line-height: 1.35;
   margin: 0;
   overflow-wrap: anywhere;
@@ -348,6 +444,10 @@ a.row:active {
   flex-shrink: 0;
 }
 .dialogBody {
+  font-family: var(--body-font);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
   --dialog-body-pad: 24px;
   padding: var(--dialog-body-pad);
   overflow-y: auto;
@@ -388,6 +488,65 @@ a.row:active {
   color: var(--muted);
   margin: 4px 0 0;
 }
+.dialogBody :is(h3, h4) {
+  font-family: var(--body-font);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.dialogBody :is(strong, b) {
+  font-weight: 600;
+}
+.dialogSection {
+  margin-block: 16px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.dialogSection > header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+.dialogSection > header p {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.dialogSectionContent {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+  min-width: 0;
+}
+.dialogSectionContent > :is(p, article) {
+  margin-block: 0;
+}
+.dialogSectionContent > button {
+  justify-self: start;
+}
+.dialog .dialogBody .button,
+.dialog .dialogFooter .button {
+  min-height: 48px;
+  padding: 10px 18px;
+  border-radius: var(--radius-control, var(--radius-sm));
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  gap: 8px;
+  white-space: normal;
+}
+.dialogFooter .button svg {
+  width: 18px;
+  height: 18px;
+}
+@media (max-width: 600px) {
+  .dialogSection {
+    padding: 12px;
+  }
+}
 .field {
   display: flex;
   flex-direction: column;
@@ -395,7 +554,7 @@ a.row:active {
   margin: 16px 0;
 }
 .field label {
-  font-weight: 600;
+  font-weight: var(--staff-label-weight, 600);
   font-size: 14px;
 }
 .field input,
@@ -443,7 +602,7 @@ a.row:active {
     padding: 12px 20px 16px;
   }
   .dialogHeader h2 {
-    font-size: var(--section-heading-size);
+    font-size: var(--staff-dialog-heading-size, var(--section-heading-size));
   }
   .dialogBody {
     --dialog-body-pad: 20px;
@@ -529,7 +688,7 @@ a.row:active {
     padding: max(12px, env(safe-area-inset-top)) 16px 12px;
   }
   .taskDialog .dialogHeader h2 {
-    font-size: 20px;
+    font-size: var(--staff-dialog-heading-size, 20px);
     line-height: 1.4;
   }
   .taskDialog .dialogBody {
@@ -550,7 +709,7 @@ a.row:active {
     padding: 32px 16px;
   }
   .empty h2 {
-    font-size: 20px;
+    font-size: var(--staff-card-heading-size, 20px);
   }
   .emptyMark {
     width: 56px;
@@ -564,5 +723,99 @@ a.row:active {
   :global([data-customer-ui="true"]) .dialogBody {
     --dialog-body-pad: 16px;
     padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+}
+
+/* Keep native dialog focus/dirty/keyboard behavior and existing size variants. */
+:global([data-staff-ui="true"]) .button {
+  border-radius: 11px;
+  font-weight: var(--staff-emphasis-weight, 700);
+}
+:global([data-staff-ui="true"]) .badge {
+  padding: 4px 10px;
+}
+:global([data-staff-ui="true"]) .dialog {
+  box-shadow: var(--shadow-lg);
+  border-radius: 18px;
+}
+:global([data-staff-ui="true"]) .dialogHeader {
+  padding: 22px 24px;
+}
+:global([data-staff-ui="true"]) .dialogHeader h2 {
+  font-family: var(--body-font);
+  font-size: var(--staff-dialog-heading-size, 20px);
+  font-weight: var(--staff-heading-weight, 800);
+}
+:global([data-staff-ui="true"]) .dialogFooter {
+  background: var(--wash);
+}
+:global([data-staff-ui="true"]) .empty {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+:global([data-staff-ui="true"]) .rowIcon {
+  border-radius: 12px;
+  background: var(--accent-soft);
+}
+
+/* Shared desktop form rhythm; keep the established phone sheets unchanged. */
+@media (min-width: 1024px) {
+  .dialogHeader {
+    padding: 16px 20px;
+  }
+  :global([data-staff-ui="true"]) .dialogHeader {
+    padding: 16px 20px;
+  }
+  .dialogBody {
+    --dialog-body-pad: 20px;
+  }
+  .dialogFooter {
+    padding: 12px 20px;
+  }
+  .dialogBody form {
+    gap: 12px;
+  }
+  .dialogBody form fieldset {
+    min-width: 0;
+    gap: 12px;
+  }
+  .dialogBody form :is(label, legend) {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+  .dialogBody
+    form
+    label:not(:has(input[type="checkbox"], input[type="radio"])) {
+    gap: 6px;
+  }
+  .dialogBody
+    form
+    :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not(
+      [type="file"]
+    ) {
+    font-size: 16px;
+    font-weight: 400;
+    border-color: var(--line-strong);
+  }
+  .dialogBody
+    form
+    :is(input, select):not([type="checkbox"]):not([type="radio"]):not(
+      [type="file"]
+    ):not([type="hidden"]) {
+    min-height: 48px;
+    padding-block: 10px;
+  }
+  .dialogBody form textarea {
+    resize: vertical;
+  }
+  .dialogBody form > :global(.form-actions) {
+    gap: 10px;
+    margin-top: 4px;
+    padding-top: 12px;
+  }
+  .field {
+    gap: 6px;
   }
 }

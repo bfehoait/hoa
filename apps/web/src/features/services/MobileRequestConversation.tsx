@@ -106,33 +106,6 @@ export default function MobileRequestConversation({
       document.removeEventListener("click", navigate, true);
     };
   }, [dirty]);
-  // Keep the reply above the phone keyboard without moving the bottom nav.
-  useEffect(() => {
-    const viewport = window.visualViewport;
-    if (!viewport) return;
-    const update = () => {
-      const editing =
-        !!pageRef.current?.contains(document.activeElement) &&
-        document.activeElement?.tagName === "TEXTAREA";
-      const inset = editing
-        ? Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)
-        : 0;
-      pageRef.current?.style.setProperty(
-        "--thread-keyboard-inset",
-        `${inset}px`,
-      );
-    };
-    viewport.addEventListener("resize", update);
-    viewport.addEventListener("scroll", update);
-    document.addEventListener("focusin", update);
-    document.addEventListener("focusout", update);
-    return () => {
-      viewport.removeEventListener("resize", update);
-      viewport.removeEventListener("scroll", update);
-      document.removeEventListener("focusin", update);
-      document.removeEventListener("focusout", update);
-    };
-  }, []);
   return (
     <article
       className={styles.page}

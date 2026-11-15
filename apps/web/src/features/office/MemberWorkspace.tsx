@@ -1,4 +1,5 @@
 import { useId, useState } from "react";
+import { Building2, CheckCircle2, Plus, RefreshCw, Search } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import type { DirectoryMember } from "../../../../../packages/shared/src/people";
@@ -10,7 +11,13 @@ import {
 import { accountLotMatchSchema } from "../../../../../packages/shared/src/registry";
 import { useAuth } from "../../data/auth";
 import { featureRpc } from "../../data/feature-records";
-import { Button, Feedback, Modal, Skeleton } from "../../components/UI";
+import {
+  Button,
+  DialogSection,
+  Feedback,
+  Modal,
+  Skeleton,
+} from "../../components/UI";
 import { Link } from "../../components/AccessLink";
 import styles from "./MemberWorkspace.module.css";
 import PrivateHealthNote from "../more/PrivateHealthNote";
@@ -23,6 +30,35 @@ const labels = {
   title: "Position",
 } as const;
 type Input = z.infer<typeof memberDetailsInputSchema>;
+function propertyLinkBlockMessage(data: Workspace, isSelf: boolean) {
+  const reason =
+    data.link_block_reason ??
+    (isSelf
+      ? "self_review"
+      : data.auth_state === "unlinked"
+        ? "no_sign_in_account"
+        : data.auth_state === "missing"
+          ? "missing_sign_in_account"
+          : data.member.status !== "Active"
+            ? "inactive_account"
+            : null);
+  switch (reason) {
+    case "property_permission":
+      return "Your staff account needs property viewing and management permission. Ask an authorized administrator to review your access in Roles & permissions.";
+    case "self_review":
+      return "Another authorized staff member must link your own account.";
+    case "no_sign_in_account":
+      return "This member record has no sign-in account linked. Check the member's existing account in People & accounts before creating another account.";
+    case "missing_sign_in_account":
+      return "The sign-in account referenced by this member record no longer exists. An authorized administrator must resolve the account connection before linking a property.";
+    case "inactive_account":
+      return "This member's sign-in account has no active membership access. An authorized administrator must review its roles and status before linking a property.";
+    case "duplicate_account":
+      return "More than one member record refers to this sign-in account. An authorized administrator must resolve the duplicate records before linking a property.";
+    default:
+      return "Property linking is unavailable. Check the member's sign-in account and your property-management permission, then refresh this member.";
+  }
+}
 const date = (value: string) =>
   new Date(value).toLocaleString("en-PH", {
     timeZone: "Asia/Manila",
@@ -116,7 +152,7 @@ export default function MemberWorkspace({
       );
       setPage(0);
       setEditing(false);
-      setNotice("Recorded details updated by the server.");
+      setNotice("Member details saved.");
       await refreshRelated();
     },
   });
@@ -180,9 +216,13 @@ export default function MemberWorkspace({
                 <Button
                   secondary
                   disabled={busy || query.isFetching}
+                  pending={query.isFetching}
                   onClick={() => void query.refetch()}
                 >
-                  Refresh member
+                  {!query.isFetching && (
+                    <RefreshCw size={18} aria-hidden="true" />
+                  )}{" "}
+                  Refresh
                 </Button>
               </div>
             )}
@@ -360,65 +400,67 @@ export default function MemberWorkspace({
           </p>
         ) : (
           <>
-            <p className={styles.note}>
-              Link a verified owner, renter or household relationship.
-              Registered ownership and receipt access stay separate.
-            </p>
-            {data.properties.map((r) => (
-              <article className={styles.record} key={r.membership_id}>
-                <strong>{r.physical_id}</strong>
-                <p>
-                  {r.relationship} · {r.state}
-                  {!r.active_import
-                    ? " · inactive import"
-                    : r.expires_at &&
-                        new Date(r.expires_at).getTime() <= query.dataUpdatedAt
-                      ? " · expired"
-                      : ""}
-                </p>
+            <DialogSection
+              title="Linked properties"
+              description="Approved owner and household links give access to property receipts. Linking does not change the registered owner."
+            >
+              {data.properties.map((r) => (
+                <article className={styles.record} key={r.membership_id}>
+                  <strong>{r.physical_id}</strong>
+                  <p>
+                    {r.relationship} · {r.state}
+                    {!r.active_import
+                      ? " · inactive import"
+                      : r.expires_at &&
+                          new Date(r.expires_at).getTime() <=
+                            query.dataUpdatedAt
+                        ? " · expired"
+                        : ""}
+                  </p>
+                  <p className={styles.note}>
+                    From {date(r.starts_at)}
+                    {r.expires_at ? ` until ${date(r.expires_at)}` : ""}
+                  </p>
+                  {r.reference && (
+                    <p className={styles.note}>Reference: {r.reference}</p>
+                  )}
+                  <Link className="text-link" to={`/office/lots/${r.lot_id}`}>
+                    Review property link
+                  </Link>
+                </article>
+              ))}
+              {!data.properties.length && <p>No linked properties yet.</p>}
+              {!data.can_link && (
                 <p className={styles.note}>
-                  From {date(r.starts_at)}
-                  {r.expires_at ? ` until ${date(r.expires_at)}` : ""}
+                  {propertyLinkBlockMessage(
+                    data,
+                    member.user_id === auth.userId,
+                  )}
                 </p>
-                {r.reference && (
-                  <p className={styles.note}>Reference: {r.reference}</p>
-                )}
-                <Link className="text-link" to={`/office/lots/${r.lot_id}`}>
-                  Open lot & relationship review
-                </Link>
-              </article>
-            ))}
-            {!data.properties.length && (
-              <p>No property relationships recorded.</p>
-            )}
-            {!data.can_link && (
-              <p className={styles.note}>
-                {member.user_id === auth.userId
-                  ? "Another authorized staff member must link your own account."
-                  : "Linking requires an active sign-in account and account/property management permissions."}
-              </p>
-            )}
-            {data.can_link && !linking && !rosterEditing && (
-              <Button
-                onClick={() => {
-                  setLinking(true);
-                  setNotice("");
-                }}
-              >
-                {data.properties.some(
-                  (relationship) =>
-                    relationship.state === "approved" &&
-                    relationship.active_import &&
-                    new Date(relationship.starts_at).getTime() <=
-                      query.dataUpdatedAt &&
-                    (!relationship.expires_at ||
-                      new Date(relationship.expires_at).getTime() >
-                        query.dataUpdatedAt),
-                )
-                  ? "Link another property"
-                  : "Link property"}
-              </Button>
-            )}
+              )}
+              {data.can_link && !linking && !rosterEditing && (
+                <Button
+                  onClick={() => {
+                    setLinking(true);
+                    setNotice("");
+                  }}
+                >
+                  <Plus size={18} aria-hidden="true" />
+                  {data.properties.some(
+                    (relationship) =>
+                      relationship.state === "approved" &&
+                      relationship.active_import &&
+                      new Date(relationship.starts_at).getTime() <=
+                        query.dataUpdatedAt &&
+                      (!relationship.expires_at ||
+                        new Date(relationship.expires_at).getTime() >
+                          query.dataUpdatedAt),
+                  )
+                    ? "Link another property"
+                    : "Link property"}
+                </Button>
+              )}
+            </DialogSection>
             {!linking && member.user_id && (
               <HouseholdRoster
                 target={member.user_id}
@@ -435,9 +477,7 @@ export default function MemberWorkspace({
                 onCancel={() => setLinking(false)}
                 onLinked={async () => {
                   setLinking(false);
-                  setNotice(
-                    "Verified property relationship confirmed by the server.",
-                  );
+                  setNotice("Verified property link saved.");
                   await refreshRelated();
                 }}
               />
@@ -445,73 +485,74 @@ export default function MemberWorkspace({
           </>
         )
       ) : !data?.can_history ? (
-        <p>
-          Member management or audit access is required to view correction
-          history.
-        </p>
+        <p>You need permission to manage members or view the change history.</p>
       ) : (
         <>
-          <h3>Detail corrections</h3>
-          {!data.history.length && <p>No recorded detail corrections.</p>}
-          {data.history.map((h) => (
-            <article className={styles.record} key={h.id}>
-              <strong>{h.actor_name}</strong>
-              <p className={styles.note}>{date(h.changed_at)}</p>
-              <p>{h.reason}</p>
-              <ul className={styles.changes}>
-                {(Object.keys(labels) as (keyof typeof labels)[])
-                  .filter(
-                    (field) => h.before_values[field] !== h.after_values[field],
-                  )
-                  .map((field) => (
-                    <li key={field}>
-                      {labels[field]}:{" "}
-                      {h.before_values[field] || "Not supplied"} →{" "}
-                      {h.after_values[field] || "Not supplied"}
-                    </li>
-                  ))}
-              </ul>
-            </article>
-          ))}
-          {data.history_total > 20 && (
-            <div className={styles.actions}>
-              <Button
-                secondary
-                disabled={page === 0}
-                onClick={() => setPage(page - 1)}
-              >
-                Previous corrections
-              </Button>
-              <span>Page {page + 1}</span>
-              <Button
-                secondary
-                disabled={(page + 1) * 20 >= data.history_total}
-                onClick={() => setPage(page + 1)}
-              >
-                Next corrections
-              </Button>
-            </div>
-          )}
-          <h3>Property link history</h3>
-          <p className={styles.note}>
-            Latest 50 permitted actions. Full lot history is available in the
-            Lot register.
-          </p>
-          {!data.link_history.length && (
-            <p>No permitted property-link history.</p>
-          )}
-          {data.link_history.map((h) => (
-            <article className={styles.record} key={h.id}>
-              <strong>{h.action}</strong>
-              <p>
-                {h.physical_id} · {h.relationship}
-              </p>
-              <p className={styles.note}>
-                {h.actor_name} · {date(h.at)}
-              </p>
-              {h.reference && <p>{h.reference}</p>}
-            </article>
-          ))}
+          <DialogSection title="Detail changes">
+            {!data.history.length && (
+              <p className={styles.note}>No detail changes recorded.</p>
+            )}
+            {data.history.map((h) => (
+              <article className={styles.record} key={h.id}>
+                <strong>{h.actor_name}</strong>
+                <p className={styles.note}>{date(h.changed_at)}</p>
+                <p>{h.reason}</p>
+                <ul className={styles.changes}>
+                  {(Object.keys(labels) as (keyof typeof labels)[])
+                    .filter(
+                      (field) =>
+                        h.before_values[field] !== h.after_values[field],
+                    )
+                    .map((field) => (
+                      <li key={field}>
+                        {labels[field]}:{" "}
+                        {h.before_values[field] || "Not supplied"} →{" "}
+                        {h.after_values[field] || "Not supplied"}
+                      </li>
+                    ))}
+                </ul>
+              </article>
+            ))}
+            {data.history_total > 20 && (
+              <div className={styles.actions}>
+                <Button
+                  secondary
+                  disabled={page === 0}
+                  onClick={() => setPage(page - 1)}
+                >
+                  Previous corrections
+                </Button>
+                <span>Page {page + 1}</span>
+                <Button
+                  secondary
+                  disabled={(page + 1) * 20 >= data.history_total}
+                  onClick={() => setPage(page + 1)}
+                >
+                  Next corrections
+                </Button>
+              </div>
+            )}
+          </DialogSection>
+          <DialogSection
+            title="Property link history"
+            description="Up to 50 actions you may view. Full property history is in the Lot register."
+          >
+            {!data.link_history.length && (
+              <p className={styles.note}>No property link history to show.</p>
+            )}
+            {data.link_history.map((h) => (
+              <article className={styles.record} key={h.id}>
+                <strong>{h.action}</strong>
+                <p>
+                  {h.physical_id} · {h.relationship}
+                </p>
+                <p className={styles.note}>
+                  {h.actor_name} · {date(h.at)}
+                </p>
+                {h.reference && <p>{h.reference}</p>}
+              </article>
+            ))}
+          </DialogSection>
         </>
       )}
     </Modal>
@@ -561,8 +602,20 @@ function PropertyLink({
     onSuccess: onLinked,
   });
   const busy = checking || link.isPending;
+  const physicalId =
+    phase && block && lot
+      ? `${Number(phase)}-${String(Number(block)).padStart(2, "0")}-${String(Number(lot)).padStart(3, "0")}`
+      : null;
   return (
-    <div className={styles.form}>
+    <div className={`${styles.form} ${styles.propertyLink}`}>
+      <ol className={styles.linkSteps} aria-label="Property linking steps">
+        <li aria-current={!match?.candidate ? "step" : undefined}>
+          <span>1</span> Find property
+        </li>
+        <li aria-current={match?.candidate ? "step" : undefined}>
+          <span>2</span> Review & link
+        </li>
+      </ol>
       <form
         className={styles.form}
         onSubmit={async (e) => {
@@ -572,14 +625,15 @@ function PropertyLink({
           setError(null);
           setMatch(null);
           try {
-            setMatch(
-              accountLotMatchSchema.parse(
-                await featureRpc("bfe_account_lot_match", {
-                  p_target: target,
-                  p_physical: `${Number(phase)}-${String(Number(block)).padStart(2, "0")}-${String(Number(lot)).padStart(3, "0")}`,
-                }),
-              ),
-            );
+            const [result] = await Promise.allSettled([
+              featureRpc("bfe_account_lot_match", {
+                p_target: target,
+                p_physical: `${Number(phase)}-${String(Number(block)).padStart(2, "0")}-${String(Number(lot)).padStart(3, "0")}`,
+              }),
+              new Promise<void>((resolve) => window.setTimeout(resolve, 2000)),
+            ]);
+            if (result.status === "rejected") throw result.reason;
+            setMatch(accountLotMatchSchema.parse(result.value));
           } catch (error) {
             setError(
               error instanceof Error
@@ -593,6 +647,15 @@ function PropertyLink({
         }}
       >
         <fieldset disabled={busy}>
+          <div className={styles.linkHeading}>
+            <Building2 size={22} aria-hidden="true" />
+            <div>
+              <h3>Property address</h3>
+              <p>
+                Enter the phase, block and lot to check the property record.
+              </p>
+            </div>
+          </div>
           <div className={styles.address}>
             {[
               ["Phase", phase, setPhase, 9999],
@@ -611,24 +674,46 @@ function PropertyLink({
                   onChange={(e) => {
                     (setter as (value: string) => void)(e.target.value);
                     setMatch(null);
+                    setError(null);
                     link.reset();
                   }}
                 />
               </label>
             ))}
           </div>
-          <Button secondary type="submit" pending={checking}>
-            Check property
-          </Button>
+          <div className={styles.linkSearchActions}>
+            <span className={styles.addressPreview}>
+              Property <strong>{physicalId ?? "#-##-###"}</strong>
+            </span>
+            <Button type="submit" disabled={busy} aria-busy={checking}>
+              <Search size={18} aria-hidden="true" />{" "}
+              {checking ? "Checking property…" : "Check property"}
+            </Button>
+          </div>
         </fieldset>
       </form>
+      {checking && (
+        <div
+          className={styles.propertyChecking}
+          role="status"
+          aria-live="polite"
+        >
+          <span className={styles.searchTrack} aria-hidden="true">
+            <Search size={24} />
+          </span>
+          <div>
+            <strong>Looking for {physicalId}</strong>
+            <p>Checking the property record and account link.</p>
+          </div>
+        </div>
+      )}
       <Feedback error={error ?? link.error} />
       {match && !match.candidate && (
-        <div>
-          <p>No matching lot was found in an active registry import.</p>
+        <div className={styles.propertyResult} role="status">
+          <strong>No matching property found</strong>
           <p className={styles.note}>
-            Check the existing Lot register before linking. Entering an address
-            does not create a lot.
+            Check the phase, block and lot, or look in the Lot register. No
+            property link has been created.
           </p>
           <Link
             className="text-link"
@@ -640,7 +725,7 @@ function PropertyLink({
       )}
       {match?.candidate && (
         <form
-          className={styles.form}
+          className={`${styles.form} ${styles.propertyResult}`}
           onChange={() => {
             setError(null);
             link.reset();
@@ -661,24 +746,34 @@ function PropertyLink({
           }}
         >
           <fieldset disabled={busy}>
-            <p>
-              <strong>{match.candidate.physical_id}</strong>
-              <br />
-              Recorded homeowner:{" "}
-              {match.candidate.recorded_homeowner || "Not supplied"}
-            </p>
+            <div className={styles.linkHeading}>
+              <CheckCircle2 size={22} aria-hidden="true" />
+              <div>
+                <h3>Property found: {match.candidate.physical_id}</h3>
+                <p>
+                  Recorded homeowner:{" "}
+                  {match.candidate.recorded_homeowner || "Not supplied"}
+                </p>
+              </div>
+            </div>
             <label>
-              Verified relationship
+              Relationship to this property
               <select name="relationship" required>
-                <option value="">Choose</option>
+                <option value="">Choose a relationship</option>
                 <option value="owner">Owner relationship</option>
                 <option value="renter">Renter</option>
                 <option value="household">Household member</option>
               </select>
             </label>
             <label>
-              Verification reference
-              <input name="reference" required minLength={3} maxLength={200} />
+              Proof or reference checked
+              <input
+                name="reference"
+                required
+                minLength={3}
+                maxLength={200}
+                placeholder="Document or office reference"
+              />
             </label>
             <label className={styles.check}>
               <input type="checkbox" required />I verified this account, lot and
@@ -691,6 +786,12 @@ function PropertyLink({
             >
               Confirm property link
             </Button>
+            {!match.can_link && (
+              <p role="status" className={styles.note}>
+                Linking is unavailable for this account and property. Review the
+                account and property records before continuing.
+              </p>
+            )}
           </fieldset>
         </form>
       )}

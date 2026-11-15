@@ -244,22 +244,62 @@ export function Feedback({
     </div>
   );
 }
-export function Skeleton() {
+/** Common compact section for grouped content inside Modal and Sheet. */
+export function DialogSection({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
   return (
-    <div
-      aria-label="Loading your community"
+    <section className={styles.dialogSection} aria-label={title}>
+      <header>
+        <h3>{title}</h3>
+        {description && <p>{description}</p>}
+      </header>
+      <div className={styles.dialogSectionContent}>{children}</div>
+    </section>
+  );
+}
+
+export function Skeleton({
+  variant = "page",
+  label = "Loading content",
+}: {
+  variant?: "page" | "section" | "metric";
+  label?: string;
+}) {
+  return (
+    <span
+      aria-label={label}
       role="status"
-      className="skeleton-layout"
+      aria-busy="true"
+      className={`${styles.skeleton} ${styles[`skeleton${variant}`]}`}
     >
-      <span className="sr-only">Loading your community…</span>
-      <div />
-      <div />
-      <div />
-    </div>
+      <span className="sr-only">{label}…</span>
+      <span className={styles.skeletonShape} aria-hidden="true" />
+      {variant !== "metric" && (
+        <>
+          <span className={styles.skeletonShape} aria-hidden="true" />
+          <span className={styles.skeletonShape} aria-hidden="true" />
+        </>
+      )}
+    </span>
   );
 }
 let openDialogCount = 0;
 let previousBodyOverflow = "";
+let mobileBodyLock: {
+  position: string;
+  top: string;
+  left: string;
+  width: string;
+  x: number;
+  y: number;
+} | null = null;
 export function Modal({
   title,
   description,
@@ -307,24 +347,26 @@ export function Modal({
   useEffect(() => {
     const dialog = ref.current;
     const trigger = document.activeElement as HTMLElement | null;
-    const viewport = window.visualViewport;
-    const size = () => {
-      if (!dialog) return;
-      dialog.style.setProperty(
-        "--dialog-viewport-height",
-        `${viewport?.height ?? window.innerHeight}px`,
-      );
-      dialog.style.setProperty(
-        "--dialog-keyboard-inset",
-        `${Math.max(0, window.innerHeight - (viewport?.height ?? window.innerHeight) - (viewport?.offsetTop ?? 0))}px`,
-      );
-    };
-    size();
-    viewport?.addEventListener("resize", size);
-    viewport?.addEventListener("scroll", size);
     if (openDialogCount++ === 0) {
       previousBodyOverflow = document.body.style.overflow;
       document.body.style.overflow = "hidden";
+      if (
+        window.matchMedia("(max-width: 1023px) and (pointer: coarse)").matches
+      ) {
+        const body = document.body.style;
+        mobileBodyLock = {
+          position: body.position,
+          top: body.top,
+          left: body.left,
+          width: body.width,
+          x: window.scrollX,
+          y: window.scrollY,
+        };
+        body.position = "fixed";
+        body.top = `${-mobileBodyLock.y}px`;
+        body.left = `${-mobileBodyLock.x}px`;
+        body.width = "100%";
+      }
     }
     dialog?.showModal();
     // Open on the dialog itself, not on Close. Focusing the dismiss control
@@ -333,10 +375,20 @@ export function Modal({
     inner.current?.focus({ preventScroll: true });
     return () => {
       dialog?.close();
-      viewport?.removeEventListener("resize", size);
-      viewport?.removeEventListener("scroll", size);
-      if (--openDialogCount === 0)
+      if (--openDialogCount === 0) {
         document.body.style.overflow = previousBodyOverflow;
+        if (mobileBodyLock) {
+          const saved = mobileBodyLock;
+          Object.assign(document.body.style, {
+            position: saved.position,
+            top: saved.top,
+            left: saved.left,
+            width: saved.width,
+          });
+          mobileBodyLock = null;
+          window.scrollTo(saved.x, saved.y);
+        }
+      }
       if (trigger?.isConnected) trigger.focus({ preventScroll: true });
     };
   }, []);
@@ -346,6 +398,7 @@ export function Modal({
       aria-labelledby={titleId}
       aria-describedby={description ? descriptionId : undefined}
       aria-busy={busy || undefined}
+      data-dialog-size={size}
       className={`${styles.dialog} ${presentation === "task" ? styles.taskDialog : ""} ${styles[`dialog${size.toUpperCase()}` as keyof typeof styles] ?? ""} ${className ?? ""}`}
       onCancel={(event) => {
         event.preventDefault();

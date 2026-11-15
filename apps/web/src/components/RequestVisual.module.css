@@ -41,7 +41,7 @@
   text-decoration: none;
   color: var(--accent);
   font-size: 14px;
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
 }
 .total {
   display: flex;
@@ -50,9 +50,9 @@
   margin: 24px 0 16px;
 }
 .total strong {
-  font-size: 32px;
+  font-size: var(--staff-kpi-size, 32px);
   line-height: 1;
-  font-weight: 750;
+  font-weight: var(--staff-emphasis-weight, 750);
 }
 .total span {
   font-size: 14px;

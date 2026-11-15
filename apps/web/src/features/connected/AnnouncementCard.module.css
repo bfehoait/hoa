@@ -1,0 +1,128 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+.card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.meta,
+.heading,
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.meta {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.meta time,
+.audience {
+  color: var(--muted);
+  font-size: 14px;
+}
+.heading {
+  align-items: flex-start;
+}
+.icon {
+  flex: 0 0 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: var(--radius-sm);
+}
+.card h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.excerpt {
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.expand {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.expand:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.image:empty {
+  display: none;
+}
+.image > section {
+  margin: 0;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--wash);
+}
+.image :is(img, [data-image-frame]) {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  max-height: 420px;
+  object-fit: contain;
+}
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.audience {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.footer {
+  margin-top: auto;
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.footer > button {
+  justify-content: space-between;
+  text-align: left;
+}
+.actions {
+  flex-wrap: wrap;
+}
+.actions > button {
+  flex: 1 1 auto;
+}
+@media (max-width: 767px) {
+  .card {
+    padding: 16px;
+  }
+}

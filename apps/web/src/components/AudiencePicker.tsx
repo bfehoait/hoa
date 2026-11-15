@@ -12,14 +12,18 @@ export default function AudiencePicker({
   onChange: () => void;
 }) {
   const [all, setAll] = useState(true);
+  const [selected, setSelected] = useState<string[]>([]);
   const id = useId();
   return (
     <fieldset
       className={styles.picker}
       disabled={disabled}
-      aria-describedby={error ? `${id}-error` : undefined}
+      aria-describedby={`${id}-help${error ? ` ${id}-error` : ""}`}
     >
-      <legend>Audience</legend>
+      <legend>Choose audience</legend>
+      <p className={styles.help} id={`${id}-help`}>
+        Choose one or more groups, or choose All members.
+      </p>
       <label className={styles.all}>
         <input
           type="checkbox"
@@ -28,6 +32,7 @@ export default function AudiencePicker({
           checked={all}
           onChange={(event) => {
             setAll(event.target.checked);
+            setSelected([]);
             onChange();
           }}
         />
@@ -42,8 +47,17 @@ export default function AudiencePicker({
               type="checkbox"
               name="audience"
               value={value}
-              disabled={all}
-              onChange={onChange}
+              checked={selected.includes(value)}
+              onChange={(event) => {
+                const checked = event.target.checked;
+                setAll(false);
+                setSelected((current) =>
+                  checked
+                    ? [...current, value]
+                    : current.filter((entry) => entry !== value),
+                );
+                onChange();
+              }}
             />
             <span>{label}</span>
           </label>

@@ -40,6 +40,14 @@ const output = [
   handler.replace(clientImport, "").replace(localImport, "").trim(),
   "",
 ].join("\n\n");
+if (process.argv.includes("--check")) {
+  if ((await read("docs/setup/bfe-create-account.editor.txt")) !== output)
+    throw new Error(
+      "Account editor artifact is stale. Run node scripts/prepare-manual-account-editor.mjs and deploy the regenerated file with its matching SQL/frontend.",
+    );
+  console.log("Account editor artifact matches canonical sources.");
+  process.exit(0);
+}
 await mkdir(new URL("docs/setup/", root), { recursive: true });
 await writeFile(
   new URL("docs/setup/bfe-create-account.editor.txt", root),

@@ -67,7 +67,7 @@ const moduleNames: Record<string, string> = {
   finance: "Finance & payments",
   calendar: "Facilities & calendar",
   security: "Visitors & gate access",
-  community: "Community updates",
+  community: "Announcements",
   hotlines: "Emergency contacts",
   livelihood: "Livelihood",
   transport: "Shuttle service",

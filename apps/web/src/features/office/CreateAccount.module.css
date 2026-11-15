@@ -63,3 +63,19 @@
     gap: 16px;
   }
 }
+
+.createTrigger {
+  white-space: nowrap;
+  width: auto;
+  flex: 0 0 auto;
+  min-height: 48px;
+}
+.createTrigger svg {
+  flex-shrink: 0;
+}
+@media (min-width: 1024px) {
+  .form,
+  .fields {
+    gap: 12px 20px;
+  }
+}

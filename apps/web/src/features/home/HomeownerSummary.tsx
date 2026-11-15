@@ -2,6 +2,7 @@ import { Link } from "../../components/AccessLink";
 import { ChevronRight } from "lucide-react";
 import { useAccountBalance } from "../../data/hoa-balance";
 import { balanceMoney } from "../../../../../packages/shared/src/hoa-balance";
+import { Skeleton } from "../../components/UI";
 import styles from "./ResidentHome.module.css";
 
 export default function HomeownerSummary() {
@@ -21,13 +22,15 @@ export default function HomeownerSummary() {
       <span>
         <span>Total balance</span>
         <strong>
-          {data?.hoa.needs_review
-            ? "Under review"
-            : data
-              ? balanceMoney(data.total_balance_centavos)
-              : balance.isPending && balance.allowed
-                ? "Loading..."
-                : "Unavailable"}
+          {data?.hoa.needs_review ? (
+            "Under review"
+          ) : data ? (
+            balanceMoney(data.total_balance_centavos)
+          ) : balance.isPending && balance.allowed ? (
+            <Skeleton variant="metric" label="Loading balance" />
+          ) : (
+            "Unavailable"
+          )}
         </strong>
       </span>
       <span>

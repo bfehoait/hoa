@@ -1,3 +1,10 @@
+import ReviewDetailFrame from "../office/ReviewDetailFrame";
+import {
+  useReviewState,
+  useReviewSurface,
+  useReviewRecord,
+} from "../office/ReviewSurface";
+import PageIntro from "../office/OfficePage";
 import { useId, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
@@ -18,7 +25,6 @@ import {
   Empty,
   Feedback,
   Modal,
-  PageIntro,
   Skeleton,
 } from "../../components/UI";
 import styles from "./LiveFeature.module.css";
@@ -28,6 +34,10 @@ import BookingSlots from "./BookingSlots";
 import BookingDatePicker from "./BookingDatePicker";
 import AmenityGuidelines from "./AmenityGuidelines";
 import BookingCharge from "./BookingCharge";
+import BookingFeeApproval from "./BookingFeeApproval";
+import Sheet from "../../components/Sheet";
+import AmenityPolicyLink from "./AmenityPolicyLink";
+import BookingPrice, { priceSchema, PriceBreakdown } from "./BookingPrice";
 import {
   amenityAttendeeLimit,
   amenityKey,
@@ -38,7 +48,7 @@ import { CalendarDays, House } from "lucide-react";
 import { Link } from "../../components/AccessLink";
 import { usePermissions } from "../../data/permissions";
 import { hasCapability } from "../../../../../packages/shared/src/permissions";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import {
   useNotificationTarget,
   useReadOpenedNotification,
@@ -53,15 +63,30 @@ const display = (s: string) =>
 export default function OperationsDesk({
   kind,
   office = false,
+  pendingReview = false,
 }: {
   kind: "booking" | "visitor";
   office?: boolean;
+  pendingReview?: boolean;
 }) {
+  const reviewSurface = useReviewSurface();
+  const decisionFormId = useId();
   const auth = useAuth(),
     cache = useQueryClient();
   const permissions = usePermissions();
   const [params] = useSearchParams();
-  const pendingOnly = office && params.get("queue") === "pending";
+  const { pathname } = useLocation();
+  const securityDesk = pathname.startsWith("/security");
+  const [securitySearch, setSecuritySearch] = useState("");
+  const [feeBusy, setFeeBusy] = useState(false);
+  const [securityStatus, setSecurityStatus] = useState("");
+  const [reviewHistory, setReviewHistory] = useReviewState(
+    "operations.history",
+    false,
+  );
+  const pendingOnly =
+    office &&
+    (pendingReview ? !reviewHistory : params.get("queue") === "pending");
   const [passKind, setPassKind] = useState(
     ["visitor", "gate", "small_delivery"].includes(params.get("type") ?? "")
       ? params.get("type")!
@@ -73,7 +98,10 @@ export default function OperationsDesk({
     gate: "Gate pass",
     small_delivery: "Small delivery pass",
   };
-  const [page, setPage] = useState(0),
+  const [page, setPage] = useReviewState(
+      `operations.${reviewSurface?.recordId ?? "list"}.page`,
+      reviewSurface?.page ?? 0,
+    ),
     [form, setForm] = useState(
       kind === "booking" && !office && !params.has("record"),
     ),
@@ -86,14 +114,10 @@ export default function OperationsDesk({
     "",
     !office,
   );
-  const selected = target.requested
-    ? target.isSuccess
-      ? target.data
-      : null
-    : selection;
   const closeDetails = () => {
     setSelected(null);
     target.clear();
+    reviewSurface?.clearRecord?.();
   };
   const [clientId, setClientId] = useState(() => crypto.randomUUID()),
     [validation, setValidation] = useState<Error | null>(null);
@@ -106,7 +130,21 @@ export default function OperationsDesk({
   const [startTime, setStartTime] = useState(""),
     [endTime, setEndTime] = useState("");
   const [memberSearch, setMemberSearch] = useState("");
+  const [priceChoice, setPriceChoice] = useState({
+    facility: "",
+    use: "",
+    adults: 0,
+    children: 0,
+  });
   const [bookingMember, setBookingMember] = useState("");
+  const [bookingReview, setBookingReview] = useState<{
+    fingerprint: string;
+    price: z.infer<typeof priceSchema>;
+    facility: string;
+    when: string;
+    attendees: number;
+    purpose: string;
+  } | null>(null);
   const officeBookingCreate =
     office &&
     kind === "booking" &&
@@ -169,6 +207,14 @@ export default function OperationsDesk({
         : { kind: "visitor" as const, ...visitorDashboardSchema.parse(raw) };
     },
   });
+  const inboxRecord = useReviewRecord<Booking | VisitorPass>(query.data?.rows);
+  const selected = target.requested
+    ? target.isSuccess
+      ? target.data
+      : null
+    : reviewSurface?.recordId
+      ? inboxRecord
+      : selection;
   const slots = useQuery({
     queryKey: ["operations-slots", auth.userId, facility, date],
     enabled: form && kind === "booking" && !!facility && !!date,
@@ -233,6 +279,33 @@ export default function OperationsDesk({
         )
       : [];
   const chosen = eligibleFacilities.find((f) => f.id === facility);
+  const priceKind = chosen ? amenityKey(chosen.name) : null;
+  const useType = priceChoice.facility === chosen?.id ? priceChoice.use : "";
+  const priceRequest = {
+    p_facility: chosen?.id,
+    p_start: date && startTime ? `${date}T${startTime}:00+08:00` : null,
+    p_end: date && endTime ? `${date}T${endTime}:00+08:00` : null,
+    p_use: useType,
+    p_adults: priceChoice.adults,
+    p_children: priceChoice.children,
+  };
+  const price = useQuery({
+    queryKey: ["booking-price-preview", auth.userId, priceRequest],
+    enabled:
+      kind === "booking" &&
+      form &&
+      !!chosen &&
+      !!priceRequest.p_start &&
+      !!priceRequest.p_end &&
+      !!useType &&
+      !auth.preview &&
+      !auth.rolePreview &&
+      !auth.memberPreview,
+    retry: false,
+    staleTime: 15000,
+    queryFn: async () =>
+      priceSchema.parse(await featureRpc("bfe_quote_booking", priceRequest)),
+  });
   const selectionBusy = !!(
     date &&
     startTime &&
@@ -276,6 +349,7 @@ export default function OperationsDesk({
             setEndTime("");
             setValidation(null);
             mutation.reset();
+            setPriceChoice({ facility: "", use: "", adults: 0, children: 0 });
           } else setForm(false);
         }}
       >
@@ -294,10 +368,13 @@ export default function OperationsDesk({
               !date ||
               !startTime ||
               !endTime ||
+              !useType ||
+              !price.isSuccess ||
+              price.isFetching ||
               !slots.isSuccess))
         }
       >
-        {kind === "booking" ? "Request booking" : "Request pass"}
+        {kind === "booking" ? "Review price & booking" : "Request pass"}
       </Button>
     </div>
   );
@@ -331,6 +408,47 @@ export default function OperationsDesk({
                 throw new Error(
                   "Choose an amenity, date and available time before submitting.",
                 );
+              if (
+                kind === "booking" &&
+                (!useType || !price.isSuccess || price.isFetching)
+              )
+                throw new Error(
+                  "Choose the booking use and wait for the price estimate before submitting.",
+                );
+              if (kind === "booking") {
+                if (!price.data || !chosen)
+                  throw new Error("Choose your booking details first.");
+                const fingerprint = JSON.stringify({
+                  fields: Array.from(f.entries()),
+                  price: price.data,
+                  clientId,
+                  bookingMember,
+                });
+                const confirmed =
+                  (e.nativeEvent as SubmitEvent).submitter?.getAttribute(
+                    "data-confirm-booking",
+                  ) === "true";
+                if (!confirmed) {
+                  setBookingReview({
+                    fingerprint,
+                    price: price.data,
+                    facility: chosen.name,
+                    when: `${display(manilaInstant(`${date}T${startTime}`))} – ${display(manilaInstant(`${date}T${endTime}`))}`,
+                    attendees: Number(f.get("attendees")),
+                    purpose: String(f.get("purpose") ?? ""),
+                  });
+                  return;
+                }
+                if (
+                  !bookingReview ||
+                  bookingReview.fingerprint !== fingerprint
+                ) {
+                  setBookingReview(null);
+                  throw new Error(
+                    "The booking details changed. Review the price and booking again.",
+                  );
+                }
+              }
               const args =
                 kind === "booking"
                   ? {
@@ -344,6 +462,13 @@ export default function OperationsDesk({
                       ),
                       p_purpose: f.get("purpose"),
                       p_attendees: Number(f.get("attendees")),
+                      p_use: useType,
+                      p_adults:
+                        useType === "pool-individual" ? priceChoice.adults : 0,
+                      p_children:
+                        useType === "pool-individual"
+                          ? priceChoice.children
+                          : 0,
                       ...(office
                         ? {
                             p_target: bookingMember,
@@ -370,14 +495,13 @@ export default function OperationsDesk({
                 {
                   name:
                     kind === "booking"
-                      ? office
-                        ? "bfe_office_create_booking"
-                        : "bfe_create_booking"
+                      ? "bfe_create_priced_booking"
                       : "bfe_create_community_pass",
                   args,
                 },
                 {
                   onSuccess: () => {
+                    setBookingReview(null);
                     setClientId(crypto.randomUUID());
                     setForm(inlineBooking);
                     if (inlineBooking) {
@@ -385,6 +509,12 @@ export default function OperationsDesk({
                       setDate("");
                       setStartTime("");
                       setEndTime("");
+                      setPriceChoice({
+                        facility: "",
+                        use: "",
+                        adults: 0,
+                        children: 0,
+                      });
                     }
                     setNotice(
                       "Your request was saved. Office approval is pending.",
@@ -402,6 +532,7 @@ export default function OperationsDesk({
           }}
         >
           <p>Times use Philippine time. The office will review your request.</p>
+          {data.kind === "booking" && <AmenityPolicyLink />}
           {data.kind === "booking" ? (
             <>
               {office && (
@@ -422,7 +553,10 @@ export default function OperationsDesk({
                   </label>
                   <Feedback error={members.error} />
                   {members.isFetching && (
-                    <p role="status">Looking up eligible residents…</p>
+                    <Skeleton
+                      variant="section"
+                      label="Looking up eligible residents"
+                    />
                   )}
                   {members.isSuccess && (
                     <label>
@@ -533,7 +667,10 @@ export default function OperationsDesk({
                         <>
                           <Feedback error={slots.error} />
                           {slots.isPending && (
-                            <p role="status">Checking available times…</p>
+                            <Skeleton
+                              variant="section"
+                              label="Loading available times"
+                            />
                           )}
                           {slots.isSuccess && (
                             <BookingSlots
@@ -564,16 +701,119 @@ export default function OperationsDesk({
                   </div>
                   <label>
                     <span className={schedule.requestStep}>Your request</span>
+                    Booking use
+                    <select
+                      required
+                      value={useType}
+                      onChange={(e) =>
+                        setPriceChoice({
+                          facility: chosen.id,
+                          use: e.target.value,
+                          adults: 0,
+                          children: 0,
+                        })
+                      }
+                    >
+                      <option value="">
+                        Choose how you will use the amenity
+                      </option>
+                      {priceKind === "hall" && (
+                        <option value="hall">Function Hall</option>
+                      )}
+                      {priceKind === "court" && (
+                        <>
+                          <option value="court-sports">Sports activity</option>
+                          <option value="court-function">
+                            Special function
+                          </option>
+                        </>
+                      )}
+                      {priceKind === "pool" && (
+                        <>
+                          <option value="pool-individual">
+                            Individual admission
+                          </option>
+                          <option value="pool-exclusive">
+                            Exclusive pool use
+                          </option>
+                        </>
+                      )}
+                    </select>
+                  </label>
+                  {useType === "pool-individual" && (
+                    <div className={schedule.guestCounts}>
+                      <label>
+                        Adults
+                        <input
+                          type="number"
+                          min={0}
+                          max={40}
+                          step={1}
+                          required
+                          value={priceChoice.adults}
+                          onChange={(e) =>
+                            setPriceChoice((old) => ({
+                              ...old,
+                              adults: Number(e.target.value),
+                            }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        Children
+                        <input
+                          type="number"
+                          min={0}
+                          max={40}
+                          step={1}
+                          required
+                          value={priceChoice.children}
+                          onChange={(e) =>
+                            setPriceChoice((old) => ({
+                              ...old,
+                              children: Number(e.target.value),
+                            }))
+                          }
+                        />
+                      </label>
+                      <p className={styles.formHelp}>
+                        Office confirms child-rate eligibility. Children aged 7
+                        and below need adult supervision under the guidelines.
+                      </p>
+                    </div>
+                  )}
+                  <label>
                     Attendees
                     <input
                       required
                       name="attendees"
+                      key={useType}
                       type="number"
                       min={1}
                       max={amenityAttendeeLimit(chosen.name, chosen.capacity)}
                       step={1}
+                      {...(useType === "pool-individual"
+                        ? {
+                            value: priceChoice.adults + priceChoice.children,
+                            readOnly: true,
+                          }
+                        : {})}
                     />
                   </label>
+                  {useType && date && startTime && endTime && (
+                    <>
+                      {price.isFetching && (
+                        <Skeleton
+                          variant="section"
+                          label="Calculating the booking price"
+                        />
+                      )}
+                      <Feedback error={price.error} />
+                      {price.isSuccess && !price.isFetching && (
+                        <PriceBreakdown price={price.data} />
+                      )}
+                    </>
+                  )}
                 </>
               )}
             </>
@@ -678,13 +918,17 @@ export default function OperationsDesk({
                 </>
               )}
               <label>
-                Valid from
+                Pass starts
                 <input required name="from" type="datetime-local" />
               </label>
               <label>
-                Valid until
+                Pass ends
                 <input required name="until" type="datetime-local" />
               </label>
+              <p className={styles.formHelp}>
+                Choose the start and end of the visit in Philippine time. A pass
+                can last less than 24 hours; the maximum is 24 hours.
+              </p>
             </>
           )}
           {(data.kind !== "booking" || chosen) && (
@@ -716,294 +960,533 @@ export default function OperationsDesk({
     ) : null;
   return (
     <>
-      <NotificationTargetFeedback target={target} />
-      {office && kind === "booking" && (
-        <Link className="text-link" to="/office/calendar">
-          Calendar view
-        </Link>
-      )}
-      {office && (
-        <Link
-          className="text-link"
-          to={
-            pendingOnly
-              ? `/office/${kind === "booking" ? "bookings" : "visitors"}`
-              : `/office/${kind === "booking" ? "bookings" : "visitors"}?queue=pending`
-          }
-        >
-          {pendingOnly ? "All records & history" : "Pending approval only"}
-        </Link>
-      )}
-      <PageIntro
-        eyebrow={office ? "OFFICE OPERATIONS" : "RESIDENT SERVICES"}
-        title={
-          kind === "booking"
-            ? office
-              ? "Amenity bookings"
-              : "Amenities"
-            : "Security & passes"
-        }
-        description={
-          inlineBooking
-            ? "Choose an amenity, date and time. Office approval is required."
-            : "Dates and times use Philippine time."
-        }
-      />
-      {!office && data?.kind === "visitor" && !data.lots.length && (
-        <section className={`${schedule.panel} ${schedule.preflight}`}>
-          <span className={schedule.preflightIcon}>
-            <House size={24} aria-hidden="true" />
-          </span>
-          <h2>Link your lot to create passes</h2>
-          <p>
-            The office needs to confirm your household before you can request a
-            visitor, gate or delivery pass.
-          </p>
-          <Link className="text-link" to="/more/lots">
-            Request a lot link
+      <div hidden={!!reviewSurface?.recordId}>
+        <NotificationTargetFeedback target={target} />
+        {office && !pendingReview && kind === "booking" && (
+          <Link className="text-link" to="/office/calendar">
+            Calendar view
           </Link>
-        </section>
-      )}
-      <div className={styles.actions}>
-        {canCreate && !inlineBooking && (
-          <Button
-            onClick={() => {
-              mutation.reset();
-              setValidation(null);
-              setFacility(
-                eligibleFacilities.length === 1 ? eligibleFacilities[0].id : "",
-              );
-              setDate("");
-              setStartTime("");
-              setEndTime("");
-              setClientId(crypto.randomUUID());
-              setForm(true);
-            }}
-          >
-            New {kind === "booking" ? "booking" : "pass"}
-          </Button>
         )}
-        {data?.kind === "booking" && data.can_manage && (
+        {office && pendingReview && (
           <Button
             secondary
             onClick={() => {
-              mutation.reset();
-              setConfigure(true);
+              setPage(0);
+              setReviewHistory((value) => !value);
             }}
           >
-            Configure amenity
+            {pendingOnly ? "All records & history" : "Pending approval only"}
           </Button>
         )}
-      </div>
-      {notice && (
-        <p className={schedule.summary} role="status">
-          {notice}
-        </p>
-      )}
-      {composer}
-      <Feedback error={validation ?? query.error ?? mutation.error} />
-      {query.isPending ? (
-        <Skeleton />
-      ) : (
-        data && (
-          <>
-            {inlineBooking && !canCreate && (
-              <section className={schedule.panel}>
-                <h2>Booking unavailable</h2>
-                <p>
-                  {eligibleFacilities.length
-                    ? "Your current account cannot submit amenity bookings. Contact the office for help."
-                    : "No amenities are currently available for your membership."}
-                </p>
-                <Link className="text-link" to="/services/requests">
-                  Contact the office
-                </Link>
-              </section>
-            )}
-            {data.kind === "booking" && !inlineBooking && (
-              <section className={schedule.panel}>
-                <h2>Amenities</h2>
-                {data.facilities.map((f) => (
-                  <article key={f.id} className={styles.card}>
-                    <h3>{f.name}</h3>
-                    <p>
-                      {f.opens.slice(0, 5)}–{f.closes.slice(0, 5)} ·{" "}
-                      {f.slot_minutes}-minute slots · maximum {f.max_minutes}{" "}
-                      minutes · configured booking limit{" "}
-                      {amenityAttendeeLimit(f.name, f.capacity)}
-                    </p>
-                    <p>
-                      {f.renters ? "Homeowners and renters" : "Homeowners"} ·{" "}
-                      {f.active ? "Open for booking" : "Unavailable"}
-                    </p>
-                    <p>Policy: {f.policy_reference}</p>
-                    <AmenityGuidelines name={f.name} />
-                  </article>
-                ))}
-                {!eligibleFacilities.length && (
+        {office && !pendingReview && (
+          <Link
+            className="text-link"
+            to={
+              pendingOnly
+                ? `/office/${kind === "booking" ? "bookings" : "visitors"}`
+                : `/office/${kind === "booking" ? "bookings" : "visitors"}?queue=pending`
+            }
+          >
+            {pendingOnly ? "All records & history" : "Pending approval only"}
+          </Link>
+        )}
+        <PageIntro
+          eyebrow={
+            securityDesk
+              ? "GATE & SECURITY"
+              : office
+                ? "OFFICE OPERATIONS"
+                : "RESIDENT SERVICES"
+          }
+          title={
+            kind === "booking"
+              ? office
+                ? "Amenity bookings"
+                : "Amenities"
+              : securityDesk
+                ? pathname.endsWith("/gate")
+                  ? "Gate desk"
+                  : "Visitors"
+                : "Security & passes"
+          }
+          description={
+            securityDesk
+              ? pathname.endsWith("/gate")
+                ? "Review pass states and record authorized entry or exit. A complete gate-event feed is not connected."
+                : "Visitor, gate and delivery passes. Dates and times use Philippine time."
+              : inlineBooking
+                ? "Choose an amenity, date and time. Office approval is required."
+                : "Dates and times use Philippine time."
+          }
+        />
+        {!office && data?.kind === "visitor" && !data.lots.length && (
+          <section className={`${schedule.panel} ${schedule.preflight}`}>
+            <span className={schedule.preflightIcon}>
+              <House size={24} aria-hidden="true" />
+            </span>
+            <h2>Link your lot to create passes</h2>
+            <p>
+              The office needs to confirm your household before you can request
+              a visitor, gate or delivery pass.
+            </p>
+            <Link className="text-link" to="/more/lots">
+              Request a lot link
+            </Link>
+          </section>
+        )}
+        <div className={styles.actions}>
+          {canCreate && !inlineBooking && (
+            <Button
+              onClick={() => {
+                mutation.reset();
+                setValidation(null);
+                setFacility(
+                  eligibleFacilities.length === 1
+                    ? eligibleFacilities[0].id
+                    : "",
+                );
+                setDate("");
+                setStartTime("");
+                setEndTime("");
+                setClientId(crypto.randomUUID());
+                setForm(true);
+              }}
+            >
+              New {kind === "booking" ? "booking" : "pass"}
+            </Button>
+          )}
+          {data?.kind === "booking" && data.can_manage && (
+            <Button
+              secondary
+              onClick={() => {
+                mutation.reset();
+                setConfigure(true);
+              }}
+            >
+              Configure amenity
+            </Button>
+          )}
+        </div>
+        {notice && (
+          <p className={schedule.summary} role="status">
+            {notice}
+          </p>
+        )}
+        {composer}
+        {form && bookingReview && (
+          <Sheet
+            title="Review price & booking"
+            busy={mutation.isPending}
+            onClose={() => setBookingReview(null)}
+            footer={
+              <div data-sheet-actions>
+                <Button
+                  type="button"
+                  secondary
+                  disabled={mutation.isPending}
+                  onClick={() => setBookingReview(null)}
+                >
+                  Back to edit
+                </Button>
+                <Button
+                  type="submit"
+                  form={composerFormId}
+                  data-confirm-booking="true"
+                  pending={mutation.isPending}
+                  disabled={
+                    !price.isSuccess ||
+                    price.isFetching ||
+                    selectionBusy ||
+                    auth.memberPreview
+                  }
+                >
+                  Request booking
+                </Button>
+              </div>
+            }
+          >
+            <dl className="detail-list">
+              <div>
+                <dt>Amenity</dt>
+                <dd>{bookingReview.facility}</dd>
+              </div>
+              <div>
+                <dt>Schedule</dt>
+                <dd>{bookingReview.when}</dd>
+              </div>
+              <div>
+                <dt>Attendees</dt>
+                <dd>{bookingReview.attendees}</dd>
+              </div>
+              <div>
+                <dt>Purpose</dt>
+                <dd>{bookingReview.purpose}</dd>
+              </div>
+            </dl>
+            <PriceBreakdown price={bookingReview.price} />
+            <AmenityPolicyLink />
+            <p className={styles.formHelp}>
+              Review the price information before sending. This requests a
+              booking; Office approval and final fee confirmation are still
+              required.
+            </p>
+            <Feedback error={validation ?? mutation.error} />
+          </Sheet>
+        )}
+        <Feedback error={validation ?? query.error ?? mutation.error} />
+        {query.isPending ? (
+          <Skeleton />
+        ) : (
+          data && (
+            <>
+              {inlineBooking && !canCreate && (
+                <section className={schedule.panel}>
+                  <h2>Booking unavailable</h2>
                   <p>
-                    {data.facilities.some((f) => f.active)
-                      ? "No amenities are available for your membership. Contact the office if you need access."
-                      : "Booking is not available yet. The office needs to configure approved amenities, hours and capacities."}
+                    {eligibleFacilities.length
+                      ? "Your current account cannot submit amenity bookings. Contact the office for help."
+                      : "No amenities are currently available for your membership."}
                   </p>
-                )}
-                {/* Facility setup is an office action. Sending a resident to a
+                  <Link className="text-link" to="/services/requests">
+                    Contact the office
+                  </Link>
+                </section>
+              )}
+              {data.kind === "booking" && !inlineBooking && (
+                <section className={schedule.panel}>
+                  <h2>Amenities</h2>
+                  {data.facilities.map((f) => (
+                    <article key={f.id} className={styles.card}>
+                      <h3>{f.name}</h3>
+                      <p>
+                        {f.opens.slice(0, 5)}–{f.closes.slice(0, 5)} ·{" "}
+                        {f.slot_minutes}-minute slots · maximum {f.max_minutes}{" "}
+                        minutes · configured booking limit{" "}
+                        {amenityAttendeeLimit(f.name, f.capacity)}
+                      </p>
+                      <p>
+                        {f.renters ? "Homeowners and renters" : "Homeowners"} ·{" "}
+                        {f.active ? "Open for booking" : "Unavailable"}
+                      </p>
+                      <p>Policy: {f.policy_reference}</p>
+                      <AmenityGuidelines name={f.name} />
+                    </article>
+                  ))}
+                  {!eligibleFacilities.length && (
+                    <p>
+                      {data.facilities.some((f) => f.active)
+                        ? "No amenities are available for your membership. Contact the office if you need access."
+                        : "Booking is not available yet. The office needs to configure approved amenities, hours and capacities."}
+                    </p>
+                  )}
+                  {/* Facility setup is an office action. Sending a resident to a
                     page they cannot use is a dead end, so they get the Helpdesk
                     instead — the one route that reaches a person. */}
-                {!eligibleFacilities.length &&
-                  (data.can_manage ? (
-                    <Link className="text-link" to="/office/bookings">
-                      Open amenity setup
-                    </Link>
-                  ) : (
-                    <Link
-                      className="text-link"
-                      to="/services/requests?new=Maintenance"
-                    >
-                      Ask the office about amenity bookings
-                    </Link>
-                  ))}
-              </section>
-            )}
-            <section className={schedule.panel}>
-              <h2>
-                {office
-                  ? "Review queue"
-                  : kind === "booking"
-                    ? "My bookings"
-                    : "My passes"}{" "}
-                · {data.total}
-              </h2>
-              <div className={styles.stack}>
-                {data.rows.map((r) =>
-                  !office ? (
-                    <button
-                      type="button"
-                      key={r.id}
-                      className={styles.recordRow}
-                      onClick={() => {
-                        mutation.reset();
-                        setSelected(r);
-                      }}
-                    >
-                      <span>
-                        <strong>
-                          {"visitor" in r ? r.visitor : r.facility_name}
-                        </strong>
-                        <span>
-                          {"visitor" in r
-                            ? passNames[r.pass_kind ?? "visitor"]
-                            : r.purpose}
-                        </span>
-                        <span>
-                          {display("visitor" in r ? r.valid_from : r.starts_at)}
-                        </span>
-                      </span>
-                      <Badge>
-                        {"effective_status" in r
-                          ? r.effective_status
-                          : r.status}
-                      </Badge>
-                    </button>
-                  ) : (
-                    <article key={r.id} className={styles.card}>
-                      <Badge>
-                        {"effective_status" in r
-                          ? r.effective_status
-                          : r.status}
-                      </Badge>
-                      <h3>{"visitor" in r ? r.visitor : r.facility_name}</h3>
-                      {"visitor" in r && (
-                        <p className="note">
-                          {passNames[r.pass_kind ?? "visitor"]}
-                          {r.pass_kind === "gate"
-                            ? ` / ${r.direction === "outbound" ? "Outbound" : "Inbound"}`
-                            : ""}{" "}
-                          ·{" "}
-                          {r.arrival_mode === "vehicle"
-                            ? "With vehicle"
-                            : "Commuting / on foot"}
-                        </p>
-                      )}
-                      <p>{r.purpose}</p>
-                      {"visitor" in r ? (
-                        <p>
-                          Lot {r.physical_id} ·{" "}
-                          {r.plate || "No vehicle plate supplied"}
-                          <br />
-                          {display(r.valid_from)} – {display(r.valid_until)}
-                        </p>
-                      ) : (
-                        <p>
-                          {display(r.starts_at)} – {display(r.ends_at)} ·{" "}
-                          {r.attendees} attendees
-                        </p>
-                      )}
-                      <Button
-                        secondary
-                        onClick={() => {
-                          mutation.reset();
-                          setSelected(r);
-                        }}
+                  {!eligibleFacilities.length &&
+                    (data.can_manage ? (
+                      <Link className="text-link" to="/office/bookings">
+                        Open amenity setup
+                      </Link>
+                    ) : (
+                      <Link
+                        className="text-link"
+                        to="/services/requests?new=Maintenance"
                       >
-                        View actions
-                      </Button>
-                    </article>
-                  ),
-                )}
-              </div>
-              {!data.rows.length &&
-                (inlineBooking ? (
-                  <p className="note">
-                    No bookings yet. Submitted requests will appear here.
-                  </p>
-                ) : (
-                  <Empty
-                    title={
-                      kind === "booking"
-                        ? "No bookings yet"
-                        : office
-                          ? "No passes waiting for review"
-                          : "No visitor passes yet"
-                    }
-                  >
-                    {office
-                      ? "New submissions will appear here when they need your review."
-                      : kind === "booking"
-                        ? "Book an amenity and the office will confirm it."
-                        : "Request a pass for a guest, delivery or gate movement."}
-                  </Empty>
-                ))}
-              {data.total > 20 && (
-                <div className={styles.actions}>
-                  <Button
-                    secondary
-                    disabled={!page}
-                    onClick={() => setPage(page - 1)}
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    secondary
-                    disabled={(page + 1) * 20 >= data.total}
-                    onClick={() => setPage(page + 1)}
-                  >
-                    Next
-                  </Button>
-                </div>
+                        Ask the office about amenity bookings
+                      </Link>
+                    ))}
+                </section>
               )}
-            </section>
-          </>
-        )
+              <section className={schedule.panel}>
+                {securityDesk && data.kind === "visitor" && (
+                  <>
+                    <div className={styles.toolbar}>
+                      <label>
+                        Search this page
+                        <input
+                          type="search"
+                          value={securitySearch}
+                          maxLength={100}
+                          placeholder="Visitor, lot or plate"
+                          onChange={(e) => setSecuritySearch(e.target.value)}
+                        />
+                      </label>
+                      <div
+                        className={styles.securityFilters}
+                        role="group"
+                        aria-label="Pass status on this page"
+                      >
+                        {["", "Approved", "Entered", "Exited"].map((value) => (
+                          <button
+                            type="button"
+                            key={value}
+                            aria-pressed={securityStatus === value}
+                            onClick={() => setSecurityStatus(value)}
+                          >
+                            {value || "All"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <p className="note">
+                      Search and status filter the loaded page only. Approved
+                      does not mean the visitor has arrived. Expired passes
+                      cannot authorize entry.
+                    </p>
+                    {!data.rows.some(
+                      (r) =>
+                        (!securityStatus ||
+                          r.effective_status === securityStatus) &&
+                        `${r.visitor} ${r.physical_id} ${r.plate}`
+                          .toLowerCase()
+                          .includes(securitySearch.trim().toLowerCase()),
+                    ) && (
+                      <p role="status" className="note">
+                        No matching passes on this page. Clear the filters or
+                        try another page.
+                      </p>
+                    )}
+                    <div
+                      className={styles.securityTable}
+                      role="region"
+                      aria-label="Pass records on this page"
+                      tabIndex={0}
+                    >
+                      <table>
+                        <thead>
+                          <tr>
+                            <th scope="col">Visitor / pass</th>
+                            <th scope="col">Host lot</th>
+                            <th scope="col">Valid</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {data.rows
+                            .filter(
+                              (r) =>
+                                (!securityStatus ||
+                                  r.effective_status === securityStatus) &&
+                                `${r.visitor} ${r.physical_id} ${r.plate}`
+                                  .toLowerCase()
+                                  .includes(
+                                    securitySearch.trim().toLowerCase(),
+                                  ),
+                            )
+                            .map((r) => (
+                              <tr key={r.id}>
+                                <td>
+                                  <strong>{r.visitor}</strong>
+                                  <small>
+                                    {passNames[r.pass_kind ?? "visitor"]}
+                                  </small>
+                                </td>
+                                <td>{r.physical_id}</td>
+                                <td>
+                                  {display(r.valid_from)} –{" "}
+                                  {display(r.valid_until)}
+                                </td>
+                                <td>
+                                  <Badge
+                                    tone={
+                                      r.effective_status === "Entered"
+                                        ? "green"
+                                        : r.effective_status === "Expired"
+                                          ? "red"
+                                          : "neutral"
+                                    }
+                                  >
+                                    {r.effective_status}
+                                  </Badge>
+                                </td>
+                                <td>
+                                  <Button
+                                    secondary
+                                    onClick={() => {
+                                      mutation.reset();
+                                      setSelected(r);
+                                    }}
+                                  >
+                                    Open
+                                  </Button>
+                                </td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
+                <h2>
+                  {securityDesk
+                    ? "Pass records"
+                    : office
+                      ? "Review queue"
+                      : kind === "booking"
+                        ? "My bookings"
+                        : "My passes"}{" "}
+                  · {data.total}
+                </h2>
+                <div
+                  className={`${styles.stack} ${securityDesk ? styles.securityPassCards : ""}`}
+                >
+                  {data.rows
+                    .filter(
+                      (r) =>
+                        !securityDesk ||
+                        !("visitor" in r) ||
+                        ((!securityStatus ||
+                          r.effective_status === securityStatus) &&
+                          `${r.visitor} ${r.physical_id} ${r.plate}`
+                            .toLowerCase()
+                            .includes(securitySearch.trim().toLowerCase())),
+                    )
+                    .map((r) =>
+                      !office ? (
+                        <button
+                          type="button"
+                          key={r.id}
+                          className={styles.recordRow}
+                          onClick={() => {
+                            mutation.reset();
+                            setSelected(r);
+                          }}
+                        >
+                          <span>
+                            <strong>
+                              {"visitor" in r ? r.visitor : r.facility_name}
+                            </strong>
+                            <span>
+                              {"visitor" in r
+                                ? passNames[r.pass_kind ?? "visitor"]
+                                : r.purpose}
+                            </span>
+                            <span>
+                              {display(
+                                "visitor" in r ? r.valid_from : r.starts_at,
+                              )}
+                            </span>
+                          </span>
+                          <Badge>
+                            {"effective_status" in r
+                              ? r.effective_status
+                              : r.status}
+                          </Badge>
+                        </button>
+                      ) : (
+                        <article key={r.id} className={styles.card}>
+                          <Badge>
+                            {"effective_status" in r
+                              ? r.effective_status
+                              : r.status}
+                          </Badge>
+                          <h3>
+                            {"visitor" in r ? r.visitor : r.facility_name}
+                          </h3>
+                          {"visitor" in r && (
+                            <p className="note">
+                              {passNames[r.pass_kind ?? "visitor"]}
+                              {r.pass_kind === "gate"
+                                ? ` / ${r.direction === "outbound" ? "Outbound" : "Inbound"}`
+                                : ""}{" "}
+                              ·{" "}
+                              {r.arrival_mode === "vehicle"
+                                ? "With vehicle"
+                                : "Commuting / on foot"}
+                            </p>
+                          )}
+                          <p>{r.purpose}</p>
+                          {"visitor" in r ? (
+                            <p>
+                              Lot {r.physical_id} ·{" "}
+                              {r.plate || "No vehicle plate supplied"}
+                              <br />
+                              {display(r.valid_from)} – {display(r.valid_until)}
+                            </p>
+                          ) : (
+                            <p>
+                              {display(r.starts_at)} – {display(r.ends_at)} ·{" "}
+                              {r.attendees} attendees
+                            </p>
+                          )}
+                          <Button
+                            secondary
+                            onClick={() => {
+                              mutation.reset();
+                              setSelected(r);
+                            }}
+                          >
+                            View actions
+                          </Button>
+                        </article>
+                      ),
+                    )}
+                </div>
+                {!data.rows.length &&
+                  (inlineBooking ? (
+                    <p className="note">
+                      No bookings yet. Submitted requests will appear here.
+                    </p>
+                  ) : (
+                    <Empty
+                      title={
+                        kind === "booking"
+                          ? "No bookings yet"
+                          : office
+                            ? "No passes waiting for review"
+                            : "No visitor passes yet"
+                      }
+                    >
+                      {office
+                        ? "New submissions will appear here when they need your review."
+                        : kind === "booking"
+                          ? "Book an amenity and the office will confirm it."
+                          : "Request a pass for a guest, delivery or gate movement."}
+                    </Empty>
+                  ))}
+                {data.total > 20 && (
+                  <div className={styles.actions}>
+                    <Button
+                      secondary
+                      disabled={!page}
+                      onClick={() => setPage(page - 1)}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      secondary
+                      disabled={(page + 1) * 20 >= data.total}
+                      onClick={() => setPage(page + 1)}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                )}
+              </section>
+            </>
+          )
+        )}
+      </div>
+      {reviewSurface?.recordId && query.isPending && <Skeleton />}
+      {reviewSurface?.recordId && query.error && (
+        <Feedback error={query.error} />
+      )}
+      {reviewSurface?.recordId && query.isSuccess && !selected && (
+        <p role="status">
+          This submission has changed or is no longer pending. Select another
+          item.
+        </p>
       )}
       {selected && data && (
-        <Modal
+        <ReviewDetailFrame
           title={kind === "visitor" ? "Pass details" : "Booking details"}
           presentation={office ? "sheet" : "task"}
-          busy={mutation.isPending}
+          busy={mutation.isPending || feeBusy}
           onClose={closeDetails}
         >
           <form
+            id={decisionFormId}
             className={styles.form}
             onSubmit={(e) => {
               e.preventDefault();
@@ -1017,7 +1500,10 @@ export default function OperationsDesk({
                   args: {
                     p_id: selected.id,
                     p_version: selected.version,
-                    p_status: f.get("status"),
+                    p_status:
+                      (e.nativeEvent as SubmitEvent).submitter?.getAttribute(
+                        "value",
+                      ) || f.get("status"),
                     p_note: f.get("note"),
                   },
                 },
@@ -1030,62 +1516,149 @@ export default function OperationsDesk({
               );
             }}
           >
-            <Badge>{selected.status}</Badge>
-            <h3>
-              {"visitor" in selected
-                ? selected.visitor
-                : selected.facility_name}
-            </h3>
-            <p>{selected.purpose}</p>
-            {kind === "booking" && (
-              <BookingCharge id={selected.id} office={office} />
-            )}
-            <p>
-              {display(
-                "visitor" in selected
-                  ? selected.valid_from
-                  : selected.starts_at,
-              )}{" "}
-              ?{" "}
-              {display(
-                "visitor" in selected ? selected.valid_until : selected.ends_at,
-              )}
-            </p>
-            {"visitor" in selected && (
+            {reviewSurface ? (
               <dl className="detail-list">
-                <div>
-                  <dt>Pass type</dt>
-                  <dd>{passNames[selected.pass_kind ?? "visitor"]}</dd>
-                </div>
-                <div>
-                  <dt>Name</dt>
-                  <dd>{selected.visitor}</dd>
-                </div>
+                {"visitor" in selected && (
+                  <>
+                    <div>
+                      <dt>Pass type</dt>
+                      <dd>{passNames[selected.pass_kind ?? "visitor"]}</dd>
+                    </div>
+                    <div>
+                      <dt>Household</dt>
+                      <dd>{selected.physical_id}</dd>
+                    </div>
+                  </>
+                )}
                 <div>
                   <dt>Purpose</dt>
                   <dd>{selected.purpose}</dd>
                 </div>
                 <div>
-                  <dt>Arrival</dt>
+                  <dt>{kind === "visitor" ? "Pass starts" : "Starts"}</dt>
                   <dd>
-                    {selected.arrival_mode === "vehicle"
-                      ? selected.plate
-                      : "Commuting / on foot"}
+                    {display(
+                      "visitor" in selected
+                        ? selected.valid_from
+                        : selected.starts_at,
+                    )}
                   </dd>
                 </div>
-                {selected.pass_kind === "gate" && (
+                <div>
+                  <dt>{kind === "visitor" ? "Pass ends" : "Ends"}</dt>
+                  <dd>
+                    {display(
+                      "visitor" in selected
+                        ? selected.valid_until
+                        : selected.ends_at,
+                    )}
+                  </dd>
+                </div>
+                {"visitor" in selected ? (
                   <>
                     <div>
-                      <dt>Movement</dt>
-                      <dd>{selected.direction}</dd>
+                      <dt>Arrival</dt>
+                      <dd>
+                        {selected.arrival_mode === "vehicle"
+                          ? selected.plate
+                          : "Commuting / on foot"}
+                      </dd>
                     </div>
-                    <div>
-                      <dt>Items</dt>
-                      <dd>{selected.items}</dd>
-                    </div>
+                    {selected.party_count !== undefined && (
+                      <div>
+                        <dt>People</dt>
+                        <dd>{selected.party_count}</dd>
+                      </div>
+                    )}
+                    {selected.pass_kind === "gate" && (
+                      <>
+                        <div>
+                          <dt>Movement</dt>
+                          <dd>{selected.direction}</dd>
+                        </div>
+                        <div>
+                          <dt>Items</dt>
+                          <dd>{selected.items}</dd>
+                        </div>
+                      </>
+                    )}
                   </>
+                ) : (
+                  <div>
+                    <dt>Attendees</dt>
+                    <dd>{selected.attendees}</dd>
+                  </div>
                 )}
               </dl>
+            ) : (
+              <>
+                <Badge>{selected.status}</Badge>
+                <h3>
+                  {"visitor" in selected
+                    ? selected.visitor
+                    : selected.facility_name}
+                </h3>
+                <p>{selected.purpose}</p>
+                <p>
+                  {display(
+                    "visitor" in selected
+                      ? selected.valid_from
+                      : selected.starts_at,
+                  )}{" "}
+                  –{" "}
+                  {display(
+                    "visitor" in selected
+                      ? selected.valid_until
+                      : selected.ends_at,
+                  )}
+                </p>
+                {"visitor" in selected && (
+                  <dl className="detail-list">
+                    <div>
+                      <dt>Pass type</dt>
+                      <dd>{passNames[selected.pass_kind ?? "visitor"]}</dd>
+                    </div>
+                    <div>
+                      <dt>Name</dt>
+                      <dd>{selected.visitor}</dd>
+                    </div>
+                    <div>
+                      <dt>Purpose</dt>
+                      <dd>{selected.purpose}</dd>
+                    </div>
+                    <div>
+                      <dt>Arrival</dt>
+                      <dd>
+                        {selected.arrival_mode === "vehicle"
+                          ? selected.plate
+                          : "Commuting / on foot"}
+                      </dd>
+                    </div>
+                    {selected.pass_kind === "gate" && (
+                      <>
+                        <div>
+                          <dt>Movement</dt>
+                          <dd>{selected.direction}</dd>
+                        </div>
+                        <div>
+                          <dt>Items</dt>
+                          <dd>{selected.items}</dd>
+                        </div>
+                      </>
+                    )}
+                  </dl>
+                )}
+              </>
+            )}
+            {kind === "booking" && (
+              <>
+                <BookingPrice id={selected.id} />
+                <BookingCharge
+                  id={selected.id}
+                  office={office}
+                  status={selected.status}
+                />
+              </>
             )}
             {kind === "visitor" && (
               <p className="note">Expired passes cannot authorize entry.</p>
@@ -1100,52 +1673,134 @@ export default function OperationsDesk({
                 data.can_gate &&
                 ["Approved", "Entered"].includes(selected.status))) && (
               <>
-                <label>
-                  Action
-                  <select required name="status">
-                    <option value="">Choose</option>
-                    {!office &&
-                      ["Pending", "Approved"].includes(selected.status) && (
-                        <option>Cancelled</option>
+                {!(
+                  (reviewSurface || (office && kind === "booking")) &&
+                  data.can_approve &&
+                  selected.status === "Pending"
+                ) && (
+                  <label>
+                    Action
+                    <select required name="status">
+                      <option value="">Choose</option>
+                      {!office &&
+                        ["Pending", "Approved"].includes(selected.status) && (
+                          <option>Cancelled</option>
+                        )}
+                      {data.can_approve && selected.status === "Pending" && (
+                        <>
+                          {kind !== "booking" && <option>Approved</option>}
+                          <option>Rejected</option>
+                        </>
                       )}
-                    {data.can_approve && selected.status === "Pending" && (
-                      <>
-                        <option>Approved</option>
-                        <option>Rejected</option>
-                      </>
-                    )}
-                    {data.kind === "visitor" &&
-                      data.can_gate &&
-                      selected.status === "Approved" && (
-                        <option>
-                          {"visitor" in selected &&
-                          selected.direction === "outbound"
-                            ? "Exited"
-                            : "Entered"}
-                        </option>
-                      )}
-                    {data.kind === "visitor" &&
-                      data.can_gate &&
-                      selected.status === "Entered" && <option>Exited</option>}
-                  </select>
-                </label>
+                      {data.kind === "visitor" &&
+                        data.can_gate &&
+                        selected.status === "Approved" && (
+                          <option>
+                            {"visitor" in selected &&
+                            selected.direction === "outbound"
+                              ? "Exited"
+                              : "Entered"}
+                          </option>
+                        )}
+                      {data.kind === "visitor" &&
+                        data.can_gate &&
+                        selected.status === "Entered" && (
+                          <option>Exited</option>
+                        )}
+                    </select>
+                  </label>
+                )}
                 <label>
-                  {office ? "Reason / gate note" : "Reason for cancellation"}
+                  {office
+                    ? kind === "booking"
+                      ? "Reason for rejection"
+                      : "Decision / gate note"
+                    : "Reason for cancellation"}
                   <textarea
+                    rows={2}
                     name="note"
+                    placeholder={
+                      office && kind === "booking"
+                        ? "Required only if you reject this booking"
+                        : undefined
+                    }
                     required
                     minLength={5}
                     maxLength={500}
                   />
                 </label>
                 <Feedback error={mutation.error} />
-                <Button type="submit" pending={mutation.isPending}>
-                  Confirm action
-                </Button>
+                {office &&
+                kind === "booking" &&
+                data.can_approve &&
+                selected.status === "Pending" ? null : reviewSurface &&
+                  data.can_approve &&
+                  selected.status === "Pending" ? (
+                  <div className="btn-row">
+                    {kind !== "booking" && (
+                      <Button
+                        type="submit"
+                        name="status"
+                        value="Approved"
+                        pending={mutation.isPending || feeBusy}
+                      >
+                        Approve
+                      </Button>
+                    )}
+                    <Button
+                      secondary
+                      type="submit"
+                      name="status"
+                      value="Rejected"
+                      disabled={mutation.isPending || feeBusy}
+                    >
+                      Reject
+                    </Button>
+                  </div>
+                ) : (
+                  <Button type="submit" pending={mutation.isPending || feeBusy}>
+                    {office &&
+                    kind === "booking" &&
+                    selected.status === "Pending"
+                      ? "Reject booking"
+                      : "Confirm action"}
+                  </Button>
+                )}
               </>
             )}
           </form>
-        </Modal>
+          {kind === "booking" &&
+            office &&
+            data.can_approve &&
+            ["Pending", "Approved"].includes(selected.status) && (
+              <BookingFeeApproval
+                id={selected.id}
+                version={selected.version}
+                onBusyChange={setFeeBusy}
+                disabled={mutation.isPending}
+                rejectAction={
+                  selected.status === "Pending" ? (
+                    <Button
+                      secondary
+                      type="submit"
+                      form={decisionFormId}
+                      name="status"
+                      value="Rejected"
+                      disabled={mutation.isPending || feeBusy}
+                    >
+                      Reject
+                    </Button>
+                  ) : undefined
+                }
+                onSaved={() => {
+                  closeDetails();
+                  setNotice(
+                    "Booking approved and confirmed fee added to the account.",
+                  );
+                }}
+              />
+            )}
+        </ReviewDetailFrame>
       )}
       {configure && (
         <Modal

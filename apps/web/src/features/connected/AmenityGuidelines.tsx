@@ -4,6 +4,7 @@ import {
   amenityGuidelineDate,
   generalAmenityRestrictions,
 } from "../../../../../packages/shared/src/amenity-guidelines";
+import AmenityPolicyLink from "./AmenityPolicyLink";
 
 export default function AmenityGuidelines({ name }: { name: string }) {
   const key = amenityKey(name);
@@ -12,6 +13,7 @@ export default function AmenityGuidelines({ name }: { name: string }) {
   return (
     <details>
       <summary>{guide.name} hours, rates & rules</summary>
+      <AmenityPolicyLink />
       <p>
         Guideline dated {amenityGuidelineDate}. Office confirms availability and
         charges; this is not a payment confirmation.

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import styles from "./DeveloperSearch.module.css";
@@ -6,6 +6,21 @@ import styles from "./DeveloperSearch.module.css";
 export default function DeveloperSearch() {
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
+  const input = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const focusSearch = (event: KeyboardEvent) => {
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        event.key.toLowerCase() === "k" &&
+        !document.querySelector("dialog[open]")
+      ) {
+        event.preventDefault();
+        input.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", focusSearch);
+    return () => window.removeEventListener("keydown", focusSearch);
+  }, []);
   function submit(event: FormEvent) {
     event.preventDefault();
     navigate(
@@ -20,13 +35,14 @@ export default function DeveloperSearch() {
       </label>
       <input
         id="developer-module-search"
+        ref={input}
         value={search}
         onChange={(event) => setSearch(event.target.value)}
-        placeholder="Find people, finance, security modules…"
+        placeholder="Search"
         maxLength={100}
       />
       <button type="submit" aria-label="Search system modules">
-        Search
+        <kbd title="Control or Command + K">⌘/Ctrl K</kbd>
       </button>
     </form>
   );

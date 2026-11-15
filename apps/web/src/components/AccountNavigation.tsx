@@ -2,6 +2,7 @@ import {
   Building2,
   CalendarDays,
   House,
+  UsersRound,
   LayoutDashboard,
   MoreHorizontal,
   Newspaper,
@@ -102,8 +103,8 @@ export const areaNavigation: Record<
       },
       {
         to: "/office/community",
-        label: "Community",
-        mobile: "Publish",
+        label: "Announcements",
+        mobile: "Announcements",
         icon: Newspaper,
       },
       {
@@ -132,7 +133,7 @@ export const areaNavigation: Record<
         mobile: "Vote",
         icon: ShieldCheck,
       },
-      { to: "/board/updates", label: "Updates", icon: Newspaper },
+      { to: "/board/updates", label: "Announcements", icon: Newspaper },
       { to: "/board/reports", label: "Reports", icon: Wallet },
       { to: "/board/shuttle", label: "Shuttle review", icon: CarFront },
     ],
@@ -140,7 +141,8 @@ export const areaNavigation: Record<
   security: {
     title: "Security",
     links: [
-      { to: "/security", label: "Visitors", icon: House },
+      { to: "/security", label: "Overview", icon: House },
+      { to: "/security/visitors", label: "Visitors", icon: UsersRound },
       { to: "/security/vehicles", label: "Vehicles", icon: CarFront },
       { to: "/security/incidents", label: "Incidents", icon: ShieldCheck },
       {
@@ -155,7 +157,7 @@ export const areaNavigation: Record<
     title: "Transport",
     links: [
       { to: "/driver", label: "Shuttle", icon: House },
-      { to: "/more/profile", label: "Profile", icon: Settings2 },
+      { to: "/driver/profile", label: "Profile", icon: Settings2 },
     ],
   },
 };

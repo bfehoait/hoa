@@ -157,7 +157,13 @@ Deno.serve(async (request: Request) => {
               : "Account creation could not be verified. Check the setup before trying again.",
       });
     if (check.error) return fail(check.error.code);
-    if (check.data?.created) return reply(200, { created: true });
+    if (check.data?.created && check.data?.member_linked === true)
+      return reply(200, { created: true, member_linked: true });
+    if (check.data?.created)
+      return reply(503, {
+        message:
+          "Account connection could not be verified. Ask the system owner to check the account setup.",
+      });
     const { data, error } = await admin.auth.admin.createUser({
       email: input.email,
       password: input.password,
@@ -178,8 +184,12 @@ Deno.serve(async (request: Request) => {
     // A response may be lost after a commit or race with a repeated request.
     // Never reset a password or overwrite an account to make a retry succeed.
     const confirmed = await preflight();
-    if (!confirmed.error && confirmed.data?.created)
-      return reply(200, { created: true });
+    if (
+      !confirmed.error &&
+      confirmed.data?.created &&
+      confirmed.data?.member_linked === true
+    )
+      return reply(200, { created: true, member_linked: true });
     if (error)
       return reply(error.code === "email_exists" ? 409 : 400, {
         message:

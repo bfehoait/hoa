@@ -125,7 +125,10 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,svg,woff2}"],
+        globPatterns: [
+          "**/*.{js,mjs,css,html,svg,woff2}",
+          "documents/bfe-amenities-guidelines-2025-10-21.pdf",
+        ],
         navigateFallbackDenylist: [/^\/api/, /^\/auth/],
         runtimeCaching: [],
         cleanupOutdatedCaches: true,

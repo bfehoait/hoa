@@ -1,4 +1,5 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useState } from "react";
+import LoadingImage, { ImageSkeleton } from "../../components/LoadingImage";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { ImagePlus, Image as ImageIcon, ExternalLink } from "lucide-react";
@@ -28,41 +29,14 @@ function SignedCoverImage({
   alt: string;
   preload: boolean;
 }) {
-  const ref = useRef<HTMLImageElement>(null);
-  const [failedUrl, setFailedUrl] = useState<string | null>(null);
-  // The image resource is assigned only after checking its lifetime. An old
-  // inactive slide can otherwise start loading an expired URL on reactivation.
-  useLayoutEffect(() => {
-    const image = ref.current;
-    if (!image) return;
-    if (!(expiresAt > Date.now())) {
-      image.hidden = true;
-      image.style.visibility = "hidden";
-      image.removeAttribute("src");
-      return;
-    }
-    image.hidden = false;
-    image.style.visibility = "visible";
-    if (image.getAttribute("src") !== url) image.src = url;
-  }, [url, expiresAt]);
-  if (failedUrl === url)
-    return (
-      <div
-        className={styles.placeholder}
-        role="img"
-        aria-label="Photo unavailable"
-      >
-        <ImageIcon size={32} aria-hidden="true" />
-      </div>
-    );
   return (
-    <img
-      ref={ref}
+    <LoadingImage
+      src={url}
+      validUntil={expiresAt}
       className={className}
       alt={alt}
       loading={preload ? "eager" : "lazy"}
       decoding="async"
-      onError={() => setFailedUrl(url)}
     />
   );
 }
@@ -336,22 +310,13 @@ export default function ListingMedia({
   });
   if (!active) return null;
   if (query.isPending)
-    if (coverOnly)
-      return (
-        <div
-          className={styles.placeholder}
-          role="img"
-          aria-label="Loading photo"
-        >
-          <ImageIcon size={32} aria-hidden="true" />
-        </div>
-      );
-    else
-      return (
-        <p className={styles.note}>
-          {announcement ? "Loading image..." : "Loading photo and links…"}
-        </p>
-      );
+    return (
+      <section className={styles.media} aria-label="Image loading">
+        <ImageSkeleton
+          className={coverOnly ? styles.cardCover : styles.cover}
+        />
+      </section>
+    );
   if (
     coverOnly &&
     announcement &&
@@ -371,6 +336,15 @@ export default function ListingMedia({
       <Feedback error={query.error} />
     );
   if (coverOnly && hideEmpty && !query.data?.url) return null;
+  // Reviews still show upload failures and publication links, but an absent
+  // optional photo must not reserve an empty block in the detail panel.
+  if (
+    hideEmpty &&
+    !editable &&
+    !query.data?.cover_path &&
+    !query.data?.links.length
+  )
+    return null;
   if (coverOnly && !query.data?.url)
     return (
       <div

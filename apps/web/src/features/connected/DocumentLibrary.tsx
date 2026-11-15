@@ -1,14 +1,13 @@
+import PageIntro from "../office/OfficePage";
+import { useLocation } from "react-router-dom";
+import { Folder } from "lucide-react";
+import boardStyles from "../workspaces/Board.module.css";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { useAuth } from "../../data/auth";
 import { featureRpc } from "../../data/feature-records";
-import {
-  Button,
-  Feedback,
-  PageIntro,
-  Skeleton,
-} from "../../components/UI";
+import { Button, Feedback, Skeleton } from "../../components/UI";
 import Sheet from "../../components/Sheet";
 import DocumentAttachment from "./DocumentAttachment";
 import styles from "./LiveFeature.module.css";
@@ -26,6 +25,7 @@ const schema = z.object({
   total: z.number(),
 });
 export default function DocumentLibrary() {
+  const board = useLocation().pathname.startsWith("/board/");
   const auth = useAuth(),
     [search, setSearch] = useState(""),
     [category, setCategory] = useState(""),
@@ -50,7 +50,7 @@ export default function DocumentLibrary() {
     <>
       <PageIntro
         eyebrow="YOUR COMMUNITY"
-        title="Community documents"
+        title={board ? "Documents" : "Community documents"}
         description="Approved HOA policies, resolutions, minutes and disclosures."
       />
       <div className={styles.toolbar}>
@@ -97,9 +97,15 @@ export default function DocumentLibrary() {
         </>
       ) : (
         <>
-          <div className={styles.stack}>
+          {board && (
+            <p className="note">{query.data.total} published documents</p>
+          )}
+          <div className={board ? boardStyles.grid : styles.stack}>
             {query.data.rows.map((row) => (
-              <article key={row.id} className={styles.card}>
+              <article
+                key={row.id}
+                className={board ? boardStyles.card : styles.card}
+              >
                 <p className="note">
                   {row.category ?? "Document"}
                   {row.version ? ` / Version ${row.version}` : ""} ·{" "}
@@ -107,7 +113,9 @@ export default function DocumentLibrary() {
                     timeZone: "Asia/Manila",
                   })}
                 </p>
-                <h2>{row.title}</h2>
+                <h2>
+                  {board && <Folder size={22} aria-hidden="true" />} {row.title}
+                </h2>
                 <p>{row.summary}</p>
                 <Button secondary onClick={() => setSelected(row.id)}>
                   View document

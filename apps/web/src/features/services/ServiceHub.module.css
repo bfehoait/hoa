@@ -3,8 +3,8 @@
 }
 .section > h2 {
   margin-bottom: 16px;
-  font-size: var(--section-heading-size);
-  font-weight: 600;
+  font-size: var(--staff-section-heading-size, var(--section-heading-size));
+  font-weight: var(--staff-heading-weight, 600);
 }
 .activity {
   padding: 0 16px;

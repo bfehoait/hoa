@@ -48,11 +48,11 @@
   min-width: 0;
 }
 .metrics h2 {
-  font-size: 14px;
+  font-size: var(--staff-card-heading-size, 14px);
   color: var(--muted);
 }
 .metrics strong {
-  font-size: 28px;
+  font-size: var(--staff-kpi-size, 28px);
   display: block;
   margin: 12px 0;
   font-variant-numeric: tabular-nums;
@@ -65,7 +65,7 @@
   margin: 24px 0;
 }
 .chart h2 {
-  font-size: var(--section-heading-size);
+  font-size: var(--staff-section-heading-size, var(--section-heading-size));
 }
 .month {
   display: grid;
@@ -129,7 +129,7 @@
   border-bottom: 1px solid var(--line);
 }
 .table tfoot {
-  font-weight: 700;
+  font-weight: var(--staff-emphasis-weight, 700);
   background: var(--wash);
 }
 @media (max-width: 700px) {
@@ -165,7 +165,7 @@
   align-content: center;
   cursor: pointer;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: var(--staff-emphasis-weight, 700);
 }
 
 .tabs {
@@ -184,7 +184,7 @@
   color: var(--muted);
   text-decoration: none;
   font-size: 14px;
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
   background: var(--surface);
 }
 .tabs [aria-current="page"] {
@@ -301,5 +301,46 @@
   }
   .source {
     margin-block: 16px;
+  }
+}
+
+:global([data-staff-ui="true"]) .chart {
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+:global([data-staff-ui="true"]) .tabs {
+  padding: 5px;
+  background: var(--wash);
+  border-radius: 14px;
+  gap: 5px;
+}
+:global([data-staff-ui="true"]) .tabs a {
+  border-radius: 10px;
+  min-height: 48px;
+}
+
+/* Compact desktop filters: one control band, without a second card shell. */
+@media (min-width: 768px) {
+  :global([data-staff-ui="true"]) .filters {
+    position: static;
+    padding: 0;
+    margin-block: 12px;
+    gap: 10px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    align-items: end;
+  }
+  :global([data-staff-ui="true"]) .filters > label {
+    flex: 0 1 280px;
+    min-width: min(180px, 100%);
+    gap: 4px;
+    font-size: 14px;
+  }
+  :global([data-staff-ui="true"]) .filters :is(input, select) {
+    min-height: 48px;
+    padding-block: 10px;
+    font-size: 16px;
   }
 }

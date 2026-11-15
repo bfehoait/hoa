@@ -2,56 +2,56 @@ export const financeReports = [
   {
     id: "collections",
     title: "Recorded collections",
-    needs: "Imported receipt dates, amounts and physical lot links.",
+    needs: "Past receipts with payment dates, amounts and matching properties.",
     available: true,
   },
   {
     id: "balance-sheet",
     title: "Balance Sheet",
     needs:
-      "Approved opening balances and a balanced ledger of assets, liabilities and association equity.",
+      "Approved starting balances and complete records of what the association owns, owes and holds in its funds.",
     available: false,
   },
   {
     id: "income-expense",
     title: "Income and Expense Statement",
     needs:
-      "Approved accounting basis, categorized income and expense entries, and period adjustments.",
+      "Approved accounting rules, income and expenses grouped by category, and corrections for the selected dates.",
     available: false,
   },
   {
     id: "budget-actual",
-    title: "Budget vs. Actual Variance Report",
+    title: "Budget compared with actual spending",
     needs:
-      "An approved budget version and actual ledger entries mapped to the same categories and period.",
+      "An approved budget and recorded income and expenses for the same categories and dates.",
     available: false,
   },
   {
     id: "reserves",
     title: "Reserve Fund Report",
     needs:
-      "Verified opening fund balances and classified contributions, transfers and spending.",
+      "Confirmed starting fund balances and records of contributions, transfers and spending.",
     available: false,
   },
   {
     id: "aging",
-    title: "Accounts Receivable Aging",
+    title: "Unpaid bills by age",
     needs:
-      "Approved invoices, due dates, opening receivables, credits and verified payment allocations.",
+      "Approved bills, due dates, starting unpaid balances, credits and confirmed payments applied to those bills.",
     available: false,
   },
   {
     id: "delinquency",
     title: "Delinquency Report",
     needs:
-      "Verified receivables and approved grace-period, dispute and delinquency rules.",
+      "Confirmed unpaid bills and approved rules for late payments, grace periods and disputes.",
     available: false,
   },
   {
     id: "bank",
     title: "Bank Reconciliation Report",
     needs:
-      "Authorized bank statements, ledger cash entries and independently verified matches and adjustments.",
+      "Bank statements and cash records, with payments and corrections checked against each other by a separate reviewer.",
     available: false,
   },
 ] as const;

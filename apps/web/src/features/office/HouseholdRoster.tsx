@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { Plus } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { Button, Feedback, Skeleton } from "../../components/UI";
+import { Button, DialogSection, Feedback, Skeleton } from "../../components/UI";
 import { useAuth } from "../../data/auth";
 import { featureRpc } from "../../data/feature-records";
 import styles from "./MemberWorkspace.module.css";
@@ -83,20 +84,16 @@ export default function HouseholdRoster({
     [onBusy, onEditing],
   );
   return (
-    <section aria-label="Household occupants">
-      <h3>Household occupants</h3>
-      <p className={styles.note}>
-        A roster entry does not create a sign-in account, ownership, property
-        access or receipt access.
-      </p>
+    <DialogSection
+      title="Household occupants"
+      description="Lists who lives here. Adding a person does not create a login or give property or receipt access."
+    >
       <Feedback error={query.error} />
       {query.isPending && <Skeleton />}
       {query.data && (
         <>
           {!query.data.lots.length ? (
-            <p>
-              Link a verified property before maintaining its household roster.
-            </p>
+            <p>Link a property before adding household occupants.</p>
           ) : (
             <>
               {query.data.rows.map((r) => (
@@ -132,7 +129,7 @@ export default function HouseholdRoster({
                     save.reset();
                   }}
                 >
-                  Add occupant
+                  <Plus size={18} aria-hidden="true" /> Add occupant
                 </Button>
               )}
               {editing !== false && (
@@ -255,6 +252,6 @@ export default function HouseholdRoster({
           )}
         </>
       )}
-    </section>
+    </DialogSection>
   );
 }

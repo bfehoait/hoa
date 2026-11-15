@@ -99,7 +99,7 @@
 }
 .metrics strong {
   display: block;
-  font-size: 28px;
+  font-size: var(--staff-kpi-size, 28px);
   margin-block: 8px;
 }
 .metrics span,
@@ -116,7 +116,7 @@
   background: var(--bg);
 }
 .request h3 {
-  font-size: 18px;
+  font-size: var(--staff-card-heading-size, 18px);
 }
 .form {
   display: grid;
@@ -251,7 +251,7 @@
   padding: 20px 0 12px;
 }
 .vehicleDetail h3 {
-  font-size: 18px;
+  font-size: var(--staff-card-heading-size, 18px);
   margin: 0;
 }
 .vehicleDetail p {
@@ -280,7 +280,7 @@
   color: var(--muted);
 }
 .routeSummary h3 {
-  font-size: 18px;
+  font-size: var(--staff-card-heading-size, 18px);
   line-height: 1.5;
   margin: 0;
 }
@@ -393,7 +393,7 @@
   background: var(--brand-strong);
 }
 .tripHeading h2 {
-  font-size: 20px;
+  font-size: var(--staff-section-heading-size, 20px);
   margin: 0;
 }
 .tripHeading > span {
@@ -541,8 +541,8 @@
     gap: 14px 10px;
   }
   .routeSummary h3 {
-    font-size: 16px;
-    font-weight: 650;
+    font-size: var(--staff-card-heading-size, 16px);
+    font-weight: var(--staff-heading-weight, 650);
   }
   .routeSummary > div + span {
     margin-top: 12px;
@@ -605,5 +605,236 @@
   }
   :global([data-customer-ui="true"]) .request .tripTimeline {
     margin-bottom: 12px;
+  }
+}
+
+:global([data-staff-ui="true"]) .toolbar {
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+:global([data-staff-ui="true"]) .metrics > div,
+:global([data-staff-ui="true"]) .grid article {
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+:global([data-staff-ui="true"]) .metrics strong {
+  font-weight: var(--staff-emphasis-weight, 800);
+}
+:global([data-staff-ui="true"]) .unavailable {
+  border-radius: 14px;
+}
+
+.boardTripTable {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  margin: 20px 0;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.boardTripTable table {
+  width: 100%;
+  min-width: 620px;
+}
+.boardTripTable th {
+  padding: 16px 20px;
+  background: var(--wash);
+  font-size: 14px;
+  font-weight: var(--staff-emphasis-weight, 650);
+  text-transform: uppercase;
+}
+.boardTripTable td {
+  padding: 18px 20px;
+}
+.boardTripTable > p {
+  padding: 12px 20px;
+}
+:global([data-board-ui="true"]) .card,
+:global([data-board-ui="true"]) .request {
+  border-radius: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.dispatchSection {
+  margin: 24px 0 28px;
+}
+.dispatchSection > h2 {
+  font-size: var(--staff-section-heading-size, 20px);
+  font-weight: var(--staff-heading-weight, 800);
+  margin: 0 0 16px;
+}
+.dispatchGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: 20px;
+}
+.dispatchCard {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 14px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.dispatchAction {
+  background: linear-gradient(var(--accent-soft), var(--surface));
+}
+.dispatchCard h3 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: var(--staff-card-heading-size, 18px);
+  font-weight: var(--staff-heading-weight, 750);
+  margin: 0;
+}
+.dispatchCard h3 svg {
+  color: var(--accent);
+}
+.dispatchCard p {
+  color: var(--muted);
+  line-height: 1.6;
+  font-size: 14px;
+}
+.dispatchCard a {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  margin-top: auto;
+}
+.dispatchValue {
+  font-size: var(--staff-kpi-size, 42px);
+  font-weight: var(--staff-emphasis-weight, 800);
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.dispatchUnavailable {
+  font-size: 24px;
+  font-weight: var(--staff-emphasis-weight, 700);
+  color: var(--muted);
+}
+:global([data-transport-ui="true"]) .panel,
+:global([data-transport-ui="true"]) .request {
+  border-radius: 20px;
+  box-shadow: var(--shadow-sm);
+}
+:global([data-transport-ui="true"]) .serviceSummary {
+  display: none;
+}
+:global([data-transport-ui="true"]) .vehicleChoices {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: 20px;
+}
+:global([data-transport-ui="true"]) .vehicleChoices button {
+  min-height: 108px;
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  font-size: 18px;
+  font-weight: var(--staff-emphasis-weight, 700);
+}
+:global([data-transport-ui="true"])
+  .vehicleChoices
+  button[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+:global([data-transport-ui="true"]) .vehicleChoices small {
+  font-size: 14px;
+  font-weight: 400;
+}
+:global([data-transport-ui="true"]) .vehicleDetail {
+  padding: 18px;
+  border-radius: 14px;
+  background: var(--wash);
+  margin-top: 16px;
+}
+:global([data-transport-ui="true"]) .navigation {
+  padding: 6px;
+  border-radius: 14px;
+  background: var(--wash);
+}
+:global([data-transport-ui="true"]) .request {
+  padding: 22px;
+}
+@media (max-width: 767px) {
+  .dispatchGrid {
+    gap: 12px;
+  }
+  .dispatchCard {
+    padding: 18px;
+  }
+}
+
+.driverAssignment {
+  max-width: 860px;
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.driverAssignment h2 {
+  font-size: var(--staff-section-heading-size, 20px);
+  font-weight: var(--staff-heading-weight, 750);
+  margin: 0 0 8px;
+}
+.driverAssignment p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+.driverAssignment dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 24px;
+}
+.driverAssignment dt {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.driverAssignment dd {
+  margin: 0;
+  font-size: 16px;
+  font-weight: var(--staff-emphasis-weight, 650);
+  overflow-wrap: anywhere;
+}
+@media (max-width: 599px) {
+  .driverAssignment dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Compact desktop filters: one control band, without a second card shell. */
+@media (min-width: 768px) {
+  :global([data-staff-ui="true"]) .toolbar {
+    position: static;
+    padding: 0;
+    margin-block: 12px;
+    gap: 10px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    align-items: end;
+  }
+  :global([data-staff-ui="true"]) .toolbar > label {
+    flex: 0 1 280px;
+    min-width: min(180px, 100%);
+    gap: 4px;
+    font-size: 14px;
+  }
+  :global([data-staff-ui="true"]) .toolbar :is(input, select) {
+    min-height: 48px;
+    padding-block: 10px;
+    font-size: 16px;
   }
 }

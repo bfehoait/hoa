@@ -24,7 +24,7 @@
   flex-shrink: 0;
 }
 .listing h2 {
-  font-size: var(--section-heading-size);
+  font-size: var(--staff-section-heading-size, var(--section-heading-size));
   margin: 16px 0 12px;
 }
 .listing p {
@@ -52,7 +52,7 @@
 }
 .session h2,
 .election h2 {
-  font-size: 24px;
+  font-size: var(--staff-section-heading-size, 24px);
   margin: 12px 0;
 }
 .session p,
@@ -138,7 +138,7 @@
 .calendar > .hasBooking {
   background: var(--accent-soft);
   color: var(--accent);
-  font-weight: 700;
+  font-weight: var(--staff-emphasis-weight, 700);
 }
 .hasBooking > i {
   width: 4px;
@@ -170,7 +170,7 @@
   }
   .session h2,
   .election h2 {
-    font-size: var(--section-heading-size);
+    font-size: var(--staff-section-heading-size, var(--section-heading-size));
   }
   .session > .listingIcon,
   .lock {
@@ -240,7 +240,7 @@
   place-items: center;
   background: var(--accent-soft);
   color: var(--accent);
-  font-weight: 700;
+  font-weight: var(--staff-emphasis-weight, 700);
 }
 .libraryStatus {
   display: flex;
@@ -262,7 +262,7 @@
   width: 100%;
   margin-top: auto;
   color: var(--accent) !important;
-  font-weight: 700;
+  font-weight: var(--staff-emphasis-weight, 700);
 }
 .controlLabel {
   display: block;
@@ -279,7 +279,7 @@
   padding: 20px;
 }
 .monthPanel h2 {
-  font-size: var(--section-heading-size);
+  font-size: var(--staff-section-heading-size, var(--section-heading-size));
   text-align: center;
 }
 .calendarLegend {
@@ -362,7 +362,7 @@
   border-radius: var(--radius-sm);
   background: var(--accent-soft);
   color: var(--accent);
-  font-weight: 700;
+  font-weight: var(--staff-emphasis-weight, 700);
   text-decoration: none;
   margin-top: 20px;
 }
@@ -403,4 +403,27 @@
   position: absolute;
   bottom: 2px;
   right: 4px;
+}
+
+:global([data-staff-ui="true"]) .cards {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr));
+  gap: 16px;
+}
+:global([data-staff-ui="true"]) .listing,
+:global([data-staff-ui="true"]) .documentCard,
+:global([data-staff-ui="true"]) .session,
+:global([data-staff-ui="true"]) .election,
+:global([data-staff-ui="true"]) .libraryHeader {
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  padding: 22px;
+}
+:global([data-staff-ui="true"]) .listingIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+:global([data-staff-ui="true"]) .listing h2 {
+  font-size: var(--staff-section-heading-size, 18px);
+  font-weight: var(--staff-heading-weight, 750);
 }

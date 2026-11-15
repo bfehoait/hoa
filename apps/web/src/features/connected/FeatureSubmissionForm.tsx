@@ -1,3 +1,4 @@
+import LoadingImage from "../../components/LoadingImage";
 import {
   useEffect,
   useId,
@@ -9,6 +10,9 @@ import {
 } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
+import { ImagePlus } from "lucide-react";
+import { publicationAudiencesSchema } from "../../../../../packages/shared/src/publication-audiences";
+import AudiencePicker from "../../components/AudiencePicker";
 import {
   baselineModule,
   fieldVisible,
@@ -45,6 +49,7 @@ type Payload = {
   links: PublicationLink[];
   cover: Blob | null;
   expires: string | null;
+  audiences: string[] | null;
 };
 export default function FeatureSubmissionForm({
   module,
@@ -90,7 +95,10 @@ export default function FeatureSubmissionForm({
       drivers.map((key) => [key, editing?.fields?.[key] ?? ""]),
     ),
   );
-  const shownFields = definition.fields.filter((f) => fieldVisible(f, answers));
+  const shownFields = definition.fields.filter(
+    (f) =>
+      fieldVisible(f, answers) && !(directPublish && f.key === "attachments"),
+  );
   const [links, setLinks] = useState<PublicationLink[]>([]),
     [cover, setCover] = useState<Blob | null>(null),
     [photoName, setPhotoName] = useState("");
@@ -126,7 +134,11 @@ export default function FeatureSubmissionForm({
     mutationFn: async (input: Payload) => {
       if (!saved.current) {
         const result = await featureRpc(
-          editing ? "bfe_revise_listing" : "bfe_submit_feature",
+          editing
+            ? "bfe_revise_listing"
+            : directPublish && announcement
+              ? "bfe_submit_announcement"
+              : "bfe_submit_feature",
           {
             ...(editing
               ? { p_id: editing.id, p_version: editing.version }
@@ -135,6 +147,9 @@ export default function FeatureSubmissionForm({
             p_detail: input.detail,
             p_fields: input.fields,
             p_consent: input.consent,
+            ...(directPublish && announcement && !editing
+              ? { p_audiences: input.audiences }
+              : {}),
           },
         );
         saved.current = {
@@ -197,13 +212,38 @@ export default function FeatureSubmissionForm({
       return;
     }
     const values = new FormData(event.currentTarget);
+    const audiences =
+      directPublish && announcement
+        ? publicationAudiencesSchema.safeParse(values.getAll("audience"))
+        : null;
+    if (audiences && !audiences.success) {
+      setValidation(new Error(audiences.error.issues[0].message));
+      event.currentTarget
+        .querySelector<HTMLElement>('[name="audience"]')
+        ?.focus();
+      return;
+    }
+    // Keep the legacy field valid; the server saves the full selection with
+    // the draft before any image upload and uses it when publishing or retrying.
+    const audienceLabels: Record<string, string> = {
+      members: "All members",
+      homeowner: "Homeowners",
+      renter: "Renters",
+      board: "Board",
+      security: "Security",
+      driver: "Drivers",
+    };
     const parsed = featureInputSchema(module).safeParse({
       title: values.get("recordTitle"),
       detail: values.get("recordDetail"),
       fields: Object.fromEntries(
         definition.fields.map((f) => [
           f.key,
-          shownFields.includes(f) ? String(values.get(f.key) ?? "").trim() : "",
+          f.key === "audience" && audiences?.success
+            ? audienceLabels[audiences.data[0]]
+            : shownFields.includes(f)
+              ? String(values.get(f.key) ?? "").trim()
+              : "",
         ]),
       ),
     });
@@ -246,6 +286,7 @@ export default function FeatureSubmissionForm({
       consent,
       links: parsedLinks.data,
       cover,
+      audiences: audiences?.success ? audiences.data : null,
       expires: directPublish
         ? manilaInstant(String(values.get("publicationExpiry") ?? ""))
         : null,
@@ -253,7 +294,10 @@ export default function FeatureSubmissionForm({
     mutation.mutate(payload.current);
   }
   return (
-    <form className={styles.form} onSubmit={submit}>
+    <form
+      className={`${styles.form} ${directPublish ? styles.announcementForm : ""}`}
+      onSubmit={submit}
+    >
       <p className={styles.formHelp}>
         {directPublish
           ? "Post this announcement to the selected audience."
@@ -295,12 +339,22 @@ export default function FeatureSubmissionForm({
             maxLength={5000}
           />
         </label>
-        {shownFields.some((f) => f.type === "time" || f.type === "date") && (
-          <p className={styles.formHelp}>
-            Dates and times use Philippine time.
-          </p>
-        )}
+        {!directPublish &&
+          shownFields.some((f) => f.type === "time" || f.type === "date") && (
+            <p className={styles.formHelp}>
+              Dates and times use Philippine time.
+            </p>
+          )}
         {shownFields.map((f) => {
+          if (directPublish && f.key === "audience")
+            return (
+              <AudiencePicker
+                key={f.key}
+                error=""
+                disabled={busy || recordSaved}
+                onChange={() => setValidation(null)}
+              />
+            );
           if (directPublish && f.key === "date")
             return (
               <input
@@ -436,11 +490,11 @@ export default function FeatureSubmissionForm({
         })}
         {directPublish && (
           <label>
-            Show until (Philippine time)
+            Hide announcement after
             <input name="publicationExpiry" type="datetime-local" required />
             <span className={styles.formHelp}>
               The announcement is published immediately and hidden after this
-              time. Choose an expiry within one year.
+              time (Philippine time). Choose a date within one year.
             </span>
           </label>
         )}
@@ -460,7 +514,7 @@ export default function FeatureSubmissionForm({
             </h4>
             <p className={styles.formHelp}>
               {announcement
-                ? "Choose an image for Home and the announcement. Text-only announcements work too. Only upload images you may share."
+                ? "Optional. Add an image you have permission to share."
                 : "Optional. One cover photo and up to five HTTPS links. They stay private until staff review and publication. Only upload an image you may share."}
             </p>
             {editing && (
@@ -473,13 +527,16 @@ export default function FeatureSubmissionForm({
                 </p>
               </>
             )}
-            <label>
-              {candidate
-                ? "Candidate photo"
-                : module === "businesses"
-                  ? "Business logo"
-                  : "Cover photo"}
+            <label className={styles.imagePicker}>
+              <span className={styles.imagePickerLabel}>
+                {candidate
+                  ? "Candidate photo"
+                  : module === "businesses"
+                    ? "Business logo"
+                    : "Cover photo"}
+              </span>
               <input
+                className={styles.imageInput}
                 type="file"
                 aria-label={
                   candidate
@@ -514,15 +571,21 @@ export default function FeatureSubmissionForm({
                   }
                 }}
               />
+              <span className={styles.imagePickerVisual}>
+                <ImagePlus size={24} aria-hidden="true" />
+                <span>
+                  <strong>{photoName ? "Change image" : "Choose image"}</strong>
+                  <small>{photoName || "JPEG, PNG or WebP · Up to 8 MB"}</small>
+                </span>
+              </span>
             </label>
             <p className={styles.formHelp}>
-              JPEG, PNG or WebP up to 8 MB. The photo is resized and prepared as
-              a private WebP cover under 1 MB.
+              JPEG, PNG or WebP up to 8 MB. Your image is resized automatically.
             </p>
             {preparing && <p role="status">Preparing photo…</p>}
             {preview && (
               <>
-                <img
+                <LoadingImage
                   src={preview}
                   className={styles.photoPreview}
                   alt="Selected cover preview"
@@ -551,16 +614,22 @@ export default function FeatureSubmissionForm({
               name="consent"
               defaultChecked={editing?.publication_consent}
             />
-            {directPublish
-              ? "I confirm this announcement text"
-              : "I allow reviewed public text"}
-            {announcement
-              ? " and the selected image"
-              : media
-                ? ", the selected photo and these specific links"
-                : ""}{" "}
-            {directPublish ? "may be" : "to be"} published to the selected
-            community audience. Private submitted fields stay restricted.
+            <span>
+              {directPublish ? (
+                "I have permission to share this announcement and image with the chosen audience."
+              ) : (
+                <>
+                  I allow reviewed public text
+                  {announcement
+                    ? " and the selected image"
+                    : media
+                      ? ", the selected photo and these specific links"
+                      : ""}{" "}
+                  to be published to the selected community audience. Private
+                  submitted fields stay restricted.
+                </>
+              )}
+            </span>
           </label>
         )}
       </fieldset>

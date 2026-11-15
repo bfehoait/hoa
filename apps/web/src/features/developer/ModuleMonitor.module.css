@@ -50,7 +50,7 @@
   display: grid;
   gap: 8px;
   font-size: 14px;
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
   margin: 24px 0;
   max-width: 640px;
 }
@@ -84,7 +84,7 @@
   min-height: 48px;
   cursor: pointer;
   align-content: center;
-  font-weight: 650;
+  font-weight: var(--staff-emphasis-weight, 650);
 }
 .notes p {
   color: var(--muted);
@@ -191,7 +191,7 @@
   color: var(--accent);
 }
 .empty h2 {
-  font-size: 22px;
+  font-size: var(--staff-card-heading-size, 22px);
 }
 .empty p {
   max-width: 65ch;
@@ -268,9 +268,9 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    font-size: 30px;
+    font-size: var(--staff-page-heading-size, 30px);
     line-height: 1.25;
-    font-weight: 600;
+    font-weight: var(--staff-page-weight, 600);
     letter-spacing: -0.6px;
     margin: 0;
   }
@@ -331,7 +331,7 @@
   .sourceSummary strong {
     display: block;
     font-size: 20px;
-    font-weight: 700;
+    font-weight: var(--staff-emphasis-weight, 700);
     overflow-wrap: anywhere;
   }
   .summaryIcon {
@@ -367,8 +367,8 @@
     min-width: 100px;
   }
   .recordTools h2 {
-    font-size: 16px;
-    font-weight: 600;
+    font-size: var(--staff-section-heading-size, 16px);
+    font-weight: var(--staff-heading-weight, 600);
     margin: 0;
   }
   .recordTools > div > span {
@@ -429,7 +429,7 @@
     gap: 12px;
   }
   .monitor :global(.page-title h1) {
-    font-size: 28px;
+    font-size: var(--staff-page-heading-size, 28px);
     line-height: 1.2;
   }
   .monitor :global(.page-title-icon) {
@@ -540,7 +540,7 @@
   }
   .recordIdentity strong {
     color: var(--ink);
-    font-weight: 650;
+    font-weight: var(--staff-emphasis-weight, 650);
   }
   .recordAvatar {
     display: grid;
@@ -552,7 +552,7 @@
     color: var(--accent);
     background: var(--accent-soft);
     font-size: 14px;
-    font-weight: 700;
+    font-weight: var(--staff-emphasis-weight, 700);
   }
   .table tbody small {
     display: block;
@@ -620,7 +620,7 @@
     border-left: 1px solid var(--line);
   }
   .inspector h2 {
-    font-size: 24px;
+    font-size: var(--staff-section-heading-size, 24px);
     overflow-wrap: anywhere;
   }
 }
@@ -650,7 +650,7 @@
     font-size: 16px;
   }
   .desktopHeading h1 {
-    font-size: 26px;
+    font-size: var(--staff-page-heading-size, 26px);
   }
 }
 
@@ -665,7 +665,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    font-size: 28px;
+    font-size: var(--staff-page-heading-size, 28px);
     line-height: 1.25;
   }
   .desktopHeading p {

@@ -1,0 +1,78 @@
+:where(.frame) {
+  display: inline-block;
+  position: relative;
+  vertical-align: middle;
+  width: var(--image-width, 100%);
+  max-width: 100%;
+  aspect-ratio: var(--image-ratio, 4 / 3);
+  overflow: hidden;
+}
+:where(.frame > .image) {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: inherit;
+  object-fit: inherit;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+.frame[data-image-state="ready"] > .image {
+  opacity: 1;
+}
+.frame[data-image-state="error"] > .image {
+  visibility: hidden;
+}
+.shimmer {
+  position: absolute;
+  inset: 0;
+  display: block;
+  border-radius: inherit;
+  background: linear-gradient(
+    100deg,
+    var(--wash) 20%,
+    var(--line) 50%,
+    var(--wash) 80%
+  );
+  background-size: 220% 100%;
+  animation: imageShimmer 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+:where(.placeholder) {
+  display: block;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  background: var(--wash);
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+  padding: 8px;
+}
+@keyframes imageShimmer {
+  0% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -120% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shimmer {
+    animation: none;
+  }
+  .image {
+    transition: none;
+  }
+}
