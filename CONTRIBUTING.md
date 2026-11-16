@@ -1,7 +1,7 @@
 # Contributing
 
-Read `AGENTS.md` and `docs/vault/Home.md` first. Keep work bounded to the authorized environment. Branch, commit and deployment actions require user approval.
+Read `AGENTS.md`, `docs/CO-DEVELOPER-GUIDE.md` and `docs/vault/Home.md` first. Keep work bounded to the requested task and authorized environment. Ordinary local edits and validation do not need repeated approval. Commit, push, deployment and live database actions require explicit owner authorization.
 
 Put shareable contracts and pure logic in `packages/shared/src`. UI belongs to route features or the owned component library. Keep CSS local with CSS Modules and reuse semantic tokens. Use synthetic fixtures only. An empty, unavailable, loading or failed state is part of a feature, not an optional follow-up.
 
-Before handoff, run typecheck, lint, unit tests, relevant browser tests and production build. For visual changes, check phone and desktop widths in both themes. Record what ran in `docs/vault/Verification.md`. An automated accessibility scan does not replace keyboard, assistive technology or actual-resident testing.
+Before handoff, review the diff and run checks appropriate to the change: typecheck frontend edits, target lint and unit/component tests at affected behavior, and build for integration/bundling changes. Local browser/E2E/accessibility checks are authorized only against a verified local server and synthetic mocked/isolated services; inspect the setup so they cannot mutate live data. For visual changes, check phone and desktop widths in both themes where tooling permits. Documentation-only edits need a whitespace/diff check, not a full application test run. Record what actually ran and what remains unverified in `docs/vault/Verification.md`. An automated accessibility scan does not replace keyboard, assistive technology or actual-resident testing. Preserve and run the account-integrity gate whenever its protected workflow changes.

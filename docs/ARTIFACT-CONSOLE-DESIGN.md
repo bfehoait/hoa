@@ -1,3 +1,5 @@
+> Current scope - 16 November 2026: this document describes the original UI design task. Its presentation-only/no-SQL limits apply to that historical task, not all future development. Follow the current owner request, AGENTS.md and docs/CO-DEVELOPER-GUIDE.md. Claude and Codex may implement authorized local behavior and wiring fixes while preserving server permissions and protected workflow checks. Production actions still require owner authorization.
+
 # Admin console design spec (self-contained — rebuild the artifact blind)
 
 **Audience:** Codex / engineers. This document contains **every** design detail of the

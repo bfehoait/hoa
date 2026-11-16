@@ -1,3 +1,5 @@
+> **Current instructions ? 16 November 2026:** Read root [AGENTS.md](../AGENTS.md), [CLAUDE.md](../CLAUDE.md) and [Co-developer guide](CO-DEVELOPER-GUIDE.md) first. Claude is authorized to implement, repair and validate requested work locally after the owner's go signal, including relevant behavior/wiring/backend preparation and local tests. The handoff below is historical (6 November); its separate-rebuild/no-Git/current-task statements and earlier test restrictions are superseded. It does not limit Claude to UI work or require Codex approval. Live deployment/database boundaries remain in the current root rules.
+
 # Claude handoff — Bellefort Estate Portal
 
 Updated: 6 November 2026, Asia/Manila.

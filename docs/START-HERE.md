@@ -1,3 +1,5 @@
+> **Current co-developer entry point ? 16 November 2026:** Read [Co-developer guide](CO-DEVELOPER-GUIDE.md), root [AGENTS.md](../AGENTS.md) and [CLAUDE.md](../CLAUDE.md). They authorize requested local implementation and validation equally for Claude and Codex. Older task-specific UI-only/no-test/rebuild restrictions below are historical; live actions still need explicit authorization.
+
 # Current: customer workflows and imported registry
 
 Business form restoration (11 November 2026): [setup, SQL 048-059 and owner verification](BUSINESS-FORM-RESTORATION-SETUP.md). [Coverage and remaining gaps](LEGACY-FORM-COVERAGE-ASSESSMENT.md). Prepared locally; not applied to the live database by the agent.

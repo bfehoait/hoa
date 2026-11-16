@@ -1,3 +1,5 @@
+> **Historical task scope:** The presentation-only limits below describe Claude's earlier design pass. They are not a permanent restriction. Under the owner's 16 November 2026 authorization, Claude/co-developers may implement and validate requested behavior/wiring fixes locally; see [Co-developer guide](CO-DEVELOPER-GUIDE.md) and current [AGENTS.md](../AGENTS.md). No Codex approval is required for ordinary local work.
+
 # Console redesign — handoff to Codex
 
 **From:** Claude (presentation pass on the staff/admin console).

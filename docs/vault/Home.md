@@ -1,3 +1,5 @@
+> **Current development workflow ? 16 November 2026:** [Co-developer guide](../CO-DEVELOPER-GUIDE.md), root [AGENTS.md](../../AGENTS.md) and [CLAUDE.md](../../CLAUDE.md) are the entry points for Claude/Codex and the co-developer. Requested local implementation, necessary fixes and proportionate isolated validation are authorized. Older task scopes and test restrictions below are historical. See the latest Verification entries for current rollout/open issues.
+
 # Bellefort project vault
 
 Latest customer workflow work: authorized shuttle RPCs, private history, driver duty/presence, 60-minute expiry, capacity checks, notifications and developer roster controls are prepared in migration 006. Helpdesk adds Idea without replacing its protected thread. Finance uses two main tabs and a consolidated report selector; accounting calculations still require approved records. Buyani handoff/account-format help is connected locally. Follow docs/CUSTOMER-WORKFLOWS.md for installation and pilot checks. No SQL was applied or site deployed by the agent.

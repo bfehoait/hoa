@@ -1,3 +1,5 @@
+> **Current instructions ? 16 November 2026:** [AGENTS.md](../AGENTS.md) and the [Co-developer guide](CO-DEVELOPER-GUIDE.md) govern all assistants, including Claude. The dated handoff below is historical. Its earlier blanket ban on automated tests is superseded by authorization for proportionate local checks with synthetic mocked/isolated services. Read current rules and latest owner instructions before applying any old restriction or pending setup checklist.
+
 # Handoff — 9 November 2026
 
 > Current follow-up: [Resident access and onboarding](RESIDENT-ACCESS-FOLLOWUP.md) corrects stale claims below and documents migration 023, guarded synthetic configuration, and the registration schema check. Historical statements below are not live verification.

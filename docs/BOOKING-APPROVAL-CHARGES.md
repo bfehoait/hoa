@@ -55,3 +55,11 @@ Owner clarified on 15 November 2026 that a dash in the package table means the s
 085 recalculates an unposted booking estimate on staff fee review and authorized owner price reads using its saved use/guest data. Saved snapshots and posted charges are retained. Booking creation continues to enforce the existing hours, maximum duration, slots and availability; this pricing correction does not increase configured duration limits. Older bookings without a saved price still require staff confirmation. Reservation-credit amounts remain explicit to avoid duplicate fees.
 
 Local synthetic SQL rehearsal: both migrations parsed/executed; hall/pool cross-period package rates and distinct hall two-hour rates returned the expected values; staff and owner reads returned the updated unposted rental; posted snapshot read remained unchanged. Live permission, full approval transaction and owner balances require owner verification. Deploy frontend changes and run 084 then 085; no BFE Edge Function deployment is needed.
+
+## Latest owner-reported status — 16 November 2026
+
+The owner reported applying 084 and 085 and then confirmed the booking charge appeared on the homeowner account. Earlier run/retry instructions above are historical; do not rerun these migrations merely because those instructions remain in this log. This is owner-reported verification, not an agent live database or browser check.
+
+The reservation fee's treatment remains undecided: the owner has not confirmed whether it is credited against rental or charged additionally. Its explicit confirmation requirement has therefore not been removed; not every booking can be approved without entering/checking a missing fee. The form identifies incomplete amounts, explanation and confirmation requirements. No new fee-credit policy should be inferred from the PDF.
+
+The owner also supplied a Vercel production screenshot identifying commit 3eee881 on main as Ready, but reported the browser still showing an older UI. PWA/browser caching was a proposed explanation, not a confirmed cause. The Incognito/update check has not been reported complete. Verification through https://behoademo.hoa-system.com/portal remains outstanding.
