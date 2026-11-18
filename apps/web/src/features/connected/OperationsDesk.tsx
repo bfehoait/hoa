@@ -17,6 +17,7 @@ import {
   type Booking,
   type VisitorPass,
 } from "../../../../../packages/shared/src/operations";
+import { manilaDate } from "../../../../../packages/shared/src";
 import { featureRpc } from "../../data/feature-records";
 import { useAuth } from "../../data/auth";
 import {
@@ -60,6 +61,32 @@ const display = (s: string) =>
     timeStyle: "short",
     timeZone: "Asia/Manila",
   }).format(new Date(s));
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** Turns the date-only "Pass starts" and "Pass ends" fields into the instants
+ *  the server expects. A pass covers whole days in Philippine time, starting
+ *  now when the first day is today. The server limits a pass to 24 hours, so
+ *  the end is capped there and may be at most the next day. */
+function passWindow(fromDate: string, untilDate: string) {
+  const day = /^\d{4}-\d{2}-\d{2}$/;
+  if (!day.test(fromDate) || !day.test(untilDate))
+    throw new Error("Choose the dates of the pass.");
+  if (untilDate < fromDate)
+    throw new Error("Pass ends must be on or after Pass starts.");
+  const startOfDay = Date.parse(manilaInstant(fromDate + "T00:00"));
+  const start = fromDate === manilaDate() ? Date.now() : startOfDay;
+  if (Date.parse(manilaInstant(untilDate + "T00:00")) - startOfDay > DAY_MS)
+    throw new Error(
+      "A pass can last up to 24 hours. Choose the same day or the next day.",
+    );
+  const end = Math.min(
+    Date.parse(manilaInstant(untilDate + "T23:59")),
+    start + DAY_MS,
+  );
+  return {
+    p_from: new Date(start).toISOString(),
+    p_until: new Date(end).toISOString(),
+  };
+}
 export default function OperationsDesk({
   kind,
   office = false,
@@ -482,8 +509,10 @@ export default function OperationsDesk({
                       p_visitor: f.get("visitor"),
                       p_purpose: f.get("purpose"),
                       p_plate: f.get("plate"),
-                      p_from: manilaInstant(String(f.get("from"))),
-                      p_until: manilaInstant(String(f.get("until"))),
+                      ...passWindow(
+                        String(f.get("from")),
+                        String(f.get("until")),
+                      ),
                       p_kind: passKind,
                       p_arrival: arrival,
                       p_direction:
@@ -863,7 +892,7 @@ export default function OperationsDesk({
               )}
               <label>
                 {passKind === "visitor"
-                  ? "Visitor name"
+                  ? "Visitor’s Name"
                   : "Driver / rider name"}
                 <input required name="visitor" minLength={2} maxLength={120} />
               </label>
@@ -919,15 +948,15 @@ export default function OperationsDesk({
               )}
               <label>
                 Pass starts
-                <input required name="from" type="datetime-local" />
+                <input required name="from" type="date" min={manilaDate()} />
               </label>
               <label>
                 Pass ends
-                <input required name="until" type="datetime-local" />
+                <input required name="until" type="date" min={manilaDate()} />
               </label>
               <p className={styles.formHelp}>
-                Choose the start and end of the visit in Philippine time. A pass
-                can last less than 24 hours; the maximum is 24 hours.
+                Dates use Philippine time. A pass covers the whole day and can
+                end the same day or the next day, up to 24 hours.
               </p>
             </>
           )}

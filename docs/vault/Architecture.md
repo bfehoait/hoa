@@ -289,6 +289,7 @@ Developer desktop navigation now scrolls in its outer sidebar rather than clippi
 - Shared desktop dialogs and feature forms have tighter spacing and aligned labels. The image chooser uses the existing validation, conversion, preview and private upload/retry flow; phone controls remain native.
 - Direct announcements use the shared multi-audience picker. Prepared migration 081 saves audiences with the draft atomically and makes the existing author-only publisher honor that saved set on initial publication, retry and republish. Legacy single-audience records retain visibility; 073 readers enforce role matching. Drivers is included in the legacy validated labels. No account workflow or BFE source was changed.
 - Pass date labels are Pass starts / Pass ends; the existing server maximum remains 24 hours. Amenity rules deferred.
+- 18 November 2026: the resident pass form asks for dates only (no times) and labels the visitor field "Visitor’s Name". `passWindow` in `OperationsDesk.tsx` sends whole Philippine days to the unchanged server: the pass starts at midnight, or now when the date is today, and ends at 11:59 PM, capped at 24 hours, so Pass ends can be the same or next day. Specific arrival times are no longer captured; confirm with the owner that whole-day passes match gate policy. No SQL or BFE change.
 - Rollout: owner SQL 081 after 080, then matching frontend deployment; no BFE Edge Function redeployment. See docs/DESKTOP-FORMS-AND-ANNOUNCEMENTS.md for scope and browser checks.
 
 ### 15 November 2026 - Shared phone viewport and PDF booking estimates
