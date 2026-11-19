@@ -6,10 +6,11 @@ export const requestTopics: Record<
   Record<string, readonly string[]>
 > = {
   Maintenance: {
-    Lighting: [
+    "Lights and posts": [
       "Streetlight not working",
       "Flickering light",
       "Damaged light fixture",
+      "Damaged or leaning post",
     ],
     "Roads and walkways": [
       "Road damage",
@@ -21,11 +22,20 @@ export const requestTopics: Record<
       "Blocked drain",
       "Flooding or standing water",
     ],
-    Amenities: ["Damaged equipment", "Cleaning needed", "Facility repair"],
+    "Clubhouse Amenities": [
+      "Damaged equipment",
+      "Cleaning needed",
+      "Facility repair",
+    ],
     "Waste and landscaping": [
       "Uncollected waste",
       "Tree or plant maintenance",
       "Shared-area cleaning",
+    ],
+    "Linear park": [
+      "Damaged path or bench",
+      "Cleaning needed",
+      "Plant or tree maintenance",
     ],
   },
   Complaint: {
@@ -57,17 +67,35 @@ export const requestTopics: Record<
       "Shared-area hazard",
       "Security service concern",
     ],
-    "Office services": [
+    "Committee and Governance matters": [
+      "Board or committee decision",
+      "Meeting or election matter",
+      "Officer conduct",
+    ],
+    "Administrative office feedbacks": [
       "Follow-up",
       "Processing concern",
       "Communication concern",
     ],
-    "Utilities and surroundings": [
-      "Water service",
-      "Waste collection",
-      "Environmental concern",
+    // Suggestions share the Concern category.
+    "Improvement ideas": [
+      "Facilities",
+      "Landscaping",
+      "Community activity",
+      "Office process",
+      "Transport",
+      "Portal experience",
+      "Road safety",
+      "Lighting",
+      "Emergency preparedness",
+    ],
+    "Policy/Rule questions": [
+      "Rule clarification",
+      "Policy update",
+      "Permit requirements",
     ],
   },
+  // Earlier requests only; no longer offered when creating a request.
   Idea: {
     "Community improvement": [
       "Facilities",

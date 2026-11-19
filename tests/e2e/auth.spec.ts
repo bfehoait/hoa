@@ -2449,11 +2449,11 @@ test.describe("customer workflow improvements", () => {
       exact: true,
     });
     await expect(dialog.getByRole("combobox", { name: "Category" })).toHaveText(
-      /IssueComplaintConcernIdea/,
+      /Maintenance IssueViolation or ComplaintConcern and SuggestionDocument requestSupport/,
     );
     await dialog
       .getByRole("combobox", { name: "Category" })
-      .selectOption("Idea");
+      .selectOption("Concern");
     await dialog
       .getByLabel("Title", { exact: true })
       .fill("Synthetic system idea");
