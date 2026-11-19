@@ -19,6 +19,44 @@ const documentCategories = [
   "Mandatory Documents",
   "Member's Right to Inspect",
 ] as const;
+// Records members may inspect (owner-supplied list, 19 November 2026).
+const inspectionRecords = [
+  {
+    title: "Corporate & Governance Records",
+    groups: [
+      {
+        heading: null,
+        items: [
+          "Articles of Incorporation and By-Laws (including all approved amendments)",
+          "DHSUD Certificate of Registration and General Information Sheets (GIS)",
+          "Minutes Book: Complete minutes of all General Assembly meetings and Board of Directors / Executive Officer meetings",
+          "Compilation of Board Resolutions (including policies, authorizations, and administrative issuances)",
+          "Deed of Restrictions, subdivision plans, and turnover documents from the developer",
+        ],
+      },
+      {
+        heading: "Membership & Election Records",
+        items: [
+          "Membership Book / Updated Master List of Members (indicating owners and authorized lessees/occupants)",
+          "Election Reports: Attendance sheets, notarized minutes of elections, and certified election returns/tally sheets",
+        ],
+      },
+    ],
+  },
+  {
+    title: "Financial & Accounting Records",
+    groups: [
+      {
+        heading: null,
+        items: [
+          "Audited Annual Financial Statements (AFS) and Annual Reports (which must also be provided upon request)",
+          "Books of Accounts: Cash Receipts Book, Cash Disbursements Book, General Journal, and General Ledger",
+          "Supporting Financial Vouchers: Official receipts, disbursement vouchers, supplier invoices, bank statements, check stubs, and approved contracts with service providers (e.g., security, maintenance, construction)",
+        ],
+      },
+    ],
+  },
+] as const;
 const schema = z.object({
   rows: z.array(
     z.object({
@@ -113,6 +151,35 @@ export default function DocumentLibrary() {
               </li>
             ))}
           </ol>
+        </section>
+      )}
+      {!board && category === "Member's Right to Inspect" && (
+        <section
+          className={listStyles.inspect}
+          aria-label="Records members may inspect"
+        >
+          <p>
+            Under Section 7(b) and Section 17 of R.A. 9904, any member in good
+            standing has the right to inspect the following official association
+            books and records at the principal HOA office during reasonable
+            office hours, and to request copies (at the requesting member's
+            expense):
+          </p>
+          {inspectionRecords.map((table) => (
+            <div key={table.title} className={listStyles.table}>
+              <h2>{table.title}</h2>
+              {table.groups.map((group) => (
+                <div key={group.heading ?? "records"}>
+                  {group.heading && <h3>{group.heading}</h3>}
+                  <ul role="list">
+                    {group.items.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          ))}
         </section>
       )}
       {query.isPending ? (
