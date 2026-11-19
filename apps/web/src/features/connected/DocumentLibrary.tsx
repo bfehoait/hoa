@@ -1,6 +1,9 @@
 import PageIntro from "../office/OfficePage";
 import { useLocation } from "react-router-dom";
-import { Folder } from "lucide-react";
+import { ChevronRight, Folder } from "lucide-react";
+import { Link } from "../../components/AccessLink";
+import { mandatoryDocuments } from "../../../../../packages/shared/src/request-topics";
+import listStyles from "./DocumentLibrary.module.css";
 import boardStyles from "../workspaces/Board.module.css";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -11,6 +14,11 @@ import { Button, Feedback, Skeleton } from "../../components/UI";
 import Sheet from "../../components/Sheet";
 import DocumentAttachment from "./DocumentAttachment";
 import styles from "./LiveFeature.module.css";
+// Must match the board-records "Record category" options (migration 086).
+const documentCategories = [
+  "Mandatory Documents",
+  "Member's Right to Inspect",
+] as const;
 const schema = z.object({
   rows: z.array(
     z.object({
@@ -51,7 +59,7 @@ export default function DocumentLibrary() {
       <PageIntro
         eyebrow="YOUR COMMUNITY"
         title={board ? "Documents" : "Community documents"}
-        description="Approved HOA policies, resolutions, minutes and disclosures."
+        description="Under Republic Act No. 9904 (Magna Carta for Homeowners and Homeowners’ Associations), the 2021 Revised Implementing Rules and Regulations (DHSUD Department Order No. 2021-007), and the Revised Corporation Code (R.A. No. 11232), HOA documents are divided into two categories: those that the Board must proactively post in common areas, and those that the Board must keep at the HOA office for members to inspect or copy upon request."
       />
       <div className={styles.toolbar}>
         <label>
@@ -78,14 +86,35 @@ export default function DocumentLibrary() {
             }}
           >
             <option value="">All categories</option>
-            {["Minutes", "Policy", "Financial disclosure", "Resolution"].map(
-              (value) => (
-                <option key={value}>{value}</option>
-              ),
-            )}
+            {documentCategories.map((value) => (
+              <option key={value}>{value}</option>
+            ))}
           </select>
         </label>
       </div>
+      {!board && category === "Mandatory Documents" && (
+        <section
+          className={listStyles.mandatory}
+          aria-labelledby="mandatory-documents"
+        >
+          <h2 id="mandatory-documents">Request a mandatory document</h2>
+          <p>Choose a document to send a request to the office.</p>
+          <ol className={listStyles.list} role="list">
+            {mandatoryDocuments.map((name) => (
+              <li key={name}>
+                <Link
+                  to={`/services/requests?new=document&topic=${encodeURIComponent(
+                    `Mandatory Documents: ${name}`,
+                  )}`}
+                >
+                  {name}
+                  <ChevronRight size={20} aria-hidden="true" />
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
       {query.isPending ? (
         <Skeleton />
       ) : query.isError ? (

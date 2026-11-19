@@ -878,10 +878,8 @@ export const baselineModules: BaselineModule[] = [
     "Prepare versioned document and financial disclosure metadata.",
     [
       select("category", "Record category", [
-        "Minutes",
-        "Policy",
-        "Financial disclosure",
-        "Resolution",
+        "Mandatory Documents",
+        "Member's Right to Inspect",
       ]),
       field("version", "Sample version"),
       field("owner", "Sample record owner"),
