@@ -21,6 +21,7 @@ export default function ItemRows({
   required,
   defaultValue = "",
   placeholder,
+  titleCase = false,
 }: {
   id: string;
   name: string;
@@ -28,6 +29,8 @@ export default function ItemRows({
   required?: boolean;
   defaultValue?: string;
   placeholder?: string;
+  /** Title Case button text, as used by Post a listing. */
+  titleCase?: boolean;
 }) {
   const [rows, setRows] = useState<string[]>(() => {
     const existing = defaultValue
@@ -78,7 +81,7 @@ export default function ItemRows({
         onClick={() => setRows((prev) => [...prev, ""])}
       >
         <Plus size={16} aria-hidden="true" />
-        Add another
+        {titleCase ? "Add Another" : "Add another"}
       </Button>
       {required && !joined && (
         <p className={styles.formHelp} role="status">

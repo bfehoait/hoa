@@ -5,7 +5,10 @@ import {
   baselineModules,
   sampleBaselineFields,
 } from "../../packages/shared/src/baseline";
-import { liveFieldLabel } from "../../packages/shared/src/feature-records";
+import {
+  liveFieldLabel,
+  listingFieldLabel,
+} from "../../packages/shared/src/feature-records";
 
 const configured = process.env.BELLEFORT_TEST_AUTH === "configured";
 test.describe("member access and service entry points", () => {
@@ -52,7 +55,7 @@ test.describe("member access and service entry points", () => {
       const dialog = page.getByRole("dialog");
       await expect(dialog.getByLabel("Title", { exact: true })).toBeVisible();
       await expect(
-        dialog.getByRole("button", { name: "Submit for review", exact: true }),
+        dialog.getByRole("button", { name: /^Submit for review$/i }),
       ).toBeVisible();
       await dialog
         .getByRole("button", { name: "Close dialog", exact: true })
@@ -1256,10 +1259,10 @@ test.describe("new protected feature services", () => {
     for (const field of baselineModule("businesses").fields) {
       const control = field.options
         ? dialog.getByRole("combobox", {
-            name: liveFieldLabel(field.label),
+            name: listingFieldLabel(field.label),
             exact: true,
           })
-        : dialog.getByLabel(liveFieldLabel(field.label), { exact: true });
+        : dialog.getByLabel(listingFieldLabel(field.label), { exact: true });
       if (field.options) await control.selectOption(sample[field.key]);
       else await control.fill(sample[field.key]);
     }
