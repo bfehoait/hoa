@@ -206,15 +206,11 @@ export const baselineModules: BaselineModule[] = [
     [
       select("kind", "Listing purpose", ["Hiring", "Seeking work"]),
       field("company", "Sample company or worker"),
-      select("jobType", "Job type", [
-        "Full-time",
-        "Part-time",
-        "Contract",
-        "One-off",
-      ]),
+      // Job type and optional pay must match the server jobs definition (migration 088).
+      select("jobType", "Job type", ["Full-time", "Part-time", "Contract"]),
       select("setup", "Work setup", ["On-site", "Remote", "Hybrid"]),
       field("location", "Sample work location"),
-      field("pay", "Sample pay description"),
+      field("pay", "Sample pay description", "text", false),
       field("deadline", "Application deadline", "date"),
       field("applyLink", "Sample application link", "url", false),
     ],

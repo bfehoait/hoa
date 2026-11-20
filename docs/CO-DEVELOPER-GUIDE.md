@@ -108,6 +108,11 @@ fixtures, logs or screenshots.
   Do not rerun migrations from an old pending checklist without checking status.
 - Reservation fee credit versus an extra charge remains an HOA policy question.
   Do not silently default it into a duplicate charge or assume it is waived.
+- Jobs & referrals (20 November 2026): owner runs prepared migration 088 after
+  085 (independent of 086/087). It removes the One-off job type, makes pay
+  optional, and caps each job listing's expiry at the end of its application
+  deadline day (Asia/Manila), including already published listings. Deploy the
+  matching frontend after 088.
 - `docs/DESKTOP-DENSITY-INBOX.md`: Inbox, Helpdesk and shared Announcements UI.
 - `docs/LOADING-SKELETONS.md`: shared loading/image behavior.
 - `docs/ACCOUNT-CONNECTION-INTEGRITY.md`: protected account workflow.
