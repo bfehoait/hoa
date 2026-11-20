@@ -22,6 +22,7 @@ import {
   featureInputSchema,
   liveFieldLabel,
   publicationLinksSchema,
+  titleCase,
   type FeatureRecord,
 } from "../../../../../packages/shared/src/feature-records";
 import { featureRpc } from "../../data/feature-records";
@@ -76,6 +77,10 @@ export default function FeatureSubmissionForm({
   const announcement = module === "publishing";
   const candidate = module === "election-candidates";
   const media = listingModules.includes(module) || announcement || candidate;
+  // Owner request, 20 November 2026: Post a listing uses Title Case labels.
+  const listing = listingModules.includes(module);
+  const heading = (text: string) => (listing ? titleCase(text) : text);
+  const fieldLabel = (text: string) => heading(liveFieldLabel(text));
   // Fields can depend on an earlier answer (see BaselineField.showWhen), so the
   // selects those fields depend on are controlled; everything else stays
   // uncontrolled and is read from FormData on submit.
@@ -374,7 +379,7 @@ export default function FeatureSubmissionForm({
                 ? "Audience"
                 : announcement && f.key === "attachments"
                   ? "Image or attachment notes"
-                  : liveFieldLabel(f.label),
+                  : fieldLabel(f.label),
             hint =
               announcement && f.key === "attachments"
                 ? "Optional notes only. Attach the actual image under Cover image below."
@@ -386,7 +391,7 @@ export default function FeatureSubmissionForm({
               : f.options;
           const drives = drivers.includes(f.key);
           const because = f.showWhen
-            ? liveFieldLabel(
+            ? fieldLabel(
                 definition.fields.find((d) => d.key === f.showWhen?.key)
                   ?.label ?? f.showWhen.key,
               )
@@ -431,6 +436,7 @@ export default function FeatureSubmissionForm({
                   id={id}
                   name={f.key}
                   label={label}
+                  titleCase={listing}
                   required={f.required}
                   defaultValue={editing?.fields?.[f.key] ?? ""}
                   placeholder={
@@ -508,9 +514,11 @@ export default function FeatureSubmissionForm({
                 ? "Cover image (optional)"
                 : candidate
                   ? "Candidate photo & information links"
-                  : module === "businesses"
-                    ? "Business logo & links"
-                    : "Photo & publication links"}
+                  : heading(
+                      module === "businesses"
+                        ? "Business logo & links"
+                        : "Photo & publication links",
+                    )}
             </h4>
             <p className={styles.formHelp}>
               {announcement
@@ -531,9 +539,9 @@ export default function FeatureSubmissionForm({
               <span className={styles.imagePickerLabel}>
                 {candidate
                   ? "Candidate photo"
-                  : module === "businesses"
-                    ? "Business logo"
-                    : "Cover photo"}
+                  : heading(
+                      module === "businesses" ? "Business logo" : "Cover photo",
+                    )}
               </span>
               <input
                 className={styles.imageInput}
@@ -541,9 +549,11 @@ export default function FeatureSubmissionForm({
                 aria-label={
                   candidate
                     ? "Candidate photo"
-                    : module === "businesses"
-                      ? "Business logo"
-                      : "Cover photo"
+                    : heading(
+                        module === "businesses"
+                          ? "Business logo"
+                          : "Cover photo",
+                      )
                 }
                 accept="image/jpeg,image/png,image/webp"
                 onChange={async (event) => {
@@ -600,6 +610,7 @@ export default function FeatureSubmissionForm({
             )}
             {!announcement && (
               <PublicationLinkFields
+                titleCase={listing}
                 links={links}
                 onChange={setLinks}
                 disabled={busy || recordSaved}
@@ -643,8 +654,8 @@ export default function FeatureSubmissionForm({
             : recordSaved
               ? announcement
                 ? "Retry image upload"
-                : "Retry photo and links"
-              : "Submit for review"}
+                : heading("Retry photo and links")
+              : heading("Submit for review")}
         </Button>
         {recordSaved && (
           <Button
