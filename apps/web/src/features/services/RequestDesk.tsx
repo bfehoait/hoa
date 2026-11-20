@@ -26,7 +26,6 @@ import Sheet from "../../components/Sheet";
 import MobileRequestConversation from "./MobileRequestConversation";
 import {
   liveRequestInput,
-  requestCategories,
   requestStatuses,
   helpdeskCategories,
   requestCategoryLabel,
@@ -40,7 +39,7 @@ import {
   useRequestThread,
 } from "../../data/requests";
 import styles from "./RequestDesk.module.css";
-import RequestTopicFields from "./RequestTopicFields";
+import RequestTopicFields, { listedTopic } from "./RequestTopicFields";
 import RequestBusinessDetails from "./RequestBusinessDetails";
 import { useAuth } from "../../data/auth";
 import { usePermissions } from "../../data/permissions";
@@ -250,9 +249,9 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
               }}
             >
               <option value="">All categories</option>
-              {requestCategories.map((value) => (
+              {helpdeskCategories.map(({ value, label }) => (
                 <option key={value} value={value}>
-                  {requestCategoryLabel(value)}
+                  {label}
                 </option>
               ))}
             </select>
@@ -438,6 +437,7 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
                 (params.get("new") ?? "").toLowerCase(),
             )?.value ?? "Maintenance"
           }
+          initialTopic={params.get("topic")}
           onClose={() => setCreating(false)}
           onSaved={() => {
             setCreating(false);
@@ -468,17 +468,26 @@ function NewRequest({
   onClose,
   onSaved,
   initialCategory,
+  initialTopic,
 }: {
   onClose: () => void;
   onSaved: () => void;
   initialCategory: string;
+  initialTopic: string | null;
 }) {
   const auth = useAuth();
   const actions = useRequestActions();
+  const [startTopic] = useState(() =>
+    listedTopic(initialCategory, initialTopic),
+  );
   const [draft, setDraft] = useState({
     description: "",
     category: initialCategory,
-    business_details: requestBusinessDetailsSchema.parse({}),
+    business_details: requestBusinessDetailsSchema.parse(
+      startTopic
+        ? { topic: `${startTopic.group}: ${startTopic.specific}` }
+        : {},
+    ),
   });
   const [clientId, setClientId] = useState(() => crypto.randomUUID());
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -563,13 +572,18 @@ function NewRequest({
           </select>
         </Field>
         <p className={styles.source}>
-          {helpdeskCategories.find((c) => c.value === draft.category)?.detail}{" "}
-          Your request is visible to you and authorized handlers, not the
-          community feed.
+          {helpdeskCategories.find((c) => c.value === draft.category)?.detail}
         </p>
         <RequestTopicFields
           key={draft.category}
           category={draft.category}
+          initial={
+            startTopic &&
+            draft.business_details.topic ===
+              `${startTopic.group}: ${startTopic.specific}`
+              ? startTopic
+              : null
+          }
           disabled={actions.create.isPending}
           error={errors.business_details}
           onChange={(topic) => {
@@ -820,7 +834,7 @@ function Thread({
       presentation={office ? "sheet" : "task"}
       busy={actions.reply.isPending || actions.status.isPending || handlingBusy}
       protectChanges={handlingEditing || !!body.trim()}
-      description={`${request.category} · ${request.status}`}
+      description={`${requestCategoryLabel(request.category)} · ${request.status}`}
       onClose={onClose}
     >
       <p className={styles.description}>{request.description}</p>

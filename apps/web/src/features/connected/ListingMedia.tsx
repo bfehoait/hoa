@@ -148,17 +148,20 @@ export function PublicationLinkFields({
   links,
   onChange,
   disabled = false,
+  titleCase = false,
 }: {
   links: PublicationLink[];
   onChange: (links: PublicationLink[]) => void;
   disabled?: boolean;
+  /** Title Case labels, as used by Post a listing. */
+  titleCase?: boolean;
 }) {
   return (
     <div className={styles.editor}>
       {links.map((link, i) => (
         <div className={styles.linkRow} key={i}>
           <label>
-            Link label
+            {titleCase ? "Link Label" : "Link label"}
             <input
               maxLength={40}
               value={link.label}
@@ -173,7 +176,7 @@ export function PublicationLinkFields({
             />
           </label>
           <label>
-            HTTPS address
+            {titleCase ? "HTTPS Address" : "HTTPS address"}
             <input
               type="url"
               maxLength={2000}
@@ -195,7 +198,7 @@ export function PublicationLinkFields({
             disabled={disabled}
             onClick={() => onChange(links.filter((_, n) => n !== i))}
           >
-            Remove link {i + 1}
+            {titleCase ? "Remove Link" : "Remove link"} {i + 1}
           </Button>
         </div>
       ))}
@@ -207,7 +210,7 @@ export function PublicationLinkFields({
           onChange([...links, { label: "Website", url: "https://" }])
         }
       >
-        Add link
+        {titleCase ? "Add Link" : "Add link"}
       </Button>
     </div>
   );
