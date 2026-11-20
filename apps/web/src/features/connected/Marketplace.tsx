@@ -6,6 +6,7 @@ import { Plus, Search, ShoppingBag } from "lucide-react";
 import {
   featureRecordSchema,
   featureDashboardSchema,
+  titleCase,
   type FeatureRecord,
 } from "../../../../../packages/shared/src/feature-records";
 import { baselineModule } from "../../../../../packages/shared/src/baseline";
@@ -628,7 +629,7 @@ export default function Marketplace() {
         )}
         {create && !!postingTypes.length && (
           <Sheet
-            title="Post a listing"
+            title="Post a Listing"
             presentation="task"
             protectChanges={!saved}
             size="lg"
@@ -645,7 +646,7 @@ export default function Marketplace() {
             }}
           >
             <label className={styles.postType}>
-              Listing type
+              Listing Type
               <select
                 value={postingModule}
                 disabled={busy || saved}
@@ -653,7 +654,7 @@ export default function Marketplace() {
               >
                 {postingTypes.map((type) => (
                   <option key={type.id} value={type.id}>
-                    {type.label}
+                    {titleCase(type.label)}
                   </option>
                 ))}
               </select>

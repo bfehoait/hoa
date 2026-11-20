@@ -112,6 +112,19 @@ fixtures, logs or screenshots.
   after 085 (independent of 086-088). It removes Proposed audience and
   Contact email, makes Items optional and sets Title Case labels. Deploy the
   matching frontend after 089; until then the server rejects the new form.
+- Jobs & referrals (20 November 2026): owner runs prepared migration 088 after
+  085 (independent of 086/087). It removes the One-off job type, makes pay
+  optional, and caps each job listing's expiry at the end of its application
+  deadline day (Asia/Manila), including already published listings. Deploy the
+  matching frontend after 088.
+- Buy & sell categories (19 November 2026): owner runs prepared migration 087
+  after 085 (independent of 086) to replace the buy-sell Item category options;
+  deploy the matching frontend after 087. Earlier listings keep their old
+  category until edited.
+- Community documents (19 November 2026): owner runs prepared migration 086
+  after 085 to replace the board-records Record category options with
+  "Mandatory Documents" and "Member's Right to Inspect"; deploy the matching
+  frontend after 086. Earlier documents keep their old category until edited.
 - `docs/DESKTOP-DENSITY-INBOX.md`: Inbox, Helpdesk and shared Announcements UI.
 - `docs/LOADING-SKELETONS.md`: shared loading/image behavior.
 - `docs/ACCOUNT-CONNECTION-INTEGRITY.md`: protected account workflow.
