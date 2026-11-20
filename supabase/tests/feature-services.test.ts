@@ -103,6 +103,7 @@ beforeAll(async () => {
     // Keep the synthetic schema aligned with the current shared form
     // contract. These optional questions are part of the live definitions.
     "202611100049_business_submission_questions.sql",
+    "202611190086_document_inspection_categories.sql",
   ])
     await db.exec(
       await readFile(new URL("../migrations/" + file, import.meta.url), "utf8"),
