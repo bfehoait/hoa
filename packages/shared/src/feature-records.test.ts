@@ -10,6 +10,8 @@ import {
   publicationLinksSchema,
   featureFieldHint,
   liveFieldLabel,
+  listingFieldLabel,
+  titleCase,
 } from "./feature-records";
 it("validates all structured feature inputs without restricting real contacts to sample domains", () => {
   for (const definition of baselineModules)
@@ -174,4 +176,25 @@ it("gate pass questions follow the pass purpose", () => {
     expect(
       visibleFields("gate-passes", { purpose }).map((f) => f.key),
     ).toContain("movingUnit");
+});
+it("writes Post a listing labels in Title Case", () => {
+  expect(titleCase("Rate basis (per hour, day or service)")).toBe(
+    "Rate Basis (Per Hour, Day or Service)",
+  );
+  expect(titleCase("Service or rental rate (PHP)")).toBe(
+    "Service or Rental Rate (PHP)",
+  );
+  expect(titleCase("What are you listing?")).toBe("What Are You Listing?");
+  expect(titleCase("Photo & publication links")).toBe(
+    "Photo & Publication Links",
+  );
+  expect(titleCase("HTTPS address")).toBe("HTTPS Address");
+  expect(titleCase("Listed by")).toBe("Listed By");
+  expect(titleCase("a place to belong")).toBe("A Place to Belong");
+  expect(listingFieldLabel("Sample asking price (PHP)")).toBe(
+    "Asking Price (PHP)",
+  );
+  expect(listingFieldLabel("Photo description (no upload)")).toBe(
+    "Photo Description (Text Only)",
+  );
 });

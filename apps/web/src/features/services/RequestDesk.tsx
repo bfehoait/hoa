@@ -26,7 +26,6 @@ import Sheet from "../../components/Sheet";
 import MobileRequestConversation from "./MobileRequestConversation";
 import {
   liveRequestInput,
-  requestCategories,
   requestStatuses,
   helpdeskCategories,
   requestCategoryLabel,
@@ -250,9 +249,9 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
               }}
             >
               <option value="">All categories</option>
-              {requestCategories.map((value) => (
+              {helpdeskCategories.map(({ value, label }) => (
                 <option key={value} value={value}>
-                  {requestCategoryLabel(value)}
+                  {label}
                 </option>
               ))}
             </select>
@@ -573,9 +572,7 @@ function NewRequest({
           </select>
         </Field>
         <p className={styles.source}>
-          {helpdeskCategories.find((c) => c.value === draft.category)?.detail}{" "}
-          Your request is visible to you and authorized handlers, not the
-          community feed.
+          {helpdeskCategories.find((c) => c.value === draft.category)?.detail}
         </p>
         <RequestTopicFields
           key={draft.category}
@@ -837,7 +834,7 @@ function Thread({
       presentation={office ? "sheet" : "task"}
       busy={actions.reply.isPending || actions.status.isPending || handlingBusy}
       protectChanges={handlingEditing || !!body.trim()}
-      description={`${request.category} · ${request.status}`}
+      description={`${requestCategoryLabel(request.category)} · ${request.status}`}
       onClose={onClose}
     >
       <p className={styles.description}>{request.description}</p>

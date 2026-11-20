@@ -36,6 +36,31 @@ export function liveFieldLabel(value: string) {
     .replace(/\b(Sample|Synthetic|Local)\s+/gi, "")
     .replace(/\(no upload\)/g, "(text only)");
 }
+// Short connecting words stay lowercase in Title Case unless they come first
+// or last.
+const titleCaseMinor = new Set(
+  "a an and as at but by for in nor of on or per the to via vs with".split(" "),
+);
+/** Title Case for labels and headings (owner request, 20 November 2026, for
+ *  Post a listing). Keeps acronyms such as PHP and HTTPS, and words that
+ *  already contain capitals, as written. */
+export function titleCase(value: string) {
+  const words = value.split(" ");
+  return words
+    .map((word, index) => {
+      const [, lead, core] = /^([("'[]*)(.*)$/.exec(word) ?? ["", "", word];
+      if (!core || /[A-Z]/.test(core.slice(1))) return word;
+      const bare = core.toLowerCase().replace(/[^a-z]/g, "");
+      const inside = index > 0 && index < words.length - 1;
+      if (inside && !lead && titleCaseMinor.has(bare))
+        return lead + core.toLowerCase();
+      return lead + core.charAt(0).toUpperCase() + core.slice(1);
+    })
+    .join(" ");
+}
+/** A Post a listing field label: without sample wording, in Title Case. */
+export const listingFieldLabel = (value: string) =>
+  titleCase(liveFieldLabel(value));
 export const publicationLinksSchema = z
   .array(
     z.object({
