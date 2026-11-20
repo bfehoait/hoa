@@ -30,7 +30,6 @@ export const businessFormAdditions: Record<string, BaselineField[]> = {
   ],
   jobs: [text("contact", "Contact details")],
   workshops: [
-    text("category", "Training category"),
     text("contact", "Contact details"),
     text("signupLink", "Registration or information link", "url"),
   ],
