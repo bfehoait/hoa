@@ -7,36 +7,40 @@ export const requestCategories = [
   "Document",
   "Support",
 ] as const;
+// Choices offered when creating a request. "Concern" also covers suggestions:
+// the stored "Idea" value stays valid on the server for earlier requests but is
+// no longer offered, and displays under the combined label. Each detail is the
+// full note shown under the Category field.
+const privateToHandlers =
+  "Your request is visible to you and authorized handlers, not the community feed.";
 export const helpdeskCategories = [
   {
     value: "Maintenance",
-    label: "Issue",
-    detail: "Report damage or maintenance needs at HOA facilities.",
+    label: "Maintenance Issue",
+    detail:
+      "Report common-area damage or maintenance needs. Your request goes directly to authorized committee and will not appear on the community feed.",
   },
   {
     value: "Complaint",
-    label: "Complaint",
-    detail: "File a private complaint involving a neighbour.",
+    label: "Violation or Complaint",
+    detail:
+      "Report a rule violation or neighbor dispute privately. Only you and authorized committee can view this request—it will not appear on the community feed.",
   },
   {
     value: "Concern",
-    label: "Concern",
-    detail: "Raise a matter for office, BOD or officer review.",
-  },
-  {
-    value: "Idea",
-    label: "Idea",
-    detail: "Suggest an improvement to community systems or services.",
+    label: "Concern and Suggestion",
+    detail:
+      "Raise a community concern or suggest an improvement for office, BOD, or officer review. Your request is visible only to you and authorized committee, not the community feed.",
   },
   {
     value: "Document",
     label: "Document request",
-    detail: "Ask for a document or its requirements.",
+    detail: `Ask for a document or its requirements. ${privateToHandlers}`,
   },
   {
     value: "Support",
     label: "Support",
-    detail: "Get help with an account or community service.",
+    detail: `Get help with an account or community service. ${privateToHandlers}`,
   },
 ] as const;
 export const requestBusinessFields = [
@@ -94,7 +98,9 @@ export const requestHandlingSchema = z.object({
   handlers: z.array(z.object({ id: z.uuid(), name: z.string() })),
 });
 export const requestCategoryLabel = (value: string) =>
-  helpdeskCategories.find((c) => c.value === value)?.label ?? value;
+  helpdeskCategories.find(
+    (c) => c.value === (value === "Idea" ? "Concern" : value),
+  )?.label ?? value;
 export const requestStatuses = ["Open", "In progress", "Resolved"] as const;
 export const liveRequestInput = z.object({
   title: z.string().trim().min(3, "Use at least 3 characters.").max(120),
