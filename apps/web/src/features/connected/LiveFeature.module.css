@@ -212,7 +212,8 @@
     align-items: baseline;
     gap: 6px;
   }
-  .formFields > label > :is(input, textarea, select, .formHelp) {
+  /* Not the consent checkbox: a full-width box left its sentence one word wide. */
+  .formFields > label:not(.check) > :is(input, textarea, select, .formHelp) {
     flex-basis: 100%;
   }
   .formFields > label > .fieldTag {
@@ -442,6 +443,10 @@
   min-height: 24px;
   flex: none;
   font-size: 16px;
+}
+.check > span {
+  flex: 1;
+  min-width: 0;
 }
 .fields {
   display: grid;

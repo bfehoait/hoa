@@ -104,6 +104,7 @@ beforeAll(async () => {
     // contract. These optional questions are part of the live definitions.
     "202611100049_business_submission_questions.sql",
     "202611190086_document_inspection_categories.sql",
+    "202611190087_buy_sell_categories.sql",
   ])
     await db.exec(
       await readFile(new URL("../migrations/" + file, import.meta.url), "utf8"),

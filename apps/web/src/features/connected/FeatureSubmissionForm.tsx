@@ -77,6 +77,9 @@ export default function FeatureSubmissionForm({
   const announcement = module === "publishing";
   const candidate = module === "election-candidates";
   const media = listingModules.includes(module) || announcement || candidate;
+  // Owner request, 19 November 2026: community listings must give publication
+  // consent before they can be submitted.
+  const consentRequired = directPublish || listingModules.includes(module);
   // Owner request, 20 November 2026: Post a listing uses Title Case labels.
   const listing = listingModules.includes(module);
   const heading = (text: string) => (listing ? titleCase(text) : text);
@@ -272,12 +275,20 @@ export default function FeatureSubmissionForm({
       return;
     }
     const consent = values.get("consent") === "on";
-    if ((cover || links.length || directPublish) && !consent) {
+    if (
+      (cover ||
+        links.length ||
+        directPublish ||
+        (publishable && consentRequired)) &&
+      !consent
+    ) {
       setValidation(
         new Error(
           directPublish
             ? "Confirm that this announcement may be published to the selected audience."
-            : "Choose publication consent before attaching a photo or public contact links.",
+            : consentRequired
+              ? "Tick the permission box so the office can publish your listing after review."
+              : "Choose publication consent before attaching a photo or public contact links.",
         ),
       );
       event.currentTarget
@@ -624,6 +635,7 @@ export default function FeatureSubmissionForm({
               type="checkbox"
               name="consent"
               defaultChecked={editing?.publication_consent}
+              required={consentRequired}
             />
             <span>
               {directPublish ? (
@@ -638,6 +650,14 @@ export default function FeatureSubmissionForm({
                       : ""}{" "}
                   to be published to the selected community audience. Private
                   submitted fields stay restricted.
+                  {consentRequired && (
+                    <>
+                      {" "}
+                      <span className={styles.fieldTag} aria-hidden="true">
+                        Required
+                      </span>
+                    </>
+                  )}
                 </>
               )}
             </span>
