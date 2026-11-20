@@ -1,5 +1,17 @@
 import type { requestCategories } from "./requests";
 
+// Documents the Board must post in common areas (owner list, 19 November 2026).
+// Community documents links each one to a pre-filled Help desk Document request.
+export const mandatoryDocuments = [
+  "Annual Financial Statements (AFS)",
+  "Notice of Elections & Election Guidelines",
+  "Master List of Qualified Voters",
+  "Official Election Results / Tally",
+  "Notice of General Assembly / Special Meetings",
+  "Proposed Amendments to Articles or By-Laws",
+  "New House Rules, Traffic/Parking Rules & Fee/Fine Schedules",
+] as const;
+
 // Triage labels only: none of these choices grants a service or establishes a violation.
 export const requestTopics: Record<
   (typeof requestCategories)[number],
@@ -106,6 +118,7 @@ export const requestTopics: Record<
     "Safety improvement": ["Road safety", "Lighting", "Emergency preparedness"],
   },
   Document: {
+    "Mandatory Documents": mandatoryDocuments,
     "Document request": [
       "Clearance requirements",
       "Certification requirements",

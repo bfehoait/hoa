@@ -6,21 +6,36 @@ import {
 } from "../../../../../packages/shared/src/requests";
 import { Field } from "../../components/UI";
 
+/** Splits "Group: Specific" into a listed type and specific type for the
+ *  category, or returns null when it isn't one of the listed choices. */
+export function listedTopic(category: string, topic: string | null) {
+  const choices =
+    requestTopics[category as (typeof requestCategories)[number]] ?? {};
+  const at = topic?.indexOf(": ") ?? -1;
+  if (!topic || at < 0) return null;
+  const group = topic.slice(0, at),
+    specific = topic.slice(at + 2);
+  return choices[group]?.includes(specific) ? { group, specific } : null;
+}
+
 export default function RequestTopicFields({
   category,
   disabled,
   error,
   onChange,
+  initial,
 }: {
   category: string;
   disabled: boolean;
   error?: string;
   onChange: (value: string) => void;
+  /** A listed type to start with, for example from a link that pre-fills it. */
+  initial?: { group: string; specific: string } | null;
 }) {
   const choices =
     requestTopics[category as (typeof requestCategories)[number]] ?? {};
-  const [group, setGroup] = useState("");
-  const [specific, setSpecific] = useState("");
+  const [group, setGroup] = useState(initial?.group ?? "");
+  const [specific, setSpecific] = useState(initial?.specific ?? "");
   const [other, setOther] = useState("");
   const emit = (g: string, s: string, o: string) =>
     onChange(

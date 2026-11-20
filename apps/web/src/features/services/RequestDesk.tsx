@@ -39,7 +39,7 @@ import {
   useRequestThread,
 } from "../../data/requests";
 import styles from "./RequestDesk.module.css";
-import RequestTopicFields from "./RequestTopicFields";
+import RequestTopicFields, { listedTopic } from "./RequestTopicFields";
 import RequestBusinessDetails from "./RequestBusinessDetails";
 import { useAuth } from "../../data/auth";
 import { usePermissions } from "../../data/permissions";
@@ -437,6 +437,7 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
                 (params.get("new") ?? "").toLowerCase(),
             )?.value ?? "Maintenance"
           }
+          initialTopic={params.get("topic")}
           onClose={() => setCreating(false)}
           onSaved={() => {
             setCreating(false);
@@ -467,17 +468,26 @@ function NewRequest({
   onClose,
   onSaved,
   initialCategory,
+  initialTopic,
 }: {
   onClose: () => void;
   onSaved: () => void;
   initialCategory: string;
+  initialTopic: string | null;
 }) {
   const auth = useAuth();
   const actions = useRequestActions();
+  const [startTopic] = useState(() =>
+    listedTopic(initialCategory, initialTopic),
+  );
   const [draft, setDraft] = useState({
     description: "",
     category: initialCategory,
-    business_details: requestBusinessDetailsSchema.parse({}),
+    business_details: requestBusinessDetailsSchema.parse(
+      startTopic
+        ? { topic: `${startTopic.group}: ${startTopic.specific}` }
+        : {},
+    ),
   });
   const [clientId, setClientId] = useState(() => crypto.randomUUID());
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -567,6 +577,13 @@ function NewRequest({
         <RequestTopicFields
           key={draft.category}
           category={draft.category}
+          initial={
+            startTopic &&
+            draft.business_details.topic ===
+              `${startTopic.group}: ${startTopic.specific}`
+              ? startTopic
+              : null
+          }
           disabled={actions.create.isPending}
           error={errors.business_details}
           onChange={(topic) => {
