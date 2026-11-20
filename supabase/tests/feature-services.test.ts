@@ -106,6 +106,7 @@ beforeAll(async () => {
     "202611190086_document_inspection_categories.sql",
     "202611190087_buy_sell_categories.sql",
     "202611200088_job_listing_rules.sql",
+    "202611200089_garage_sale_form.sql",
   ])
     await db.exec(
       await readFile(new URL("../migrations/" + file, import.meta.url), "utf8"),

@@ -234,16 +234,12 @@ export const baselineModules: BaselineModule[] = [
     "Livelihood",
     "Plan a sale window and an item list before moderation.",
     [
-      field("date", "Sale date", "date"),
-      field("start", "Start time", "time"),
-      field("end", "End time", "time"),
-      field("location", "Sample sale location"),
-      field("items", "Items", "textarea"),
-      select("visibility", "Proposed audience", [
-        "Households",
-        "Community members",
-      ]),
-      field("contact", "Sample contact email", "email"),
+      // Must match the server garage-sales definition (migration 089).
+      field("date", "Sale Date", "date"),
+      field("start", "Start Time", "time"),
+      field("end", "End Time", "time"),
+      field("location", "Sale Location"),
+      field("items", "Items", "textarea", false),
     ],
     [
       "List sale items",
