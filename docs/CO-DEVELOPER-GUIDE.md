@@ -108,6 +108,11 @@ fixtures, logs or screenshots.
   Do not rerun migrations from an old pending checklist without checking status.
 - Reservation fee credit versus an extra charge remains an HOA policy question.
   Do not silently default it into a duplicate charge or assume it is waived.
+- Visitor passes (21 November 2026): owner runs prepared migration 090 after
+  089. It removes the 24-hour maximum from the table rule and from
+  `bfe_create_visitor_pass` so passes can span several days (start within 90
+  days, end after start, unchanged). Deploy the matching frontend after 090;
+  until then multi-day passes are rejected.
 - Garage sales form (20 November 2026): owner runs prepared migration 089
   after 085 (independent of 086-088). It removes Proposed audience and
   Contact email, makes Items optional and sets Title Case labels. Deploy the
