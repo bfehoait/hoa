@@ -61,11 +61,11 @@ const display = (s: string) =>
     timeStyle: "short",
     timeZone: "Asia/Manila",
   }).format(new Date(s));
-const DAY_MS = 24 * 60 * 60 * 1000;
 /** Turns the date-only "Pass starts" and "Pass ends" fields into the instants
- *  the server expects. A pass covers whole days in Philippine time, starting
- *  now when the first day is today. The server limits a pass to 24 hours, so
- *  the end is capped there and may be at most the next day. */
+ *  the server expects. A pass covers whole days in Philippine time: it starts
+ *  at midnight (or now, when the first day is today) and ends at 11:59 PM on
+ *  the end date. Owner request, 21 November 2026: no maximum length
+ *  (migration 090 removes the server's former 24-hour limit). */
 function passWindow(fromDate: string, untilDate: string) {
   const day = /^\d{4}-\d{2}-\d{2}$/;
   if (!day.test(fromDate) || !day.test(untilDate))
@@ -74,14 +74,7 @@ function passWindow(fromDate: string, untilDate: string) {
     throw new Error("Pass ends must be on or after Pass starts.");
   const startOfDay = Date.parse(manilaInstant(fromDate + "T00:00"));
   const start = fromDate === manilaDate() ? Date.now() : startOfDay;
-  if (Date.parse(manilaInstant(untilDate + "T00:00")) - startOfDay > DAY_MS)
-    throw new Error(
-      "A pass can last up to 24 hours. Choose the same day or the next day.",
-    );
-  const end = Math.min(
-    Date.parse(manilaInstant(untilDate + "T23:59")),
-    start + DAY_MS,
-  );
+  const end = Date.parse(manilaInstant(untilDate + "T23:59"));
   return {
     p_from: new Date(start).toISOString(),
     p_until: new Date(end).toISOString(),
@@ -120,6 +113,8 @@ export default function OperationsDesk({
       : "visitor",
   );
   const [arrival, setArrival] = useState("commute");
+  // The chosen Pass starts date, so Pass ends cannot be set earlier.
+  const [passStart, setPassStart] = useState("");
   const passNames: Record<string, string> = {
     visitor: "Visitor pass",
     gate: "Gate pass",
@@ -948,16 +943,23 @@ export default function OperationsDesk({
               )}
               <label>
                 Pass starts
-                <input required name="from" type="date" min={manilaDate()} />
+                <input
+                  required
+                  name="from"
+                  type="date"
+                  min={manilaDate()}
+                  onChange={(e) => setPassStart(e.target.value)}
+                />
               </label>
               <label>
                 Pass ends
-                <input required name="until" type="date" min={manilaDate()} />
+                <input
+                  required
+                  name="until"
+                  type="date"
+                  min={passStart || manilaDate()}
+                />
               </label>
-              <p className={styles.formHelp}>
-                Dates use Philippine time. A pass covers the whole day and can
-                end the same day or the next day, up to 24 hours.
-              </p>
             </>
           )}
           {(data.kind !== "booking" || chosen) && (

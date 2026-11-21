@@ -107,6 +107,7 @@ beforeAll(async () => {
     "202611190087_buy_sell_categories.sql",
     "202611200088_job_listing_rules.sql",
     "202611200089_garage_sale_form.sql",
+    "202611210090_visitor_pass_multi_day.sql",
   ])
     await db.exec(
       await readFile(new URL("../migrations/" + file, import.meta.url), "utf8"),
@@ -1206,6 +1207,39 @@ it("requires approved, unexpired lot membership and explicit visitor permissions
     "UPDATE bfe_lot_memberships SET expires_at=now()-interval '1 minute',starts_at=now()-interval '1 day'",
   );
   await expect(visitor()).rejects.toThrow(/lot membership/);
+});
+it("allows visitor passes longer than one day but keeps the start and end rules", async () => {
+  await visitorPermissions();
+  const day = 24 * 3600000;
+  const id = await visitor(
+    resident,
+    lot,
+    new Date(Date.now() - 1000).toISOString(),
+    new Date(Date.now() + 5 * day).toISOString(),
+  );
+  const [row] = (
+    await db.query<{ hours: number }>(
+      "SELECT extract(epoch FROM valid_until-valid_from)/3600 AS hours FROM bfe_visitor_passes WHERE id=$1",
+      [id],
+    )
+  ).rows;
+  expect(Number(row.hours)).toBeGreaterThan(119);
+  await expect(
+    visitor(
+      resident,
+      lot,
+      new Date(Date.now() + day).toISOString(),
+      new Date(Date.now() + 1000).toISOString(),
+    ),
+  ).rejects.toThrow(/ends after it starts/);
+  await expect(
+    visitor(
+      resident,
+      lot,
+      new Date(Date.now() + 91 * day).toISOString(),
+      new Date(Date.now() + 92 * day).toISOString(),
+    ),
+  ).rejects.toThrow(/within 90 days/);
 });
 it("allows only authorized security to record entry and exit, with version protection", async () => {
   await visitorPermissions();
