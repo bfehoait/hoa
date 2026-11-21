@@ -540,8 +540,14 @@ export default function OperationsDesk({
                         children: 0,
                       });
                     }
+                    // Migration 091: visitor and small delivery passes are
+                    // approved automatically; gate passes wait for the office.
                     setNotice(
-                      "Your request was saved. Office approval is pending.",
+                      kind === "visitor" && passKind !== "gate"
+                        ? "Your pass is approved. Security can see it at the gate."
+                        : kind === "visitor"
+                          ? "Your gate pass was saved. Office approval is pending; security will see it once it is approved."
+                          : "Your request was saved. Office approval is pending.",
                     );
                   },
                 },
@@ -860,7 +866,7 @@ export default function OperationsDesk({
                 {passKind === "visitor"
                   ? "For guests visiting your household."
                   : passKind === "gate"
-                    ? "For items, deliveries and materials moving in or out."
+                    ? "For items, deliveries and materials moving in or out. Needs office approval before security can see it."
                     : "For a delivery rider or driver dropping off a small order."}
               </p>
               <label>

@@ -108,6 +108,12 @@ fixtures, logs or screenshots.
   Do not rerun migrations from an old pending checklist without checking status.
 - Reservation fee credit versus an extra charge remains an HOA policy question.
   Do not silently default it into a duplicate charge or assume it is waived.
+- Pass approvals (21 November 2026): owner runs prepared migration 091 after
+  090. Visitor and small delivery passes are approved automatically on
+  submission; gate passes stay Pending for admin approval and appear for
+  security staff without approve permission only once approved. Verify with
+  `SELECT pg_get_functiondef('public.bfe_create_community_pass(uuid,uuid,text,text,text,timestamptz,timestamptz,text,text,text,integer,text)'::regprocedure) ILIKE '%Approved automatically%';`
+  (expect true) before deploying the matching frontend.
 - Visitor passes (21 November 2026): owner runs prepared migration 090 after
   089. It removes the 24-hour maximum from the table rule and from
   `bfe_create_visitor_pass` so passes can span several days (start within 90
