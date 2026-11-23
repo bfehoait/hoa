@@ -1,0 +1,6 @@
+# Keep document and image files byte-for-byte: no line-ending conversion.
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary

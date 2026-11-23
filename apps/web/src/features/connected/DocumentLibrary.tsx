@@ -1,8 +1,11 @@
 import PageIntro from "../office/OfficePage";
 import { useLocation } from "react-router-dom";
-import { ChevronRight, Folder } from "lucide-react";
-import { Link } from "../../components/AccessLink";
-import { mandatoryDocuments } from "../../../../../packages/shared/src/request-topics";
+import { Download, Folder } from "lucide-react";
+import {
+  mandatoryDocumentFiles,
+  mandatoryDocumentHref,
+} from "../../../../../packages/shared/src/mandatory-documents";
+import { downloadFile } from "../../data/download";
 import listStyles from "./DocumentLibrary.module.css";
 import boardStyles from "../workspaces/Board.module.css";
 import { useState } from "react";
@@ -92,6 +95,31 @@ export default function DocumentLibrary() {
       ),
   });
   const current = query.data?.rows.find((row) => row.id === selected);
+  // Mandatory Documents download directly; the server records each download
+  // and notifies admins (migration 092). Admins see the history in the office.
+  const [downloading, setDownloading] = useState<string | null>(null),
+    [downloadNotice, setDownloadNotice] = useState(""),
+    [downloadError, setDownloadError] = useState<Error | null>(null);
+  async function download(name: string, file: string) {
+    setDownloading(name);
+    setDownloadNotice("");
+    setDownloadError(null);
+    try {
+      await featureRpc("bfe_record_document_download", { p_document: name });
+      downloadFile(mandatoryDocumentHref(file), file);
+      setDownloadNotice(
+        `Downloading ${name}. The HOA office has been notified.`,
+      );
+    } catch (error) {
+      setDownloadError(
+        error instanceof Error
+          ? error
+          : new Error("The download could not start."),
+      );
+    } finally {
+      setDownloading(null);
+    }
+  }
   return (
     <>
       <PageIntro
@@ -135,22 +163,32 @@ export default function DocumentLibrary() {
           className={listStyles.mandatory}
           aria-labelledby="mandatory-documents"
         >
-          <h2 id="mandatory-documents">Request a mandatory document</h2>
-          <p>Choose a document to send a request to the office.</p>
+          <h2 id="mandatory-documents">Download a mandatory document</h2>
+          <p>
+            Choose a document to download it. The HOA office is notified of each
+            download.
+          </p>
           <ol className={listStyles.list} role="list">
-            {mandatoryDocuments.map((name) => (
+            {mandatoryDocumentFiles.map(({ name, file }) => (
               <li key={name}>
-                <Link
-                  to={`/services/requests?new=document&topic=${encodeURIComponent(
-                    `Mandatory Documents: ${name}`,
-                  )}`}
+                <button
+                  type="button"
+                  disabled={!!downloading}
+                  aria-busy={downloading === name}
+                  onClick={() => void download(name, file)}
                 >
                   {name}
-                  <ChevronRight size={20} aria-hidden="true" />
-                </Link>
+                  <Download size={20} aria-hidden="true" />
+                </button>
               </li>
             ))}
           </ol>
+          {downloadNotice && (
+            <p className={listStyles.notice} role="status">
+              {downloadNotice}
+            </p>
+          )}
+          <Feedback error={downloadError} />
         </section>
       )}
       {!board && category === "Member's Right to Inspect" && (
