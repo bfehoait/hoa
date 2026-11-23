@@ -108,6 +108,15 @@ fixtures, logs or screenshots.
   Do not rerun migrations from an old pending checklist without checking status.
 - Reservation fee credit versus an extra charge remains an HOA policy question.
   Do not silently default it into a duplicate charge or assume it is waived.
+- Mandatory document downloads (23 November 2026): owner runs prepared
+  migration 092 after 091 (download history table, admin notifications to
+  `/office/documents`, history function). Verify with
+  `SELECT to_regclass('public.bfe_document_downloads') IS NOT NULL;` (expect
+  true) before deploying the matching frontend; until then downloads fail with
+  "This service is not available yet". The PDFs in
+  `public/documents/mandatory` are SAMPLE placeholders, regenerated with
+  `node scripts/generate-mandatory-samples.mjs`; replace them with approved
+  files of the same names.
 - Pass approvals (21 November 2026): owner runs prepared migration 091 after
   090. Visitor and small delivery passes are approved automatically on
   submission; gate passes stay Pending for admin approval and appear for

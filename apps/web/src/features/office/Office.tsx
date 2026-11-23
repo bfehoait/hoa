@@ -43,6 +43,7 @@ import { RequestVisual } from "../../components/RequestVisual";
 import RequestDesk from "../services/RequestDesk";
 import OperationsDesk from "../connected/OperationsDesk";
 import LiveFeature from "../connected/LiveFeature";
+import DocumentDownloadHistory from "../connected/DocumentDownloadHistory";
 import AnnouncementManager from "../connected/AnnouncementManager";
 import LiveFeatureDirectory from "../connected/LiveFeatureDirectory";
 import AccessPlanning from "../developer/AccessPlanning";
@@ -146,7 +147,10 @@ export default function Office() {
     ["announcements", "community", "documents"].includes(path)
   )
     return path === "documents" ? (
-      <LiveFeature key={path} module="board-records" initialView="review" />
+      <>
+        <LiveFeature key={path} module="board-records" initialView="review" />
+        <DocumentDownloadHistory />
+      </>
     ) : (
       <AnnouncementManager key={path} />
     );

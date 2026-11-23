@@ -13,3 +13,13 @@ export function downloadCsv(filename: string, rows: unknown[][]) {
   anchor.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+/** Starts a browser download of a file the app serves, such as a sample PDF. */
+export function downloadFile(href: string, filename: string) {
+  const anchor = document.createElement("a");
+  anchor.href = href;
+  anchor.download = filename;
+  anchor.rel = "noopener";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+}

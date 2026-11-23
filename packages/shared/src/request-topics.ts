@@ -1,16 +1,8 @@
 import type { requestCategories } from "./requests";
+import { mandatoryDocumentFiles } from "./mandatory-documents";
 
-// Documents the Board must post in common areas (owner list, 19 November 2026).
-// Community documents links each one to a pre-filled Help desk Document request.
-export const mandatoryDocuments = [
-  "Annual Financial Statements (AFS)",
-  "Notice of Elections & Election Guidelines",
-  "Master List of Qualified Voters",
-  "Official Election Results / Tally",
-  "Notice of General Assembly / Special Meetings",
-  "Proposed Amendments to Articles or By-Laws",
-  "New House Rules, Traffic/Parking Rules & Fee/Fine Schedules",
-] as const;
+// Mandatory Documents (shared list): Community documents downloads them directly.
+export const mandatoryDocuments = mandatoryDocumentFiles.map((d) => d.name);
 
 // Triage labels only: none of these choices grants a service or establishes a violation.
 export const requestTopics: Record<
