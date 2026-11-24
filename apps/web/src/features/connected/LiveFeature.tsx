@@ -425,7 +425,9 @@ export default function LiveFeature({
           </details>
         )}
         {!embedded &&
-          ["booth-events", "workshops", "carpools"].includes(module) && (
+          ["booth-events", "workshops", "carpools"].includes(module) &&
+          // Owner request (24 November 2026): no application link for carpool residents.
+          !(module === "carpools" && view !== "review") && (
             <Link
               className="text-link"
               to={

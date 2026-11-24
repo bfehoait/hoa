@@ -28,7 +28,7 @@ export default function ShuttleStops({
       <div className={styles.tripHeading}>
         <BusFront size={24} aria-hidden="true" />
         <h2>Your trip</h2>
-        <span>12 stops</span>
+        <span>{shuttleStops.length} stops</span>
       </div>
       <div className={styles.tripEndpoints}>
         <button
