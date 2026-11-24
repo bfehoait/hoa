@@ -1,7 +1,7 @@
 import { PGlite } from "@electric-sql/pglite";
 import { readFile } from "node:fs/promises";
 import { beforeAll, afterAll, beforeEach, it, expect } from "vitest";
-// Migration 094: Finance, Grievance and Maintenance committees get their area by
+// Migrations 094/095: Finance, Grievance and Maintenance committees get their area by
 // default, and Grievance/Maintenance members only handle their Help desk
 // categories (visibility, replies, status, handling and notifications).
 const db = new PGlite();
@@ -100,6 +100,7 @@ beforeAll(async () => {
     "202611230092_mandatory_document_downloads.sql",
     "202611240093_document_download_requests.sql",
     "202611240094_committee_area_access.sql",
+    "202611240095_office_area_roles.sql",
   ])
     await db.exec(
       await readFile(new URL("../migrations/" + file, import.meta.url), "utf8"),
@@ -157,7 +158,7 @@ beforeEach(async () => {
     "TRUNCATE bfe_request_messages,bfe_request_audit,bfe_requests,bfe_notifications CASCADE",
   );
   await db.exec(
-    "DELETE FROM bfe_access_grants; DELETE FROM bfe_access_assignments; DELETE FROM bfe_tab_rules WHERE subject_kind<>'committee';",
+    "DELETE FROM bfe_access_grants; DELETE FROM bfe_access_assignments; DELETE FROM bfe_tab_rules WHERE subject_kind<>'committee' AND NOT (subject_kind='role' AND subject_id IN ('finance','grievance','maintenance'));",
   );
   await addAdmin(grievance, "grievance-admin");
   await addAdmin(maintenance, "maintenance-admin");
@@ -245,4 +246,129 @@ it("does not widen a Grievance member through an all-admins rule, but ordinary a
   await newRequest("Complaint");
   expect(await visible(grievance)).toEqual(["Complaint"]);
   expect(await visible(finance)).toEqual(["Complaint", "Maintenance"]);
+});
+
+// Migration 095: Finance, Grievance and Maintenance as member roles.
+const financeRole = "81000000-0000-4000-8000-000000000021",
+  grievanceRole = "81000000-0000-4000-8000-000000000022",
+  maintenanceRole = "81000000-0000-4000-8000-000000000023";
+async function addRole(id: string, name: string, role: string) {
+  await db.query("INSERT INTO auth.users VALUES($1) ON CONFLICT DO NOTHING", [
+    id,
+  ]);
+  await db.query(
+    "INSERT INTO members(id,user_id,name,role) VALUES($1,$2,$3,$4) ON CONFLICT(id) DO UPDATE SET role=EXCLUDED.role,extra_roles='{}'",
+    [name, id, name, role],
+  );
+}
+async function addRoleMembers() {
+  await addRole(financeRole, "finance-role", "finance");
+  await addRole(grievanceRole, "grievance-role", "grievance");
+  await addRole(maintenanceRole, "maintenance-role", "maintenance");
+}
+it("treats the office area roles as office staff limited to their area", async () => {
+  await addRoleMembers();
+  const roles = await as<string[]>(grievanceRole, "bfe_current_roles()");
+  expect([...roles!].sort()).toEqual(["admin", "grievance"]);
+  const can = (user: string, module: string, action: string) =>
+    as<boolean>(user, "bfe_can($1,$2,'association')", [module, action]);
+  expect(await can(financeRole, "finance", "view")).toBe(true);
+  expect(await can(financeRole, "requests", "view")).toBe(false);
+  expect(await can(grievanceRole, "requests", "status")).toBe(true);
+  expect(await can(grievanceRole, "finance", "view")).toBe(false);
+  expect(await can(maintenanceRole, "requests", "reply")).toBe(true);
+});
+it("limits the Grievance and Maintenance roles to their Help desk categories", async () => {
+  await addRoleMembers();
+  const maint = await newRequest("Maintenance");
+  await newRequest("Complaint");
+  await newRequest("Document");
+  expect(await visible(grievanceRole)).toEqual(["Complaint"]);
+  expect(await visible(maintenanceRole)).toEqual(["Maintenance"]);
+  expect(await visible(financeRole)).toEqual([]);
+  await expect(
+    as(grievanceRole, "bfe_set_request_status($1,1,'In progress')", [maint.id]),
+  ).rejects.toThrow(/outside your committee/);
+  await as(maintenanceRole, "bfe_set_request_status($1,1,'In progress')", [
+    maint.id,
+  ]);
+  const recipients = (
+    await db.query<{ recipient_id: string }>(
+      "SELECT recipient_id FROM bfe_notifications WHERE path='/office/requests' AND event_key IN (SELECT 'request-audit:'||id FROM bfe_request_audit WHERE request_id=$1 AND action='Created')",
+      [maint.id],
+    )
+  ).rows.map((r) => r.recipient_id);
+  expect(recipients).toContain(maintenanceRole);
+  expect(recipients).not.toContain(grievanceRole);
+  expect(recipients).not.toContain(financeRole);
+});
+it("does not widen the roles through rules written for all office admins", async () => {
+  await addRoleMembers();
+  await db.query(
+    "INSERT INTO bfe_tab_rules(subject_kind,subject_id,module,scope,mode) VALUES('role','admin','requests','association','edit'),('role','admin','finance','association','edit')",
+  );
+  await newRequest("Maintenance");
+  await newRequest("Complaint");
+  expect(await visible(grievanceRole)).toEqual(["Complaint"]);
+  expect(await visible(financeRole)).toEqual([]);
+  expect(
+    await as<boolean>(grievanceRole, "bfe_can('finance','view','association')"),
+  ).toBe(false);
+  // A recorded office admin keeps the all-admins rule.
+  expect(await visible(finance)).toEqual(["Complaint", "Maintenance"]);
+});
+it("keeps document download approvals with recorded office admins", async () => {
+  await addRoleMembers();
+  await expect(
+    as(grievanceRole, "bfe_document_download_requests_queue(0)"),
+  ).rejects.toThrow(/available to admins/);
+  await expect(
+    as(financeRole, "bfe_document_download_history(0)"),
+  ).rejects.toThrow(/available to admins/);
+  expect(
+    await as(fullAdmin, "bfe_document_download_requests_queue(0)"),
+  ).toBeTruthy();
+});
+it("lets an access manager assign and filter the new roles", async () => {
+  await addRoleMembers();
+  await db.query("UPDATE members SET role='admin' WHERE user_id=$1", [
+    grievanceRole,
+  ]);
+  const expected = JSON.stringify({
+    role: "admin",
+    extra_roles: [],
+    status: "Active",
+  });
+  await as(
+    developer,
+    "bfe_update_member_access($1,'grievance',ARRAY['homeowner','maintenance'],'Active','Synthetic role change',$2::jsonb)",
+    [grievanceRole, expected],
+  );
+  const saved = await db.query<{ role: string; extra_roles: string[] }>(
+    "SELECT role,extra_roles FROM members WHERE user_id=$1",
+    [grievanceRole],
+  );
+  expect(saved.rows[0]).toEqual({
+    role: "grievance",
+    extra_roles: ["homeowner", "maintenance"],
+  });
+  await expect(
+    as(
+      developer,
+      "bfe_update_member_access($1,'treasurer','{}','Active','Synthetic role change',$2::jsonb)",
+      [
+        grievanceRole,
+        JSON.stringify({
+          role: "grievance",
+          extra_roles: ["homeowner", "maintenance"],
+          status: "Active",
+        }),
+      ],
+    ),
+  ).rejects.toThrow(/Check the role/);
+  const filtered = await as<{ rows: { user_id: string }[] }>(
+    developer,
+    "bfe_filtered_access_members('', 'finance', 0)",
+  );
+  expect(filtered!.rows.map((r) => r.user_id)).toEqual([financeRole]);
 });

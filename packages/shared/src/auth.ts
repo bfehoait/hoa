@@ -27,8 +27,14 @@ export const roles = [
   "security",
   "driver",
   "developer",
+  "finance",
+  "grievance",
+  "maintenance",
 ] as const;
 export type MemberRole = (typeof roles)[number];
+// Office roles limited to one area. Like the server, they include the office
+// admin role; the area itself is set by server permission rules.
+export const officeAreaRoles = ["finance", "grievance", "maintenance"] as const;
 export const memberSchema = z.object({
   id: z.string().min(1),
   user_id: z.uuid(),
@@ -46,9 +52,14 @@ export type AuthMember = z.infer<typeof memberSchema>;
 // every real operation. Extra roles come only from the server member record.
 export function memberRoles(member: AuthMember): MemberRole[] {
   if (member.status !== "Active") return [];
-  return [...new Set([member.role, ...(member.extra_roles ?? [])])].filter(
-    (role): role is MemberRole => roles.some((known) => known === role),
-  );
+  const assigned = [
+    ...new Set([member.role, ...(member.extra_roles ?? [])]),
+  ].filter((role): role is MemberRole => roles.some((known) => known === role));
+  return assigned.some((role) =>
+    officeAreaRoles.some((area) => area === role),
+  ) && !assigned.includes("admin")
+    ? [...assigned, "admin"]
+    : assigned;
 }
 export const workspaces = [
   {
@@ -67,7 +78,7 @@ export const workspaces = [
     id: "office",
     title: "Office & administration",
     path: "/office",
-    roles: ["admin", "developer"],
+    roles: ["admin", "finance", "grievance", "maintenance", "developer"],
   },
   {
     id: "board",

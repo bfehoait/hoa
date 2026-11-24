@@ -92,6 +92,23 @@ describe("identity and member boundaries", () => {
       memberRoles({ ...member, extra_roles: ["admin", "admin", "unknown"] }),
     ).toEqual(["homeowner", "admin"]);
   });
+  it("opens the office for the Finance, Grievance and Maintenance roles", () => {
+    const finance = { ...member, role: "finance", extra_roles: [] };
+    expect(memberRoles(finance)).toEqual(["finance", "admin"]);
+    expect(memberHomePath(finance)).toBe("/office");
+    expect(canOpenPath(finance, "/office/finance")).toBe(true);
+    expect(canOpenPath(finance, "/security")).toBe(false);
+    expect(
+      memberRoles({ ...member, extra_roles: ["grievance", "maintenance"] }),
+    ).toEqual(["homeowner", "grievance", "maintenance", "admin"]);
+    expect(
+      memberHomePath({
+        ...member,
+        role: "maintenance",
+        extra_roles: ["homeowner"],
+      }),
+    ).toBe("/office");
+  });
   it("denies unknown roles and does not invent a staff/admin mapping", () => {
     expect(
       memberWorkspaces({ ...member, role: "staff", extra_roles: [] }),

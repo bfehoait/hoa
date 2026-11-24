@@ -108,6 +108,12 @@ fixtures, logs or screenshots.
   Do not rerun migrations from an old pending checklist without checking status.
 - Reservation fee credit versus an extra charge remains an HOA policy question.
   Do not silently default it into a duplicate charge or assume it is waived.
+- Office area roles (24 November 2026): owner runs prepared migration 095
+  after 094. Finance, Grievance and Maintenance become member roles (main or
+  additional) limited to their area, alongside the 094 committees. Verify with
+  `SELECT to_regprocedure('public.bfe_assigned_roles_for(uuid)') IS NOT NULL;`
+  (expect true) before deploying the matching frontend. New accounts are still
+  created with the original roles (no BFE change); change the role afterwards.
 - Committee area access (24 November 2026): owner runs prepared migration 094
   after 093. Finance, Grievance and Maintenance stay access committees (not new
   roles): default committee rules give Finance the finance area and
