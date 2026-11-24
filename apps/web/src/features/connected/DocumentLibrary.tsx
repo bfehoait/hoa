@@ -1,11 +1,14 @@
 import PageIntro from "../office/OfficePage";
 import { useLocation } from "react-router-dom";
-import { Download, Folder } from "lucide-react";
+import { Eye, Folder } from "lucide-react";
 import {
+  inspectionRecordFiles,
   mandatoryDocumentFiles,
-  mandatoryDocumentHref,
 } from "../../../../../packages/shared/src/mandatory-documents";
-import { downloadFile } from "../../data/download";
+import CommunityDocumentViewer, {
+  DocumentStatusTag,
+  useDocumentAccess,
+} from "./CommunityDocumentViewer";
 import listStyles from "./DocumentLibrary.module.css";
 import boardStyles from "../workspaces/Board.module.css";
 import { useState } from "react";
@@ -17,49 +20,21 @@ import { Button, Feedback, Skeleton } from "../../components/UI";
 import Sheet from "../../components/Sheet";
 import DocumentAttachment from "./DocumentAttachment";
 import styles from "./LiveFeature.module.css";
-// Must match the board-records "Record category" options (migration 086).
-const documentCategories = [
-  "Mandatory Documents",
-  "Member's Right to Inspect",
-] as const;
-// Records members may inspect (owner-supplied list, 19 November 2026).
-const inspectionRecords = [
-  {
-    title: "Corporate & Governance Records",
-    groups: [
-      {
-        heading: null,
-        items: [
-          "Articles of Incorporation and By-Laws (including all approved amendments)",
-          "DHSUD Certificate of Registration and General Information Sheets (GIS)",
-          "Minutes Book: Complete minutes of all General Assembly meetings and Board of Directors / Executive Officer meetings",
-          "Compilation of Board Resolutions (including policies, authorizations, and administrative issuances)",
-          "Deed of Restrictions, subdivision plans, and turnover documents from the developer",
-        ],
-      },
-      {
-        heading: "Membership & Election Records",
-        items: [
-          "Membership Book / Updated Master List of Members (indicating owners and authorized lessees/occupants)",
-          "Election Reports: Attendance sheets, notarized minutes of elections, and certified election returns/tally sheets",
-        ],
-      },
-    ],
-  },
-  {
-    title: "Financial & Accounting Records",
-    groups: [
-      {
-        heading: null,
-        items: [
-          "Audited Annual Financial Statements (AFS) and Annual Reports (which must also be provided upon request)",
-          "Books of Accounts: Cash Receipts Book, Cash Disbursements Book, General Journal, and General Ledger",
-          "Supporting Financial Vouchers: Official receipts, disbursement vouchers, supplier invoices, bank statements, check stubs, and approved contracts with service providers (e.g., security, maintenance, construction)",
-        ],
-      },
-    ],
-  },
-] as const;
+// Must match the board-records "Record category" options (migration 093).
+const documentCategories = ["Mandatory Documents", "Right to Inspect"] as const;
+// Records members may inspect (owner list), grouped as on the page.
+const inspectionTables = [
+  ...new Set(inspectionRecordFiles.map((r) => r.table)),
+].map((title) => {
+  const rows = inspectionRecordFiles.filter((r) => r.table === title);
+  return {
+    title,
+    groups: [...new Set(rows.map((r) => r.group))].map((heading) => ({
+      heading,
+      items: rows.filter((r) => r.group === heading),
+    })),
+  };
+});
 const schema = z.object({
   rows: z.array(
     z.object({
@@ -95,31 +70,19 @@ export default function DocumentLibrary() {
       ),
   });
   const current = query.data?.rows.find((row) => row.id === selected);
-  // Mandatory Documents download directly; the server records each download
-  // and notifies admins (migration 092). Admins see the history in the office.
-  const [downloading, setDownloading] = useState<string | null>(null),
-    [downloadNotice, setDownloadNotice] = useState(""),
-    [downloadError, setDownloadError] = useState<Error | null>(null);
-  async function download(name: string, file: string) {
-    setDownloading(name);
-    setDownloadNotice("");
-    setDownloadError(null);
-    try {
-      await featureRpc("bfe_record_document_download", { p_document: name });
-      downloadFile(mandatoryDocumentHref(file), file);
-      setDownloadNotice(
-        `Downloading ${name}. The HOA office has been notified.`,
-      );
-    } catch (error) {
-      setDownloadError(
-        error instanceof Error
-          ? error
-          : new Error("The download could not start."),
-      );
-    } finally {
-      setDownloading(null);
-    }
-  }
+  // Community documents are view-only; downloading needs an approved
+  // request (migration 093). Admins decide requests on the office page.
+  const access = useDocumentAccess();
+  const [viewing, setViewing] = useState<{ name: string; file: string } | null>(
+    null,
+  );
+  const documentButton = (name: string, file: string) => (
+    <button type="button" onClick={() => setViewing({ name, file })}>
+      <span className={listStyles.docName}>{name}</span>
+      <DocumentStatusTag access={access.data?.get(name)} />
+      <Eye size={20} aria-hidden="true" />
+    </button>
+  );
   return (
     <>
       <PageIntro
@@ -163,35 +126,19 @@ export default function DocumentLibrary() {
           className={listStyles.mandatory}
           aria-labelledby="mandatory-documents"
         >
-          <h2 id="mandatory-documents">Download a mandatory document</h2>
+          <h2 id="mandatory-documents">Mandatory documents</h2>
           <p>
-            Choose a document to download it. The HOA office is notified of each
-            download.
+            Choose a document to view it. To download a copy, request it from
+            the HOA office.
           </p>
           <ol className={listStyles.list} role="list">
             {mandatoryDocumentFiles.map(({ name, file }) => (
-              <li key={name}>
-                <button
-                  type="button"
-                  disabled={!!downloading}
-                  aria-busy={downloading === name}
-                  onClick={() => void download(name, file)}
-                >
-                  {name}
-                  <Download size={20} aria-hidden="true" />
-                </button>
-              </li>
+              <li key={name}>{documentButton(name, file)}</li>
             ))}
           </ol>
-          {downloadNotice && (
-            <p className={listStyles.notice} role="status">
-              {downloadNotice}
-            </p>
-          )}
-          <Feedback error={downloadError} />
         </section>
       )}
-      {!board && category === "Member's Right to Inspect" && (
+      {!board && category === "Right to Inspect" && (
         <section
           className={listStyles.inspect}
           aria-label="Records members may inspect"
@@ -203,15 +150,19 @@ export default function DocumentLibrary() {
             office hours, and to request copies (at the requesting member's
             expense):
           </p>
-          {inspectionRecords.map((table) => (
+          <p className={listStyles.hint}>
+            Choose a record to view it. To download a copy, request it from the
+            HOA office.
+          </p>
+          {inspectionTables.map((table) => (
             <div key={table.title} className={listStyles.table}>
               <h2>{table.title}</h2>
               {table.groups.map((group) => (
                 <div key={group.heading ?? "records"}>
                   {group.heading && <h3>{group.heading}</h3>}
                   <ul role="list">
-                    {group.items.map((item) => (
-                      <li key={item}>{item}</li>
+                    {group.items.map(({ name, file }) => (
+                      <li key={name}>{documentButton(name, file)}</li>
                     ))}
                   </ul>
                 </div>
@@ -219,6 +170,14 @@ export default function DocumentLibrary() {
             </div>
           ))}
         </section>
+      )}
+      {viewing && (
+        <CommunityDocumentViewer
+          name={viewing.name}
+          file={viewing.file}
+          access={access.data?.get(viewing.name)}
+          onClose={() => setViewing(null)}
+        />
       )}
       {query.isPending ? (
         <Skeleton />

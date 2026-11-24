@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Download, Minus, Plus } from "lucide-react";
 import {
   getDocument,
@@ -17,11 +17,17 @@ export default function PdfViewer({
   title,
   filename,
   onClose,
+  viewOnly = false,
+  actions,
 }: {
   file: Blob;
   title: string;
   filename: string;
   onClose: () => void;
+  /** Hide the Download button (documents that need an approved request). */
+  viewOnly?: boolean;
+  /** Extra footer content, such as a request or status button. */
+  actions?: ReactNode;
 }) {
   const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null);
   const [page, setPage] = useState(1);
@@ -139,10 +145,13 @@ export default function PdfViewer({
           <Button type="button" secondary onClick={onClose}>
             Close
           </Button>
-          <Button type="button" onClick={download}>
-            <Download size={18} aria-hidden="true" />
-            Download PDF
-          </Button>
+          {actions}
+          {!viewOnly && (
+            <Button type="button" onClick={download}>
+              <Download size={18} aria-hidden="true" />
+              Download PDF
+            </Button>
+          )}
         </div>
       }
     >
@@ -216,7 +225,13 @@ export default function PdfViewer({
         </p>
       )}
       {loading && <Skeleton variant="section" label="Loading page" />}
-      {error && <p role="alert">{error}</p>}
+      {error && (
+        <p role="alert">
+          {viewOnly
+            ? "This document could not be displayed. Please try again later."
+            : error}
+        </p>
+      )}
       <div ref={container} className={styles.page} aria-busy={loading}>
         <canvas
           ref={canvas}

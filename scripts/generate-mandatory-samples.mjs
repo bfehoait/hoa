@@ -12,6 +12,13 @@ const list = JSON.parse(
     "utf8",
   ),
 );
+const inspection = JSON.parse(
+  readFileSync(
+    new URL("packages/shared/src/inspection-records.json", root),
+    "utf8",
+  ),
+);
+const allDocs = [...list, ...inspection];
 const outDir = new URL("public/documents/mandatory/", root);
 mkdirSync(outDir, { recursive: true });
 
@@ -607,6 +614,408 @@ const docs = {
       ],
     );
   },
+  // ---- Right to Inspect records (R.A. 9904, Sections 7(b) and 17). ----
+  "articles-of-incorporation-and-by-laws.pdf": (p) => {
+    frame(
+      p,
+      "Articles of Incorporation and By-Laws",
+      "As amended and approved (sample excerpt)",
+    );
+    p.heading("Articles of Incorporation");
+    p.table(
+      [
+        { label: "Article", width: 110 },
+        { label: "Summary", width: 394 },
+      ],
+      [
+        ["First (Name)", "Bellefort Estates Homeowners Association, Inc."],
+        [
+          "Second (Purpose)",
+          "To promote the welfare of members, maintain common areas and enforce the Deed of Restrictions.",
+        ],
+        [
+          "Third (Principal office)",
+          "Bellefort Estates Clubhouse, Bacoor, Cavite",
+        ],
+        [
+          "Fourth (Term)",
+          "Perpetual, as allowed by the Revised Corporation Code",
+        ],
+        [
+          "Fifth (Incorporators)",
+          "Sample Incorporator 1 to Sample Incorporator 5",
+        ],
+      ],
+    );
+    p.heading("By-Laws (table of contents)");
+    p.bullets(
+      [
+        "Article I - Membership, rights and obligations",
+        "Article II - General Assembly and quorum",
+        "Article III - Board of Directors and elections",
+        "Article IV - Officers and committees",
+        "Article V - Dues, assessments and fines",
+        "Article VI - Books, records and inspection",
+        "Article VII - Amendments",
+      ],
+      10,
+      true,
+    );
+    p.para(
+      "Amendments approved: Article III, Section 2 (General Assembly of 28 February 2026, sample).",
+      { size: 9, color: MUTED },
+    );
+    p.signature([["Sample Secretary", "Corporate Secretary"]]);
+  },
+  "dhsud-registration-and-gis.pdf": (p) => {
+    frame(
+      p,
+      "DHSUD Certificate of Registration and GIS",
+      "Registration details and General Information Sheet (sample)",
+    );
+    p.heading("Certificate of Registration");
+    p.table(
+      [
+        { label: "Item", width: 170 },
+        { label: "Details", width: 334 },
+      ],
+      [
+        ["Registered name", "Bellefort Estates Homeowners Association, Inc."],
+        ["Registration number", "SAMPLE-HOA-0000-0000"],
+        ["Date of registration", "12 June 2012 (sample)"],
+        ["Registering office", "DHSUD Regional Office IV-A (sample)"],
+      ],
+    );
+    p.heading("General Information Sheet (current officers)");
+    p.table(
+      [
+        { label: "Position", width: 170 },
+        { label: "Name", width: 194 },
+        { label: "Term", width: 140 },
+      ],
+      [
+        ["President", "Sample President", "2026 to 2028"],
+        ["Vice President", "Sample Vice President", "2026 to 2028"],
+        ["Secretary", "Sample Secretary", "2026 to 2028"],
+        ["Treasurer", "Sample Treasurer", "2026 to 2028"],
+        ["Auditor", "Sample Auditor", "2026 to 2028"],
+      ],
+    );
+    p.para("GIS filed with DHSUD on 30 March 2026 (sample).", {
+      size: 9,
+      color: MUTED,
+    });
+  },
+  "minutes-book.pdf": (p) => {
+    frame(
+      p,
+      "Minutes Book",
+      "Index of General Assembly and Board meetings (sample)",
+    );
+    p.table(
+      [
+        { label: "Date", width: 90 },
+        { label: "Meeting", width: 130 },
+        { label: "Attendance", width: 84 },
+        { label: "Key decisions", width: 200 },
+      ],
+      [
+        [
+          "28 Feb 2026",
+          "General Assembly",
+          "312 members",
+          "Approved 2025 AFS; By-Laws amendment",
+        ],
+        [
+          "10 Feb 2026",
+          "Board meeting",
+          "7 of 7",
+          "Set election schedule; appointed Election Committee",
+        ],
+        [
+          "13 Jan 2026",
+          "Board meeting",
+          "6 of 7",
+          "Approved security contract renewal",
+        ],
+        ["9 Dec 2025", "Board meeting", "7 of 7", "Adopted 2026 budget"],
+        [
+          "11 Nov 2025",
+          "Board meeting",
+          "5 of 7",
+          "Street light repairs, Phase 2",
+        ],
+        [
+          "14 Oct 2025",
+          "Special meeting",
+          "7 of 7",
+          "Drainage project funding",
+        ],
+      ],
+    );
+    p.para(
+      "Full minutes for each meeting are kept in the Minutes Book at the HOA office and may be inspected during office hours.",
+      { size: 9.5 },
+    );
+    p.signature([["Sample Secretary", "Corporate Secretary"]]);
+  },
+  "board-resolutions.pdf": (p) => {
+    frame(
+      p,
+      "Compilation of Board Resolutions",
+      "Policies, authorizations and administrative issuances (sample)",
+    );
+    p.table(
+      [
+        { label: "No.", width: 70 },
+        { label: "Date", width: 84 },
+        { label: "Subject", width: 250 },
+        { label: "Status", width: 100 },
+      ],
+      [
+        [
+          "2026-07",
+          "10 Feb 2026",
+          "Election schedule and Election Committee",
+          "In force",
+        ],
+        [
+          "2026-05",
+          "13 Jan 2026",
+          "Renewal of security services contract",
+          "In force",
+        ],
+        [
+          "2026-03",
+          "13 Jan 2026",
+          "Guidelines for clubhouse rental",
+          "In force",
+        ],
+        ["2025-22", "9 Dec 2025", "Adoption of the 2026 budget", "In force"],
+        ["2025-19", "11 Nov 2025", "Street light repair, Phase 2", "Completed"],
+        [
+          "2025-15",
+          "14 Oct 2025",
+          "Drainage improvement project",
+          "In progress",
+        ],
+      ],
+    );
+    p.signature([
+      ["Sample Secretary", "Corporate Secretary"],
+      ["Sample President", "President, Board of Directors"],
+    ]);
+  },
+  "deed-of-restrictions-and-turnover.pdf": (p) => {
+    frame(
+      p,
+      "Deed of Restrictions and Turnover Documents",
+      "From the developer (sample summary)",
+    );
+    p.heading("Key restrictions");
+    p.bullets([
+      "Lots are for residential use only. Home-based businesses need Board approval and must not disturb neighbours.",
+      "Building plans must be cleared by the Association before construction. Setbacks: 2 m front, 1.5 m sides (sample).",
+      "No structures on easements or road right-of-way. Fences may not exceed 2.4 m.",
+    ]);
+    p.heading("Turnover documents received");
+    p.table(
+      [
+        { label: "Document", width: 304 },
+        { label: "Received", width: 110 },
+        { label: "Copy kept", width: 90 },
+      ],
+      [
+        ["Approved subdivision plan", "15 May 2013", "Yes"],
+        ["Deed of Donation of open spaces and roads", "15 May 2013", "Yes"],
+        ["As-built plans (water, drainage, lighting)", "20 Aug 2013", "Yes"],
+        ["List of turned-over common facilities", "20 Aug 2013", "Yes"],
+      ],
+    );
+  },
+  "membership-book.pdf": (p) => {
+    frame(
+      p,
+      "Membership Book",
+      "Updated master list of members, owners and authorized lessees (sample)",
+    );
+    const rows = [];
+    for (let i = 1; i <= 14; i++)
+      rows.push([
+        `${1 + (i > 7 ? 1 : 0)}-${String(1 + (i % 4)).padStart(2, "0")}-${String(2 + i * 2).padStart(3, "0")}`,
+        `Sample Member ${String(i).padStart(3, "0")}`,
+        i % 5 === 0 ? "Authorized lessee" : "Owner",
+        `${2013 + (i % 10)}`,
+      ]);
+    p.table(
+      [
+        { label: "Phase-Block-Lot", width: 110 },
+        { label: "Name", width: 204 },
+        { label: "Type", width: 120 },
+        { label: "Member since", width: 70 },
+      ],
+      rows,
+    );
+    p.para(
+      "Contact details are kept private and are not included in copies given to members.",
+      { size: 9, color: MUTED },
+    );
+  },
+  "election-reports.pdf": (p) => {
+    frame(p, "Election Reports", "Election of 15 March 2026 (sample)");
+    p.heading("Attendance and ballots");
+    p.table(
+      [
+        { label: "Item", width: 344 },
+        { label: "Count", width: 160, align: "right" },
+      ],
+      [
+        ["Members who signed the attendance sheet", "448"],
+        ["Proxies filed and validated", "38"],
+        ["Ballots cast", "486"],
+        ["Spoiled ballots", "6"],
+      ],
+    );
+    p.heading("Documents in this report");
+    p.bullets([
+      "Attendance sheets (signed), 12 pages",
+      "Notarized minutes of the election proceedings",
+      "Certified election returns and tally sheets per precinct",
+      "Election Committee certification of winners",
+    ]);
+    p.signature([
+      ["Sample Chair", "Chair, Election Committee"],
+      ["Sample Notary", "Notary Public (sample)"],
+    ]);
+  },
+  "audited-financial-statements-and-annual-reports.pdf": (p) => {
+    frame(
+      p,
+      "Audited Financial Statements and Annual Report",
+      "For the year ended 31 December 2025 (sample)",
+    );
+    p.heading("Independent auditor's opinion (excerpt)");
+    p.para(
+      "In our opinion, the financial statements present fairly, in all material respects, the financial position of the Association as at 31 December 2025, in accordance with the Philippine Financial Reporting Standard for Small Entities. (Sample wording, Sample Auditing Firm.)",
+      { size: 9.5 },
+    );
+    p.y -= 4;
+    p.heading("Highlights");
+    p.table(
+      [
+        { label: "Item", width: 344 },
+        { label: "2025", width: 160, align: "right" },
+      ],
+      [
+        ["Total income", peso(3172740)],
+        ["Total expenses", peso(2914850)],
+        ["Excess of income over expenses", peso(257890)],
+        ["Members' equity at year end", peso(1363850)],
+      ],
+    );
+    p.heading("Annual report");
+    p.bullets([
+      "Completed street light repairs in Phase 2 and the first stage of the drainage project.",
+      "Collection rate for association dues: 89% (sample).",
+      "Renewed the security services contract after a competitive canvass.",
+    ]);
+  },
+  "books-of-accounts.pdf": (p) => {
+    frame(
+      p,
+      "Books of Accounts",
+      "Sample entries from the General Ledger, January 2026",
+    );
+    p.table(
+      [
+        { label: "Date", width: 70 },
+        { label: "Account", width: 174 },
+        { label: "Ref.", width: 60 },
+        { label: "Debit", width: 100, align: "right" },
+        { label: "Credit", width: 100, align: "right" },
+      ],
+      [
+        ["05 Jan", "Cash in bank", "CR-001", peso(84500), ""],
+        ["05 Jan", "Association dues", "CR-001", "", peso(84500)],
+        ["10 Jan", "Security services", "CD-004", peso(110000), ""],
+        ["10 Jan", "Cash in bank", "CD-004", "", peso(110000)],
+        ["15 Jan", "Utilities expense", "CD-007", peso(38250), ""],
+        ["15 Jan", "Cash in bank", "CD-007", "", peso(38250)],
+        ["31 Jan", "Interest income", "JV-002", "", peso(1520)],
+        ["31 Jan", "Cash in bank", "JV-002", peso(1520), ""],
+      ],
+      8.5,
+    );
+    p.para(
+      "The Cash Receipts Book, Cash Disbursements Book, General Journal and General Ledger are kept at the HOA office.",
+      { size: 9, color: MUTED },
+    );
+  },
+  "supporting-financial-vouchers.pdf": (p) => {
+    frame(
+      p,
+      "Supporting Financial Vouchers",
+      "Voucher register, January 2026 (sample)",
+    );
+    p.table(
+      [
+        { label: "Voucher", width: 70 },
+        { label: "Date", width: 64 },
+        { label: "Payee", width: 160 },
+        { label: "Support", width: 110 },
+        { label: "Amount", width: 100, align: "right" },
+      ],
+      [
+        [
+          "CD-004",
+          "10 Jan",
+          "Sample Security Agency",
+          "Invoice, contract",
+          peso(110000),
+        ],
+        [
+          "CD-005",
+          "12 Jan",
+          "Sample Hardware Supply",
+          "Official receipt",
+          peso(12480),
+        ],
+        [
+          "CD-006",
+          "14 Jan",
+          "Sample Electric Co.",
+          "Billing statement",
+          peso(26300),
+        ],
+        [
+          "CD-007",
+          "15 Jan",
+          "Sample Water District",
+          "Billing statement",
+          peso(11950),
+        ],
+        [
+          "CD-008",
+          "20 Jan",
+          "Sample Landscaping",
+          "Invoice, job order",
+          peso(18000),
+        ],
+        [
+          "CD-009",
+          "28 Jan",
+          "Sample Office Staff",
+          "Payroll register",
+          peso(45000),
+        ],
+      ],
+      8.5,
+    );
+    p.para(
+      "Bank statements and check stubs for January 2026 are filed with these vouchers (sample).",
+      { size: 9, color: MUTED },
+    );
+  },
 };
 
 // ---- Assemble a one-page PDF with the logo image. ----
@@ -615,7 +1024,7 @@ function build(file) {
   docs[file](page);
   footer(page);
   const content = Buffer.from(page.ops.join("\n"), "latin1");
-  const title = list.find((d) => d.file === file).name;
+  const title = allDocs.find((d) => d.file === file).name;
   const objects = [
     Buffer.from("<< /Type /Catalog /Pages 2 0 R >>"),
     Buffer.from("<< /Type /Pages /Kids [3 0 R] /Count 1 >>"),
@@ -666,7 +1075,7 @@ function build(file) {
   return Buffer.concat(parts);
 }
 
-for (const { file } of list) {
+for (const { file } of allDocs) {
   if (!docs[file]) throw new Error(`No sample content for ${file}`);
   writeFileSync(new URL(file, outDir), build(file));
   console.log("wrote", file);
