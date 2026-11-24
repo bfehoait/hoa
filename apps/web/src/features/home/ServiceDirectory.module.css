@@ -48,3 +48,7 @@
     align-items: start;
   }
 }
+.statusNote {
+  margin: 0 0 20px;
+  color: var(--muted);
+}

@@ -467,3 +467,27 @@
     gap: 10px;
   }
 }
+/* Services page status: green when active, light gray while pending BOD
+   approval. Text keeps WCAG AA contrast on both backgrounds. */
+.rows .destination.active {
+  background: var(--green-bg);
+}
+.rows .destination.active .tileText strong,
+.rows .destination.active .tileArrow {
+  color: var(--green);
+}
+.rows .destination.active .tileIcon {
+  background: var(--surface);
+  color: var(--green);
+}
+.rows .destination.pending {
+  background: var(--wash);
+}
+.rows .destination.pending .tileText strong,
+.rows .destination.pending .tileArrow {
+  color: var(--muted);
+}
+.rows .destination.pending .tileIcon {
+  background: var(--surface);
+  color: var(--muted);
+}

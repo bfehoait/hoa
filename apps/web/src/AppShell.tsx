@@ -515,12 +515,12 @@ export default function AppShell() {
             {workspaceHeading(auth.member, location.pathname, developer, board)}
           </p>
           <nav>
-            {links.map(({ to, label, icon: Icon }) => (
+            {links.map(({ to, label, icon: Icon, tone }) => (
               <Link
                 key={to}
                 to={to}
                 aria-current={activeWithin(to, links) ? "page" : undefined}
-                className={`${styles.navLink} ${activeWithin(to, links) ? styles.selected : ""}`}
+                className={`${styles.navLink} ${activeWithin(to, links) ? styles.selected : ""} ${tone === "green" ? styles.greenLink : ""}`}
               >
                 <Icon size={20} />
                 <span>{label}</span>
@@ -970,12 +970,12 @@ export default function AppShell() {
           gridTemplateColumns: `repeat(${mobileLinks.length}, minmax(0, 1fr))`,
         }}
       >
-        {mobileLinks.map(({ to, label, mobile, icon: Icon }) => (
+        {mobileLinks.map(({ to, label, mobile, icon: Icon, tone }) => (
           <Link
             to={to}
             key={to}
             aria-current={mobileActive === to ? "page" : undefined}
-            className={mobileActive === to ? styles.mobileSelected : ""}
+            className={`${mobileActive === to ? styles.mobileSelected : ""} ${tone === "green" ? styles.greenLink : ""}`}
           >
             <Icon size={24} />
             <span>{mobile ?? label}</span>
