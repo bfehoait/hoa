@@ -108,6 +108,14 @@ fixtures, logs or screenshots.
   Do not rerun migrations from an old pending checklist without checking status.
 - Reservation fee credit versus an extra charge remains an HOA policy question.
   Do not silently default it into a duplicate charge or assume it is waived.
+- Document view and download requests (24 November 2026): owner runs prepared
+  migration 093 after 092. It adds the `bfe_community_documents` reference
+  list (17 documents), download requests with admin approval (7-day download
+  window), `/more/documents` notifications, and renames "Member's Right to
+  Inspect" to "Right to Inspect" (definition and saved documents). Verify with
+  `SELECT to_regclass('public.bfe_document_download_requests') IS NOT NULL;`
+  (expect true) before deploying the matching frontend; until then the
+  documents page cannot load request status.
 - Mandatory document downloads (23 November 2026): owner runs prepared
   migration 092 after 091 (download history table, admin notifications to
   `/office/documents`, history function). Verify with

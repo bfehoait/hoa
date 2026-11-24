@@ -1,8 +1,9 @@
 import { PGlite } from "@electric-sql/pglite";
 import { readFile } from "node:fs/promises";
 import { beforeAll, afterAll, beforeEach, it, expect } from "vitest";
-// Migration 092: Mandatory Documents downloads are recorded, admins are
-// notified, and only admins/developers can read the download history.
+// Migrations 092-093: community documents are view-only; downloading needs a
+// request that an admin approves. Downloads and requests notify, and only
+// admins/developers can read the history and the request queue.
 const db = new PGlite();
 const resident = "81000000-0000-4000-8000-000000000001",
   other = "81000000-0000-4000-8000-000000000002",
@@ -81,6 +82,7 @@ beforeAll(async () => {
     "202611200089_garage_sale_form.sql",
     "202611210090_visitor_pass_multi_day.sql",
     "202611230092_mandatory_document_downloads.sql",
+    "202611240093_document_download_requests.sql",
   ])
     await db.exec(
       await readFile(new URL("../migrations/" + file, import.meta.url), "utf8"),
@@ -96,61 +98,164 @@ beforeAll(async () => {
   );
 }, 30000);
 beforeEach(async () => {
-  await db.exec("TRUNCATE bfe_document_downloads,bfe_notifications");
+  await db.exec(
+    "TRUNCATE bfe_document_downloads,bfe_document_download_requests,bfe_notifications",
+  );
 });
 afterAll(() => db.close());
+const AFS = "Annual Financial Statements (AFS)";
+const MINUTES =
+  "Minutes Book: Complete minutes of all General Assembly meetings and Board of Directors / Executive Officer meetings";
 const record = (user: string | null, document: string) =>
   as<string>(user, "bfe_record_document_download($1)", [document]);
+const request = (user: string, document: string) =>
+  as<{ id: string; status: string; expires_at: string | null }>(
+    user,
+    "bfe_request_document_download($1)",
+    [document],
+  );
+const decide = (user: string, id: string, decision: string, note = "") =>
+  as(user, "bfe_decide_document_download($1,$2,$3)", [id, decision, note]);
+type Access = { document: string; status: string; expires_at: string | null }[];
 type History = {
   rows: { document: string; name: string; unit: string | null }[];
   total: number;
 };
-it("records a mandatory document download and notifies admins", async () => {
-  const id = await record(resident, "Annual Financial Statements (AFS)");
-  expect(id).toMatch(/^[0-9a-f-]{36}$/);
-  const rows = await db.query<{ user_id: string; document: string }>(
-    "SELECT user_id,document FROM bfe_document_downloads",
+const notes = async () =>
+  (
+    await db.query<{
+      recipient_id: string;
+      title: string;
+      body: string;
+      path: string;
+    }>(
+      "SELECT recipient_id,title,body,path FROM bfe_notifications ORDER BY created_at,title",
+    )
+  ).rows;
+it("blocks downloads until an admin approves a request", async () => {
+  await expect(record(resident, AFS)).rejects.toThrow(
+    /Request this document from the HOA office/,
   );
-  expect(rows.rows).toEqual([
-    { user_id: resident, document: "Annual Financial Statements (AFS)" },
-  ]);
-  const notes = await db.query<{
-    recipient_id: string;
-    body: string;
-    path: string;
-  }>("SELECT recipient_id,body,path FROM bfe_notifications");
-  expect(notes.rows).toEqual([
+  const first = await request(resident, AFS);
+  expect(first?.status).toBe("Pending");
+  // Asking again returns the same pending request instead of a duplicate.
+  expect((await request(resident, AFS))?.id).toBe(first?.id);
+  expect(await notes()).toEqual([
     {
       recipient_id: admin,
+      title: "Download request",
+      body: "Synthetic homeowner (1-01-005) asked to download Annual Financial Statements (AFS). Review it on the office documents page.",
+      path: "/office/documents",
+    },
+  ]);
+  await expect(record(resident, AFS)).rejects.toThrow(/Request this document/);
+  await expect(decide(resident, first!.id, "Approved")).rejects.toThrow(
+    /Only admins/,
+  );
+  await decide(admin, first!.id, "Approved");
+  const access = await as<Access>(resident, "bfe_my_document_access()");
+  expect(access?.[0]).toMatchObject({ document: AFS, status: "Approved" });
+  const decision = (await notes()).find((n) => n.recipient_id === resident);
+  expect(decision?.title).toBe("Download request approved");
+  expect(decision?.path).toBe("/more/documents");
+  expect(decision?.body).toMatch(
+    /^You can download Annual Financial Statements \(AFS\) until /,
+  );
+  await record(resident, AFS);
+  const downloaded = (await notes()).filter(
+    (n) => n.title === "Document downloaded",
+  );
+  expect(downloaded).toEqual([
+    {
+      recipient_id: admin,
+      title: "Document downloaded",
       body: "Synthetic homeowner (1-01-005) downloaded Annual Financial Statements (AFS).",
       path: "/office/documents",
     },
   ]);
-});
-it("rejects unlisted documents and signed-out downloads", async () => {
-  await expect(record(resident, "Secret ledger")).rejects.toThrow(
-    /listed mandatory document/,
+  await expect(decide(admin, first!.id, "Declined")).rejects.toThrow(
+    /already decided/,
   );
-  await expect(
-    record(null, "Annual Financial Statements (AFS)"),
-  ).rejects.toThrow();
+});
+it("handles declined and expired approvals for Right to Inspect records", async () => {
+  const declined = await request(resident, MINUTES);
+  await decide(
+    admin,
+    declined!.id,
+    "Declined",
+    "Please inspect it at the office.",
+  );
+  expect(
+    (await as<Access>(resident, "bfe_my_document_access()"))?.[0]?.status,
+  ).toBe("Declined");
+  const declineNote = (await notes()).find((n) => n.recipient_id === resident);
+  expect(declineNote?.body).toMatch(
+    /declined .* Note: Please inspect it at the office\.$/,
+  );
+  await expect(record(resident, MINUTES)).rejects.toThrow(
+    /Request this document/,
+  );
+  const again = await request(resident, MINUTES);
+  expect(again?.id).not.toBe(declined?.id);
+  await decide(admin, again!.id, "Approved");
+  await db.query(
+    "UPDATE bfe_document_download_requests SET expires_at=now()-interval '1 minute' WHERE id=$1",
+    [again!.id],
+  );
+  expect(
+    (await as<Access>(resident, "bfe_my_document_access()"))?.[0]?.status,
+  ).toBe("Expired");
+  await expect(record(resident, MINUTES)).rejects.toThrow(
+    /Request this document/,
+  );
+});
+it("rejects unlisted documents and signed-out calls", async () => {
+  await expect(request(resident, "Secret ledger")).rejects.toThrow(
+    /listed community document/,
+  );
+  await expect(record(null, AFS)).rejects.toThrow();
   expect(
     (await db.query("SELECT 1 FROM bfe_document_downloads")).rows,
   ).toHaveLength(0);
 });
-it("shows the download history to admins only", async () => {
-  await record(resident, "Master List of Qualified Voters");
+it("lets admins see the request queue and download history, not homeowners", async () => {
+  const r = await request(resident, AFS);
+  await expect(
+    as(resident, "bfe_document_download_requests_queue(0)"),
+  ).rejects.toThrow(/available to admins/);
+  const queue = await as<{
+    rows: { id: string; status: string; name: string }[];
+    pending: number;
+  }>(admin, "bfe_document_download_requests_queue(0)");
+  expect(queue?.pending).toBe(1);
+  expect(queue?.rows[0]).toMatchObject({
+    id: r?.id,
+    status: "Pending",
+    name: "Synthetic homeowner",
+  });
+  await decide(admin, r!.id, "Approved");
+  await record(resident, AFS);
   await expect(
     as(resident, "bfe_document_download_history(0)"),
   ).rejects.toThrow(/available to admins/);
   const history = await as<History>(admin, "bfe_document_download_history(0)");
-  expect(history?.total).toBe(1);
   expect(history?.rows[0]).toMatchObject({
-    document: "Master List of Qualified Voters",
+    document: AFS,
     name: "Synthetic homeowner",
     unit: "1-01-005",
   });
   expect(
     (await as<History>(developer, "bfe_document_download_history(0)"))?.total,
   ).toBe(1);
+});
+it("renames Member's Right to Inspect to Right to Inspect", async () => {
+  const fields = (
+    await db.query<{ fields: { key: string; options?: string[] }[] }>(
+      "SELECT fields FROM bfe_feature_definitions WHERE code='board-records'",
+    )
+  ).rows[0].fields;
+  expect(fields.find((f) => f.key === "category")?.options).toEqual([
+    "Mandatory Documents",
+    "Right to Inspect",
+  ]);
 });

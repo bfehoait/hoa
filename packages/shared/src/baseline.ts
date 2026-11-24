@@ -877,7 +877,7 @@ export const baselineModules: BaselineModule[] = [
     [
       select("category", "Record category", [
         "Mandatory Documents",
-        "Member's Right to Inspect",
+        "Right to Inspect",
       ]),
       field("version", "Sample version"),
       field("owner", "Sample record owner"),

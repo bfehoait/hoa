@@ -44,6 +44,7 @@ import RequestDesk from "../services/RequestDesk";
 import OperationsDesk from "../connected/OperationsDesk";
 import LiveFeature from "../connected/LiveFeature";
 import DocumentDownloadHistory from "../connected/DocumentDownloadHistory";
+import DocumentRequestQueue from "../connected/DocumentRequestQueue";
 import AnnouncementManager from "../connected/AnnouncementManager";
 import LiveFeatureDirectory from "../connected/LiveFeatureDirectory";
 import AccessPlanning from "../developer/AccessPlanning";
@@ -149,6 +150,7 @@ export default function Office() {
     return path === "documents" ? (
       <>
         <LiveFeature key={path} module="board-records" initialView="review" />
+        <DocumentRequestQueue />
         <DocumentDownloadHistory />
       </>
     ) : (
