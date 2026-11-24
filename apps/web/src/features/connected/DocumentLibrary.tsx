@@ -1,6 +1,6 @@
 import PageIntro from "../office/OfficePage";
 import { useLocation } from "react-router-dom";
-import { Eye, Folder } from "lucide-react";
+import { Eye, Folder, Send } from "lucide-react";
 import {
   inspectionRecordFiles,
   mandatoryDocumentFiles,
@@ -73,14 +73,24 @@ export default function DocumentLibrary() {
   // Community documents are view-only; downloading needs an approved
   // request (migration 093). Admins decide requests on the office page.
   const access = useDocumentAccess();
-  const [viewing, setViewing] = useState<{ name: string; file: string } | null>(
-    null,
-  );
-  const documentButton = (name: string, file: string) => (
-    <button type="button" onClick={() => setViewing({ name, file })}>
+  const [viewing, setViewing] = useState<{
+    name: string;
+    file: string;
+    viewable: boolean;
+  } | null>(null);
+  // Mandatory Documents can be viewed; Right to Inspect records are request-only.
+  const documentButton = (name: string, file: string, viewable = true) => (
+    <button type="button" onClick={() => setViewing({ name, file, viewable })}>
       <span className={listStyles.docName}>{name}</span>
-      <DocumentStatusTag access={access.data?.get(name)} />
-      <Eye size={20} aria-hidden="true" />
+      <DocumentStatusTag
+        access={access.data?.get(name)}
+        idle={viewable ? "View" : "Request"}
+      />
+      {viewable ? (
+        <Eye size={20} aria-hidden="true" />
+      ) : (
+        <Send size={20} aria-hidden="true" />
+      )}
     </button>
   );
   return (
@@ -151,8 +161,7 @@ export default function DocumentLibrary() {
             expense):
           </p>
           <p className={listStyles.hint}>
-            Choose a record to view it. To download a copy, request it from the
-            HOA office.
+            Choose a record to request a downloadable copy from the HOA office.
           </p>
           {inspectionTables.map((table) => (
             <div key={table.title} className={listStyles.table}>
@@ -162,7 +171,7 @@ export default function DocumentLibrary() {
                   {group.heading && <h3>{group.heading}</h3>}
                   <ul role="list">
                     {group.items.map(({ name, file }) => (
-                      <li key={name}>{documentButton(name, file)}</li>
+                      <li key={name}>{documentButton(name, file, false)}</li>
                     ))}
                   </ul>
                 </div>
@@ -176,6 +185,7 @@ export default function DocumentLibrary() {
           name={viewing.name}
           file={viewing.file}
           access={access.data?.get(viewing.name)}
+          viewable={viewing.viewable}
           onClose={() => setViewing(null)}
         />
       )}

@@ -46,7 +46,14 @@ const until = (iso: string) =>
   });
 
 /** Short status shown beside a document in the lists. */
-export function DocumentStatusTag({ access }: { access?: DocumentAccess }) {
+export function DocumentStatusTag({
+  access,
+  idle = "View",
+}: {
+  access?: DocumentAccess;
+  /** Label when there is no request yet ("View" or "Request"). */
+  idle?: string;
+}) {
   if (access?.status === "Pending")
     return <span className={listStyles.tag}>Requested</span>;
   if (access?.status === "Approved" && access.expires_at)
@@ -55,7 +62,7 @@ export function DocumentStatusTag({ access }: { access?: DocumentAccess }) {
         Download until {until(access.expires_at)}
       </span>
     );
-  return <span className={listStyles.tagView}>View</span>;
+  return <span className={listStyles.tagView}>{idle}</span>;
 }
 
 export default function CommunityDocumentViewer({
@@ -63,17 +70,21 @@ export default function CommunityDocumentViewer({
   file,
   access,
   onClose,
+  viewable = true,
 }: {
   name: string;
   file: string;
   access?: DocumentAccess;
   onClose: () => void;
+  /** False for Right to Inspect records: request a download, no viewing. */
+  viewable?: boolean;
 }) {
   const cache = useQueryClient();
   const [notice, setNotice] = useState("");
   const pdf = useQuery({
     queryKey: ["community-document-file", file],
     staleTime: Infinity,
+    enabled: viewable,
     queryFn: async () => {
       const response = await fetch(mandatoryDocumentHref(file));
       if (!response.ok) throw new Error("This document is unavailable.");
@@ -136,7 +147,29 @@ export default function CommunityDocumentViewer({
           ? "Your approved download period has ended."
           : approved
             ? "Your download request was approved."
-            : "View only. To get a copy, request a download from the HOA office.";
+            : viewable
+              ? "View only. To get a copy, request a download from the HOA office."
+              : "This record is kept at the HOA office. You may inspect it there during office hours, or request a downloadable copy here.";
+  if (!viewable)
+    return (
+      <Sheet
+        title={name}
+        onClose={onClose}
+        footer={
+          <div data-sheet-actions>
+            <Button type="button" secondary onClick={onClose}>
+              Close
+            </Button>
+            {actions}
+          </div>
+        }
+      >
+        <p className={listStyles.requestStatus} role="status">
+          {notice || status}
+        </p>
+        <Feedback error={request.error ?? download.error} />
+      </Sheet>
+    );
   if (!pdf.isSuccess)
     return (
       <Sheet title={name} size="lg" onClose={onClose}>

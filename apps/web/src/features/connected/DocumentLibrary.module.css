@@ -256,3 +256,8 @@
   flex-wrap: wrap;
   gap: 6px;
 }
+
+.requestStatus {
+  margin: 0;
+  font-size: var(--text-base);
+}
