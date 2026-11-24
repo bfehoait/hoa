@@ -491,10 +491,10 @@ export default function Marketplace() {
                       </span>
                     </div>
                   )}
-                  <div className={styles.grid}>
+                  <div className={styles.list}>
                     {query.data.rows.map((record) => (
                       <Link
-                        className={styles.card}
+                        className={styles.row}
                         key={record.id}
                         to={{
                           search: `?${new URLSearchParams([...params.entries()].filter(([key]) => key !== "listing").concat([["listing", record.id]])).toString()}`,
@@ -506,6 +506,7 @@ export default function Marketplace() {
                           <ListingMedia
                             id={record.id}
                             coverOnly
+                            logoFallback
                             alt={record.title}
                           />
                         </div>

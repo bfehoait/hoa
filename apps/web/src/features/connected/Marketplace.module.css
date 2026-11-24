@@ -629,3 +629,72 @@
     background: var(--wash);
   }
 }
+/* Posts shown as a list: the item's photo (or the Bellefort logo when there
+   is no photo) on the left, then price, title and category. */
+.list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--surface);
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 80px;
+  padding: 8px 14px 8px 8px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.row + .row {
+  border-top: 1px solid var(--line);
+}
+.row:hover {
+  background: var(--wash);
+}
+.row:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+.row .image {
+  flex: 0 0 64px;
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+}
+.row .cardBody {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+}
+.row .price {
+  display: block;
+  margin: 0 0 2px;
+  font-size: 15px;
+}
+.row h3 {
+  font-size: 15px;
+  font-family: inherit;
+  margin: 0 0 4px;
+  line-height: 1.35;
+}
+.row .listingTitle {
+  -webkit-line-clamp: 1;
+}
+.row::after {
+  content: "›";
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 24px;
+  line-height: 1;
+}
+@media (min-width: 900px) {
+  .row .image {
+    flex-basis: 72px;
+    width: 72px;
+    height: 72px;
+  }
+}
