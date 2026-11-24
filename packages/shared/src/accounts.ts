@@ -41,6 +41,9 @@ export const notificationSchema = z.object({
       "/account",
       "/account/payments",
       "/office/finance",
+      // Document download requests and decisions (migrations 092-093).
+      "/office/documents",
+      "/more/documents",
     ];
     if (
       !allowed.includes(url.pathname) &&
@@ -58,8 +61,16 @@ export const notificationSchema = z.object({
   created_at: z.string(),
   read_at: z.string().nullable(),
 });
+// One notification with an unknown or unsafe link is skipped instead of
+// failing the whole list, so the bell keeps working for the others.
+const notificationRows = z.array(z.unknown()).transform((rows) =>
+  rows.flatMap((row) => {
+    const parsed = notificationSchema.safeParse(row);
+    return parsed.success ? [parsed.data] : [];
+  }),
+);
 export const notificationsSchema = z.object({
-  rows: z.array(notificationSchema),
+  rows: notificationRows,
   total: z.number().int().nonnegative(),
   unread: z.number().int().nonnegative(),
 });

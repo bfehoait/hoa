@@ -5,6 +5,7 @@ import {
   shouldSuggestInstall,
   profilePreferencesSchema,
   notificationSchema,
+  notificationsSchema,
   type AppNotification,
 } from "./accounts";
 const now = new Date("2026-11-05T08:00:00Z");
@@ -70,5 +71,28 @@ describe("own-account presentation contracts", () => {
         bio: "",
       }).display_name,
     ).toBe("Sample");
+  });
+  it("accepts document request links and skips one unknown link instead of failing the list", () => {
+    for (const path of ["/office/documents", "/more/documents"])
+      expect(notificationSchema.safeParse({ ...item, path }).success).toBe(
+        true,
+      );
+    const list = notificationsSchema.parse({
+      rows: [
+        { ...item, path: "/office/documents" },
+        {
+          ...item,
+          id: "41000000-0000-4000-8000-000000000002",
+          path: "/unknown/page",
+        },
+        { ...item, id: "41000000-0000-4000-8000-000000000003" },
+      ],
+      total: 3,
+      unread: 3,
+    });
+    expect(list.rows.map((r) => r.path)).toEqual([
+      "/office/documents",
+      "/more/profile",
+    ]);
   });
 });
