@@ -464,6 +464,9 @@ function MemberAccessEditor({
       security: "Security",
       driver: "Driver",
       developer: "Developer",
+      finance: "Finance",
+      grievance: "Grievance",
+      maintenance: "Maintenance",
     };
     return labels[role] ?? role;
   }
@@ -482,6 +485,11 @@ function MemberAccessEditor({
       "Handles assigned shuttle duties within their transport permissions.",
     developer:
       "Maintains the system and its technical tools. This role has broad system access.",
+    finance:
+      "Works in the office Finance area only, within the permissions assigned to the Finance role.",
+    grievance:
+      "Handles Violation or Complaint and Concern and Suggestion requests in the office Helpdesk.",
+    maintenance: "Handles Maintenance Issue requests in the office Helpdesk.",
   };
   function review(event: FormEvent, kind: string) {
     event.preventDefault();
