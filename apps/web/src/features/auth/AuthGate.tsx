@@ -14,6 +14,20 @@ import styles from "./Access.module.css";
 import { usePermissions } from "../../data/permissions";
 import { officeRequirement } from "../../../../../packages/shared/src/permissions";
 
+// Office areas in the order a person without the office overview should land.
+const officeAreas = [
+  "/office/requests",
+  "/office/finance",
+  "/office/documents",
+  "/office/announcements",
+  "/office/calendar",
+  "/office/visitors",
+  "/office/residents",
+  "/office/registry",
+  "/office/operations",
+  "/office/reports",
+];
+
 export function AuthGate({
   children,
   developerOnly = false,
@@ -137,6 +151,13 @@ export function AuthGate({
           <Skeleton variant="section" label="Checking your access" />
         </AuthFrame>
       );
+    // Committee members (for example Finance or Grievance) may not have the
+    // office overview: open the first office area they can use instead.
+    const area =
+      /^\/(office|admin)\/?$/.test(location.pathname) &&
+      officeAreas.find((path) => permissions.allowsPath(path));
+    if (!permissions.allowsPath(location.pathname) && area)
+      return <Navigate to={area} replace />;
     if (!permissions.allowsPath(location.pathname))
       return (
         <AuthFrame>

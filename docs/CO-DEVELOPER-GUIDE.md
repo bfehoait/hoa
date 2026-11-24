@@ -108,6 +108,14 @@ fixtures, logs or screenshots.
   Do not rerun migrations from an old pending checklist without checking status.
 - Reservation fee credit versus an extra charge remains an HOA policy question.
   Do not silently default it into a duplicate charge or assume it is waived.
+- Committee area access (24 November 2026): owner runs prepared migration 094
+  after 093. Finance, Grievance and Maintenance stay access committees (not new
+  roles): default committee rules give Finance the finance area and
+  Grievance/Maintenance the Help desk, and Grievance/Maintenance members only
+  handle their own categories unless given wider Help desk access personally.
+  Verify with
+  `SELECT to_regprocedure('public.bfe_request_category_allowed_for(uuid,text)') IS NOT NULL;`
+  (expect true). People need the admin role plus the committee assignment.
 - Document view and download requests (24 November 2026): owner runs prepared
   migration 093 after 092. It adds the `bfe_community_documents` reference
   list (17 documents), download requests with admin approval (7-day download
