@@ -224,6 +224,7 @@ export default function ListingMedia({
   hideEmpty = false,
   preload = false,
   active = true,
+  logoFallback = false,
 }: {
   id: string;
   editable?: boolean;
@@ -233,6 +234,8 @@ export default function ListingMedia({
   hideEmpty?: boolean;
   preload?: boolean;
   active?: boolean;
+  /** Show the Bellefort logo instead of the picture icon when there is no photo. */
+  logoFallback?: boolean;
 }) {
   const auth = useAuth(),
     cache = useQueryClient();
@@ -348,6 +351,25 @@ export default function ListingMedia({
     !query.data?.links.length
   )
     return null;
+  if (coverOnly && logoFallback && !query.isPending && !query.data?.cover_path)
+    return (
+      <div className={styles.logoPlaceholder} role="img" aria-label="No photo">
+        <img
+          className={styles.logoLight}
+          src="/brand/bellefort-logo.png"
+          alt=""
+          width="479"
+          height="212"
+        />
+        <img
+          className={styles.logoDark}
+          src="/brand/bellefort-logo-white.png"
+          alt=""
+          width="479"
+          height="212"
+        />
+      </div>
+    );
   if (coverOnly && !query.data?.url)
     return (
       <div
