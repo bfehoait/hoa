@@ -1648,3 +1648,16 @@
     display: flex;
   }
 }
+/* Livelihood menu tab is shown in green (owner request). */
+.app .navLink.greenLink,
+.app .mobileNav > a.greenLink {
+  color: var(--green);
+}
+.app .navLink.greenLink.selected,
+.app .mobileNav > a.greenLink.mobileSelected {
+  color: var(--green);
+  background: var(--green-bg);
+}
+.app .mobileNav > a.greenLink.mobileSelected {
+  box-shadow: inset 0 2px 0 var(--green);
+}

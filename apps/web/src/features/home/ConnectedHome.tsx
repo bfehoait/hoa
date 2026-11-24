@@ -82,6 +82,10 @@ const services: Destination[] = [
   },
 ];
 
+// Services approved by the Board of Directors (BOD). Other links stay visible
+// but light gray until the rest of the BOD approves them.
+const activeServices = ["/directory/transport"];
+
 export default function ConnectedHome({
   area = "home",
 }: {
@@ -169,6 +173,12 @@ export default function ConnectedHome({
               : "What can we help you with?"
           }
         />
+        {area === "services" && (
+          <p className={`note ${styles.statusNote}`}>
+            All green links are active. Grayed-out links are pending approval
+            from the rest of the Board of Directors (BOD).
+          </p>
+        )}
         <div className={styles.groups}>
           {serviceGroups.map((group) => {
             const destinations = items.filter((item) =>
@@ -177,7 +187,19 @@ export default function ConnectedHome({
             return destinations.length ? (
               <section key={group.title}>
                 <h2>{group.title}</h2>
-                <DestinationGrid items={destinations} variant="rows" />
+                <DestinationGrid
+                  items={
+                    area === "services"
+                      ? destinations.map((item) => ({
+                          ...item,
+                          status: activeServices.includes(item.to)
+                            ? ("active" as const)
+                            : ("pending" as const),
+                        }))
+                      : destinations
+                  }
+                  variant="rows"
+                />
               </section>
             ) : null;
           })}

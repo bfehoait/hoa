@@ -41,6 +41,8 @@ export type Destination = {
   detail?: string;
   icon: LucideIcon;
   badge?: string;
+  // Services page: green when active, light gray while pending BOD approval.
+  status?: "active" | "pending";
 };
 export function DestinationGrid({
   items,
@@ -55,14 +57,21 @@ export function DestinationGrid({
     <div
       className={`${styles.destinations} ${compact ? styles.compact : ""} ${styles[variant] ?? ""}`}
     >
-      {items.map(({ to, title, detail, icon: Icon, badge }) => (
-        <Link key={to} to={to} className={styles.destination}>
+      {items.map(({ to, title, detail, icon: Icon, badge, status }) => (
+        <Link
+          key={to}
+          to={to}
+          className={`${styles.destination} ${status ? styles[status] : ""}`}
+        >
           <span className={styles.tileIcon}>
             <Icon size={26} aria-hidden="true" />
           </span>
           <span className={styles.tileText}>
             <strong>{title}</strong>
             {detail && <span>{detail}</span>}
+            {status === "pending" && (
+              <span className="sr-only">Pending BOD approval</span>
+            )}
           </span>
           {badge && <span className={styles.count}>{badge}</span>}
           <ChevronRight

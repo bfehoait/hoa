@@ -27,6 +27,7 @@ export type AccountNavLink = {
   label: string;
   mobile?: string;
   icon: LucideIcon;
+  tone?: "green";
 };
 export const areaNavigation: Record<
   string,
@@ -42,6 +43,7 @@ export const areaNavigation: Record<
         label: "Livelihood",
         mobile: "Livelihood",
         icon: Store,
+        tone: "green",
       },
       { to: "/services", label: "Services", icon: Wrench },
       {
