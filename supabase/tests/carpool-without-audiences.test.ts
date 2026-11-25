@@ -2,7 +2,8 @@ import { PGlite } from "@electric-sql/pglite";
 import { readFile } from "node:fs/promises";
 import { beforeAll, afterAll, it, expect } from "vitest";
 // Migrations 096-098 on a database without 073 (no audiences column), as live
-// on 25 November 2026. 096 alone breaks qualifying carpool posts; 098 fixes it.
+// on 25 November 2026. 096 alone breaks qualifying carpool posts; 098 fixes it;
+// then 073 and 098 again (the owner-approved live sequence) widen to renters.
 const db = new PGlite();
 const resident = "81000000-0000-4000-8000-000000000001",
   other = "81000000-0000-4000-8000-000000000002",
@@ -202,4 +203,30 @@ it("posts and publishes carpools after 098 without 073", async () => {
   // A carpool without consent still waits for the office.
   const pending = await submit("carpools", fields(day(2)), false);
   expect((await record(pending)).status).toBe("Submitted");
+});
+it("shows carpools to renters once 073 is applied and 098 is run again", async () => {
+  const earlier = await submit("carpools", fields(day(3)), true, other);
+  await run("202611130073_publication_audiences.sql");
+  await run("202611250098_carpool_renters.sql");
+  const audiences = async (id: string) =>
+    (
+      await db.query<{ audiences: string[] | null }>(
+        "SELECT audiences FROM bfe_feature_records WHERE id=$1",
+        [id],
+      )
+    ).rows[0].audiences;
+  expect(await audiences(earlier)).toEqual(["homeowner", "renter"]);
+  const seenBy = async (user: string) =>
+    (await as<{ rows: { id: string }[] }>(
+      user,
+      "bfe_feature_dashboard('carpools','published',0,'')",
+    ))!.rows.map((x) => x.id);
+  expect(await seenBy(renter)).toContain(earlier);
+  const fresh = await submit("carpools", fields(day(4)), true, other);
+  expect(await audiences(fresh)).toEqual(["homeowner", "renter"]);
+  expect((await notified(fresh)).map((n) => n.recipient_id).sort()).toEqual(
+    [resident, renter].sort(),
+  );
+  expect(await seenBy(renter)).toContain(fresh);
+  expect(await seenBy(resident)).toContain(fresh);
 });
