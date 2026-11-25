@@ -108,6 +108,14 @@ fixtures, logs or screenshots.
   Do not rerun migrations from an old pending checklist without checking status.
 - Reservation fee credit versus an extra charge remains an HOA policy question.
   Do not silently default it into a duplicate charge or assume it is waived.
+- Carpool auto-publish (25 November 2026): owner runs prepared migration 096
+  after 095. Carpools submitted with consent and a departure date from today
+  up to a year ahead are published to homeowners immediately (no office
+  review), expire at the end of the departure date, and every other active
+  homeowner gets a bell notification opening `/directory/transport`. Home shows
+  a "New carpools" card. Verify with
+  `SELECT to_regprocedure('public.bfe_carpool_notify_homeowners()') IS NOT NULL;`
+  (expect true) before deploying the matching frontend.
 - Office area roles (24 November 2026): owner runs prepared migration 095
   after 094. Finance, Grievance and Maintenance become member roles (main or
   additional) limited to their area, alongside the 094 committees. Verify with

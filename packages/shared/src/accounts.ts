@@ -44,6 +44,8 @@ export const notificationSchema = z.object({
       // Document download requests and decisions (migrations 092-093).
       "/office/documents",
       "/more/documents",
+      // New carpool notifications for homeowners (migration 096).
+      "/directory/transport",
     ];
     if (
       !allowed.includes(url.pathname) &&

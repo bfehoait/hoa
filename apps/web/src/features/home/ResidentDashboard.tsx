@@ -15,7 +15,7 @@ import CommunityHighlights from "./CommunityHighlights";
 import DailyScripture from "./DailyScripture";
 import HomeownerSummary from "./HomeownerSummary";
 import HomeHotlines from "./HomeHotlines";
-import { HomeRequests, HomeBookings } from "./HomeActivity";
+import { HomeRequests, HomeBookings, HomeCarpools } from "./HomeActivity";
 import styles from "./ResidentHome.module.css";
 const shortcuts = [
   {
@@ -100,8 +100,11 @@ export default function ResidentDashboard() {
           </div>
         )}
         {allowed("/more/hotlines") && <HomeHotlines />}
-        {(allowed("/services/requests") || allowed("/services/bookings")) && (
+        {(allowed("/services/requests") ||
+          allowed("/services/bookings") ||
+          allowed("/directory/transport")) && (
           <div className={styles.activity}>
+            {allowed("/directory/transport") && <HomeCarpools />}
             {allowed("/services/requests") && <HomeRequests />}
             {allowed("/services/bookings") && <HomeBookings />}
           </div>

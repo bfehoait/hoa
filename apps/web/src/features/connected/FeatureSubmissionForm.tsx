@@ -52,6 +52,19 @@ type Payload = {
   expires: string | null;
   audiences: string[] | null;
 };
+// Matches migration 096: carpools with consent and a departure date from today
+// up to a year ahead are published on submission.
+function carpoolGoesLive(input: Payload) {
+  const date = String(input.fields?.date ?? "");
+  if (!input.consent || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Manila",
+  }).format(new Date());
+  const limit = new Date(Date.now() + 365 * 86400000)
+    .toISOString()
+    .slice(0, 10);
+  return date >= today && date <= limit;
+}
 export default function FeatureSubmissionForm({
   module,
   editing,
@@ -79,7 +92,11 @@ export default function FeatureSubmissionForm({
   const media = listingModules.includes(module) || announcement || candidate;
   // Owner request, 19 November 2026: community listings must give publication
   // consent before they can be submitted.
-  const consentRequired = directPublish || listingModules.includes(module);
+  // Owner request, 25 November 2026: carpools are published to other
+  // homeowners as soon as they are posted (migration 096), so consent is required.
+  const carpool = module === "carpools";
+  const consentRequired =
+    directPublish || carpool || listingModules.includes(module);
   // Owner request, 20 November 2026: Post a listing uses Title Case labels.
   const listing = listingModules.includes(module);
   const heading = (text: string) => (listing ? titleCase(text) : text);
@@ -197,13 +214,15 @@ export default function FeatureSubmissionForm({
         });
       }
     },
-    onSuccess: async () => {
+    onSuccess: async (_data, input) => {
       await cache.invalidateQueries({ queryKey: ["feature-records"] });
       await cache.invalidateQueries({ queryKey: ["listing-media"] });
       onSaved(
         announcement && directPublish
           ? "Announcement published."
-          : "Your submission was saved. Office review is pending.",
+          : carpool && !editing && carpoolGoesLive(input)
+            ? "Your carpool is now live. Other homeowners have been notified."
+            : "Your submission was saved. Office review is pending.",
       );
     },
   });
@@ -640,6 +659,15 @@ export default function FeatureSubmissionForm({
             <span>
               {directPublish ? (
                 "I have permission to share this announcement and image with the chosen audience."
+              ) : carpool ? (
+                <>
+                  I allow this carpool's title and description to be shown to
+                  other homeowners as soon as I post it. Pickup, destination and
+                  contact details stay private.{" "}
+                  <span className={styles.fieldTag} aria-hidden="true">
+                    Required
+                  </span>
+                </>
               ) : (
                 <>
                   I allow reviewed public text
@@ -675,7 +703,9 @@ export default function FeatureSubmissionForm({
               ? announcement
                 ? "Retry image upload"
                 : heading("Retry photo and links")
-              : heading("Submit for review")}
+              : carpool && !editing
+                ? "Post carpool"
+                : heading("Submit for review")}
         </Button>
         {recordSaved && (
           <Button
