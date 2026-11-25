@@ -93,7 +93,8 @@ export default function FeatureSubmissionForm({
   // Owner request, 19 November 2026: community listings must give publication
   // consent before they can be submitted.
   // Owner request, 25 November 2026: carpools are published to other
-  // homeowners as soon as they are posted (migration 096), so consent is required.
+  // homeowners and renters as soon as they are posted (migrations 096, 098), so
+  // consent is required.
   const carpool = module === "carpools";
   const consentRequired =
     directPublish || carpool || listingModules.includes(module);
@@ -221,7 +222,7 @@ export default function FeatureSubmissionForm({
         announcement && directPublish
           ? "Announcement published."
           : carpool && !editing && carpoolGoesLive(input)
-            ? "Your carpool is now live. Other homeowners have been notified."
+            ? "Your carpool is now live. Other homeowners and renters have been notified."
             : "Your submission was saved. Office review is pending.",
       );
     },
@@ -662,8 +663,8 @@ export default function FeatureSubmissionForm({
               ) : carpool ? (
                 <>
                   I allow this carpool's title and description to be shown to
-                  other homeowners as soon as I post it. Pickup, destination and
-                  contact details stay private.{" "}
+                  other homeowners and renters as soon as I post it. Pickup,
+                  destination and contact details stay private.{" "}
                   <span className={styles.fieldTag} aria-hidden="true">
                     Required
                   </span>

@@ -88,8 +88,16 @@ beforeAll(async () => {
     await db.exec(
       await readFile(new URL("../migrations/" + file, import.meta.url), "utf8"),
     );
-  // Column added by 073 (publication audiences), which this harness skips.
-  await db.exec("ALTER TABLE bfe_feature_records ADD COLUMN audiences text[]");
+  // 073 adds publication audiences and the audience-matching read functions.
+  await db.exec(
+    await readFile(
+      new URL(
+        "../migrations/202611130073_publication_audiences.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
   await db.exec(
     await readFile(
       new URL(
@@ -293,4 +301,53 @@ it("publishes older pending carpools with consent and a future date", async () =
     "SELECT count(*)::int AS n FROM bfe_notifications",
   );
   expect(after.rows[0]).toEqual(before.rows[0]);
+});
+
+// Migration 098: renters see carpools too.
+it("shows carpools to renters and notifies them", async () => {
+  const seenBy = async (user: string) =>
+    (await as<{ rows: { id: string }[] }>(
+      user,
+      "bfe_feature_dashboard('carpools','published',0,'')",
+    ))!.rows.map((x) => x.id);
+  const autoBefore = await submit("carpools", fields(day(5)), true, other);
+  const office = (
+    await db.query<{ id: string }>(
+      "INSERT INTO bfe_feature_records(module,owner_id,client_id,title,detail,fields) VALUES('carpools',$1,gen_random_uuid(),'Sample office ride','Synthetic office-published carpool.',$2::jsonb) RETURNING id",
+      [guard, JSON.stringify(fields(day(5)))],
+    )
+  ).rows[0].id;
+  await db.query(
+    "UPDATE bfe_feature_records SET status='Published',publication_consent=true,public_title=title,public_body=detail,audience='homeowner',expires_at=now()+interval '5 days' WHERE id=$1",
+    [office],
+  );
+  expect(await seenBy(renter)).not.toContain(autoBefore);
+  await db.exec(
+    await readFile(
+      new URL(
+        "../migrations/202611250098_carpool_renters.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
+  // Earlier auto-published and 097 carpools are widened; office choices are not.
+  expect((await record(autoBefore)).audiences).toEqual(["homeowner", "renter"]);
+  const renterSees = await seenBy(renter);
+  expect(renterSees).toContain(autoBefore);
+  expect(renterSees).not.toContain(office);
+  expect((await record(office)).audiences).toBeNull();
+  // New carpools go to homeowners and renters; both are notified.
+  const fresh = await submit("carpools", fields(day(6)), true, other);
+  expect((await record(fresh)).audiences).toEqual(["homeowner", "renter"]);
+  expect((await notified(fresh)).map((n) => n.recipient_id).sort()).toEqual(
+    [resident, renter].sort(),
+  );
+  expect(await seenBy(renter)).toContain(fresh);
+  expect(await seenBy(resident)).toContain(fresh);
+  // A renter's own carpool reaches homeowners.
+  const byRenter = await submit("carpools", fields(day(6)), true, renter);
+  expect((await notified(byRenter)).map((n) => n.recipient_id).sort()).toEqual(
+    [resident, other].sort(),
+  );
 });
