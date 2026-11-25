@@ -108,6 +108,17 @@ fixtures, logs or screenshots.
   Do not rerun migrations from an old pending checklist without checking status.
 - Reservation fee credit versus an extra charge remains an HOA policy question.
   Do not silently default it into a duplicate charge or assume it is waived.
+- Carpools for renters (25 November 2026): owner runs prepared migration 098
+  after 097. The live database was found not to have 073 (no `audiences`
+  column), so 096's trigger made qualifying carpool posts fail; 098 fixes this
+  and works with or without 073. New carpools get audiences {homeowner,renter}
+  only where the column exists; renters are notified only where 073 is live.
+  Where 073 is live, current 096/097 carpools still homeowner-only are widened
+  to renters; office-published carpools keep their audience. Renters see
+  carpools only once 073 is live. Owner applied 073 live (25 November 2026)
+  after a read-only readiness check, then reran 098 (idempotent) to widen
+  carpools posted while 073 was missing; checks all true. 073's functions are not
+  redefined by any later migration. Form wording updated.
 - Older pending carpools (25 November 2026): owner runs prepared one-time
   migration 097 after 096. Carpools still Submitted/In review/Reviewed with
   consent and a departure date from today up to a year ahead are published to

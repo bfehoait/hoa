@@ -137,8 +137,8 @@ export function HomeBookings() {
   );
 }
 
-// Owner request, 25 November 2026: homeowners see carpools as soon as a
-// neighbour posts one (published on submission by migration 096).
+// Owner request, 25 November 2026: homeowners and renters see carpools as soon
+// as a neighbour posts one (published on submission by migrations 096, 098).
 export function HomeCarpools() {
   const auth = useAuth();
   const query = useQuery({
