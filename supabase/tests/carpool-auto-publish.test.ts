@@ -235,3 +235,62 @@ it("does not change other listing types", async () => {
   );
   expect(after.rows[0]).toEqual(before.rows[0]);
 });
+
+// Migration 097: one-time publication of carpools still pending from before 096.
+it("publishes older pending carpools with consent and a future date", async () => {
+  const older = async (
+    date: string,
+    consent: boolean,
+    status = "Submitted",
+  ) => {
+    // Inserted without consent so the 096 trigger leaves it pending, as before 096.
+    const id = (
+      await db.query<{ id: string }>(
+        "INSERT INTO bfe_feature_records(module,owner_id,client_id,title,detail,fields) VALUES('carpools',$1,gen_random_uuid(),'Sample older ride','Synthetic carpool posted before 096.',$2::jsonb) RETURNING id",
+        [guard, JSON.stringify(fields(date))],
+      )
+    ).rows[0].id;
+    await db.query(
+      "UPDATE bfe_feature_records SET publication_consent=$2,status=$3 WHERE id=$1",
+      [id, consent, status],
+    );
+    return id;
+  };
+  const ready = await older(day(3), true);
+  const inReview = await older(day(4), true, "In review");
+  const noConsent = await older(day(3), false);
+  const past = await older(day(-3), true);
+  const rejected = await older(day(3), true, "Rejected");
+  const before = await db.query(
+    "SELECT count(*)::int AS n FROM bfe_notifications",
+  );
+  await db.exec(
+    await readFile(
+      new URL(
+        "../migrations/202611250097_publish_pending_carpools.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
+  for (const id of [ready, inReview]) {
+    const r = await record(id);
+    expect(r.status).toBe("Published");
+    expect(r.audience).toBe("homeowner");
+    expect(r.expires_at.getTime()).toBeGreaterThan(Date.now());
+  }
+  expect((await record(noConsent)).status).toBe("Submitted");
+  expect((await record(past)).status).toBe("Submitted");
+  expect((await record(rejected)).status).toBe("Rejected");
+  const seen = await as<{ rows: { id: string }[] }>(
+    other,
+    "bfe_feature_dashboard('carpools','published',0,'')",
+  );
+  expect(seen!.rows.map((x) => x.id)).toEqual(
+    expect.arrayContaining([ready, inReview]),
+  );
+  const after = await db.query(
+    "SELECT count(*)::int AS n FROM bfe_notifications",
+  );
+  expect(after.rows[0]).toEqual(before.rows[0]);
+});

@@ -108,6 +108,11 @@ fixtures, logs or screenshots.
   Do not rerun migrations from an old pending checklist without checking status.
 - Reservation fee credit versus an extra charge remains an HOA policy question.
   Do not silently default it into a duplicate charge or assume it is waived.
+- Older pending carpools (25 November 2026): owner runs prepared one-time
+  migration 097 after 096. Carpools still Submitted/In review/Reviewed with
+  consent and a departure date from today up to a year ahead are published to
+  homeowners (same rule as 096); no notifications are sent. Others are left
+  unchanged. No frontend change.
 - Carpool auto-publish (25 November 2026): owner runs prepared migration 096
   after 095. Carpools submitted with consent and a departure date from today
   up to a year ahead are published to homeowners immediately (no office
