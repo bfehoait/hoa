@@ -79,29 +79,34 @@ export default function Office() {
     if (path === "approvals") return <OfficeReviewInbox />;
     if (path === "shuttle") return <Shuttle />;
     const [desk, module] = path.split("/");
-    if (desk === "review" && Object.hasOwn(featureReviewCapabilities, module))
+    if (desk === "review" && Object.hasOwn(featureReviewCapabilities, module)) {
+      // Carpools are posted without approval (migrations 096-099), so their
+      // desk is the full history only, with no pending-review view.
+      const carpools = module === "carpools";
+      const history = carpools || params.get("history") === "1";
       return (
         <>
-          <Link
-            className="text-link"
-            to={
-              params.get("history") === "1"
-                ? `/office/review/${module}`
-                : `/office/review/${module}?history=1`
-            }
-          >
-            {params.get("history") === "1"
-              ? "Pending review only"
-              : "All submissions & history"}
-          </Link>
+          {!carpools && (
+            <Link
+              className="text-link"
+              to={
+                history
+                  ? `/office/review/${module}`
+                  : `/office/review/${module}?history=1`
+              }
+            >
+              {history ? "Pending review only" : "All submissions & history"}
+            </Link>
+          )}
           <LiveFeature
-            key={`${module}:${params.get("history")}`}
+            key={`${module}:${history}`}
             module={module}
             initialView="review"
-            pendingOnly={params.get("history") !== "1"}
+            pendingOnly={!history}
           />
         </>
       );
+    }
     if (
       desk === "participation" &&
       (module === "workshops" ||

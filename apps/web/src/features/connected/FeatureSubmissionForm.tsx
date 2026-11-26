@@ -52,18 +52,15 @@ type Payload = {
   expires: string | null;
   audiences: string[] | null;
 };
-// Matches migration 096: carpools with consent and a departure date from today
-// up to a year ahead are published on submission.
-function carpoolGoesLive(input: Payload) {
-  const date = String(input.fields?.date ?? "");
-  if (!input.consent || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
-  const today = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Manila",
-  }).format(new Date());
-  const limit = new Date(Date.now() + 365 * 86400000)
-    .toISOString()
-    .slice(0, 10);
-  return date >= today && date <= limit;
+// Matches migrations 096-099: carpools are published on posting and never wait
+// for office approval, so the departure date must be from today (Asia/Manila)
+// up to a year ahead; the server refuses anything else.
+function carpoolDateRange() {
+  const day = (at: number) =>
+    new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(
+      new Date(at),
+    );
+  return { min: day(Date.now()), max: day(Date.now() + 365 * 86400000) };
 }
 export default function FeatureSubmissionForm({
   module,
@@ -215,13 +212,13 @@ export default function FeatureSubmissionForm({
         });
       }
     },
-    onSuccess: async (_data, input) => {
+    onSuccess: async () => {
       await cache.invalidateQueries({ queryKey: ["feature-records"] });
       await cache.invalidateQueries({ queryKey: ["listing-media"] });
       onSaved(
         announcement && directPublish
           ? "Announcement published."
-          : carpool && !editing && carpoolGoesLive(input)
+          : carpool && !editing
             ? "Your carpool is now live. Other homeowners and renters have been notified."
             : "Your submission was saved. Office review is pending.",
       );
@@ -289,6 +286,19 @@ export default function FeatureSubmissionForm({
         ?.focus();
       return;
     }
+    if (carpool) {
+      const { min, max } = carpoolDateRange();
+      const date = parsed.data.fields.date ?? "";
+      if (date < min || date > max) {
+        setValidation(
+          new Error("Choose a departure date from today up to one year ahead."),
+        );
+        event.currentTarget
+          .querySelector<HTMLElement>('[name="date"]')
+          ?.focus();
+        return;
+      }
+    }
     const parsedLinks = publicationLinksSchema.safeParse(links);
     if (!parsedLinks.success) {
       setValidation(new Error(parsedLinks.error.issues[0].message));
@@ -306,9 +316,11 @@ export default function FeatureSubmissionForm({
         new Error(
           directPublish
             ? "Confirm that this announcement may be published to the selected audience."
-            : consentRequired
-              ? "Tick the permission box so the office can publish your listing after review."
-              : "Choose publication consent before attaching a photo or public contact links.",
+            : carpool
+              ? "Tick the permission box so your carpool can be shown to your neighbours."
+              : consentRequired
+                ? "Tick the permission box so the office can publish your listing after review."
+                : "Choose publication consent before attaching a photo or public contact links.",
         ),
       );
       event.currentTarget
@@ -493,8 +505,12 @@ export default function FeatureSubmissionForm({
                   defaultValue={editing?.fields?.[f.key]}
                   type={f.type ?? "text"}
                   required={f.required}
-                  min={f.min}
-                  max={f.max}
+                  min={
+                    carpool && f.key === "date" ? carpoolDateRange().min : f.min
+                  }
+                  max={
+                    carpool && f.key === "date" ? carpoolDateRange().max : f.max
+                  }
                   step={
                     f.type === "number"
                       ? ["capacity", "places", "passengers", "seats"].includes(

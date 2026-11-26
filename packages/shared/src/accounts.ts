@@ -46,6 +46,8 @@ export const notificationSchema = z.object({
       "/more/documents",
       // New carpool notifications for homeowners (migration 096).
       "/directory/transport",
+      // Carpool history notices for admins (migration 099).
+      "/office/review/carpools",
     ];
     if (
       !allowed.includes(url.pathname) &&

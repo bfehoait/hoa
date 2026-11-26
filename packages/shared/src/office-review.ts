@@ -40,28 +40,36 @@ export const featureReviewCapabilities = {
 
 export const officeReviewSchema = z.object({
   accounting_available: z.boolean().optional(),
-  queues: z.array(
-    z.object({
-      kind: z.enum([
-        "accounting",
-        "garage_items",
-        "registrations",
-        "lots",
-        "bookings",
-        "passes",
-        "feature",
-        "participation",
-        "issuance",
-        "household",
-        "requests",
-        "shuttle",
-      ]),
-      module: z.string(),
-      pending: z.number().int().nonnegative(),
-      in_review: z.number().int().nonnegative(),
-      can_decide: z.boolean(),
-    }),
-  ),
+  queues: z
+    .array(
+      z.object({
+        kind: z.enum([
+          "accounting",
+          "garage_items",
+          "registrations",
+          "lots",
+          "bookings",
+          "passes",
+          "feature",
+          "participation",
+          "issuance",
+          "household",
+          "requests",
+          "shuttle",
+        ]),
+        module: z.string(),
+        pending: z.number().int().nonnegative(),
+        in_review: z.number().int().nonnegative(),
+        can_decide: z.boolean(),
+      }),
+    )
+    // Owner request (26 November 2026): carpools are posted without office
+    // approval (migrations 096-099), so they are never an office review queue.
+    .transform((queues) =>
+      queues.filter(
+        (queue) => !["carpools", "carpool-interests"].includes(queue.module),
+      ),
+    ),
 });
 export type OfficeReviewQueue = z.infer<
   typeof officeReviewSchema
