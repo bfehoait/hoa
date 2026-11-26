@@ -119,7 +119,10 @@ fixtures, logs or screenshots.
   carpools were still waiting for approval. 099 therefore (re)creates both
   triggers and publishes carpools still waiting with consent and a date from
   today to +1 year (homeowner+renter, no notifications), like 097. 096 and
-  097 do not need to be run.
+  097 do not need to be run. Owner applied 099 live on 26 November 2026;
+  post-check true (4 carpools published, 1 left waiting). That project has
+  no `audiences` column, so 073 must still be applied there for renters to
+  see carpools.
   Other homeowners/renters are told "A neighbour is offering a carpool" or
   "A neighbour needs a carpool" with title and departure date.
   Frontend: carpools are removed from the office approvals inbox and badge
