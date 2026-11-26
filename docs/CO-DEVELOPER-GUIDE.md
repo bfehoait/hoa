@@ -114,7 +114,12 @@ fixtures, logs or screenshots.
   title and departure date, linking to `/office/review/carpools`; admins get
   this instead of the resident notice. A carpool can no longer wait for office
   approval: no consent or a date outside today to +1 year is refused with a
-  message (previously left Submitted). Existing Submitted carpools unchanged.
+  message (previously left Submitted). The live readiness check found the 096
+  triggers missing (096/097 never ran live; 098 only replaced functions), so
+  carpools were still waiting for approval. 099 therefore (re)creates both
+  triggers and publishes carpools still waiting with consent and a date from
+  today to +1 year (homeowner+renter, no notifications), like 097. 096 and
+  097 do not need to be run.
   Other homeowners/renters are told "A neighbour is offering a carpool" or
   "A neighbour needs a carpool" with title and departure date.
   Frontend: carpools are removed from the office approvals inbox and badge

@@ -1,4 +1,5 @@
--- Owner-run after 098. Owner request, 26 November 2026: carpools never need
+-- Owner-run after 098 (096 and 097 are not required; see the trigger and
+-- pending-carpool steps at the end). Owner request, 26 November 2026: carpools never need
 -- admin approval. A carpool appears for other homeowners (and renters) as soon
 -- as it is posted. Admins are notified of every carpool so the office keeps a
 -- history of who offered or asked for a ride; the notice is informational
@@ -16,8 +17,8 @@
 --    such carpools were left Submitted for office review.)
 --  * The audit history keeps the 098 "Published automatically ..." entry.
 --  * Works with or without 073, like 098.
---  * Carpools already Submitted before this migration are not changed; the
---    office can still review or withdraw them.
+--  * Creates the two carpool triggers if missing and publishes carpools still
+--    waiting for review that have consent and a date from today to +1 year.
 BEGIN;
 SET LOCAL lock_timeout='5s'; SET LOCAL statement_timeout='30s';
 
@@ -100,6 +101,54 @@ BEGIN
  RETURN NULL;
 END;$$;
 REVOKE ALL ON FUNCTION public.bfe_carpool_notify_homeowners() FROM PUBLIC,anon,authenticated;
+
+-- The live readiness check (26 November 2026) found the 096 triggers missing:
+-- 098 had replaced the functions, but nothing called them. (Re)create both
+-- triggers here so carpools are posted and notified whether or not 096 ran.
+DROP TRIGGER IF EXISTS bfe_carpool_auto_publish ON public.bfe_feature_records;
+CREATE TRIGGER bfe_carpool_auto_publish BEFORE INSERT ON public.bfe_feature_records
+ FOR EACH ROW WHEN (NEW.module='carpools') EXECUTE FUNCTION public.bfe_carpool_auto_publish();
+DROP TRIGGER IF EXISTS bfe_carpool_notify_homeowners ON public.bfe_feature_records;
+CREATE TRIGGER bfe_carpool_notify_homeowners AFTER INSERT ON public.bfe_feature_records
+ FOR EACH ROW WHEN (NEW.module='carpools' AND NEW.status='Published')
+ EXECUTE FUNCTION public.bfe_carpool_notify_homeowners();
+
+-- Carpools still waiting for office review (because 096/097 never ran live)
+-- are published with the same rule as 097: publication consent and a
+-- departure date from today up to one year ahead. Homeowners and renters see
+-- them (renters only where 073's audiences column exists). No notifications
+-- are sent for these older carpools. Others (no consent, past date) are left
+-- as they are; they stay in the office carpool history.
+WITH eligible AS (
+ SELECT r.id,((r.fields->>'date')::date+1)::timestamp AT TIME ZONE 'Asia/Manila' AS until
+ FROM public.bfe_feature_records r
+ WHERE r.module='carpools' AND r.status IN ('Submitted','In review','Reviewed')
+  AND r.publication_consent AND coalesce(r.fields->>'date','') ~ '^\d{4}-\d{2}-\d{2}$'
+ FOR UPDATE
+), published AS (
+ UPDATE public.bfe_feature_records r
+ SET status='Published',public_title=r.title,public_body=r.detail,
+  audience='homeowner',expires_at=e.until,version=r.version+1,updated_at=now()
+ FROM eligible e WHERE r.id=e.id AND e.until>now() AND e.until<=now()+interval '366 days'
+ RETURNING r.id,r.owner_id
+)
+INSERT INTO public.bfe_feature_audit(record_id,actor_id,action,note)
+SELECT id,owner_id,'Published','Published to residents by the carpool no-approval update (owner request)'
+FROM published;
+-- Renters too, where 073 is applied. Set separately because 073's trigger
+-- clears audiences whenever the legacy audience column is updated.
+DO $do$
+BEGIN
+ IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='public'
+  AND table_name='bfe_feature_records' AND column_name='audiences') THEN
+  EXECUTE $q$
+   UPDATE public.bfe_feature_records r SET audiences=ARRAY['homeowner','renter']
+   WHERE r.module='carpools' AND r.status='Published' AND r.audiences IS NULL
+    AND EXISTS(SELECT 1 FROM public.bfe_feature_audit a WHERE a.record_id=r.id AND a.action='Published'
+     AND a.note='Published to residents by the carpool no-approval update (owner request)')
+  $q$;
+ END IF;
+END$do$;
 
 NOTIFY pgrst,'reload schema';
 COMMIT;
