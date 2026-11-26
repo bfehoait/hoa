@@ -336,7 +336,11 @@ export default function LiveFeature({
                 Withdraw
               </Button>
             )}
+          {/* Owner request (26 November 2026): carpools are posted without
+              office approval. The office keeps the history and can only
+              withdraw a published carpool. */}
           {view === "review" &&
+            (module !== "carpools" || r.status === "Published") &&
             ((data.data?.can_review && r.status !== "Reviewed") ||
               (data.data?.can_publish &&
                 r.publication_consent &&
@@ -357,7 +361,9 @@ export default function LiveFeature({
                   setReview(r);
                 }}
               >
-                Review submission
+                {module === "carpools"
+                  ? "Withdraw carpool"
+                  : "Review submission"}
               </Button>
             )}
         </div>
@@ -414,7 +420,14 @@ export default function LiveFeature({
             change listings.
           </p>
         )}
-        {view === "review" && (
+        {view === "review" && module === "carpools" && (
+          <p className={styles.notice}>
+            Carpools are posted to homeowners and renters straight away. No
+            approval is needed; this is the history of every carpool offered or
+            requested.
+          </p>
+        )}
+        {view === "review" && module !== "carpools" && (
           <details className={styles.notice}>
             <summary>About submissions and approvals</summary>
             <p>
@@ -427,7 +440,8 @@ export default function LiveFeature({
         {!embedded &&
           ["booth-events", "workshops", "carpools"].includes(module) &&
           // Owner request (24 November 2026): no application link for carpool residents.
-          !(module === "carpools" && view !== "review") && (
+          // Owner request (26 November 2026): no office approval for carpools.
+          module !== "carpools" && (
             <Link
               className="text-link"
               to={
@@ -888,7 +902,9 @@ export default function LiveFeature({
       )}
       {review && (
         <DetailFrame
-          title="Review submission"
+          title={
+            module === "carpools" ? "Withdraw carpool" : "Review submission"
+          }
           busy={mutation.isPending}
           onClose={() => setReview(null)}
         >

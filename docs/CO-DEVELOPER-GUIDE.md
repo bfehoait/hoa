@@ -108,6 +108,21 @@ fixtures, logs or screenshots.
   Do not rerun migrations from an old pending checklist without checking status.
 - Reservation fee credit versus an extra charge remains an HOA policy question.
   Do not silently default it into a duplicate charge or assume it is waived.
+- Carpool admin notice, no approval (26 November 2026): owner runs prepared
+  migration 099 after 098 (073 and 098 are live). Every carpool post notifies
+  active admins (not the poster) with poster name/unit, offer or request,
+  title and departure date, linking to `/office/review/carpools`; admins get
+  this instead of the resident notice. A carpool can no longer wait for office
+  approval: no consent or a date outside today to +1 year is refused with a
+  message (previously left Submitted). Existing Submitted carpools unchanged.
+  Other homeowners/renters are told "A neighbour is offering a carpool" or
+  "A neighbour needs a carpool" with title and departure date.
+  Frontend: carpools are removed from the office approvals inbox and badge
+  counts; the office carpool page is history only (no pending toggle, no
+  "Review submission"; only "Withdraw carpool" on a published one); form
+  limits the date range; notification allowlist adds `/office/review/carpools`. Deploy the
+  frontend together with 099 (otherwise admin notices are skipped in the
+  bell). No BFE redeployment.
 - Carpools for renters (25 November 2026): owner runs prepared migration 098
   after 097. The live database was found not to have 073 (no `audiences`
   column), so 096's trigger made qualifying carpool posts fail; 098 fixes this
