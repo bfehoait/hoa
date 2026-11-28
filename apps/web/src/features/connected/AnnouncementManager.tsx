@@ -73,11 +73,7 @@ export default function AnnouncementManager() {
   };
   return (
     <>
-      <PageIntro
-        eyebrow="ANNOUNCEMENTS"
-        title="Announcements"
-        description="Create announcements and manage what members can see."
-      />
+      <PageIntro eyebrow="ANNOUNCEMENTS" title="Announcements" />
       <div className={styles.toolbar}>
         <label>
           View

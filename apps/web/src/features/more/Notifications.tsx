@@ -250,7 +250,7 @@ export default function Notifications() {
       <PageIntro
         eyebrow="YOUR UPDATES"
         title="Notifications"
-        description="Account activity and updates that matter to you."
+
         icon={<Bell size={28} />}
       />
       <div className={styles.page}>

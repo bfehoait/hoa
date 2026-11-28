@@ -4,6 +4,15 @@
 .titleRow {
   padding-right: 110px;
 }
+@media (min-width: 1024px) {
+  .pageHeader {
+    padding-inline-end: var(--staff-header-actions-space, 0px);
+    min-height: 48px;
+  }
+  .titleRow {
+    padding-right: 0;
+  }
+}
 .titleRow h1 {
   margin: 0;
   font-size: var(--staff-page-heading-size, 32px);

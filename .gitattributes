@@ -1,3 +1,6 @@
+# Match .editorconfig and Linux CI, including Windows checkouts.
+* text=auto eol=lf
+
 # Keep document and image files byte-for-byte: no line-ending conversion.
 *.pdf binary
 *.png binary

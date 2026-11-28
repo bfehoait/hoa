@@ -1,3 +1,4 @@
+import { titleCase } from "../../../../packages/shared/src/feature-records";
 import {
   Building2,
   CalendarDays,
@@ -46,6 +47,11 @@ export const areaNavigation: Record<
         tone: "green",
       },
       { to: "/services", label: "Services", icon: Wrench },
+      {
+        to: "/services/team-requests",
+        label: "Team Helpdesk",
+        icon: UsersRound,
+      },
       {
         to: "/more",
         label: "More",
@@ -136,6 +142,7 @@ export const areaNavigation: Record<
         icon: ShieldCheck,
       },
       { to: "/board/updates", label: "Announcements", icon: Newspaper },
+      { to: "/board/requests", label: "Helpdesk", icon: UsersRound },
       { to: "/board/reports", label: "Reports", icon: Wallet },
       { to: "/board/shuttle", label: "Shuttle review", icon: CarFront },
     ],
@@ -182,9 +189,9 @@ export function useAccountNavigation() {
                 ? "Renter"
                 : "Homeowner"
               : areaNavigation[area.id].title,
-          links: areaNavigation[area.id].links.filter((link) =>
-            permissions.allowsPath(link.to),
-          ),
+          links: areaNavigation[area.id].links
+            .filter((link) => permissions.allowsPath(link.to))
+            .map((link) => ({ ...link, label: titleCase(link.label) })),
         }))
         .filter((area) => area.links.length)
     : [];

@@ -68,7 +68,7 @@ export default function MemberProfile({
         description={
           auth.rolePreview
             ? "Invented details for the selected role."
-            : "Your account details and assigned access."
+            : undefined
         }
         action={
           !auth.rolePreview && (
@@ -138,7 +138,7 @@ export default function MemberProfile({
               </dd>
             </div>
             <div>
-              <dt>Recorded unit</dt>
+              <dt>Address on file</dt>
               <dd>{member.unit || "Not assigned"}</dd>
             </div>
             <div>

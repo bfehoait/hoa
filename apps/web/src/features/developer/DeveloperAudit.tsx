@@ -132,10 +132,7 @@ export function AuditFeed({ compact = false }: { compact?: boolean }) {
 
 export default function DeveloperAudit() {
   return (
-    <DeveloperPage
-      title="Diagnostics & audit"
-      description="Recorded system activity and the tools to inspect it."
-    >
+    <DeveloperPage title="Diagnostics & audit">
       <AuditFeed />
       <div className={styles.toolLinks}>
         <ButtonLink to="/developer/modules/audit">

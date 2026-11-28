@@ -52,11 +52,7 @@ export default function Settings() {
 
   return (
     <>
-      <PageIntro
-        eyebrow="YOUR ACCOUNT"
-        title="Settings"
-        description="Appearance on this device, and the contact details the office holds for you."
-      />
+      <PageIntro eyebrow="YOUR ACCOUNT" title="Settings" />
       <PrivateHealthNote />
 
       <section className={styles.panel} aria-labelledby={ids + "-appearance"}>

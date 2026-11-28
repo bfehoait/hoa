@@ -5,6 +5,8 @@ import DeveloperServices from "./DeveloperServices";
 import { AuditFeed } from "./DeveloperAudit";
 import { committees } from "./AccessManager";
 import styles from "./DeveloperScreens.module.css";
+import { Eye, UsersRound } from "lucide-react";
+import { DestinationGrid } from "../../components/Navigation";
 
 export default function DeveloperHome() {
   const members = useModuleMonitor("members", 0);
@@ -41,16 +43,26 @@ export default function DeveloperHome() {
     },
   ];
   return (
-    <DeveloperPage
-      title="Overview"
-      description="Diagnostics, access configuration and system maintenance."
-      actions={
-        <>
-          <ButtonLink to="/developer/members">Account preview</ButtonLink>
-          <ButtonLink to="/developer/previews">Role previews</ButtonLink>
-        </>
-      }
-    >
+    <DeveloperPage title="Overview">
+      <section className={styles.section} aria-label="Preview tools">
+        <DestinationGrid
+          items={[
+            {
+              to: "/developer/members",
+              title: "Account preview",
+              detail: "See a member's account in read-only mode.",
+              icon: Eye,
+            },
+            {
+              to: "/developer/previews",
+              title: "Role previews",
+              detail: "Explore role layouts using sample data.",
+              icon: UsersRound,
+            },
+          ]}
+          variant="rows"
+        />
+      </section>
       <section className={styles.section}>
         <h2>System status</h2>
         <DeveloperServices />

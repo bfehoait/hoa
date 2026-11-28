@@ -1,5 +1,5 @@
 import { useEffect, useId, useState, type FormEvent } from "react";
-import { useLocation, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import {
   Search,
   Users,
@@ -29,7 +29,7 @@ import {
 } from "../../../../../packages/shared/src/permissions";
 import { roles } from "../../../../../packages/shared/src/auth";
 import styles from "./AccessManager.module.css";
-import TabAccess, { recordScopeLabels } from "./TabAccess";
+import TabAccess from "./TabAccess";
 import DeleteAccount from "../office/DeleteAccount";
 export const committees = [
   ["finance", "Finance"],
@@ -45,16 +45,36 @@ export const committees = [
   ["election", "Election"],
   ["data_governance", "Data Governance"],
 ];
+function roleName(role: string) {
+  const labels: Record<string, string> = {
+    homeowner: "Homeowner",
+    renter: "Renter",
+    admin: "Office admin",
+    board: "Board member",
+    security: "Security",
+    driver: "Driver",
+    developer: "Developer",
+    finance: "Finance",
+    grievance: "Grievance",
+    maintenance: "Maintenance",
+  };
+  return labels[role] ?? role;
+}
+
 export default function AccessManager({
   overlayOnly = false,
 }: {
   overlayOnly?: boolean;
 }) {
   const [params, setParams] = useSearchParams();
-  const office = useLocation().pathname.startsWith("/office");
   const [roleFilter, setRoleFilter] = useState("");
   const requested = params.get("accountSearch") ?? "";
   const [search, setSearch] = useState("");
+  const [settledSearch, setSettledSearch] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => setSettledSearch(search), 200);
+    return () => clearTimeout(timer);
+  }, [search]);
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
@@ -71,7 +91,7 @@ export default function AccessManager({
     setDiscard(false);
   }
   const query = useAccessMembers(
-    requested || search,
+    requested || settledSearch,
     requested ? 0 : page,
     requested ? "" : roleFilter,
   );
@@ -116,8 +136,11 @@ export default function AccessManager({
     clearRequest();
   };
   const picker = (
-    <div className={styles.picker}>
-      {office && !requested && (
+    <div
+      className={styles.picker}
+      aria-busy={query.isFetching || search !== settledSearch}
+    >
+      {!requested && (
         <label className={styles.roleFilter}>
           Assigned role
           <select
@@ -131,7 +154,7 @@ export default function AccessManager({
             <option value="">All roles</option>
             {roles.map((role) => (
               <option key={role} value={role}>
-                {role.replace(/^./, (c) => c.toUpperCase())}
+                {roleName(role)}
               </option>
             ))}
           </select>
@@ -177,28 +200,46 @@ export default function AccessManager({
         </div>
       ) : (
         <>
+          <p className={styles.searchResults} role="status">
+            {query.isFetching || search !== settledSearch
+              ? "Searching members..."
+              : `${query.data.total} matching ${query.data.total === 1 ? "member" : "members"}`}
+          </p>
           <ul className={styles.members}>
-            {query.data.rows.map((item) => (
-              <li key={item.user_id}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelected(item.user_id);
-                    setPicking(false);
-                  }}
-                >
-                  <Users size={22} aria-hidden="true" />
-                  <span>
-                    <strong>{item.name || "Unnamed member"}</strong>
-                    <small>
-                      {item.unit || "No recorded unit"} · {item.role}
-                    </small>
-                  </span>
-                  <Badge>{item.status}</Badge>
-                  <ChevronRight size={18} aria-hidden="true" />
-                </button>
-              </li>
-            ))}
+            {query.data.rows.map((item) => {
+              const assignedRoles = [
+                ...new Set([item.role, ...(item.extra_roles ?? [])]),
+              ];
+              return (
+                <li key={item.user_id}>
+                  <button
+                    type="button"
+                    disabled={query.isFetching || search !== settledSearch}
+                    onClick={() => {
+                      setSelected(item.user_id);
+                      setPicking(false);
+                    }}
+                  >
+                    <Users size={22} aria-hidden="true" />
+                    <span>
+                      <strong>{item.name || "Unnamed member"}</strong>
+                      <small>
+                        {item.unit || "No recorded unit"}
+                        {" - "}
+                        {assignedRoles.map(roleName).join(" / ")}
+                      </small>
+                    </span>
+                    <span className={styles.memberBadges}>
+                      {assignedRoles.includes("developer") && (
+                        <Badge>Protected Developer</Badge>
+                      )}
+                      <Badge>{item.status}</Badge>
+                    </span>
+                    <ChevronRight size={18} aria-hidden="true" />
+                  </button>
+                </li>
+              );
+            })}
           </ul>
           <nav className={styles.pager} aria-label="Account pages">
             <Button
@@ -252,14 +293,11 @@ export default function AccessManager({
           footer={
             <>
               <div ref={setFooterTarget} className={styles.permissionActions} />
-              {dirty && (
-                <span className={styles.unsaved} role="status">
-                  Unsaved changes
-                </span>
+              {!dirty && (
+                <Button secondary disabled={busy} onClick={requestClose}>
+                  Done
+                </Button>
               )}
-              <Button secondary disabled={busy} onClick={requestClose}>
-                {dirty ? "Cancel" : "Done"}
-              </Button>
             </>
           }
         >
@@ -362,18 +400,12 @@ function MemberAccessEditor({
 }) {
   const [snapshot, setSnapshot] = useState(member);
   const editorId = useId();
+  const [searchTarget, setSearchTarget] = useState<HTMLDivElement | null>(null);
   const [section, setSection] = useState<"pages" | "account">("pages");
   const [roleReference, setRoleReference] = useState("");
   const [tabDirty, setTabDirty] = useState(false);
   const [tabBusy, setTabBusy] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
-  const [recordScope, setRecordScope] = useState(
-    [member.role, ...(member.extra_roles ?? [])].some(
-      (role) => role === "homeowner" || role === "renter",
-    )
-      ? "own"
-      : "association",
-  );
   const [primary, setPrimary] = useState(member.role);
   const [extra, setExtra] = useState(member.extra_roles ?? []);
   const [status, setStatus] = useState(member.status);
@@ -454,21 +486,6 @@ function MemberAccessEditor({
     setScope(sc);
     setEffect(ef);
     setError(null);
-  }
-  function roleName(role: string) {
-    const labels: Record<string, string> = {
-      homeowner: "Homeowner",
-      renter: "Renter",
-      admin: "Office admin",
-      board: "Board member",
-      security: "Security",
-      driver: "Driver",
-      developer: "Developer",
-      finance: "Finance",
-      grievance: "Grievance",
-      maintenance: "Maintenance",
-    };
-    return labels[role] ?? role;
   }
   const roleDescriptions: Record<string, string> = {
     homeowner:
@@ -553,61 +570,64 @@ function MemberAccessEditor({
         </div>
         <Badge>{snapshot.status}</Badge>
       </div>
-      <div
-        className={styles.editorTabs}
-        role="tablist"
-        aria-label="Member settings"
-        onKeyDown={(event) => {
-          if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key))
-            return;
-          const tabs = Array.from(
-            event.currentTarget.querySelectorAll<HTMLButtonElement>(
-              'button[role="tab"]:not(:disabled)',
-            ),
-          );
-          const current = tabs.indexOf(
-            document.activeElement as HTMLButtonElement,
-          );
-          if (current < 0 || !tabs.length) return;
-          event.preventDefault();
-          const index =
-            event.key === "Home"
-              ? 0
-              : event.key === "End"
-                ? tabs.length - 1
-                : (current +
-                    (event.key === "ArrowRight" ? 1 : -1) +
-                    tabs.length) %
-                  tabs.length;
-          tabs[index].focus();
-          tabs[index].click();
-        }}
-      >
-        {(
-          [
-            ["pages", "Page access"],
-            ["account", "Role & status"],
-          ] as const
-        ).map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            id={editorId + "-tab-" + id}
-            aria-controls={editorId + "-" + id}
-            aria-selected={section === id}
-            disabled={
-              section !== id && (busy || tabBusy || deleteBusy || unsaved)
-            }
-            onClick={() => {
-              setSection(id);
-              setError(null);
-              setNotice("");
-            }}
-          >
-            {label}
-          </button>
-        ))}
+      <div className={styles.editorToolbar}>
+        <div
+          className={styles.editorTabs}
+          role="tablist"
+          aria-label="Member settings"
+          onKeyDown={(event) => {
+            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key))
+              return;
+            const tabs = Array.from(
+              event.currentTarget.querySelectorAll<HTMLButtonElement>(
+                'button[role="tab"]:not(:disabled)',
+              ),
+            );
+            const current = tabs.indexOf(
+              document.activeElement as HTMLButtonElement,
+            );
+            if (current < 0 || !tabs.length) return;
+            event.preventDefault();
+            const index =
+              event.key === "Home"
+                ? 0
+                : event.key === "End"
+                  ? tabs.length - 1
+                  : (current +
+                      (event.key === "ArrowRight" ? 1 : -1) +
+                      tabs.length) %
+                    tabs.length;
+            tabs[index].focus();
+            tabs[index].click();
+          }}
+        >
+          {(
+            [
+              ["pages", "Page access"],
+              ["account", "Role & status"],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              id={editorId + "-tab-" + id}
+              aria-controls={editorId + "-" + id}
+              aria-selected={section === id}
+              disabled={
+                section !== id && (busy || tabBusy || deleteBusy || unsaved)
+              }
+              onClick={() => {
+                setSection(id);
+                setError(null);
+                setNotice("");
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div ref={setSearchTarget} hidden={section !== "pages"} />
       </div>
       {unsaved && (
         <p className="note" role="status">
@@ -623,10 +643,10 @@ function MemberAccessEditor({
       >
         <TabAccess
           member={snapshot}
-          recordScope={recordScope}
           onDirtyChange={setTabDirty}
           onPendingChange={setTabBusy}
           footerTarget={section === "pages" ? footerTarget : null}
+          searchTarget={searchTarget}
         />
       </section>
       <section
@@ -737,34 +757,6 @@ function MemberAccessEditor({
             </div>
           </form>
         </div>
-        <details className={styles.accountDetails}>
-          <summary>Records covered by page permissions</summary>
-          <p className="note">
-            Choose which records to review in Page access. This selection does
-            not grant access or change their role. Save permission changes in
-            Page access to apply them.
-          </p>
-          <Field label="Records to review">
-            <select
-              value={recordScope}
-              disabled={busy || tabBusy || unsaved}
-              onChange={(event) => setRecordScope(event.target.value)}
-            >
-              {accessScopes.map((value) => (
-                <option key={value} value={value}>
-                  {recordScopeLabels[value]}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Button
-            secondary
-            disabled={busy || tabBusy || unsaved}
-            onClick={() => setSection("pages")}
-          >
-            Review page access
-          </Button>
-        </details>
         <details className={styles.accountDetails}>
           <summary>Special committee permissions</summary>
           <form onSubmit={(event) => review(event, "grant")}>

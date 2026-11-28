@@ -94,6 +94,20 @@ beforeAll(async () => {
     await db.exec(
       await readFile(new URL("../migrations/" + file, import.meta.url), "utf8"),
     );
+  // Shared forms use the current permit labels. Install the real metadata
+  // update without importing unrelated newer workflows into this legacy fixture.
+  const permitMigration = await readFile(
+    new URL(
+      "../migrations/202611260101_excel_carpool_permits.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const permitMetadata = permitMigration.match(
+    /UPDATE public\.bfe_feature_definitions SET fields=[^;]+;/,
+  )?.[0];
+  if (!permitMetadata) throw new Error("Permit metadata migration missing");
+  await db.exec(permitMetadata);
 }, 30000);
 beforeEach(async () => {
   await db.exec(

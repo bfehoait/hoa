@@ -44,7 +44,7 @@ export function Home() {
   const [params] = useSearchParams();
   const [hidden, setHidden] = useState(false);
   const state = params.get("state") ?? "due";
-  const name = portal.data?.profile.name.split(" ")[0] ?? "neighbour";
+  const name = portal.data?.profile.name.split(" ")[0] ?? "neighbor";
   if (state === "loading" || portal.isPending)
     return (
       <>

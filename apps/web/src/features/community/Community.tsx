@@ -195,18 +195,14 @@ function SampleCommunity({ basePath = "/community" }: { basePath?: string }) {
   );
   return (
     <>
-      <PageIntro
-        eyebrow="LIFE AT BELLEFORT"
-        title="Announcements"
-        description="News, notices and events in your neighborhood."
-      />
+      <PageIntro eyebrow="LIFE AT BELLEFORT" title="Announcements" />
       <div className="search">
         <Search size={20} />
         <input
           aria-label="Search announcements"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Find an update…"
+          placeholder="Search announcements"
         />
       </div>
       <div className="filters" aria-label="Filter announcements">

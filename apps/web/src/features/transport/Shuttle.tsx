@@ -372,9 +372,9 @@ export default function Shuttle() {
           icon={<BusFront size={28} />}
           description={
             location.pathname.startsWith("/board/")
-              ? "Review permitted shuttle activity and service history."
+              ? undefined
               : location.pathname.startsWith("/driver")
-                ? "Accept ride requests and keep your shuttle status up to date."
+                ? undefined
                 : "Choose your stops, check availability and follow your pickup."
           }
         />

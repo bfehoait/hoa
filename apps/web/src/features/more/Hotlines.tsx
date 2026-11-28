@@ -80,10 +80,7 @@ export default function Hotlines() {
   });
   return (
     <div className={styles.page}>
-      <PageIntro
-        title="Hotlines"
-        description="Emergency, community and utility contacts."
-      />
+      <PageIntro title="Hotlines" />
       <a
         className={styles.emergencyCall}
         href="tel:161"

@@ -13,7 +13,7 @@ import { z } from "zod";
 import { useAuth } from "../../data/auth";
 import { featureRpc } from "../../data/feature-records";
 import { Badge, Button, Feedback, Modal, Skeleton } from "../../components/UI";
-import { NavigationGroup } from "../../components/Navigation";
+import { DetailDisclosure, NavigationGroup } from "../../components/Navigation";
 import { downloadCsv } from "../../data/download";
 import styles from "./MemberWorkspace.module.css";
 import table from "../registry/LotRegister.module.css";
@@ -149,7 +149,6 @@ export default function AccountingWorkbench({
     <>
       <PageIntro
         title="Finance"
-        description="Prepare accounting records, obtain independent review and inspect recorded postings."
         action={
           query.data?.can_create ? (
             <Button onClick={() => begin(null)}>
@@ -170,17 +169,19 @@ export default function AccountingWorkbench({
           Confirming a record does not prove that money has cleared the bank.
           Late-fee rules are saved, but fees are not charged automatically.
         </p>
-        <p className={styles.note}>
-          Before creating bills, check each property's first billing month,
-          starting unpaid balance and approved monthly rate. Record new payments
-          or apply past receipts to the months they cover. Use the correct
-          approved ₱800/₱900 rate for each property type. Opening a resident's
-          account page does not create bills.
-        </p>
+        <DetailDisclosure title="Before creating bills">
+          <p className={styles.note}>
+            Before creating bills, check each property's first billing month,
+            starting unpaid balance and approved monthly rate. Record new
+            payments or apply past receipts to the months they cover. Use the
+            correct approved ₱800/₱900 rate for each property type. Opening a
+            resident's account page does not create bills.
+          </p>
+        </DetailDisclosure>
         <div className={table.toolbar}>
           {!reviewSurface && (
             <label>
-              Business form
+              Record type
               <select
                 value={form.id}
                 onChange={(e) => filter("kind", e.target.value)}
@@ -254,11 +255,11 @@ export default function AccountingWorkbench({
                 <strong>{amount(query.data.summary.billed_centavos)}</strong>
               </div>
               <div>
-                Allocated payments
+                Payments applied to bills
                 <strong>{amount(query.data.summary.allocated_centavos)}</strong>
               </div>
               <div>
-                Unallocated payments
+                Payments not applied to bills
                 <strong>
                   {amount(query.data.summary.unallocated_centavos)}
                 </strong>
@@ -302,7 +303,7 @@ export default function AccountingWorkbench({
                     timeZone: "Asia/Manila",
                   })}
                 </p>
-                <details>
+                <details open={!!reviewSurface?.recordId}>
                   <summary>Record details</summary>
                   <dl className={styles.details}>
                     {form.fields

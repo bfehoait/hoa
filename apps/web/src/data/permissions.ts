@@ -61,6 +61,7 @@ function tabForPath(
     [/^\/services\/(request|requests|inbox)(\/|$)/, "requests", "own"],
     [/^\/(driver|more\/transport)(\/|$)/, "transport", "own"],
     [/^\/board\/shuttle/, "transport", "association"],
+    [/^\/board\/requests/, "requests", "association"],
     [
       /^\/(directory\/market|more\/marketplace|directory\/learning|more\/training)(\/|$)/,
       "livelihood",

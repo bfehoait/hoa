@@ -83,17 +83,36 @@ export function amenityWindows(name: string, date: string): [number, number][] {
   // Use the supplied Manila calendar date without a host-timezone conversion.
   const weekday = new Date(`${date}T12:00:00Z`).getUTCDay();
   if (!Number.isFinite(weekday)) return [];
-  if (key === "hall")
-    return weekday === 0
-      ? [
-          [480, 720],
-          [1020, 1320],
-        ]
-      : [[480, 1320]];
-  if (key === "court") return weekday === 0 ? [[420, 720]] : [[420, 1320]];
-  if (key === "pool")
-    return weekday === 1 ? [] : weekday === 0 ? [[420, 660]] : [[540, 1260]];
-  return [[420, 1320]];
+  const windows: [number, number][] =
+    key === "hall"
+      ? [[480, 1320]]
+      : key === "court"
+        ? [[420, weekday === 0 ? 720 : 1320]]
+        : key === "pool"
+          ? weekday === 1
+            ? []
+            : weekday === 0
+              ? [[420, 660]]
+              : [[540, 1260]]
+          : [[420, 1320]];
+  // HOA.xlsx: all amenities are closed for Sunday Mass, 10:30 AM to 1 PM.
+  return weekday === 0
+    ? windows.flatMap(
+        ([open, close]) =>
+          [
+            [open, Math.min(close, 630)],
+            [Math.max(open, 780), close],
+          ].filter(([a, b]) => b > a) as [number, number][],
+      )
+    : windows;
+}
+
+export function amenityMinimumMinutes(name: string) {
+  return amenityKey(name) === "hall"
+    ? 120
+    : amenityKey(name) === "court"
+      ? 60
+      : 30;
 }
 
 export function amenityAttendeeLimit(name: string, configured: number) {

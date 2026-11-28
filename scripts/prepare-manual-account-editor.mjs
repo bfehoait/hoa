@@ -3,7 +3,10 @@
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 
 const root = new URL("../", import.meta.url);
-const read = (path) => readFile(new URL(path, root), "utf8");
+// Git may check text out as CRLF on Windows and LF in Linux CI. Compare and
+// generate canonical LF text so checkout settings cannot mark it stale.
+const read = async (path) =>
+  (await readFile(new URL(path, root), "utf8")).replaceAll("\r\n", "\n");
 const runtime = JSON.parse(
   await read("supabase/functions/bfe-create-account/deno.json"),
 );

@@ -1,4 +1,5 @@
 import { useEffect, useId, useState, type ReactNode } from "react";
+import BookingCheckout, { checkoutSchema } from "./BookingCheckout";
 import { Check, ReceiptText } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
@@ -42,6 +43,19 @@ export default function BookingFeeApproval({
   disabled?: boolean;
 }) {
   const auth = useAuth();
+  const checkout = useQuery({
+    queryKey: ["booking-checkout-kind", auth.userId, id, version],
+    enabled:
+      !!auth.userId &&
+      !auth.preview &&
+      !auth.rolePreview &&
+      !auth.memberPreview,
+    retry: false,
+    queryFn: async () =>
+      checkoutSchema.parse(
+        await featureRpc("bfe_booking_checkout_read", { p_id: id }),
+      ),
+  });
   const fallbackAction = rejectAction ? (
     <div className={styles.footer}>{rejectAction}</div>
   ) : null;
@@ -59,6 +73,31 @@ export default function BookingFeeApproval({
         await featureRpc("bfe_booking_fee_review", { p_id: id }),
       ),
   });
+  if (checkout.isSuccess && checkout.data.checkout)
+    return (
+      <BookingCheckout
+        id={id}
+        version={version}
+        office
+        onSaved={onSaved}
+        onBusyChange={onBusyChange}
+        rejectAction={rejectAction}
+      />
+    );
+  if (checkout.isError)
+    return (
+      <>
+        <Feedback error={checkout.error} />
+        {fallbackAction}
+      </>
+    );
+  if (
+    checkout.isPending &&
+    !auth.preview &&
+    !auth.rolePreview &&
+    !auth.memberPreview
+  )
+    return <Skeleton />;
   if (auth.preview || auth.rolePreview || auth.memberPreview)
     return <p>Fee confirmation is unavailable in preview.</p>;
   if (query.isPending)

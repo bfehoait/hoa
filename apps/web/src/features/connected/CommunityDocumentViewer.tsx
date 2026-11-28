@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, Send } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import PdfViewer from "../../components/PdfViewer";
 import { Button, Feedback, Skeleton } from "../../components/UI";
@@ -81,10 +81,19 @@ export default function CommunityDocumentViewer({
 }) {
   const cache = useQueryClient();
   const [notice, setNotice] = useState("");
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    const tick = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(tick);
+  }, []);
   const pdf = useQuery({
     queryKey: ["community-document-file", file],
     staleTime: Infinity,
-    enabled: viewable,
+    enabled:
+      viewable ||
+      (access?.status === "Approved" &&
+        !!access.expires_at &&
+        Date.parse(access.expires_at) > now),
     queryFn: async () => {
       const response = await fetch(mandatoryDocumentHref(file));
       if (!response.ok) throw new Error("This document is unavailable.");
@@ -108,7 +117,10 @@ export default function CommunityDocumentViewer({
     },
     onSuccess: () => setNotice("Your download has started."),
   });
-  const approved = access?.status === "Approved" && !!access.expires_at;
+  const approved =
+    access?.status === "Approved" &&
+    !!access.expires_at &&
+    Date.parse(access.expires_at) > now;
   const actions = (
     <>
       {approved ? (
@@ -150,7 +162,7 @@ export default function CommunityDocumentViewer({
             : viewable
               ? "View only. To get a copy, request a download from the HOA office."
               : "This record is kept at the HOA office. You may inspect it there during office hours, or request a downloadable copy here.";
-  if (!viewable)
+  if (!viewable && !approved)
     return (
       <Sheet
         title={name}

@@ -114,10 +114,7 @@ export default function LiveFeatureDirectory({
     <>
       {officeOperations && (
         <>
-          <OfficePage
-            title="Operations"
-            description="Day-to-day requests, visitor passes, permits and vehicle stickers."
-          />
+          <OfficePage title="Operations" />
           <NavigationGroup aria-label="Operations desks" limit={8}>
             <Link to="/office/visitors">Visitor passes</Link>
             <Link to="/office/permits">Permits</Link>

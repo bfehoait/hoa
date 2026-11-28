@@ -125,6 +125,7 @@ export function useAccessControlActions() {
   const invalidate = () => {
     void cache.invalidateQueries({ queryKey: ["access-control", auth.userId] });
     void cache.invalidateQueries({ queryKey: ["permissions"] });
+    void cache.invalidateQueries({ queryKey: ["workspace-access"] });
   };
   const grant = useMutation({
     mutationFn: async (input: GrantInput) => {

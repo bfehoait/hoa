@@ -33,6 +33,7 @@ import WorkflowHistory from "./WorkflowHistory";
 import BookingComposerFrame from "./BookingComposerFrame";
 import BookingSlots from "./BookingSlots";
 import BookingDatePicker from "./BookingDatePicker";
+import BookingCheckout from "./BookingCheckout";
 import AmenityGuidelines from "./AmenityGuidelines";
 import BookingCharge from "./BookingCharge";
 import BookingFeeApproval from "./BookingFeeApproval";
@@ -42,7 +43,6 @@ import BookingPrice, { priceSchema, PriceBreakdown } from "./BookingPrice";
 import {
   amenityAttendeeLimit,
   amenityKey,
-  amenityGuidelines,
 } from "../../../../../packages/shared/src/amenity-guidelines";
 import schedule from "./BookingSchedule.module.css";
 import { CalendarDays, House } from "lucide-react";
@@ -98,6 +98,24 @@ export default function OperationsDesk({
   const { pathname } = useLocation();
   const securityDesk = pathname.startsWith("/security");
   const [securitySearch, setSecuritySearch] = useState("");
+  const [lotSearch, setLotSearch] = useState("");
+  const walkIn = securityDesk && office && kind === "visitor";
+  const passLots = useQuery({
+    queryKey: ["security-pass-lots", auth.userId, lotSearch],
+    enabled:
+      walkIn &&
+      !!auth.userId &&
+      !auth.preview &&
+      !auth.rolePreview &&
+      lotSearch.trim().length >= 2,
+    retry: false,
+    queryFn: async () =>
+      z
+        .array(z.object({ id: z.uuid(), physical_id: z.string() }))
+        .parse(
+          await featureRpc("bfe_security_pass_lots", { p_search: lotSearch }),
+        ),
+  });
   const [feeBusy, setFeeBusy] = useState(false);
   const [securityStatus, setSecurityStatus] = useState("");
   const [reviewHistory, setReviewHistory] = useReviewState(
@@ -108,7 +126,8 @@ export default function OperationsDesk({
     office &&
     (pendingReview ? !reviewHistory : params.get("queue") === "pending");
   const [passKind, setPassKind] = useState(
-    ["visitor", "gate", "small_delivery"].includes(params.get("type") ?? "")
+    !walkIn &&
+      ["visitor", "gate", "small_delivery"].includes(params.get("type") ?? "")
       ? params.get("type")!
       : "visitor",
   );
@@ -116,9 +135,9 @@ export default function OperationsDesk({
   // The chosen Pass starts date, so Pass ends cannot be set earlier.
   const [passStart, setPassStart] = useState("");
   const passNames: Record<string, string> = {
-    visitor: "Visitor pass",
-    gate: "Gate pass",
-    small_delivery: "Small delivery pass",
+    visitor: "Visitor\u2019s Pass",
+    gate: "Gate Pass",
+    small_delivery: "Small Delivery Pass",
   };
   const [page, setPage] = useReviewState(
       `operations.${reviewSurface?.recordId ?? "list"}.page`,
@@ -152,6 +171,7 @@ export default function OperationsDesk({
   const [startTime, setStartTime] = useState(""),
     [endTime, setEndTime] = useState("");
   const [memberSearch, setMemberSearch] = useState("");
+  const [createdBooking, setCreatedBooking] = useState<string | null>(null);
   const [priceChoice, setPriceChoice] = useState({
     facility: "",
     use: "",
@@ -282,6 +302,14 @@ export default function OperationsDesk({
     },
   });
   const data = query.isError ? undefined : query.data;
+  const canDecideSelected =
+    !!data?.can_approve &&
+    (kind !== "visitor" ||
+      !selected ||
+      !("pass_kind" in selected) ||
+      (securityDesk
+        ? selected.pass_kind !== "gate" || !!selected.office_approved_at
+        : selected.pass_kind === "gate" && !selected.office_approved_at));
   useReadOpenedNotification(target.requested && !!selected && !!data);
   const eligibleFacilities =
     data?.kind === "booking"
@@ -396,7 +424,7 @@ export default function OperationsDesk({
               !slots.isSuccess))
         }
       >
-        {kind === "booking" ? "Review price & booking" : "Request pass"}
+        {kind === "booking" ? "Review Booking" : "Request pass"}
       </Button>
     </div>
   );
@@ -435,7 +463,7 @@ export default function OperationsDesk({
                 (!useType || !price.isSuccess || price.isFetching)
               )
                 throw new Error(
-                  "Choose the booking use and wait for the price estimate before submitting.",
+                  "Choose the booking use and wait for the booking fee before submitting.",
                 );
               if (kind === "booking") {
                 if (!price.data || !chosen)
@@ -510,21 +538,33 @@ export default function OperationsDesk({
                       ),
                       p_kind: passKind,
                       p_arrival: arrival,
-                      p_direction:
-                        passKind === "gate" ? f.get("direction") : "inbound",
+                      ...(!walkIn
+                        ? {
+                            p_direction:
+                              passKind === "gate"
+                                ? f.get("direction")
+                                : "inbound",
+                          }
+                        : {}),
                       p_count: Number(f.get("party_count") ?? 1),
-                      p_items: passKind === "gate" ? f.get("items") : "",
+                      ...(!walkIn
+                        ? { p_items: passKind === "gate" ? f.get("items") : "" }
+                        : {}),
                     };
               mutation.mutate(
                 {
                   name:
                     kind === "booking"
-                      ? "bfe_create_priced_booking"
-                      : "bfe_create_community_pass",
+                      ? "bfe_create_excel_booking"
+                      : walkIn
+                        ? "bfe_create_walk_in_pass"
+                        : "bfe_create_community_pass",
                   args,
                 },
                 {
-                  onSuccess: () => {
+                  onSuccess: (result) => {
+                    if (kind === "booking")
+                      setCreatedBooking(z.uuid().parse(result));
                     setBookingReview(null);
                     setClientId(crypto.randomUUID());
                     setForm(inlineBooking);
@@ -540,13 +580,12 @@ export default function OperationsDesk({
                         children: 0,
                       });
                     }
-                    // Migration 091: visitor and small delivery passes are
-                    // approved automatically; gate passes wait for the office.
+                    // Excel: visitor/delivery requests go to Security; gate requests need Office first.
                     setNotice(
                       kind === "visitor" && passKind !== "gate"
-                        ? "Your pass is approved. Security can see it at the gate."
+                        ? "Your pass was sent to Security for ID and plate checks."
                         : kind === "visitor"
-                          ? "Your gate pass was saved. Office approval is pending; security will see it once it is approved."
+                          ? "Your gate pass is waiting for Office approval, then Security checks."
                           : "Your request was saved. Office approval is pending.",
                     );
                   },
@@ -561,7 +600,12 @@ export default function OperationsDesk({
             }
           }}
         >
-          <p>Times use Philippine time. The office will review your request.</p>
+          {kind === "visitor" && (
+            <p>
+              Choose the visit dates. Security checks the visitor's ID and plate
+              before approval. Gate passes also need Office approval.
+            </p>
+          )}
           {data.kind === "booking" && <AmenityPolicyLink />}
           {data.kind === "booking" ? (
             <>
@@ -569,7 +613,7 @@ export default function OperationsDesk({
                 <fieldset>
                   <legend>Resident requesting this booking</legend>
                   <label>
-                    Find by name or recorded address
+                    Search by name or address
                     <input
                       value={memberSearch}
                       maxLength={100}
@@ -641,11 +685,6 @@ export default function OperationsDesk({
                       <CalendarDays size={24} aria-hidden="true" />
                       <strong>{f.name}</strong>
                       <span>
-                        {amenityKey(f.name)
-                          ? amenityGuidelines[amenityKey(f.name)!].hours
-                          : `${f.opens.slice(0, 5)}–${f.closes.slice(0, 5)}`}
-                      </span>
-                      <span>
                         Booking limit:{" "}
                         {amenityAttendeeLimit(f.name, f.capacity)} people
                       </span>
@@ -662,25 +701,6 @@ export default function OperationsDesk({
               <input type="hidden" name="facility" value={facility} />
               {chosen && (
                 <>
-                  <details className={schedule.amenityDetails}>
-                    <summary>Rates &amp; facility rules</summary>
-                    <div className={schedule.amenityFacts}>
-                      <span>{chosen.slot_minutes}-minute intervals</span>
-                      <span>Up to {chosen.max_minutes / 60} hours</span>
-                      <span>
-                        Configured booking limit:{" "}
-                        {amenityAttendeeLimit(chosen.name, chosen.capacity)}{" "}
-                        people
-                      </span>
-                      <p>Policy: {chosen.policy_reference}</p>
-                    </div>
-                    <AmenityGuidelines name={chosen.name} />
-                    <p className="note">
-                      Office confirms the applicable price after reviewing the
-                      booking. Confirmed charges appear under Other in My
-                      account; submitting a request does not record payment.
-                    </p>
-                  </details>
                   <div className={schedule.layout}>
                     <BookingDatePicker
                       value={date}
@@ -752,7 +772,9 @@ export default function OperationsDesk({
                       )}
                       {priceKind === "court" && (
                         <>
-                          <option value="court-sports">Sports activity</option>
+                          <option value="court-sports">
+                            Sports Activity (Exclusive Use)
+                          </option>
                           <option value="court-function">
                             Special function
                           </option>
@@ -855,37 +877,54 @@ export default function OperationsDesk({
                   value={passKind}
                   onChange={(e) => setPassKind(e.target.value)}
                 >
-                  {Object.entries(passNames).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
+                  {Object.entries(passNames)
+                    .filter(([value]) => !walkIn || value !== "gate")
+                    .map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
                 </select>
               </label>
               <p className="note">
                 {passKind === "visitor"
                   ? "For guests visiting your household."
                   : passKind === "gate"
-                    ? "For items, deliveries and materials moving in or out. Needs office approval before security can see it."
+                    ? "For items, deliveries and materials moving in or out. Office checks first, then Security checks the ID and vehicle plate."
                     : "For a delivery rider or driver dropping off a small order."}
               </p>
               <label>
-                Your household
+                {walkIn ? "Host Property" : "Your Household"}
+                {walkIn && (
+                  <input
+                    type="search"
+                    value={lotSearch}
+                    onChange={(e) => setLotSearch(e.target.value)}
+                    placeholder="Search lot number"
+                    aria-label="Search host property"
+                  />
+                )}
                 <select
                   required
                   name="lot"
                   defaultValue={data.lots.length === 1 ? data.lots[0].id : ""}
                 >
-                  <option value="">Choose your linked lot</option>
-                  {data.lots.map((l) => (
+                  <option value="">
+                    {walkIn
+                      ? "Choose the host property"
+                      : "Choose your linked lot"}
+                  </option>
+                  {(walkIn ? (passLots.data ?? []) : data.lots).map((l) => (
                     <option key={l.id} value={l.id}>
                       {l.physical_id}
-                      {l.homeowner ? ` / ${l.homeowner}` : ""}
+                      {"homeowner" in l && l.homeowner
+                        ? ` / ${l.homeowner}`
+                        : ""}
                     </option>
                   ))}
                 </select>
               </label>
-              {!data.lots.length && (
+              {!walkIn && !data.lots.length && (
                 <p>
                   Your account needs an approved lot membership before creating
                   a pass. Request this through the lot register.
@@ -932,7 +971,7 @@ export default function OperationsDesk({
                     Movement
                     <select name="direction">
                       <option value="inbound">Inbound / delivery</option>
-                      <option value="outbound">Outbound / removal</option>
+                      <option value="outbound">Outbound / pull-out</option>
                     </select>
                   </label>
                   <label>
@@ -942,7 +981,7 @@ export default function OperationsDesk({
                       minLength={3}
                       maxLength={2000}
                       required
-                      placeholder="List what will enter or leave"
+                      placeholder="List items/materials and its corresponding quantity and unit"
                     />
                   </label>
                 </>
@@ -1110,9 +1149,10 @@ export default function OperationsDesk({
           </p>
         )}
         {composer}
+        {createdBooking && <BookingCheckout id={createdBooking} version={1} />}
         {form && bookingReview && (
           <Sheet
-            title="Review price & booking"
+            title="Review Booking"
             busy={mutation.isPending}
             onClose={() => setBookingReview(null)}
             footer={
@@ -1137,7 +1177,21 @@ export default function OperationsDesk({
                     auth.memberPreview
                   }
                 >
-                  Request booking
+                  Hold Booking
+                </Button>
+                <Button
+                  type="submit"
+                  form={composerFormId}
+                  data-confirm-booking="true"
+                  pending={mutation.isPending}
+                  disabled={
+                    !price.isSuccess ||
+                    price.isFetching ||
+                    selectionBusy ||
+                    auth.memberPreview
+                  }
+                >
+                  Pay Now
                 </Button>
               </div>
             }
@@ -1161,6 +1215,17 @@ export default function OperationsDesk({
               </div>
             </dl>
             <PriceBreakdown price={bookingReview.price} />
+            <p>
+              Hold Booking or Pay Now saves your request first. Pay Now
+              continues to the payment instructions when available. This means
+              your booking is pencil booked for 3 days. It is not guaranteed;
+              whoever pays first will have the confirmed booking after Office
+              verifies payment.
+            </p>
+            <p>
+              Pay Now is available from the saved booking once the HOA provides
+              payment details .
+            </p>
             <AmenityPolicyLink />
             <p className={styles.formHelp}>
               Review the price information before sending. This requests a
@@ -1533,7 +1598,7 @@ export default function OperationsDesk({
                   name:
                     kind === "booking"
                       ? "bfe_decide_booking"
-                      : "bfe_update_visitor_pass",
+                      : "bfe_decide_checked_pass",
                   args: {
                     p_id: selected.id,
                     p_version: selected.version,
@@ -1542,6 +1607,12 @@ export default function OperationsDesk({
                         "value",
                       ) || f.get("status"),
                     p_note: f.get("note"),
+                    ...(kind === "visitor"
+                      ? {
+                          p_id_checked: f.get("id_checked") === "on",
+                          p_plate_checked: f.get("plate_checked") === "on",
+                        }
+                      : {}),
                   },
                 },
                 {
@@ -1705,14 +1776,14 @@ export default function OperationsDesk({
               <WorkflowHistory kind={kind} id={selected.id} />
             </details>
             {((!office && ["Pending", "Approved"].includes(selected.status)) ||
-              (data.can_approve && selected.status === "Pending") ||
+              (canDecideSelected && selected.status === "Pending") ||
               (data.kind === "visitor" &&
                 data.can_gate &&
                 ["Approved", "Entered"].includes(selected.status))) && (
               <>
                 {!(
                   (reviewSurface || (office && kind === "booking")) &&
-                  data.can_approve &&
+                  canDecideSelected &&
                   selected.status === "Pending"
                 ) && (
                   <label>
@@ -1723,7 +1794,7 @@ export default function OperationsDesk({
                         ["Pending", "Approved"].includes(selected.status) && (
                           <option>Cancelled</option>
                         )}
-                      {data.can_approve && selected.status === "Pending" && (
+                      {canDecideSelected && selected.status === "Pending" && (
                         <>
                           {kind !== "booking" && <option>Approved</option>}
                           <option>Rejected</option>
@@ -1747,6 +1818,31 @@ export default function OperationsDesk({
                     </select>
                   </label>
                 )}
+                {kind === "visitor" &&
+                  securityDesk &&
+                  selected.status === "Pending" && (
+                    <>
+                      <label className={schedule.confirm}>
+                        <input type="checkbox" name="id_checked" /> I checked
+                        the visitor's ID.
+                      </label>
+                      {"arrival_mode" in selected &&
+                        selected.arrival_mode === "vehicle" && (
+                          <label className={schedule.confirm}>
+                            <input type="checkbox" name="plate_checked" /> I
+                            checked the vehicle plate.
+                          </label>
+                        )}
+                      {"office_approved_at" in selected &&
+                        selected.pass_kind === "gate" &&
+                        !selected.office_approved_at && (
+                          <p>
+                            Office approval is required before Security can
+                            approve.
+                          </p>
+                        )}
+                    </>
+                  )}
                 <label>
                   {office
                     ? kind === "booking"
@@ -1769,9 +1865,9 @@ export default function OperationsDesk({
                 <Feedback error={mutation.error} />
                 {office &&
                 kind === "booking" &&
-                data.can_approve &&
+                canDecideSelected &&
                 selected.status === "Pending" ? null : reviewSurface &&
-                  data.can_approve &&
+                  canDecideSelected &&
                   selected.status === "Pending" ? (
                   <div className="btn-row">
                     {kind !== "booking" && (
@@ -1806,6 +1902,9 @@ export default function OperationsDesk({
               </>
             )}
           </form>
+          {kind === "booking" && !office && (
+            <BookingCheckout id={selected.id} version={selected.version} />
+          )}
           {kind === "booking" &&
             office &&
             data.can_approve &&

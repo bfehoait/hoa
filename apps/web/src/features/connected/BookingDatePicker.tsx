@@ -99,8 +99,7 @@ export default function BookingDatePicker({
             }).format(new Date(value + "T12:00:00Z"))
           : "Select a day above"}
       </p>
-      <details className={styles.manual}>
-        <summary>Enter a date manually</summary>
+      <div className={styles.manual}>
         <label htmlFor={id}>Enter a date</label>
         <input
           id={id}
@@ -115,8 +114,7 @@ export default function BookingDatePicker({
           }}
           aria-label="Date"
         />
-      </details>
-      <p>Philippine time (UTC+8)</p>
+      </div>
     </section>
   );
 }

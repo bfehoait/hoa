@@ -31,7 +31,7 @@ export default function CarpoolDemo() {
     <div className={styles.page}>
       <PageIntro
         title="Carpooling"
-        description="Find a shared ride. Make room for a neighbour."
+        description="Find a shared ride. Make room for a neighbor."
       />
       <div className={styles.demoNotice}>
         <strong>Interactive demo</strong>

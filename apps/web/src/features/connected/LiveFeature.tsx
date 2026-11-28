@@ -10,10 +10,9 @@ import announcementStyles from "./AnnouncementCard.module.css";
 import { ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { useSearchParams, useLocation } from "react-router-dom";
-import {
-  fieldVisible,
-  baselineModule,
-} from "../../../../../packages/shared/src/baseline";
+import { baselineModule } from "../../../../../packages/shared/src/baseline";
+import { recordFacts } from "../../../../../packages/shared/src/record-presentation";
+import RecordFacts from "../../components/RecordFacts";
 import {
   liveFieldLabel,
   featureRecordSchema,
@@ -48,7 +47,7 @@ const residentDescriptions: Record<string, string> = {
   publishing: "Updates and notices from your HOA.",
   workshops: "Explore community training and workshops.",
   events: "Discover upcoming community events.",
-  carpools: "Find shared rides with neighbours.",
+  carpools: "Offer a ride or ask for a ride in your community.",
   vehicles: "Register household vehicles and follow sticker requests.",
   permits: "Request clearances and follow the office’s decisions.",
   "board-records": "Read published community records.",
@@ -64,6 +63,7 @@ export default function LiveFeature({
   hideHeading = false,
   reviewOnly = false,
   reviewFollowup = false,
+  carpoolKind = "",
 }: {
   module: string;
   initialView?: string;
@@ -73,6 +73,7 @@ export default function LiveFeature({
   hideHeading?: boolean;
   reviewOnly?: boolean;
   reviewFollowup?: boolean;
+  carpoolKind?: string;
 }) {
   const reviewSurface = useReviewSurface();
   const DetailFrame = reviewSurface ? ReviewDetailFrame : Sheet;
@@ -91,11 +92,17 @@ export default function LiveFeature({
       ? "New announcement"
       : isListing
         ? "Create listing"
-        : module === "permits"
-          ? "Request a permit"
-          : module === "board-records"
-            ? "Add document"
-            : "Create request";
+        : module === "vehicles"
+          ? "Add Vehicle"
+          : module === "carpools"
+            ? carpoolKind === "Looking for a ride"
+              ? "Create Carpool Request"
+              : "Create Carpool Offer"
+            : module === "permits"
+              ? "Request a Permit"
+              : module === "board-records"
+                ? "Add document"
+                : "Create request";
   const auth = useAuth();
   const boardView = useLocation().pathname.startsWith("/board/");
   const securityView = useLocation().pathname.startsWith("/security/");
@@ -129,6 +136,7 @@ export default function LiveFeature({
       reviewFollowup ||
         params.get("issuance") === "1" ||
         params.get("application") === "1",
+      carpoolKind,
     ),
     mutation = useFeatureMutation();
   const [clientId, setClientId] = useState(() => crypto.randomUUID());
@@ -146,9 +154,9 @@ export default function LiveFeature({
         : undefined;
   useReadOpenedNotification(target.requested && !!openedRecord);
 
-  const renderRecord = (r: FeatureRecord) => (
+  const renderRecord = (r: FeatureRecord, detailed = false) => (
     <article
-      className={`${styles.card} ${reviewSurface ? styles.reviewRecord : ""}`}
+      className={`${styles.card} ${reviewSurface ? styles.reviewRecord : ""} ${detailed ? styles.detailRecord : ""}`}
       key={r.id}
     >
       <div className={styles.cardHead}>
@@ -178,7 +186,9 @@ export default function LiveFeature({
             }
           />
         )}
-      {!reviewSurface && <h2 className={styles.cardTitle}>{r.title}</h2>}
+      {!reviewSurface && !detailed && (
+        <h2 className={styles.cardTitle}>{r.title}</h2>
+      )}
       {isListing && view === "published" && r.fields?.price && (
         <strong className={styles.listingPrice}>
           {new Intl.NumberFormat("en-PH", {
@@ -246,48 +256,38 @@ export default function LiveFeature({
         )}
       {r.fields &&
         !(isListing && view === "published") &&
-        (reviewSurface ? (
-          <dl className={styles.reviewFields} aria-label="Submitted details">
-            {definition.fields
-              .filter((f) => fieldVisible(f, r.fields ?? {}))
-              .map((f) => (
-                <div key={f.key}>
-                  <dt>{liveFieldLabel(f.label)}</dt>
-                  <dd>{r.fields?.[f.key] || "Not supplied"}</dd>
-                </div>
-              ))}
-          </dl>
+        (reviewSurface || detailed || officeTable ? (
+          <RecordFacts
+            label="Request information"
+            items={recordFacts(definition.fields, r.fields)}
+          />
         ) : (
           <details>
-            <summary>
-              {resident ? "Request details" : "Submitted fields"}
-            </summary>
+            <summary>Details</summary>
             <dl className={styles.fields}>
               {/* Only the questions this record was actually asked.
                             Listing a field hidden by its showWhen condition
                             reported "Not supplied" for something nobody was
                             ever shown. */}
-              {definition.fields
-                .filter((f) => fieldVisible(f, r.fields ?? {}))
-                .map((f) => (
-                  <div key={f.key}>
-                    <dt>{liveFieldLabel(f.label)}</dt>
-                    <dd>{r.fields?.[f.key] || "Not supplied"}</dd>
-                  </div>
-                ))}
+              {recordFacts(definition.fields, r.fields).map((f) => (
+                <div key={f.key}>
+                  <dt>{f.label}</dt>
+                  <dd>{f.value}</dd>
+                </div>
+              ))}
             </dl>
           </details>
         ))}
       {view !== "published" && (
         <details>
-          <summary>Record reference</summary>
+          <summary>Request number</summary>
           <p>{r.id}</p>
         </details>
       )}
       {r.version && !(resident && view === "published") && (
         <div className={styles.actions}>
           <Button secondary onClick={() => setHistory(r.id)}>
-            Record history
+            View history
           </Button>
           {view === "mine" &&
             ["businesses", "buy-sell", "jobs", "garage-sales"].includes(
@@ -333,7 +333,9 @@ export default function LiveFeature({
                   )
                 }
               >
-                Withdraw
+                {module === "carpools" && r.status === "Published"
+                  ? "End Carpool"
+                  : "Withdraw"}
               </Button>
             )}
           {view === "review" &&
@@ -350,14 +352,13 @@ export default function LiveFeature({
               ...(!data.data?.publishable ? ["Reviewed"] : []),
             ].includes(r.status) && (
               <Button
-                secondary={!reviewSurface}
                 onClick={() => {
                   mutation.reset();
                   setAudienceError("");
                   setReview(r);
                 }}
               >
-                Review submission
+                Review &amp; decide
               </Button>
             )}
         </div>
@@ -715,10 +716,23 @@ export default function LiveFeature({
                     <button
                       type="button"
                       key={r.id}
-                      className={styles.residentRecord}
+                      className={`${styles.residentRecord} ${module === "carpools" ? (r.fields?.kind === "Looking for a ride" ? styles.carpoolRequest : styles.carpoolOffer) : ""}`}
                       onClick={() => setOpened(r.id)}
                     >
                       <span className={styles.residentRecordText}>
+                        {module === "carpools" && (
+                          <Badge
+                            tone={
+                              r.fields?.kind === "Looking for a ride"
+                                ? "green"
+                                : "neutral"
+                            }
+                          >
+                            {r.fields?.kind === "Looking for a ride"
+                              ? "Ride Request"
+                              : "Ride Offer"}
+                          </Badge>
+                        )}
                         <strong>{r.title}</strong>
                         <span>
                           {new Date(r.created_at).toLocaleDateString("en-PH", {
@@ -814,24 +828,18 @@ export default function LiveFeature({
         openedRecord &&
         !review && (
           <DetailFrame
-            title={
-              module === "publishing"
-                ? "Announcement"
-                : isListing
-                  ? "Listing details"
-                  : "Request details"
-            }
+            title={openedRecord.title}
             presentation="task"
             onClose={() => {
               setOpened(null);
               target.clear();
             }}
           >
-            {renderRecord(openedRecord)}
+            {renderRecord(openedRecord, true)}
           </DetailFrame>
         )}
       {history && (
-        <Sheet title="Record history" onClose={() => setHistory(null)}>
+        <Sheet title="History" onClose={() => setHistory(null)}>
           <WorkflowHistory kind="feature" id={history} />
         </Sheet>
       )}
@@ -839,7 +847,7 @@ export default function LiveFeature({
         <Sheet
           size="lg"
           presentation={resident ? "task" : "sheet"}
-          protectChanges={resident && !recordSaved}
+          protectChanges={!recordSaved}
           title={
             editing
               ? "Edit listing — review required"
@@ -866,6 +874,11 @@ export default function LiveFeature({
           <FeatureSubmissionForm
             module={module}
             editing={editing}
+            initialFields={
+              module === "carpools" && carpoolKind
+                ? { kind: carpoolKind }
+                : undefined
+            }
             clientId={clientId}
             publishable={!!data.data?.publishable}
             directPublish={module === "publishing" && !!data.data?.can_publish}
@@ -888,7 +901,8 @@ export default function LiveFeature({
       )}
       {review && (
         <DetailFrame
-          title="Review submission"
+          title={`Review: ${review.title}`}
+          protectChanges
           busy={mutation.isPending}
           onClose={() => setReview(null)}
         >
@@ -936,12 +950,19 @@ export default function LiveFeature({
               );
             }}
           >
+            <p className={styles.reviewDescription}>{review.detail}</p>
+            {review.fields && (
+              <RecordFacts
+                label="Request information"
+                items={recordFacts(definition.fields, review.fields)}
+              />
+            )}
             <label>
               Decision
               <p className={styles.formHelp}>
                 {marketplaceListing
                   ? "Approve and publish the reviewed public information, or record a review decision."
-                  : decisionHint(review.status)}
+                  : decisionHint(review.status, module)}
               </p>
               <select
                 name="status"
@@ -980,7 +1001,7 @@ export default function LiveFeature({
                     {s === "Reviewed" &&
                     ["household-changes", "payment-evidence"].includes(module)
                       ? "Review complete - follow-up required"
-                      : decisionLabel(s)}
+                      : decisionLabel(s, module)}
                   </option>
                 ))}
               </select>
@@ -1031,9 +1052,11 @@ export default function LiveFeature({
                 </>
               )}
             <Feedback error={mutation.error} />
-            <Button type="submit" pending={mutation.isPending}>
-              Save review
-            </Button>
+            <div className="form-actions">
+              <Button type="submit" pending={mutation.isPending}>
+                Save decision
+              </Button>
+            </div>
           </form>
         </DetailFrame>
       )}
@@ -1134,23 +1157,37 @@ function StatusStrip({
 }
 
 /** Review decisions describe their actual effect; fulfillment is separate. */
-function decisionLabel(status: string) {
+function decisionLabel(status: string, module: string) {
   const labels: Record<string, string> = {
-    "In review": "In review — accept it for checking",
-    Reviewed: "Approve request - fulfillment is recorded separately",
-    Rejected: "Rejected — decline the request",
-    Published: "Approve & publish - make reviewed information visible",
-    Withdrawn: "Withdrawn — remove it from publication",
+    "In review": "Start review",
+    Reviewed:
+      module === "vehicles"
+        ? "Approve vehicle request"
+        : module === "permits"
+          ? "Approve permit request"
+          : "Complete review",
+    Rejected: "Reject request",
+    Published: "Approve and publish",
+    Withdrawn: "Remove from publication",
   };
   return labels[status] ?? status;
 }
 /** Approval is two steps by design, so say so rather than leaving a reviewer
  *  hunting for an Approve option that only appears at the second one. */
-function decisionHint(status: string) {
+function decisionHint(status: string, module: string) {
   if (status === "Submitted")
     return "Start checking the request, or reject it with a reason.";
-  if (status === "In review")
-    return "Record the review decision. Stickers and permits require a separate issuance record; household changes and payment reconciliation use their dedicated records.";
+  if (status === "In review") {
+    if (module === "vehicles")
+      return "Approve or reject this request. Record the sticker separately when it is issued.";
+    if (module === "permits")
+      return "Approve or reject this request. Record the permit separately when it is issued.";
+    if (module === "household-changes")
+      return "Complete this review, then apply any verified property link in Lot register.";
+    if (module === "payment-evidence")
+      return "Complete this review, then check the payment in Finance. This review does not change the balance.";
+    return "Choose a decision and explain it below.";
+  }
   if (status === "Published")
     return "A published record can only be withdrawn.";
   return "Record the outcome and the reason for it.";

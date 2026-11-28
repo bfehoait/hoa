@@ -10,7 +10,7 @@ export default function DeveloperConnections() {
   return (
     <DeveloperPage
       title="Connections"
-      description="Outside services the portal depends on, and what can currently be verified."
+      description="Check service connections."
       actions={
         <Button secondary onClick={auth.retry}>
           <RefreshCw size={18} />

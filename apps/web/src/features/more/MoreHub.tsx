@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Search,
   FileText,
+  UsersRound,
 } from "lucide-react";
 import {
   DestinationGrid,
@@ -209,6 +210,15 @@ export default function MoreHub() {
       >
         <h2>Community</h2>
         <div className={styles.preferenceRows}>
+          {auth.member &&
+            canOpenPath(auth.member, "/services/team-requests") &&
+            permissions.allowsPath("/services/team-requests") && (
+              <Link to="/services/team-requests">
+                <UsersRound size={20} aria-hidden="true" />
+                <span>Team Helpdesk</span>
+                <ChevronRight size={18} aria-hidden="true" />
+              </Link>
+            )}
           <Link to="/more/documents">
             <FileText size={20} aria-hidden="true" />
             <span>Community documents</span>

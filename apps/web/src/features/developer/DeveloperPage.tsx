@@ -8,7 +8,7 @@ export default function DeveloperPage({
   children,
 }: {
   title: string;
-  description: string;
+  description?: string;
   actions?: ReactNode;
   children?: ReactNode;
 }) {
@@ -17,10 +17,12 @@ export default function DeveloperPage({
       <header className={styles.header}>
         <h1>{title}</h1>
 
-        <div className={styles.intro}>
-          <p>{description}</p>
-          {actions && <div className={styles.actions}>{actions}</div>}
-        </div>
+        {(description || actions) && (
+          <div className={styles.intro}>
+            {description && <p>{description}</p>}
+            {actions && <div className={styles.actions}>{actions}</div>}
+          </div>
+        )}
       </header>
       {children}
     </div>

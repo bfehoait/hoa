@@ -19,6 +19,8 @@ import { useAuth } from "../../data/auth";
 import OperationsDesk from "../connected/OperationsDesk";
 import LiveFeature from "../connected/LiveFeature";
 import SecurityOverview from "./SecurityOverview";
+import RequestDesk from "../services/RequestDesk";
+import MoveClearances from "../connected/MoveClearances";
 import {
   LinkedCard,
   MetricStrip,
@@ -33,13 +35,19 @@ const BoardUpdates = lazy(() => import("../community/Community"));
 export default function FieldWorkspace() {
   const auth = useAuth();
   const pathname = useLocation().pathname;
+  if (pathname === "/board/requests") return <RequestDesk office />;
   if (pathname === "/security") return <SecurityOverview />;
   if (
     !auth.preview &&
     !auth.rolePreview &&
     ["/security", "/security/visitors", "/security/gate"].includes(pathname)
   )
-    return <OperationsDesk kind="visitor" office />;
+    return (
+      <>
+        <OperationsDesk kind="visitor" office />
+        {pathname === "/security/gate" && <MoveClearances />}
+      </>
+    );
   // Security reads vehicle registrations rather than deciding them; the review
   // desk already enforces who may change a status.
   if (!auth.preview && !auth.rolePreview && pathname === "/security/vehicles")

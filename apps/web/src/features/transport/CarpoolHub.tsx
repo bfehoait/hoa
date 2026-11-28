@@ -2,7 +2,6 @@ import { useSearchParams } from "react-router-dom";
 import { Button } from "../../components/UI";
 import { useAuth } from "../../data/auth";
 import LiveFeature from "../connected/LiveFeature";
-import ParticipationDesk from "../connected/ParticipationDesk";
 import CarpoolDemo from "./CarpoolDemo";
 import styles from "../connected/LiveFeature.module.css";
 
@@ -26,8 +25,8 @@ export default function CarpoolHub() {
         {(
           [
             ["rides", "Community rides"],
-            ["mine", "My offers & requests"],
-            ["interests", "My ride interests"],
+            ["mine", "My Carpool Offers"],
+            ["interests", "My Carpool Requests"],
             ["demo", "Map demo"],
           ] as const
         ).map(([id, label]) => (
@@ -47,13 +46,18 @@ export default function CarpoolHub() {
       </div>
       {tab === "demo" ? (
         <CarpoolDemo />
-      ) : tab === "interests" ? (
-        <ParticipationDesk module="carpools" />
       ) : (
         <LiveFeature
           key={tab}
           module="carpools"
-          initialView={tab === "mine" ? "mine" : "published"}
+          initialView={tab === "rides" ? "published" : "mine"}
+          carpoolKind={
+            tab === "rides"
+              ? ""
+              : tab === "interests"
+                ? "Looking for a ride"
+                : "Offering a ride"
+          }
           resident
         />
       )}

@@ -1573,8 +1573,39 @@
   .app.developer.staffShell .topbar {
     top: 16px;
   }
+  .app.officeShell,
+  .app.developer.staffShell {
+    --staff-header-actions-space: 176px;
+  }
+  .app.staffShell:has(.previewBar) {
+    --staff-header-actions-space: 0px;
+  }
 }
 /* A single compact navigation scale for every desktop staff workspace. */
+.accessNotice {
+  margin-bottom: 16px;
+  border-radius: var(--radius-sm);
+}
+/* Notices span the content width. Keep header actions in normal flow when
+   one is present instead of reserving only the page title's right corner. */
+@media (min-width: 1024px) {
+  .app.staffShell:has([data-shell-notice]) {
+    --staff-header-actions-space: 0px;
+  }
+  .app.staffShell:has([data-shell-notice]) .topbar {
+    position: static;
+    inset: auto;
+    width: auto;
+    height: auto;
+    min-height: 64px;
+    margin: 0;
+    padding: 16px 28px 0;
+    justify-content: flex-end;
+    border: 0;
+    background: transparent;
+  }
+}
+
 @media (min-width: 1024px) {
   .app.staffShell .sidebar .brand > span {
     font-size: 22px;

@@ -42,7 +42,7 @@ export default function OfficeWorkload({
           <section className={styles.actionCard} aria-label="Approval workload">
             <h3>
               <ClipboardCheck size={20} aria-hidden="true" />
-              Approvals waiting
+              Pending approvals
             </h3>
             <strong className={styles.bigNumber}>
               {number(waiting + reviewing)}
@@ -59,12 +59,14 @@ export default function OfficeWorkload({
           <section className={styles.actionCard} aria-label="Helpdesk workload">
             <h3>
               <MessageSquare size={20} aria-hidden="true" />
-              Open helpdesk
+              Requests to follow up
             </h3>
             <strong className={styles.bigNumber}>
               {number(helpdesk.pending + helpdesk.in_review)}
             </strong>
-            <p>Resident requests awaiting review or follow-up.</p>
+            <p>
+              Open a request to read the conversation and take the next step.
+            </p>
             <Link className={styles.primaryLink} to="/office/requests">
               Open helpdesk <ArrowRight size={18} aria-hidden="true" />
             </Link>
@@ -75,7 +77,7 @@ export default function OfficeWorkload({
         <div className={followUp.length ? styles.columns : undefined}>
           <section aria-label="Workload by review queue">
             <div className={styles.chartHeading}>
-              <h3>Workload by queue</h3>
+              <h3>Requests by type</h3>
               <div className={styles.legend}>
                 {ranked.some((q) => q.pending > 0) && (
                   <span>

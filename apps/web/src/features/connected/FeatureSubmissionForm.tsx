@@ -68,6 +68,7 @@ function carpoolGoesLive(input: Payload) {
 export default function FeatureSubmissionForm({
   module,
   editing,
+  initialFields = {},
   clientId,
   publishable,
   directPublish = false,
@@ -77,6 +78,7 @@ export default function FeatureSubmissionForm({
 }: {
   module: string;
   editing: FeatureRecord | null;
+  initialFields?: Record<string, string>;
   clientId: string;
   publishable: boolean;
   directPublish?: boolean;
@@ -100,7 +102,7 @@ export default function FeatureSubmissionForm({
     directPublish || carpool || listingModules.includes(module);
   // Owner request, 20 November 2026: Post a listing uses Title Case labels.
   const listing = listingModules.includes(module);
-  const heading = (text: string) => (listing ? titleCase(text) : text);
+  const heading = (text: string) => titleCase(text);
   const fieldLabel = (text: string) => heading(liveFieldLabel(text));
   // Fields can depend on an earlier answer (see BaselineField.showWhen), so the
   // selects those fields depend on are controlled; everything else stays
@@ -118,7 +120,10 @@ export default function FeatureSubmissionForm({
   );
   const [answers, setAnswers] = useState<Record<string, string>>(() =>
     Object.fromEntries(
-      drivers.map((key) => [key, editing?.fields?.[key] ?? ""]),
+      drivers.map((key) => [
+        key,
+        editing?.fields?.[key] ?? initialFields[key] ?? "",
+      ]),
     ),
   );
   const shownFields = definition.fields.filter(
@@ -455,7 +460,12 @@ export default function FeatureSubmissionForm({
                             [f.key]: event.target.value,
                           })),
                       }
-                    : { defaultValue: editing?.fields?.[f.key] ?? "" })}
+                    : {
+                        defaultValue:
+                          editing?.fields?.[f.key] ??
+                          initialFields[f.key] ??
+                          "",
+                      })}
                 >
                   <option value="">Choose</option>
                   {options.map((option) => (
@@ -469,7 +479,9 @@ export default function FeatureSubmissionForm({
                   label={label}
                   titleCase={listing}
                   required={f.required}
-                  defaultValue={editing?.fields?.[f.key] ?? ""}
+                  defaultValue={
+                    editing?.fields?.[f.key] ?? initialFields[f.key] ?? ""
+                  }
                   placeholder={
                     f.key === "items" ? "Item and quantity" : undefined
                   }

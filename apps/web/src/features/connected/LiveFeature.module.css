@@ -371,6 +371,12 @@
 .card > * {
   margin-block: 0;
 }
+.detailRecord {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+}
 .cardHead {
   display: flex;
   align-items: center;
@@ -1193,4 +1199,11 @@
     min-height: 48px;
     padding: 10px 14px;
   }
+}
+
+.carpoolOffer {
+  border-inline-start: 4px solid var(--info, #2563eb);
+}
+.carpoolRequest {
+  border-inline-start: 4px solid var(--success, #16846a);
 }

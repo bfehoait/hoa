@@ -151,3 +151,40 @@ Receipt numbers open a read-only detail dialog. Existing lot navigation and auth
 The dashboard is opt-in from RecordedFinance only. Customer screens and Office lot-profile receipt presentation retain their existing layout. The Finance chart module is loaded lazily; no chart dependency, backend migration or access-policy change is introduced.
 
 Validation: TypeScript, targeted ESLint and formatting passed; production build passed with the existing large-chunk warning. No automated test suites or browser runs were performed. Owner browser acceptance: open /office/finance, inspect full and empty date ranges, select/reset months, verify partial-month ranges, page receipts, open/close receipt details, verify authorized CSV scope and accounting shortcut destinations. Check desktop at 1024/1440/1920px and 200% zoom; monthly charts have a local scroll region when their labelled bars exceed the available width. Confirm customer Payments and Office lot receipts retain their presentation.
+
+## Shared UI/copy cleanup - 27 November 2026
+
+Permission actions are flat rows: name, checkbox and quiet reset icon only for explicit overrides. Unknown/default semantics and protected Developer references remain. Generic introductory copy was removed from selected primary screens across workspaces, and shared dialog sections use dividers instead of nested bordered cards. Office/Developer headers omit empty intro wrappers; shared staff Sheet/Modal desktop header padding matches. Brand tokens, touch targets, essential notices and existing handlers remain. See docs/UI-CLEANUP-20261127.md for exact scope, checks, unresolved older browser fixtures and manual acceptance. This is not a completed screen-by-screen redesign or full live validation. Frontend-only rollout; no SQL or BFE deployment.
+
+
+## Cross-system UI audit - 27 November 2026
+
+Follow-up covered 64 routes across Homeowner, Office, Board, Security, Transport and Developer at 390px/1440px. Fixed a shared staff-search invalid aria-controls reference, crowded resident mobile navigation (Team Helpdesk now in More behind existing permissions), Developer paging overflow and search-icon/text overlap, and malformed visitor ID copy. Desktop Team Helpdesk access remains. No routes, permission grants, backend or financial rules changed.
+
+Final Chromium assertions passed across 128 route/width captures and 28 overview/form axe scans, with no detected page overflow, broken images, runtime errors or attempted audited mutation RPCs. Empty/unavailable synthetic service states are explicitly recorded; this is not proof of populated or live workflow correctness. Announcements and visitor-pass dialogs were opened/closed without submitting. Prior legacy smoke failures remain separate. Local TypeScript, build, targeted lint and diff-check passed; existing bundle/annotation warnings remain. Windows browser-server teardown is interrupted after completed cases; do not claim clean full-suite exit.
+
+See docs/UI-CLEANUP-20261127.md for exact scope, commands, remaining unavailable-service/physical-device/live checks, and owner acceptance steps. No SQL or BFE deployment needed; frontend deployment only when authorized. No commit/push/deploy/live connection performed.
+
+
+## Cross-workspace redundancy pass - 27 November 2026
+
+Indexed all 130 feature TSX files and reviewed actual shared/role routes for redundant copy and controls. Removed title-restating introductions from People/Registration inbox, Finance, Operations directory, property/profile/settings, Calendar and Board/driver Shuttle surfaces. Helpdesk now renders a single New request control at both widths, using the same handler and disabled protections. Existing document legal guidance and bill-setup instructions remain accessible in native shared disclosures; bank-clearance/late-fee, permission/scope, synthetic and approval notices remain. Services availability copy is shorter; Announcements search and Finance Record type use clear names. No backend/permission/financial calculation changes.
+
+Commands, exact changes, acceptance checks and limitations are in docs/UI-CLEANUP-20261127.md, second follow-up section. The new browser assertions check one Helpdesk create control, expandable full document guidance, and expandable accounting setup help with the bank warning still visible. Static inventory is not proof of all populated forms. Prior WebKit mock access-control errors and legacy smoke failures remain separate. No SQL or BFE deployment; frontend deployment only when authorized. No commit/push/deploy/live connection.
+
+
+## 28 November 2026 ? shared UI follow-up
+
+Shared status/feedback/empty states, compact staff destination rows, Developer preview guidance, plain-language address/Helpdesk copy and exact Home activity links were improved locally. Existing data and permission boundaries are preserved. See [the implementation handoff](../UI-UX-SHARED-CLEANUP-20261128.md) for scope, local evidence, outstanding platform checks and frontend-only rollout.
+
+## 28 November 2026 - confirmable permission toggle
+
+Access-management settings now reuse the same visibility toggle and shared buttons/feedback as module access. Show a short explanation and saved On/Off first; reveal reason and confirmation only after a change. Toggling back or Cancel restores the saved setting without a write. Keep dirty/pending guards, explicit confirmation and inline failure feedback. This pattern applies to permission delegation; approvals, fees and destructive actions retain their own required forms and confirmations. Six-role synthetic rendering checks passed; full evidence and owner checks are in [Access layout follow-up](../ACCESS-LAYOUT-20261128.md).
+
+## 28 November 2026 - status notices and header controls
+
+Full-width read-only/offline notices must not share the desktop floating header corner. Shared staff shell now moves header controls into normal flow when a shell notice exists, preserving compact pages otherwise. Validate read-only, offline and editable states separately; all-granted route audits do not cover these states. Commands, seven completed browser cases and rollout checklist: [Access layout follow-up](../ACCESS-LAYOUT-20261128.md). Frontend only; no SQL/BFE changes.
+
+## 28 November 2026 - shared record facts
+
+RecordFacts renders authorized label/value pairs in one surface with dividers, wrapping, 16px values and 14px labels. Mobile stacks each fact; desktop aligns columns. The shared recordFacts presenter uses the existing conditional-field definition and does not dump unknown raw fields or calculate authority/fees. Essential facts stay visible in request popups, staff mobile cards and decision views; identifiers/history remain secondary. WorkflowHistory uses a plain timeline and distinct pending/error/empty states. See [usability pass](../USABILITY-PASS-20261128.md).

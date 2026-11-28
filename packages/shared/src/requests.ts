@@ -16,7 +16,7 @@ const privateToHandlers =
 export const helpdeskCategories = [
   {
     value: "Maintenance",
-    label: "Maintenance Issue",
+    label: "Community and Maintenance Issue",
     detail:
       "Report common-area damage or maintenance needs. Your request goes directly to authorized committee and will not appear on the community feed.",
   },
@@ -31,11 +31,6 @@ export const helpdeskCategories = [
     label: "Concern and Suggestion",
     detail:
       "Raise a community concern or suggest an improvement for office, BOD, or officer review. Your request is visible only to you and authorized committee, not the community feed.",
-  },
-  {
-    value: "Document",
-    label: "Document request",
-    detail: `Ask for a document or its requirements. ${privateToHandlers}`,
   },
   {
     value: "Support",

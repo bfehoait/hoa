@@ -469,6 +469,12 @@
 }
 /* Services page status: green when active, light gray while pending BOD
    approval. Text keeps WCAG AA contrast on both backgrounds. */
+:global([data-staff-ui="true"]) .rows .destination {
+  min-height: 72px;
+  padding: 12px 16px;
+  border-radius: 0;
+  box-shadow: none;
+}
 .rows .destination.active {
   background: var(--green-bg);
 }

@@ -1,0 +1,55 @@
+.guide {
+  color: var(--ink);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+.guide > p {
+  margin: 0 0 16px;
+}
+.guide ol {
+  margin: 0;
+  padding-inline-start: 24px;
+}
+.guide li {
+  padding-inline-start: 4px;
+}
+.guide li + li {
+  margin-top: 12px;
+}
+.library {
+  max-width: 800px;
+  margin-block: 20px;
+}
+.search {
+  display: grid;
+  gap: 8px;
+  max-width: 480px;
+}
+.search input {
+  width: 100%;
+  min-height: 48px;
+  font-size: 1rem;
+}
+.note {
+  color: var(--muted);
+  font-size: 0.875rem;
+  margin-block: 12px 20px;
+}
+.topic {
+  border-bottom: 1px solid var(--line);
+}
+.topic summary {
+  display: list-item;
+  min-height: 48px;
+  padding: 12px 8px;
+  cursor: pointer;
+  color: var(--ink);
+  font-weight: 600;
+}
+.topic summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.topic .guide {
+  padding: 4px 8px 20px;
+}

@@ -122,7 +122,7 @@ export const baselineModules: BaselineModule[] = [
   ),
   module(
     "businesses",
-    "Neighbourhood businesses",
+    "Neighborhood businesses",
     "Livelihood",
     "A directory for local services, opening hours and owner-managed profiles.",
     [
@@ -371,7 +371,7 @@ export const baselineModules: BaselineModule[] = [
   ),
   module(
     "carpools",
-    "Neighbour carpools",
+    "Neighbor carpools",
     "Transport",
     "Describe an offered route, departure and available sample seats.",
     [
@@ -455,7 +455,7 @@ export const baselineModules: BaselineModule[] = [
     "concerns",
     "Resident concerns",
     "Support",
-    "A conversation about neighbourhood issues with a clear follow-up trail.",
+    "A conversation about neighborhood issues with a clear follow-up trail.",
     [
       select("category", "Concern category", [
         "Maintenance",
@@ -612,7 +612,7 @@ export const baselineModules: BaselineModule[] = [
         "Other",
       ]),
       field("makeModel", "Make and model"),
-      field("colour", "Colour"),
+      field("colour", "Color"),
       field("unit", "Unit the vehicle belongs to"),
       select("owner", "Who owns the vehicle", [
         "Homeowner",
@@ -650,8 +650,8 @@ export const baselineModules: BaselineModule[] = [
     "Ask for the clearance needed before construction, renovation or a move.",
     [
       select("permit", "Permit or clearance needed", [
-        "Construction",
-        "Renovation",
+        "Construction Permit",
+        "Renovation Permit",
         "Move-in clearance",
         "Move-out clearance",
         "Other",
@@ -660,17 +660,17 @@ export const baselineModules: BaselineModule[] = [
       field("start", "Proposed start date", "date"),
       field("finish", "Proposed finish date", "date"),
       when(field("scope", "Describe the work", "textarea"), "permit", [
-        "Construction",
-        "Renovation",
+        "Construction Permit",
+        "Renovation Permit",
         "Other",
       ]),
       when(field("contractor", "Contractor or crew"), "permit", [
-        "Construction",
-        "Renovation",
+        "Construction Permit",
+        "Renovation Permit",
       ]),
       when(field("workers", "How many workers", "number"), "permit", [
-        "Construction",
-        "Renovation",
+        "Construction Permit",
+        "Renovation Permit",
       ]),
       when(field("mover", "Moving company or crew"), "permit", [
         "Move-in clearance",

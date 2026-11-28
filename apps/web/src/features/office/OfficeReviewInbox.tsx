@@ -166,7 +166,7 @@ export default function OfficeReviewInbox({
       ) : (
         <PageIntro
           title="Review inbox"
-          description="Review applications, bookings, passes and other submissions awaiting a decision."
+          description="Select a submission to review and decide."
           icon={<ClipboardCheck size={28} />}
         />
       )}

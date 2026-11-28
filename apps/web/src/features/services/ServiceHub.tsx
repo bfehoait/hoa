@@ -51,7 +51,7 @@ export default function ServiceHub() {
   const recent = portal.data?.records.slice(0, 2) ?? [];
   return (
     <div className={styles.hub}>
-      <PageIntro title="Services" description="What would you like to do?" />
+      <PageIntro title="Services" />
       <div className="search">
         <Search size={20} aria-hidden="true" />
         <input

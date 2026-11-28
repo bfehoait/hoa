@@ -24,10 +24,7 @@ export default function BoardOverview() {
     );
   return (
     <>
-      <OfficePage
-        title="Overview"
-        description="Review announcements, elections and financial reports."
-      />
+      <OfficePage title="Overview" />
       <section className={styles.section}>
         <h2>Elections & reports</h2>
         <div className={styles.grid}>

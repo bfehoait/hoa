@@ -110,6 +110,8 @@ export default function Services() {
       />
     );
   }
+  if (location.pathname === "/services/team-requests")
+    return <RequestDesk office />;
   if (location.pathname === "/services/requests") return <RequestDesk />;
   if (
     !auth.preview &&

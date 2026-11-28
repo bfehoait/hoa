@@ -36,10 +36,7 @@ export default function SecurityOverview() {
     passes.data?.rows.filter((r) => r.effective_status === "Approved") ?? [];
   return (
     <>
-      <OfficePage
-        title="Overview"
-        description="Check visitor passes, registered vehicles and incidents you reported."
-      />
+      <OfficePage title="Overview" />
       <section className={styles.section}>
         <h2>Gate activity</h2>
         <div className={styles.grid}>

@@ -179,7 +179,7 @@ export default function CommunityCalendar({
       <PageIntro
         eyebrow="COMMUNITY SERVICES"
         title="Community calendar"
-        description="Your amenity bookings and the events the office has published. Dates and times use Philippine time."
+        description="Dates and times use Philippine time."
       />
       {error ? (
         <Feedback error={error} />

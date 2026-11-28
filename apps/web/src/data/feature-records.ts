@@ -40,6 +40,7 @@ export function useFeatureRecords(
   category = "",
   pendingOnly = false,
   issuanceOnly = false,
+  carpoolKind = "",
 ) {
   const auth = useAuth();
   return useQuery({
@@ -53,6 +54,7 @@ export function useFeatureRecords(
       category,
       pendingOnly,
       issuanceOnly,
+      carpoolKind,
     ],
     enabled:
       !!auth.userId && !auth.checking && !auth.preview && !auth.rolePreview,
@@ -75,9 +77,14 @@ export function useFeatureRecords(
                     module,
                   )
                 ? "bfe_livelihood_dashboard"
-                : "bfe_feature_dashboard",
+                : module === "carpools"
+                  ? "bfe_excel_carpool_dashboard"
+                  : "bfe_feature_dashboard",
           {
             p_module: module,
+            ...(module === "carpools" && !pendingOnly && !issuanceOnly
+              ? { p_kind: carpoolKind }
+              : {}),
             ...((pendingOnly || issuanceOnly) && view === "review"
               ? {}
               : { p_view: view }),

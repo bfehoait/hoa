@@ -32,10 +32,12 @@ export default function OfficePage(props: ComponentProps<typeof PageIntro>) {
           <h1>{props.title}</h1>
         </div>
       </div>
-      <div className={styles.intro}>
-        {props.description && <p>{props.description}</p>}
-        {props.action && <div className={styles.actions}>{props.action}</div>}
-      </div>
+      {(props.description || props.action) && (
+        <div className={styles.intro}>
+          {props.description && <p>{props.description}</p>}
+          {props.action && <div className={styles.actions}>{props.action}</div>}
+        </div>
+      )}
     </header>
   );
 }

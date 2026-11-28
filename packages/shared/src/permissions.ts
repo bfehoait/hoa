@@ -90,6 +90,8 @@ export function officeRequirement(
   input: string,
 ): Capability | null | undefined {
   const path = input.split(/[?#]/)[0].replace(/\/$/, "");
+  if (["/services/team-requests", "/board/requests"].includes(path))
+    return { module: "requests", action: "view", scope: "association" };
   if (
     path !== "/office" &&
     !path.startsWith("/office/") &&

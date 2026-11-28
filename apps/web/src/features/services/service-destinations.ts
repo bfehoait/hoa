@@ -80,7 +80,7 @@ export const serviceGroups: { title: string; items: Destination[] }[] = [
       {
         to: "/directory/transport",
         title: "Carpool",
-        detail: "Share a ride with neighbours",
+        detail: "Share a ride with neighbors",
         icon: CarFront,
       },
     ],
@@ -91,7 +91,7 @@ export const serviceGroups: { title: string; items: Destination[] }[] = [
       {
         to: "/services/requests?new=Complaint",
         title: "File a complaint",
-        detail: "A private matter involving a neighbour",
+        detail: "A private matter involving a neighbor",
         icon: Flag,
       },
       {

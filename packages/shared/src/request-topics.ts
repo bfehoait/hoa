@@ -10,11 +10,13 @@ export const requestTopics: Record<
   Record<string, readonly string[]>
 > = {
   Maintenance: {
+    Shuttle: ["Shuttle service", "Shuttle stop", "Driver feedback"],
     "Lights and posts": [
       "Streetlight not working",
       "Flickering light",
       "Damaged light fixture",
       "Damaged or leaning post",
+      "Damaged or leaning street signs",
     ],
     "Roads and walkways": [
       "Road damage",
@@ -54,7 +56,7 @@ export const requestTopics: Record<
       "Parking concern",
       "Vehicle disturbance",
     ],
-    "Neighbour conduct": [
+    "Neighbor conduct": [
       "Dispute",
       "Harassment or threatening behaviour",
       "Shared-space concern",
@@ -128,11 +130,6 @@ export const requestTopics: Record<
       "Buyani payment help",
       "Missing receipt",
       "Billing question",
-    ],
-    "Community services": [
-      "Amenity booking",
-      "Shuttle",
-      "Marketplace submission",
     ],
   },
 };

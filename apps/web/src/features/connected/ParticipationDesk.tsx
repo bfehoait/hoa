@@ -18,6 +18,7 @@ import {
   Skeleton,
 } from "../../components/UI";
 import Sheet from "../../components/Sheet";
+import RecordFacts from "../../components/RecordFacts";
 import styles from "./LiveFeature.module.css";
 import { Link } from "../../components/AccessLink";
 import {
@@ -25,6 +26,21 @@ import {
   useReadOpenedNotification,
 } from "../../data/notification-target";
 import NotificationTargetFeedback from "../../components/NotificationTargetFeedback";
+function applicationFacts(answers: Record<string, string>) {
+  const labels: Record<string, string> = {
+    participant: "Applicant",
+    phone: "Contact phone",
+    business: "Business",
+    products: "Products or services",
+  };
+  return Object.entries(answers)
+    .filter(([, value]) => value)
+    .map(([key, value]) => ({
+      key,
+      label: labels[key] ?? key.replaceAll("_", " "),
+      value,
+    }));
+}
 const response = z.object({
   total: z.number(),
   can_create: z.boolean(),
@@ -229,25 +245,10 @@ export default function ParticipationDesk({
                       {r.places} place(s) · {r.details}
                     </p>
                     {r.answers && (
-                      <dl>
-                        {Object.entries(r.answers)
-                          .filter(([, value]) => value)
-                          .map(([key, value]) => (
-                            <div key={key}>
-                              <dt>
-                                {(
-                                  {
-                                    participant: "Applicant",
-                                    phone: "Contact phone",
-                                    business: "Business",
-                                    products: "Products or services",
-                                  } as Record<string, string>
-                                )[key] ?? key}
-                              </dt>
-                              <dd>{value}</dd>
-                            </div>
-                          ))}
-                      </dl>
+                      <RecordFacts
+                        label="Application information"
+                        items={applicationFacts(r.answers)}
+                      />
                     )}
                     <details>
                       <summary>History</summary>
@@ -274,7 +275,7 @@ export default function ParticipationDesk({
                           setReview(r);
                         }}
                       >
-                        Application actions
+                        {office ? "Review application" : "Manage application"}
                       </Button>
                     )}
                   </article>
@@ -341,6 +342,7 @@ export default function ParticipationDesk({
             )) && (
             <Sheet
               title="Apply for an activity"
+              protectChanges
               busy={mutation.isPending}
               onClose={() => setForm(false)}
             >
@@ -463,6 +465,7 @@ export default function ParticipationDesk({
       {review && (
         <DetailFrame
           title={office ? "Application decision" : "Application details"}
+          protectChanges
           busy={mutation.isPending}
           onClose={closeDetails}
         >
@@ -472,25 +475,10 @@ export default function ParticipationDesk({
             {review.places} place(s) · {review.details}
           </p>
           {review.answers && (
-            <dl className="detail-list">
-              {Object.entries(review.answers)
-                .filter(([, value]) => value)
-                .map(([key, value]) => (
-                  <div key={key}>
-                    <dt>
-                      {(
-                        {
-                          participant: "Applicant",
-                          phone: "Contact phone",
-                          business: "Business",
-                          products: "Products or services",
-                        } as Record<string, string>
-                      )[key] ?? key}
-                    </dt>
-                    <dd>{value}</dd>
-                  </div>
-                ))}
-            </dl>
+            <RecordFacts
+              label="Application information"
+              items={applicationFacts(review.answers)}
+            />
           )}
           {review.history.length > 0 && (
             <details className={styles.applicationHistory}>
@@ -533,11 +521,11 @@ export default function ParticipationDesk({
                 <select name="status">
                   {office ? (
                     <>
-                      <option>Confirmed</option>
-                      <option>Rejected</option>
+                      <option value="Confirmed">Accept application</option>
+                      <option value="Rejected">Reject application</option>
                     </>
                   ) : (
-                    <option>Withdrawn</option>
+                    <option value="Withdrawn">Withdraw application</option>
                   )}
                 </select>
               </label>
@@ -546,9 +534,11 @@ export default function ParticipationDesk({
                 <textarea required name="note" minLength={5} maxLength={500} />
               </label>
               <Feedback error={mutation.error} />
-              <Button type="submit" pending={mutation.isPending}>
-                {office ? "Confirm decision" : "Withdraw application"}
-              </Button>
+              <div className="form-actions">
+                <Button type="submit" pending={mutation.isPending}>
+                  {office ? "Save decision" : "Withdraw application"}
+                </Button>
+              </div>
             </form>
           )}
         </DetailFrame>

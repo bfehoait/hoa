@@ -52,6 +52,9 @@ export const visitorPassSchema = z.object({
   direction: z.enum(["inbound", "outbound"]).optional(),
   party_count: z.number().int().optional(),
   items: z.string().optional(),
+  office_approved_at: z.string().nullable().optional(),
+  security_approved_at: z.string().nullable().optional(),
+  walk_in: z.boolean().optional(),
 });
 export const visitorDashboardSchema = z.object({
   rows: z.array(visitorPassSchema),

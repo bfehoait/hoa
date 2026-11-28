@@ -49,7 +49,7 @@ export default function OfficeSearch({
       <form role="search" onSubmit={submit}>
         <Search size={18} aria-hidden="true" />
         <label className="sr-only" htmlFor={id}>
-          Find a {workspace} screen
+          Find a screen in {workspace === "driver" ? "Transport" : workspace}
         </label>
         <input
           id={id}
@@ -61,7 +61,7 @@ export default function OfficeSearch({
           onKeyDown={(event) => {
             if (event.key === "Escape") setValue("");
           }}
-          aria-controls={`${id}-results`}
+          aria-controls={value.trim() ? `${id}-results` : undefined}
         />
         <button
           type="submit"

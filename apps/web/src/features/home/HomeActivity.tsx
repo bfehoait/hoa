@@ -49,7 +49,9 @@ export function HomeRequests() {
         <ul className={styles.records}>
           {query.data.records.slice(0, 2).map((row) => (
             <li key={row.id}>
-              <Link to="/services/requests">
+              <Link
+                to={`/services/requests?record=${encodeURIComponent(row.id)}`}
+              >
                 <strong>{row.title}</strong>
                 <span className={styles.meta}>
                   <Badge>{row.status}</Badge>
@@ -114,7 +116,9 @@ export function HomeBookings() {
         <ul className={styles.records}>
           {query.data.rows.slice(0, 2).map((row) => (
             <li key={row.id}>
-              <Link to="/services/bookings">
+              <Link
+                to={`/services/bookings?record=${encodeURIComponent(row.id)}`}
+              >
                 <strong>{row.facility_name}</strong>
                 <span className={styles.meta}>
                   <Badge>{row.status}</Badge>
@@ -126,10 +130,10 @@ export function HomeBookings() {
         </ul>
       ) : (
         <div className={styles.empty}>
-          <p>Make time for your community</p>
+          <p>No bookings yet</p>
           <span>Your amenity bookings will appear here.</span>
           <Link to="/services/bookings">
-            Explore amenities <ChevronRight size={16} aria-hidden="true" />
+            Book an amenity <ChevronRight size={16} aria-hidden="true" />
           </Link>
         </div>
       )}
@@ -138,7 +142,7 @@ export function HomeBookings() {
 }
 
 // Owner request, 25 November 2026: homeowners and renters see carpools as soon
-// as a neighbour posts one (published on submission by migrations 096, 098).
+// as a neighbor posts one (published on submission by migrations 096, 098).
 export function HomeCarpools() {
   const auth = useAuth();
   const query = useQuery({
@@ -200,7 +204,7 @@ export function HomeCarpools() {
       ) : (
         <div className={styles.empty}>
           <p>No carpools right now</p>
-          <span>Rides your neighbours offer will appear here.</span>
+          <span>Rides your neighbors offer will appear here.</span>
           <Link to="/directory/transport?tab=mine">
             Offer a ride <ChevronRight size={16} aria-hidden="true" />
           </Link>

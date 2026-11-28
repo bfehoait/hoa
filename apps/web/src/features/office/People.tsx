@@ -122,11 +122,6 @@ export default function People({
       <PageIntro
         eyebrow="OFFICE · PEOPLE"
         title={applications ? "Registration inbox" : "People & accounts"}
-        description={
-          applications
-            ? "Applications received by the association."
-            : "Find a member, check their details and understand their assigned access."
-        }
         icon={applications ? <ClipboardCheck size={28} /> : <Users size={28} />}
         action={
           <div className="page-actions">
@@ -267,8 +262,8 @@ export default function People({
                 </span>
                 <span>
                   {applications
-                    ? "Recorded unit"
-                    : "Property / recorded address"}
+                    ? "Address on file"
+                    : "Property / address on file"}
                 </span>
                 <span>Status</span>
                 <span>Details</span>
@@ -385,9 +380,9 @@ export default function People({
           access settings.
         </p>
         <p>
-          Recorded unit text is not proof of ownership or occupancy. Household
-          members, property verification and financial history still require
-          their own connected records.
+          An address on file does not confirm ownership or who lives there.
+          Household members, property verification and financial history still
+          require their own connected records.
         </p>
       </details>
       {!applications && selectedId && selectedMember?.id === selectedId && (
@@ -419,7 +414,7 @@ export default function People({
               <dd>{selected.phone || "Not supplied"}</dd>
             </div>
             <div>
-              <dt>Recorded unit</dt>
+              <dt>Address on file</dt>
               <dd>{selected.unit || "Not assigned"}</dd>
             </div>
             <div>
@@ -491,7 +486,7 @@ function DirectoryProperty({
           ) : failed ? (
             "Linked addresses unavailable"
           ) : (
-            "Recorded address"
+            "Address on file"
           )}
         </small>
       </span>

@@ -25,7 +25,6 @@ export function useRequestSummary() {
   const auth = useAuth();
   const permissions = usePermissions();
   const sample = auth.preview || !!auth.rolePreview;
-  const assigned = auth.member ? memberRoles(auth.member) : [];
   return useQuery({
     queryKey: ["bfe", auth.userId, auth.rolePreview, "summary"],
     enabled:
@@ -33,8 +32,9 @@ export function useRequestSummary() {
       (!!auth.userId &&
         !auth.checking &&
         !auth.memberError &&
-        assigned.some((role) => role === "admin" || role === "developer") &&
-        permissions.allowsPath("/office/requests")),
+        (permissions.allowsPath("/office/requests") ||
+          permissions.allowsPath("/board/requests") ||
+          permissions.allowsPath("/services/team-requests"))),
     gcTime: 300_000,
     retry: false,
     refetchOnWindowFocus: true,
@@ -117,8 +117,9 @@ export function useRequests(
     !auth.memberError &&
     !!auth.userId &&
     (office
-      ? assigned.some((role) => role === "admin" || role === "developer") &&
-        permissions.allowsPath("/office/requests")
+      ? permissions.allowsPath("/office/requests") ||
+        permissions.allowsPath("/board/requests") ||
+        permissions.allowsPath("/services/team-requests")
       : assigned.some((role) => ["homeowner", "renter"].includes(role)));
   return useQuery({
     queryKey: [

@@ -224,7 +224,7 @@ export default function MemberAccountPicker() {
                   disabled={!page || members.isFetching || open.isPending}
                   onClick={() => setPage(page - 1)}
                 >
-                  Previous members
+                  Previous
                 </Button>
                 <span>
                   Page {page + 1} of{" "}
@@ -239,7 +239,7 @@ export default function MemberAccountPicker() {
                   }
                   onClick={() => setPage(page + 1)}
                 >
-                  Next members
+                  Next
                 </Button>
               </nav>
             </>

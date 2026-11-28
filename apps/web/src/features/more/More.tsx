@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { Link } from "../../components/AccessLink";
 import {
   ArrowLeft,
@@ -33,6 +33,7 @@ import Sheet from "../../components/Sheet";
 import Settings from "./Settings";
 import styles from "./More.module.css";
 import MoreHub from "./MoreHub";
+import { FeatureHelpLibrary } from "../../components/FeatureHelp";
 import { useAuth } from "../../data/auth";
 import MemberProfile from "./MemberProfile";
 
@@ -82,7 +83,8 @@ const destinations = [
 ];
 export default function More() {
   const auth = useAuth();
-  const path = useParams()["*"] ?? "";
+  const { pathname } = useLocation();
+  const path = useParams()["*"] || (pathname === "/more/help" ? "help" : "");
   const [selected, setSelected] = useState<number | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const portal = usePortal();
@@ -292,6 +294,7 @@ export default function More() {
           title="Help & support"
           icon={<CircleHelp size={28} />}
         />
+        <FeatureHelpLibrary />
         <div className={styles.faq}>
           {(auth.preview || auth.rolePreview
             ? [

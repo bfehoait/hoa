@@ -38,7 +38,7 @@ export default function ResidentMobileHeader({ name }: { name: string }) {
       ],
       "/services/visitors": [
         "Visitor passes",
-        "Prepare a request for your household. Office approval required.",
+        "Prepare a pass for your household.",
       ],
       "/more": ["More", ""],
       "/more/transport": [

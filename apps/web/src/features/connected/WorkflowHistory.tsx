@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { featureRpc } from "../../data/feature-records";
 import { useAuth } from "../../data/auth";
-import { Feedback, Skeleton } from "../../components/UI";
+import { Empty, Feedback, Skeleton } from "../../components/UI";
+import styles from "./WorkflowHistory.module.css";
 export default function WorkflowHistory({
   kind,
   id,
@@ -25,20 +26,24 @@ export default function WorkflowHistory({
         ),
   });
   return (
-    <section>
-      <h3>Record history</h3>
-      <p>
-        Latest 100 events. Review reasons are shared with the submitting member.
+    <section aria-label="History" className={styles.history}>
+      <p className={styles.note}>
+        Latest 100 updates. Review reasons can be read by the person who sent
+        the request.
       </p>
       <Feedback error={history.error} />
       {history.isPending ? (
         <Skeleton />
-      ) : (
+      ) : history.isSuccess && !history.data.length ? (
+        <Empty title="No updates yet">
+          Updates will appear here when an action is recorded.
+        </Empty>
+      ) : history.isSuccess ? (
         <ol>
           {history.data?.map((event, index) => (
             <li key={index}>
-              <strong>{event.action}</strong>
-              <p>{event.note}</p>
+              <strong>{event.action.replaceAll("_", " ")}</strong>
+              {event.note && <p>{event.note}</p>}
               <time dateTime={event.at}>
                 {new Date(event.at).toLocaleString("en-PH", {
                   timeZone: "Asia/Manila",
@@ -47,7 +52,7 @@ export default function WorkflowHistory({
             </li>
           ))}
         </ol>
-      )}
+      ) : null}
     </section>
   );
 }

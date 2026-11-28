@@ -31,7 +31,7 @@ const community = [
   {
     to: "/directory/market",
     title: "Shop local",
-    detail: "Discover neighbourhood businesses and listings",
+    detail: "Discover neighborhood businesses and listings",
     icon: Store,
   },
   {
@@ -43,7 +43,7 @@ const community = [
   {
     to: "/directory/transport",
     title: "Carpool",
-    detail: "Share a ride with neighbours",
+    detail: "Share a ride with neighbors",
     icon: CarFront,
   },
 ];

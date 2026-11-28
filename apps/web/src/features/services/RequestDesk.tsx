@@ -163,21 +163,10 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
         title={office ? "Helpdesk" : "How can we help?"}
         description={
           office
-            ? "Review requests, respond and keep residents informed."
-            : "Report an issue, file a complaint, raise a concern or share an idea. Follow the conversation here."
+            ? undefined
+            : "Report an issue or concern and follow the office's reply."
         }
         icon={<Wrench size={28} />}
-        action={
-          !office && (
-            <Button
-              onClick={() => setCreating(true)}
-              disabled={query.isError || query.isPending}
-            >
-              <Plus size={20} />
-              New request
-            </Button>
-          )
-        }
       />
       {!office && (
         <div className={styles.residentActions}>
@@ -321,7 +310,7 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
                   </h2>
                   <p>
                     {office
-                      ? "Requests submitted through this app will appear here when your account is authorized to read them."
+                      ? "Requests you can view will appear here."
                       : "Your submitted requests and office replies will appear here. Other residents’ requests stay outside this view."}
                   </p>
                 </section>
@@ -357,7 +346,7 @@ export default function RequestDesk({ office = false }: { office?: boolean }) {
                           <span>
                             {requestCategoryLabel(record.category)}
                             {office && record.unit_snapshot
-                              ? ` · Recorded unit: ${record.unit_snapshot}`
+                              ? ` · Address entered: ${record.unit_snapshot}`
                               : ""}
                           </span>
                           <time dateTime={record.updated_at}>
@@ -811,9 +800,9 @@ function Thread({
             <p className="note">
               Submitted {dateLabel(request.created_at)}
               {request.unit_snapshot
-                ? ` - Recorded unit: ${request.unit_snapshot}`
+                ? ` - Address entered: ${request.unit_snapshot}`
                 : ""}
-              . Recorded unit text is not proof of property ownership.
+              . The address entered does not confirm property ownership.
             </p>
             <RequestBusinessDetails
               request={request}
@@ -841,9 +830,10 @@ function Thread({
       <p className={styles.requestMeta}>
         Submitted {dateLabel(request.created_at)}
         {request.unit_snapshot
-          ? ` · Recorded unit: ${request.unit_snapshot}`
+          ? ` · Address entered: ${request.unit_snapshot}`
           : ""}
-        . Recorded address only; ownership is checked separately.
+        {request.unit_snapshot &&
+          ". This address was entered by the requester. Property ownership is checked separately."}
       </p>
       <RequestBusinessDetails
         request={request}
@@ -856,33 +846,40 @@ function Thread({
           className={styles.statusActions}
           aria-label="Office status actions"
         >
-          {requestStatuses.map((status) => (
-            <Button
-              secondary
-              key={status}
-              disabled={
-                status === request.status ||
-                actions.status.isPending ||
-                (inline && !!body.trim())
-              }
-              onClick={async () => {
-                try {
-                  await actions.status.mutateAsync({ request, value: status });
-                  setNotice(
-                    sample ? "Sample status saved locally." : "Status saved.",
-                  );
-                } catch {
-                  /* Error shown below. */
+          {requestStatuses
+            .filter((status) => status !== request.status)
+            .map((status) => (
+              <Button
+                secondary
+                key={status}
+                disabled={
+                  status === request.status ||
+                  actions.status.isPending ||
+                  (inline && !!body.trim())
                 }
-              }}
-            >
-              {status === "Open"
-                ? "Reopen"
-                : status === "Resolved"
-                  ? "Resolve"
-                  : "Start work"}
-            </Button>
-          ))}
+                onClick={async () => {
+                  try {
+                    await actions.status.mutateAsync({
+                      request,
+                      value: status,
+                    });
+                    setNotice(
+                      sample ? "Sample status saved locally." : "Status saved.",
+                    );
+                  } catch {
+                    /* Error shown below. */
+                  }
+                }}
+              >
+                {status === "Open"
+                  ? request.status === "Resolved"
+                    ? "Reopen"
+                    : "Mark as open"
+                  : status === "Resolved"
+                    ? "Resolve"
+                    : "Start work"}
+              </Button>
+            ))}
         </section>
       )}
       <Feedback message={notice} error={actions.status.error} />

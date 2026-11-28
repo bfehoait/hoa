@@ -1,4 +1,5 @@
 import { useState } from "react";
+import IssuedPermit from "./IssuedPermit";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import type { FeatureRecord } from "../../../../../packages/shared/src/feature-records";
@@ -6,6 +7,7 @@ import { useAuth } from "../../data/auth";
 import { featureRpc, useFeatureMutation } from "../../data/feature-records";
 import { Button, Feedback, Modal, Skeleton } from "../../components/UI";
 import styles from "./LiveFeature.module.css";
+import RecordFacts from "../../components/RecordFacts";
 
 const schema = z.object({
   can_issue: z.boolean(),
@@ -44,13 +46,18 @@ export default function RequestIssuance({
     record.module === "vehicles" &&
     record.fields?.request === "Remove a vehicle";
   const issued = query.data?.issuance;
+  const issueLabel = removal
+    ? "Record vehicle removal"
+    : record.module === "vehicles"
+      ? "Confirm sticker issued"
+      : "Confirm permit issued";
   const date = (value: string) =>
     new Date(value + "T12:00:00+08:00").toLocaleDateString("en-PH", {
       timeZone: "Asia/Manila",
       dateStyle: "medium",
     });
   if (auth.memberPreview)
-    return <p>Sign in directly to view issuance details.</p>;
+    return <p>This information is not available in account preview.</p>;
   return (
     <>
       {query.isPending && <Skeleton />}
@@ -62,22 +69,17 @@ export default function RequestIssuance({
               ? "Vehicle removal recorded"
               : "Issued"}
           </strong>
-          <dl className={styles.fields}>
-            <div>
-              <dt>Official reference</dt>
-              <dd>{issued.reference}</dd>
-            </div>
-            <div>
-              <dt>Effective from</dt>
-              <dd>{date(issued.valid_from)}</dd>
-            </div>
-            {issued.valid_until && (
-              <div>
-                <dt>Valid until</dt>
-                <dd>{date(issued.valid_until)}</dd>
-              </div>
-            )}
-          </dl>
+          <RecordFacts
+            label="Issued document information"
+            items={[
+              { label: "Official reference number", value: issued.reference },
+              { label: "Valid from", value: date(issued.valid_from) },
+              ...(issued.valid_until
+                ? [{ label: "Valid until", value: date(issued.valid_until) }]
+                : []),
+            ]}
+          />
+          {record.module === "permits" && <IssuedPermit id={record.id} />}
         </section>
       ) : (
         query.data &&
@@ -85,7 +87,9 @@ export default function RequestIssuance({
           <p>
             {removal
               ? "Approved; removal has not been recorded yet."
-              : "Approved; issuance has not been recorded yet."}
+              : record.module === "vehicles"
+                ? "Approved. The Office has not recorded the sticker as issued yet."
+                : "Approved. The Office has not recorded the permit as issued yet."}
           </p>
         )
       )}
@@ -97,12 +101,13 @@ export default function RequestIssuance({
             setOpen(true);
           }}
         >
-          {removal ? "Record vehicle removal" : "Record issuance"}
+          {issueLabel}
         </Button>
       )}
       {open && (
         <Modal
-          title={removal ? "Record vehicle removal" : "Record issuance"}
+          title={issueLabel}
+          protectChanges
           busy={mutation.isPending}
           onClose={() => setOpen(false)}
         >
@@ -132,11 +137,11 @@ export default function RequestIssuance({
               approved dates.
             </p>
             <label>
-              Official reference
+              Official reference number
               <input name="reference" required minLength={3} maxLength={120} />
             </label>
             <label>
-              Effective from
+              Valid from
               <input name="from" type="date" required />
             </label>
             {!removal && (
@@ -146,13 +151,15 @@ export default function RequestIssuance({
               </label>
             )}
             <label>
-              Issuance note
+              Office note
               <textarea name="note" required minLength={5} maxLength={1000} />
             </label>
             <Feedback error={mutation.error} />
-            <Button type="submit" pending={mutation.isPending}>
-              {removal ? "Confirm removal record" : "Confirm issuance record"}
-            </Button>
+            <div className="form-actions">
+              <Button type="submit" pending={mutation.isPending}>
+                {issueLabel}
+              </Button>
+            </div>
           </form>
         </Modal>
       )}

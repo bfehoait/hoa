@@ -1,4 +1,5 @@
 import LoadingImage from "./components/LoadingImage";
+import FeatureHelp from "./components/FeatureHelp";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import CustomerBack from "./components/CustomerBack";
 import ResidentMobileHeader from "./components/ResidentMobileHeader";
@@ -292,7 +293,7 @@ export default function AppShell() {
         );
   const mobileLinks =
     areaId === "resident"
-      ? links
+      ? links.filter((link) => link.to !== "/services/team-requests")
       : [
           ...links.filter((link) => link.to !== "/more").slice(0, 4),
           { to: "/more", label: "More", icon: MoreHorizontal },
@@ -726,6 +727,7 @@ export default function AppShell() {
                 {dark ? <Sun size={20} /> : <Moon size={20} />}
               </button>
             )}
+            <FeatureHelp key={location.pathname} />
             <NotificationBell />
           </div>
         </header>
@@ -765,14 +767,18 @@ export default function AppShell() {
           </div>
         )}
         {!online && (
-          <div className="offline-banner" role="status">
+          <div className="offline-banner" role="status" data-shell-notice>
             You’re offline. Information may be out of date. Reconnect before
             checking a status or sending a request.
           </div>
         )}
         <main id="content" tabIndex={-1} className={styles.main}>
           {permissions.readOnlyPath(location.pathname) && (
-            <div className="offline-banner" role="note">
+            <div
+              className={`offline-banner ${styles.accessNotice}`}
+              role="note"
+              data-shell-notice
+            >
               {residentShell
                 ? "Browsing only. Contact the office if you need help making a change."
                 : "View only. You can browse this module; changes require edit permission."}

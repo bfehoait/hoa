@@ -1,5 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { mkdirSync, writeFileSync } from "node:fs";
+import {
+  accessModules,
+  accessActions,
+  accessScopes,
+} from "../../packages/shared/src/permissions";
 import {
   baselineModule,
   baselineModules,
@@ -11,6 +17,182 @@ import {
 } from "../../packages/shared/src/feature-records";
 
 const configured = process.env.BELLEFORT_TEST_AUTH === "configured";
+test.describe("readable populated request details", () => {
+  test.skip(!configured);
+  for (const [role, readOnly] of [
+    ["homeowner", false],
+    ["renter", false],
+    ["admin", false],
+    ["security", false],
+    ["admin", true],
+  ] as const) {
+    test(`${role}${readOnly ? " view only" : ""} can read request facts before taking an action`, async ({
+      page,
+    }) => {
+      await workspaceAccessMock(page, { auditRole: role, readOnly });
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      const writes: string[] = [];
+      await page.route(
+        "**/rest/v1/rpc/bfe_feature_dashboard",
+        async (route) => {
+          const { p_module } = route.request().postDataJSON();
+          return route.fulfill({
+            json: {
+              rows:
+                p_module === "vehicles"
+                  ? [
+                      {
+                        id: "11111111-1111-4111-8111-111111111196",
+                        module: "vehicles",
+                        title: "Synthetic sticker request",
+                        detail: "A replacement household sticker.",
+                        fields: {
+                          request: "New sticker",
+                          plate: "TEST 1234",
+                          vehicleType: "Car",
+                          makeModel: "Synthetic car",
+                          colour: "Blue",
+                          unit: "1-01-001",
+                          owner: "Homeowner",
+                          company: "Inactive field must stay hidden",
+                          internal_key: "Unknown field must stay hidden",
+                        },
+                        status: "In review",
+                        version: 1,
+                        created_at: "2026-11-20T00:00:00Z",
+                      },
+                    ]
+                  : [],
+              total: p_module === "vehicles" ? 1 : 0,
+              can_create: role === "homeowner" || role === "renter",
+              can_review:
+                !readOnly && (role === "admin" || role === "security"),
+              can_publish: false,
+              publishable: false,
+            },
+          });
+        },
+      );
+      await page.route("**/rest/v1/rpc/bfe_workflow_history", (route) =>
+        route.fulfill({ json: [] }),
+      );
+      page.on("request", (request) => {
+        if (
+          /\/rpc\/bfe_(create|save|review|approve|submit|publish)_/.test(
+            request.url(),
+          )
+        )
+          writes.push(request.url());
+      });
+      await login(page);
+      const resident = role === "homeowner" || role === "renter";
+      for (const width of [390, 1440]) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(
+          resident
+            ? "/more/vehicles"
+            : role === "security"
+              ? "/security/vehicles"
+              : "/office/review?module=vehicles",
+        );
+        const popup = resident || width >= 768;
+        if (popup)
+          await page
+            .getByRole("button", {
+              name: resident
+                ? /Synthetic sticker request/
+                : "Open Synthetic sticker request",
+            })
+            .first()
+            .click();
+        const dialog = popup
+          ? page.getByRole("dialog").last()
+          : page.locator("main");
+        const facts = dialog.locator('dl[aria-label="Request information"]');
+        await expect(facts).toBeVisible();
+        await expect(
+          facts.getByText("TEST 1234", { exact: true }),
+        ).toBeVisible();
+        await expect(
+          facts.getByText("Inactive field must stay hidden"),
+        ).toHaveCount(0);
+        await expect(
+          facts.getByText("Unknown field must stay hidden"),
+        ).toHaveCount(0);
+        await expect(
+          dialog.getByRole("heading", {
+            name: "Synthetic sticker request",
+            exact: true,
+          }),
+        ).toHaveCount(1);
+        const review = dialog.getByRole("button", {
+          name: "Review & decide",
+          exact: true,
+        });
+        if (resident || readOnly) {
+          await expect(review).toHaveCount(0);
+        } else {
+          await review.click();
+          const decision = page.getByRole("dialog").last();
+          await expect(
+            decision.getByRole("heading", {
+              name: "Review: Synthetic sticker request",
+            }),
+          ).toBeVisible();
+          await expect(
+            decision
+              .locator('dl[aria-label="Request information"]')
+              .getByText("TEST 1234", { exact: true }),
+          ).toBeVisible();
+          await expect(
+            decision.getByRole("option", {
+              name: "Approve vehicle request",
+              exact: true,
+            }),
+          ).toHaveCount(1);
+          await decision
+            .getByRole("button", { name: "Close dialog", exact: true })
+            .click();
+        }
+        await expect(page.locator("body")).not.toHaveCSS(
+          "overflow-x",
+          "scroll",
+        );
+        await expect
+          .poll(() =>
+            page.evaluate(
+              () => document.documentElement.scrollWidth <= innerWidth + 2,
+            ),
+          )
+          .toBe(true);
+        mkdirSync(".artifacts/usability-records", { recursive: true });
+        await page.screenshot({
+          animations: "disabled",
+          path: `.artifacts/usability-records/${role}${readOnly ? "-readonly" : ""}-${width}.png`,
+        });
+        await dialog
+          .getByRole("button", { name: "View history", exact: true })
+          .click();
+        await expect(
+          page
+            .getByRole("dialog")
+            .last()
+            .getByText("No updates yet", { exact: true }),
+        ).toBeVisible();
+        await page
+          .getByRole("dialog")
+          .last()
+          .getByRole("button", { name: "Close dialog", exact: true })
+          .click();
+        if (popup)
+          await dialog
+            .getByRole("button", { name: "Close dialog", exact: true })
+            .click();
+      }
+      expect(writes).toEqual([]);
+    });
+  }
+});
 test.describe("member access and service entry points", () => {
   test.skip(!configured);
   test("developer-only account opens creation forms for every connected submission type", async ({
@@ -62,204 +244,465 @@ test.describe("member access and service entry points", () => {
         .click();
     }
   });
-  test("older access endpoint labels unknown permissions without pretending defaults allow access", async ({
+  test("workspace access refuses unavailable server data instead of guessing permissions", async ({
     page,
   }) => {
-    await api(page, {
-      accounts: true,
-      developerControl: true,
-      member: { ...baseMember, role: "admin", extra_roles: ["developer"] },
-    });
-    await page.route("**/rest/v1/rpc/bfe_tab_access", (route) =>
-      route.fulfill({ json: { rules: { requests: "edit" }, manager: false } }),
-    );
+    await workspaceAccessMock(page, { missing: true });
     await login(page);
     await page.goto("/developer/access");
     await page.getByRole("button", { name: /Sample Staff/ }).click();
-    const panel = page.getByRole("region", { name: "Tab access settings" });
-    const row = panel.getByRole("group", {
-      name: "Helpdesk permissions",
-      exact: true,
-    });
-    await expect(panel).toContainText(
-      "Current permissions are not reported by this server yet",
-    );
     await expect(
-      row.getByRole("switch", { name: "Helpdesk: Read & edit", exact: true }),
-    ).toBeChecked();
-    await expect(row.getByText("Not reported", { exact: true })).toBeVisible();
-    await expect(row.getByText("Can read", { exact: true })).toHaveCount(0);
-    await expect(row.getByText("Can edit", { exact: true })).toHaveCount(0);
-    await panel
-      .getByLabel("Find a tab", { exact: true })
-      .fill("No synthetic match");
-    await expect(panel).toContainText("No tabs match");
-  });
-  test("member name opens permission matrix with explicit saving and denial recovery", async ({
-    page,
-  }, testInfo) => {
-    await api(page, {
-      accounts: true,
-      developerControl: true,
-      member: { ...baseMember, role: "admin", extra_roles: ["developer"] },
-    });
-    let rules: Record<string, string> = {};
-    let denied = true;
-    let saves = 0;
-    await page.route("**/rest/v1/rpc/bfe_*", async (route) => {
-      const name = new URL(route.request().url()).pathname.split("/").at(-1);
-      const args = route.request().postDataJSON();
-      if (name === "bfe_tab_access")
-        return route.fulfill({
-          json: {
-            rules,
-            manager: false,
-            effective: {
-              requests: {
-                read: rules.requests === "view",
-                create: false,
-                reply: false,
-                status: false,
-              },
-              finance: {
-                read: true,
-                create: false,
-                reply: true,
-                status: false,
-              },
-            },
-          },
-        });
-      if (name === "bfe_save_tab_access") {
-        saves++;
-        expect(args.p_kind).toBe("user");
-        expect(args.p_expected).toEqual({});
-        expect(args.p_rules).toEqual({ requests: "view" });
-        if (denied)
-          return route.fulfill({
-            status: 403,
-            json: { code: "42501", message: "Synthetic refusal" },
-          });
-        rules = args.p_rules;
-        return route.fulfill({ json: null });
-      }
-      return route.fallback();
-    });
-    await login(page);
-    await page.goto("/developer/access");
+      page.getByRole("region", { name: "Workspace access" }).getByRole("alert"),
+    ).toBeVisible();
     await expect(
-      page.getByRole("region", { name: "Tab access settings" }),
+      page.getByRole("radio", { name: "Manage", exact: true }),
     ).toHaveCount(0);
-    await page.getByRole("button", { name: /Sample Staff/ }).click();
-    const panel = page.getByRole("region", { name: "Tab access settings" });
-    const read = panel.getByRole("switch", {
-      name: "Helpdesk: Read only",
-      exact: true,
+  });
+  test("workspace access presents Developer recovery first and keeps references read-only", async ({
+    page,
+  }) => {
+    const state = await workspaceAccessMock(page, {
+      targetRoles: ["admin", "developer", "board", "security"],
     });
-    const edit = panel.getByRole("switch", {
-      name: "Helpdesk: Read & edit",
-      exact: true,
-    });
-    const inherit = panel.getByRole("button", {
-      name: "Helpdesk: Use defaults",
-      exact: true,
-    });
-    const row = panel.getByRole("group", {
-      name: "Helpdesk permissions",
-      exact: true,
-    });
-    await expect(inherit).toHaveAttribute("aria-pressed", "true");
-    await expect(row.getByText("Cannot read", { exact: true })).toBeVisible();
+    await login(page);
+    await page.goto("/developer/access");
+    const member = page.getByRole("button", { name: /Sample Staff/ });
+    await expect(member).toContainText(
+      "Office admin / Developer / Board member / Security",
+    );
+    await expect(member).toContainText("Protected Developer");
+    await member.click();
+    const panel = page.getByRole("region", { name: "Workspace access" });
+    const picker = panel.getByRole("navigation", { name: "Choose workspace" });
+    await expect(picker.getByRole("button").first()).toHaveAccessibleName(
+      "Developer",
+    );
     await expect(
-      panel.getByRole("group", {
-        name: "Finance & payments permissions",
+      picker.getByRole("button", { name: "Developer", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await expect(picker).toContainText("Protected system access");
+    const explanation = panel.getByRole("region", {
+      name: "Developer protected access",
+    });
+    await expect(explanation).toContainText("system recovery procedures");
+    await expect(
+      page.getByRole("searchbox", { name: "Find a module", exact: true }),
+    ).toHaveCount(0);
+    await expect(panel.getByRole("radio")).toHaveCount(0);
+    for (const name of ["Office", "Board of Directors", "Security"]) {
+      await picker.getByRole("button", { name, exact: true }).click();
+      await expect(
+        panel.getByRole("region", { name: name + " pages", exact: true }),
+      ).toBeVisible();
+      await expect(panel.getByRole("radio")).toHaveCount(0);
+      await expect(panel.getByRole("combobox")).toHaveCount(0);
+    }
+    await expect(panel.getByRole("checkbox")).toHaveCount(0);
+    await expect(panel.getByRole("switch")).toHaveCount(0);
+    await expect(panel.getByRole("combobox")).toHaveCount(0);
+    await expect(
+      panel.getByRole("button", {
+        name: /Allow access management|Remove access management|Review changes|Confirm and save/,
+      }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByText("Protected account. Page access is read-only here.", {
         exact: true,
       }),
-    ).toContainText("Some changes allowed");
-    await expect(
-      panel.getByRole("button", { name: "Save tab permissions", exact: true }),
-    ).toHaveCount(0);
-    await edit.check();
-    await expect(edit).toBeChecked();
-    await expect(row.getByText("Cannot read", { exact: true })).toBeVisible();
-    await expect(row).toContainText("Unsaved change");
-    await expect(
-      page.getByRole("button", { name: "Account list", exact: true }),
-    ).toBeDisabled();
-    await expect(
-      panel.getByLabel("Data scope", { exact: true }),
-    ).toBeDisabled();
-    expect(saves).toBe(0);
-    await read.check();
-    await expect(read).toBeChecked();
-    await read.focus();
-    await page.keyboard.press("Space");
-    await expect(inherit).toHaveAttribute("aria-pressed", "true");
-    await panel
-      .getByRole("switch", { name: "Helpdesk: No access", exact: true })
-      .check();
-    await expect(
-      panel.getByRole("switch", { name: "Helpdesk: No access", exact: true }),
-    ).toBeChecked();
-    await expect(edit).not.toBeChecked();
-    await inherit.click();
-    await expect(inherit).toHaveAttribute("aria-pressed", "true");
-    await expect(
-      page.getByRole("button", { name: "Account list", exact: true }),
-    ).toBeEnabled();
-    await read.check();
-    await panel
-      .getByLabel("Reason for this change")
-      .fill("Synthetic permission review");
-    await panel
-      .getByRole("button", { name: "Save tab permissions", exact: true })
+    ).toBeVisible();
+    await picker
+      .getByRole("button", { name: "Developer", exact: true })
       .click();
-    await expect(panel.getByRole("alert")).toContainText("do not allow");
-    await expect(read).toBeChecked();
-    denied = false;
-    await panel
-      .getByRole("button", { name: "Save tab permissions", exact: true })
-      .click();
-    await expect(panel.getByRole("status")).toContainText(
-      "confirmed by the server",
-    );
-    await expect(row.getByText("Can read", { exact: true })).toBeVisible();
-    await expect(row.getByText("Cannot edit", { exact: true })).toBeVisible();
-    expect(saves).toBe(2);
-    await expect(
-      page.getByRole("button", { name: "Account list", exact: true }),
-    ).toBeEnabled();
-    await panel.getByLabel("Find a tab", { exact: true }).fill("Helpdesk");
     for (const width of [1440, 390]) {
       await page.setViewportSize({ width, height: 900 });
-      for (const theme of ["light", "dark"]) {
-        await page.evaluate((t) => {
-          document.documentElement.dataset.theme = t;
-        }, theme);
-        await row.evaluate((el) => el.scrollIntoView({ block: "center" }));
-        expect(
-          await page.evaluate(
-            () => document.documentElement.scrollWidth <= innerWidth,
-          ),
-        ).toBe(true);
-        expect(
-          (
-            await new AxeBuilder({ page })
-              .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
-              .analyze()
-          ).violations,
-        ).toEqual([]);
-        await page.screenshot({
-          path:
-            "test-results/ui-review/" +
-            testInfo.project.name +
-            "-member-access-" +
-            width +
-            "-" +
-            theme +
-            ".png",
-        });
-      }
+      await picker.scrollIntoViewIfNeeded();
+      await page.screenshot({
+        path: `.artifacts/developer-protected-${width}.png`,
+      });
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+      expect(
+        (
+          await new AxeBuilder({ page })
+            .include('[aria-label="Workspace access"]')
+            .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+            .analyze()
+        ).violations,
+      ).toEqual([]);
+    }
+    await page.evaluate(() => {
+      document.documentElement.setAttribute("data-theme", "dark");
+    });
+    await page.screenshot({
+      path: ".artifacts/developer-protected-dark.png",
+      animations: "disabled",
+    });
+    expect(
+      (
+        await new AxeBuilder({ page })
+          .include('[aria-label="Workspace access"]')
+          .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+          .analyze()
+      ).violations,
+    ).toEqual([]);
+    expect(state.saves).toBe(0);
+    expect(state.delegations).toBe(0);
+  });
+
+  test("workspace access staff search shows additional roles and keeps ordinary Office delegation", async ({
+    page,
+  }) => {
+    const state = await workspaceAccessMock(page, {
+      targetRoles: ["admin", "board", "security"],
+    });
+    await login(page);
+    await page.goto("/developer/access");
+    await page
+      .getByRole("combobox", { name: "Assigned role", exact: true })
+      .selectOption("security");
+    const result = page.getByRole("button", { name: /Sample Staff/ });
+    await expect(result).toContainText(
+      "Office admin / Board member / Security",
+    );
+    const search = page.getByRole("textbox", {
+      name: "Find a member by name or unit",
+      exact: true,
+    });
+    await search.fill("nobody");
+    await expect(
+      page.getByRole("heading", { name: "No matching members" }),
+    ).toBeVisible();
+    await search.fill("Sample Staff");
+    await expect(result).toBeEnabled();
+    await result.click();
+    const panel = page.getByRole("region", { name: "Workspace access" });
+    const delegationPanel = panel.getByRole("region", {
+      name: "Manage other users’ access",
+      exact: true,
+    });
+    const toggle = delegationPanel.getByRole("switch", {
+      name: "Manage other users’ access",
+      exact: true,
+    });
+    const reason = delegationPanel.getByRole("textbox", {
+      name: "Reason for this change",
+      exact: true,
+    });
+    const confirm = delegationPanel.getByRole("button", {
+      name: "Confirm change",
+      exact: true,
+    });
+    await expect(toggle).not.toBeChecked();
+    await expect(reason).toHaveCount(0);
+    await toggle.check();
+    await expect(confirm).toBeDisabled();
+    expect(state.delegations).toBe(0);
+    await toggle.uncheck();
+    await expect(reason).toHaveCount(0);
+    await toggle.check();
+    await reason.fill("Synthetic assigned access duties");
+    await expect(confirm).toBeEnabled();
+    expect(
+      state.searches.some(
+        (s) => s.p_role === "security" && s.p_search === "Sample Staff",
+      ),
+    ).toBe(true);
+    expect(state.saves).toBe(0);
+    await confirm.click();
+    await expect(toggle).toBeChecked();
+    await expect(reason).toHaveCount(0);
+    expect(state.delegations).toBe(1);
+    expect(state.manager).toBe(true);
+    await toggle.uncheck();
+    await expect(confirm).toBeDisabled();
+    await delegationPanel
+      .getByRole("button", { name: "Cancel change" })
+      .click();
+    await expect(toggle).toBeChecked();
+    expect(state.delegations).toBe(1);
+    await toggle.uncheck();
+    await reason.fill("Synthetic reassignment of access duties");
+    await confirm.click();
+    await expect(toggle).not.toBeChecked();
+    await expect(reason).toHaveCount(0);
+    expect(state.delegations).toBe(2);
+    expect(state.manager).toBe(false);
+  });
+
+  test("access management toggle fits phone and desktop and preserves a rejected draft", async ({
+    page,
+  }) => {
+    const state = await workspaceAccessMock(page, { targetRoles: ["admin"] });
+    await login(page);
+    await page.goto("/developer/access");
+    await page.getByRole("button", { name: /Sample Staff/ }).click();
+    const panel = page.getByRole("region", {
+      name: "Manage other users’ access",
+      exact: true,
+    });
+    const toggle = panel.getByRole("switch");
+    for (const width of [390, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await toggle.scrollIntoViewIfNeeded();
+      await toggle.focus();
+      await page.keyboard.press("Space");
+      await expect(toggle).toBeChecked();
+      await expect(
+        page.getByRole("tab", { name: "Role & status", exact: true }),
+      ).toBeDisabled();
+      const bounds = await panel.boundingBox();
+      expect(bounds).not.toBeNull();
+      expect(bounds!.x).toBeGreaterThanOrEqual(0);
+      expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width + 1);
+      expect((await toggle.boundingBox())!.height).toBeGreaterThanOrEqual(48);
+      await expect(
+        panel.getByRole("button", { name: "Confirm change" }),
+      ).toBeDisabled();
+      expect(
+        (
+          await new AxeBuilder({ page })
+            .include('[aria-label="Manage other users’ access"]')
+            .analyze()
+        ).violations,
+      ).toEqual([]);
+      await panel.getByRole("button", { name: "Cancel change" }).click();
+      await expect(toggle).not.toBeChecked();
+    }
+    await page.route(
+      "https://bellefort-auth-test.invalid/rest/v1/rpc/bfe_set_access_manager",
+      (route) =>
+        route.fulfill({
+          status: 403,
+          json: { code: "42501", message: "Synthetic permission denial" },
+        }),
+    );
+    await toggle.check();
+    const reason = panel.getByRole("textbox", {
+      name: "Reason for this change",
+    });
+    await reason.fill("Synthetic delegation failure test");
+    await panel.getByRole("button", { name: "Confirm change" }).click();
+    await expect(panel.getByRole("alert")).toBeVisible();
+    await expect(reason).toHaveValue("Synthetic delegation failure test");
+    await expect(panel.getByRole("status")).toContainText("Not saved");
+    expect(state.delegations).toBe(0);
+    expect(state.manager).toBe(false);
+    await panel.getByRole("button", { name: "Cancel change" }).click();
+    await expect(toggle).not.toBeChecked();
+  });
+
+  test("workspace access hides unassigned roles and separates published viewing settings", async ({
+    page,
+  }) => {
+    await workspaceAccessMock(page, { targetRoles: ["admin", "homeowner"] });
+    await login(page);
+    await page.goto("/developer/access");
+    await page.getByRole("button", { name: /Sample Staff/ }).click();
+    const panel = page.getByRole("region", { name: "Workspace access" });
+    const nav = panel.getByRole("navigation", { name: "Choose workspace" });
+    await expect(
+      nav.getByRole("button", { name: "Office", exact: true }),
+    ).toBeVisible();
+    await expect(
+      nav.getByRole("button", { name: "Homeowner / renter", exact: true }),
+    ).toBeVisible();
+    for (const name of [
+      "Security",
+      "Board of Directors",
+      "Transport",
+      "View published content",
+    ])
+      await expect(nav.getByRole("button", { name, exact: true })).toHaveCount(
+        0,
+      );
+    await nav
+      .getByRole("button", { name: "Homeowner / renter", exact: true })
+      .click();
+    await expect(
+      panel.getByText("Submission does not grant publishing permission.", {
+        exact: false,
+      }),
+    ).toBeVisible();
+    const advanced = panel.getByRole("navigation", {
+      name: "Advanced permission scopes",
+    });
+    await expect(advanced).toBeHidden();
+    await panel
+      .locator("summary")
+      .filter({ hasText: /^Advanced permissions$/ })
+      .click();
+    await expect(advanced).toBeVisible();
+    await expect(advanced).not.toContainText("Role assigned");
+    await advanced
+      .getByRole("button", { name: "View published content", exact: true })
+      .click();
+    await expect(
+      panel.getByText("This does not allow publishing them.", { exact: false }),
+    ).toBeVisible();
+  });
+  test("workspace access groups modules and saves explicit actions after review", async ({
+    page,
+  }) => {
+    const state = await workspaceAccessMock(page, {
+      targetRoles: ["admin", "security", "board"],
+    });
+    await login(page);
+    await page.goto("/developer/access");
+    await page.getByRole("button", { name: /Sample Staff/ }).click();
+    const panel = page.getByRole("region", { name: "Workspace access" });
+    const workspaces = panel.getByRole("navigation", {
+      name: "Choose workspace",
+    });
+    for (const name of ["Office", "Board of Directors", "Security"])
+      await expect(
+        workspaces.getByRole("button", { name, exact: true }),
+      ).toBeVisible();
+    await workspaces
+      .getByRole("button", { name: "Security", exact: true })
+      .click();
+    await expect(
+      panel.getByRole("region", {
+        name: "Security: Visitors & gate desk",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      workspaces.getByRole("button", { name: "Transport", exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      panel.getByRole("region", {
+        name: "Office: Facilities & calendar",
+        exact: true,
+      }),
+    ).toHaveCount(0);
+    expect(state.saves).toBe(0);
+    await workspaces
+      .getByRole("button", { name: "Office", exact: true })
+      .click();
+    await page
+      .getByRole("searchbox", { name: "Find a module", exact: true })
+      .fill("bookings");
+    const row = panel.getByRole("region", {
+      name: "Office: Facilities & calendar",
+      exact: true,
+    });
+    await expect(row).toContainText("Current: No access");
+    const approval = row.getByRole("checkbox", {
+      name: "Office Facilities & calendar Approve or reject bookings",
+      exact: true,
+    });
+    await expect(approval).toHaveCount(0);
+    await row
+      .getByRole("switch", {
+        name: "Office Facilities & calendar Tab visibility",
+        exact: true,
+      })
+      .check();
+    await expect(
+      row.getByRole("checkbox", { name: /Allow changes/ }),
+    ).toHaveCount(0);
+    await approval.check();
+    await expect(page.getByText(/3 unsaved changes/)).toBeVisible();
+    const visibility = row.getByRole("switch", {
+      name: "Office Facilities & calendar Tab visibility",
+      exact: true,
+    });
+    await visibility.uncheck();
+    await expect(approval).toHaveCount(0);
+    await expect(
+      row.getByRole("group", {
+        name: "Office Facilities & calendar actions",
+        exact: true,
+      }),
+    ).toHaveCount(0);
+    await visibility.check();
+    await expect(approval).toBeEnabled();
+    await expect(approval).toBeChecked();
+    await expect(page.getByText(/3 unsaved changes/)).toBeVisible();
+    await approval.press("Space");
+    await expect(approval).not.toBeChecked();
+    await approval.press("Space");
+    await expect(approval).toBeChecked();
+    await expect(
+      panel.locator("summary").filter({ hasText: "Default settings" }),
+    ).toHaveCount(0);
+    const resets = panel.locator("details").filter({
+      has: page.locator("summary", { hasText: "Reset custom access" }),
+    });
+    await expect(
+      panel.locator("summary").filter({ hasText: "Reset custom access" }),
+    ).toHaveCount(1);
+    await resets.locator("summary").first().click();
+    await expect(
+      resets.getByRole("button", {
+        name: "Reset Approve or reject bookings to defaults",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await resets
+      .getByRole("button", {
+        name: "Reset Approve or reject bookings to defaults",
+        exact: true,
+      })
+      .click();
+    await expect(page.getByText(/2 unsaved changes/)).toBeVisible();
+    await expect(approval).not.toBeChecked();
+    await approval.check();
+    await expect(
+      panel.locator("summary").filter({ hasText: "How access rules work" }),
+    ).toHaveCount(1);
+    await expect(
+      row
+        .locator("summary")
+        .filter({ hasText: "Where this access comes from" }),
+    ).toHaveCount(0);
+    await expect(row).toContainText("Finance payment approval");
+    expect(state.saves).toBe(0);
+    await page
+      .getByRole("button", { name: "Review changes", exact: true })
+      .click();
+    await expect(
+      page.getByRole("button", { name: "Confirm and save", exact: true }),
+    ).toBeDisabled();
+    await page
+      .getByLabel("Reason for changes", { exact: true })
+      .fill("Synthetic booking duty");
+    await expect(
+      page.getByRole("region", { name: "Review access changes" }),
+    ).toContainText("Approve or reject bookings");
+    await page
+      .getByRole("button", { name: "Confirm and save", exact: true })
+      .click();
+    await expect(
+      page.getByText(
+        "Permissions saved. Current access below has been checked by the server.",
+        { exact: true },
+      ),
+    ).toBeVisible();
+    expect(state.saves).toBe(1);
+    await expect(row).toContainText("Current: Custom (1 of 2 actions allowed)");
+    for (const width of [1440, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      await row.scrollIntoViewIfNeeded();
+      await page.screenshot({
+        path: `.artifacts/workspace-access-${width}.png`,
+      });
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+      expect(
+        (
+          await new AxeBuilder({ page })
+            .include('[aria-label="Workspace access"]')
+            .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+            .analyze()
+        ).violations,
+      ).toEqual([]);
     }
   });
   test("announcement monitor opens the existing creation workflow and respects unavailable posting", async ({
@@ -747,7 +1190,7 @@ test.describe("consistent workspace UI and configurable tabs", () => {
     ).toBeVisible();
     expect(uploads).toBe(1);
     await expect(
-      page.getByRole("button", { name: "Review submission", exact: true }),
+      page.getByRole("button", { name: "Review & decide", exact: true }),
     ).toHaveCount(0);
     await page.setViewportSize({ width: 390, height: 850 });
     expect(
@@ -763,112 +1206,48 @@ test.describe("consistent workspace UI and configurable tabs", () => {
       ).violations,
     ).toEqual([]);
   });
-  test("keeps developer navigation stable across Office and saves role defaults with responsive controls", async ({
+  test("workspace role defaults save separately from individual permissions", async ({
     page,
-  }, testInfo) => {
-    test.setTimeout(90000);
-    await api(page, {
-      accounts: true,
-      developerControl: true,
-      permissions: [],
-      liveRequests: true,
-      people: true,
-      member: { ...baseMember, role: "admin", extra_roles: ["developer"] },
-    });
-    let rules: Record<string, string> = {};
-    await page.route(
-      "https://bellefort-auth-test.invalid/rest/v1/rpc/bfe_*",
-      async (route) => {
-        const name = new URL(route.request().url()).pathname.split("/").at(-1),
-          args = route.request().postDataJSON();
-        const reply = (body: unknown) =>
-          route.fulfill({
-            contentType: "application/json",
-            body: JSON.stringify(body),
-          });
-        if (name === "bfe_tab_access") return reply({ rules, manager: false });
-        if (name === "bfe_save_tab_access") {
-          expect(args.p_expected).toEqual(rules);
-          rules = args.p_rules;
-          return reply(null);
-        }
-        return route.fallback();
-      },
-    );
-    await page.setViewportSize({ width: 1440, height: 1000 });
+  }) => {
+    const state = await workspaceAccessMock(page);
     await login(page);
-    await page.goto("/developer");
-    const officeNav = page.getByRole("navigation", {
-      name: "Office navigation",
+    await page.goto("/developer/access?accessTab=defaults");
+    const panel = page
+      .getByRole("region", { name: "Workspace access" })
+      .filter({ visible: true });
+    await panel.getByLabel("Role", { exact: true }).selectOption("security");
+    await page
+      .getByRole("searchbox", { name: "Find a module", exact: true })
+      .fill("Visitors");
+    const row = panel.getByRole("region", {
+      name: "Security: Visitors & gate desk",
+      exact: true,
     });
-    const link = officeNav.getByRole("link", { name: "Overview", exact: true });
-    await link.scrollIntoViewIfNeeded();
-    const container = officeNav.locator("..").locator("..");
-    const scroll = await container.evaluate((el) => el.scrollTop);
-    await link.click();
+    await row.getByRole("switch", { name: / Tab visibility$/ }).check();
+    await row
+      .getByRole("checkbox", {
+        name: / Approve passes and record gate checks$/,
+      })
+      .check();
+    await panel
+      .getByRole("button", { name: "Review changes", exact: true })
+      .click();
     await expect(
-      page.getByRole("heading", {
-        name: "Your office, organized.",
+      panel.getByRole("button", { name: "Confirm and save", exact: true }),
+    ).toBeDisabled();
+    await panel
+      .getByLabel("Reason for changes", { exact: true })
+      .fill("Synthetic Security default");
+    await panel
+      .getByRole("button", { name: "Confirm and save", exact: true })
+      .click();
+    await expect(
+      panel.getByText("Defaults saved. Individual restrictions still apply.", {
         exact: true,
       }),
     ).toBeVisible();
-    await expect(
-      page.getByLabel("Find a system module", { exact: true }),
-    ).toBeVisible();
-    expect(
-      Math.abs((await container.evaluate((el) => el.scrollTop)) - scroll),
-    ).toBeLessThan(4);
-    await expect(
-      page.getByText("DEVELOPER CONSOLE", { exact: true }),
-    ).toBeVisible();
-    await page.goto("/developer/access");
-    await page
-      .locator("summary")
-      .filter({ hasText: /^Role & committee defaults$/ })
-      .click();
-    const panel = page.getByRole("region", { name: "Tab access settings" });
-    await panel.getByLabel("Configure", { exact: true }).selectOption("role");
-    await panel.getByLabel("Role", { exact: true }).selectOption("homeowner");
-    await panel.getByLabel("Data scope", { exact: true }).selectOption("own");
-    await panel
-      .getByRole("switch", { name: "Helpdesk: Read only", exact: true })
-      .check();
-    await panel.getByLabel("Reason for this change").fill("Synthetic UI test");
-    await panel
-      .getByRole("button", { name: "Save tab permissions", exact: true })
-      .click();
-    await expect(panel.getByRole("status")).toContainText(
-      "confirmed by the server",
-    );
-    expect(rules).toEqual({ requests: "view" });
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await page.screenshot({
-      path:
-        "test-results/ui-review/" +
-        testInfo.project.name +
-        "-permissions-desktop.png",
-      fullPage: false,
-    });
-    await page.setViewportSize({ width: 390, height: 850 });
-    expect(
-      await page.evaluate(
-        () => document.documentElement.scrollWidth <= innerWidth,
-      ),
-    ).toBe(true);
-    expect(
-      (
-        await new AxeBuilder({ page })
-          .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
-          .analyze()
-      ).violations,
-    ).toEqual([]);
-    await page.screenshot({
-      path:
-        "test-results/ui-review/" +
-        testInfo.project.name +
-        "-permissions-mobile.png",
-      fullPage: false,
-    });
+    expect(state.lastKind).toBe("role");
+    expect(state.lastSubject).toBe("security");
   });
 });
 test.describe("developer account interface preview", () => {
@@ -1088,7 +1467,7 @@ test.describe("developer account interface preview", () => {
     );
     await expect(
       page.getByRole("heading", {
-        name: "Your office, organized.",
+        name: "Overview",
         exact: true,
       }),
     ).toBeVisible({ timeout: 15000 });
@@ -1129,7 +1508,7 @@ test.describe("new protected feature services", () => {
             contentType: "application/json",
             body: JSON.stringify(body),
           });
-        if (name === "bfe_participation_dashboard")
+        if (name === "bfe_business_participation_dashboard")
           return reply({
             rows,
             total: rows.length,
@@ -1144,7 +1523,7 @@ test.describe("new protected feature services", () => {
               },
             ],
           });
-        if (name === "bfe_request_participation") {
+        if (name === "bfe_request_business_participation") {
           expect(args.p_activity).toBe(activity);
           expect(args.p_places).toBe(2);
           rows.push({
@@ -1169,13 +1548,20 @@ test.describe("new protected feature services", () => {
     );
     await login(page);
     await expect(page).not.toHaveURL(/sign-in/);
-    await page.goto("/explore/participation");
-    await page.getByRole("button", { name: "Apply to an activity" }).click();
+    await page.goto(
+      `/directory/market?section=workshops&view=applications&activity=${activity}`,
+    );
     let dialog = page.getByRole("dialog");
     await dialog
       .getByRole("combobox", { name: "Activity", exact: true })
       .selectOption(activity);
     await dialog.getByLabel("Places", { exact: true }).fill("2");
+    await dialog
+      .getByLabel("Participant name", { exact: true })
+      .fill("Synthetic participant");
+    await dialog
+      .getByLabel("Contact phone", { exact: true })
+      .fill("09170000000");
     await dialog
       .getByLabel("Application details")
       .fill("Synthetic workshop application");
@@ -1184,7 +1570,7 @@ test.describe("new protected feature services", () => {
     await expect(
       page.getByText("Application saved. Confirmation is pending."),
     ).toBeVisible();
-    await page.getByRole("button", { name: "Application actions" }).click();
+    await page.getByRole("button", { name: "Manage application" }).click();
     dialog = page.getByRole("dialog");
     await expect(
       dialog.getByRole("option", { name: "Confirmed", exact: true }),
@@ -1192,7 +1578,9 @@ test.describe("new protected feature services", () => {
     await dialog
       .getByLabel("Reason", { exact: true })
       .fill("Synthetic resident withdrawal");
-    await dialog.getByRole("button", { name: "Confirm decision" }).click();
+    await dialog
+      .getByRole("button", { name: "Withdraw application", exact: true })
+      .click();
     await expect(dialog).toHaveCount(0);
     await expect(page.getByText("Withdrawn", { exact: true })).toBeVisible();
   });
@@ -1482,6 +1870,7 @@ type Options = {
   slowProfile?: boolean;
   seedRequest?: boolean;
   permissions?: Array<{ module: string; action: string; scope: string }>;
+  tabModes?: Array<{ module: string; scope: string; mode: string }>;
   permissionsMissing?: boolean;
   monitor?: boolean;
   monitorDenied?: boolean;
@@ -1628,6 +2017,15 @@ async function api(page: Page, options: Options = {}) {
     if (url.pathname === "/auth/v1/logout")
       return route.fulfill({ status: 204 });
     if (url.pathname === "/auth/v1/recover") return reply({});
+    if (url.pathname === "/rest/v1/rpc/bfe_session_status")
+      return reply({
+        valid: true,
+        expires_at: new Date(Date.now() + 86400000).toISOString(),
+        idle_expires_at: new Date(Date.now() + 86400000).toISOString(),
+        server_now: new Date().toISOString(),
+      });
+    if (url.pathname === "/rest/v1/rpc/bfe_navigation_action_badges")
+      return reply({ as_of: new Date().toISOString() });
     if (
       url.pathname === "/rest/v1/bfe_requests" ||
       url.pathname === "/rest/v1/bfe_request_messages"
@@ -1640,10 +2038,14 @@ async function api(page: Page, options: Options = {}) {
       let rows = url.pathname.endsWith("messages")
         ? requestMessages
         : requestRows;
-      if (url.searchParams.get("status"))
-        rows = rows.filter(
-          (row) => `eq.${row.status}` === url.searchParams.get("status"),
+      if (url.searchParams.get("status")) {
+        const filter = url.searchParams.get("status")!;
+        rows = rows.filter((row) =>
+          filter.startsWith("neq.")
+            ? `neq.${row.status}` !== filter
+            : `eq.${row.status}` === filter,
         );
+      }
       if (url.searchParams.get("request_id"))
         rows = rows.filter(
           (row) =>
@@ -1799,6 +2201,7 @@ async function api(page: Page, options: Options = {}) {
         version: 1,
         developer_control: options.developerControl ?? false,
         committees: [],
+        tab_modes: options.tabModes ?? [],
         capabilities:
           options.permissions ??
           modules
@@ -1855,12 +2258,22 @@ async function api(page: Page, options: Options = {}) {
         })),
       });
     }
-    if (url.pathname.startsWith("/rest/v1/rpc/bfe_")) {
+    if (
+      [
+        "bfe_create_request",
+        "bfe_create_business_request",
+        "bfe_reply_request",
+        "bfe_set_request_status",
+      ].some((name) => url.pathname === `/rest/v1/rpc/${name}`)
+    ) {
       expect(options.liveRequests).toBe(true);
       expect(request.method()).toBe("POST");
       const args = request.postDataJSON();
       const now = new Date().toISOString();
-      if (url.pathname.endsWith("bfe_create_request")) {
+      if (
+        url.pathname.endsWith("bfe_create_request") ||
+        url.pathname.endsWith("bfe_create_business_request")
+      ) {
         expect(args.owner_id).toBeUndefined();
         const existing = requestRows.find(
           (row) => row.client_id === args.p_client_id,
@@ -1873,6 +2286,7 @@ async function api(page: Page, options: Options = {}) {
           title: args.p_title,
           description: args.p_description,
           category: args.p_category,
+          business_details: args.p_details ?? {},
           unit_snapshot: "Sample A",
           status: "Open",
           version: 1,
@@ -1959,6 +2373,11 @@ async function api(page: Page, options: Options = {}) {
           : [],
       );
     }
+    if (url.pathname.startsWith("/rest/v1/rpc/bfe_"))
+      return reply(
+        { code: "PGRST202", message: "Synthetic unavailable service" },
+        404,
+      );
     throw new Error(
       `Unexpected simulated endpoint: ${request.method()} ${url.pathname}`,
     );
@@ -2695,7 +3114,7 @@ test.describe("account profiles notifications developer control and installation
     await page.goto("/office");
     await expect(
       page.getByRole("heading", {
-        name: "Your office, organized.",
+        name: "Overview",
         exact: true,
       }),
     ).toBeVisible({ timeout: 15000 });
@@ -2757,7 +3176,7 @@ test.describe("account profiles notifications developer control and installation
     ).toHaveCount(0);
     await expect(
       page.getByRole("heading", {
-        name: "Your office, organized.",
+        name: "Overview",
         exact: true,
       }),
     ).toBeVisible();
@@ -3006,9 +3425,9 @@ test.describe("explicit committee module permissions", () => {
       /\/(?:developer|office|board|security|driver|more\/profile)?$/,
     );
     await page.goto("/office");
-    await expect(
-      page.getByRole("heading", { name: "Your office, organized." }),
-    ).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible({
+      timeout: 15000,
+    });
     await expect(
       page.getByRole("link", { name: "People", exact: true }),
     ).toHaveCount(0);
@@ -3039,12 +3458,13 @@ test.describe("explicit committee module permissions", () => {
       liveRequests: true,
     });
     await login(page);
-    await expect(page).toHaveURL(
-      /\/(?:developer|office|board|security|driver|more\/profile)?$/,
-    );
+    await expect(page).not.toHaveURL(/sign-in/);
     await page.goto("/services/requests?new=concern");
     await page
-      .getByLabel("Title", { exact: true })
+      .getByLabel("Concern and Suggestion type", { exact: true })
+      .selectOption("Other");
+    await page
+      .getByLabel("Describe the other type", { exact: true })
       .fill("Synthetic read only case");
     await page
       .getByLabel("Details", { exact: true })
@@ -3056,11 +3476,10 @@ test.describe("explicit committee module permissions", () => {
     await page.goto("/office/requests");
     await page
       .getByRole("button", {
-        name: "Open Synthetic read only case",
-        exact: true,
+        name: /Open .*Synthetic read only case/,
       })
       .click();
-    await expect(page.getByRole("dialog")).toContainText("Read-only access.");
+    await expect(page.locator("main")).toContainText("Read-only access.");
     await expect(
       page.getByRole("button", { name: "Start work", exact: true }),
     ).toHaveCount(0);
@@ -3071,8 +3490,7 @@ test.describe("explicit committee module permissions", () => {
     await page.reload();
     await page
       .getByRole("button", {
-        name: "Open Synthetic read only case",
-        exact: true,
+        name: /Open .*Synthetic read only case/,
       })
       .click();
     await expect(page.getByLabel("Your reply")).toBeVisible();
@@ -3188,26 +3606,12 @@ test.describe("real auth against a simulated Supabase API", () => {
       member: { ...baseMember, extra_roles: ["admin", "security"] },
     });
     await login(page);
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(/\/workspaces$/);
     await page.reload();
-    if (page.viewportSize()!.width < 1024) {
-      await page
-        .getByRole("navigation", { name: "Mobile navigation" })
-        .getByRole("link", { name: "More", exact: true })
-        .click();
-      await page
-        .locator("main summary")
-        .filter({ hasText: /^Office$/ })
-        .click();
-      await page
-        .getByRole("link", { name: "Office: Overview", exact: true })
-        .click();
-    } else {
-      await page
-        .getByRole("navigation", { name: "Office navigation" })
-        .getByRole("link", { name: "Overview", exact: true })
-        .click();
-    }
+    await expect(
+      page.getByRole("link", { name: "Security", exact: true }),
+    ).toBeVisible();
+    await page.getByRole("link", { name: "Office", exact: true }).click();
     await expect(page).toHaveURL(/\/office$/);
     await page.goto("/workspaces");
     await page.evaluate(() =>
@@ -3219,9 +3623,7 @@ test.describe("real auth against a simulated Supabase API", () => {
     await page.goto("/sign-out");
     await expect(page).toHaveURL(/\/sign-in$/);
     expect(
-      await page.evaluate(() =>
-        sessionStorage.getItem("bellefort-auth-session"),
-      ),
+      await page.evaluate(() => localStorage.getItem("bellefort-auth-session")),
     ).toBeNull();
     expect(
       await page.evaluate(() =>
@@ -3262,13 +3664,20 @@ test.describe("real auth against a simulated Supabase API", () => {
   test("a stored token cannot bypass server identity verification", async ({
     page,
   }) => {
-    await api(page, { identityFails: true });
+    const calls = await api(page, { identityFails: true });
     await login(page);
     await expect(page.getByRole("alert")).toContainText(
-      "session could not be verified",
+      "could not verify your saved session",
+      { timeout: 15000 },
     );
     await page.goto("/office");
-    await expect(page).toHaveURL(/\/sign-in\?next=/);
+    await expect(
+      page.getByRole("heading", { name: "Connection interrupted" }),
+    ).toBeVisible({ timeout: 15000 });
+    expect(calls.some((call) => identityRead(call))).toBe(false);
+    await expect(
+      page.getByRole("link", { name: "Review inbox", exact: true }),
+    ).toHaveCount(0);
   });
   test("role revocation is applied on membership revalidation", async ({
     page,
@@ -3279,7 +3688,7 @@ test.describe("real auth against a simulated Supabase API", () => {
     await api(page, options);
     await login(page);
     await expect(
-      page.getByRole("link", { name: "Office & administration" }),
+      page.getByRole("link", { name: "Office", exact: true }),
     ).toBeVisible();
     options.member = { ...baseMember, status: "Suspended" };
     await page.reload();
@@ -3294,14 +3703,12 @@ test.describe("real auth against a simulated Supabase API", () => {
     await api(page, options);
     await login(page);
     await expect(
-      page.getByRole("heading", { name: /Hello, Alex/ }),
+      page.getByRole("heading", { name: "Home", exact: true }),
     ).toBeVisible();
     await page.evaluate(() => {
-      const value = JSON.parse(
-        sessionStorage.getItem("bellefort-auth-session")!,
-      );
+      const value = JSON.parse(localStorage.getItem("bellefort-auth-session")!);
       value.expires_at = Math.floor(Date.now() / 1000) - 120;
-      sessionStorage.setItem("bellefort-auth-session", JSON.stringify(value));
+      localStorage.setItem("bellefort-auth-session", JSON.stringify(value));
     });
     options.loginFails = true;
     await page.goto("/account");
@@ -3663,9 +4070,9 @@ test.describe("real auth against a simulated Supabase API", () => {
       .getByRole("button", { name: "Search system modules", exact: true })
       .click();
     await expect(page).toHaveURL(/query=Finance/);
-    await expect(page.getByLabel("Find a module", { exact: true })).toHaveValue(
-      "Finance",
-    );
+    await expect(
+      page.getByRole("searchbox", { name: "Find a module", exact: true }),
+    ).toHaveValue("Finance");
     await expect(
       page.getByRole("main").getByRole("link", { name: /sections?/ }),
     ).toHaveCount(1);
@@ -3774,7 +4181,10 @@ test.describe("real auth against a simulated Supabase API", () => {
       page.getByRole("dialog").getByLabel("Category", { exact: true }),
     ).toHaveValue("Concern");
     await page
-      .getByLabel("Title", { exact: true })
+      .getByLabel("Concern and Suggestion type", { exact: true })
+      .selectOption("Other");
+    await page
+      .getByLabel("Describe the other type", { exact: true })
       .fill("Synthetic repair request");
     await page
       .getByLabel("Details", { exact: true })
@@ -3785,30 +4195,27 @@ test.describe("real auth against a simulated Supabase API", () => {
     await expect(page.getByRole("status")).toContainText("Request saved.");
     await expect(
       page.getByRole("button", {
-        name: "Open Synthetic repair request",
-        exact: true,
+        name: /Open .*Synthetic repair request/,
       }),
     ).toBeVisible();
     await page.goto("/office/requests");
     await page
       .getByRole("button", {
-        name: "Open Synthetic repair request",
-        exact: true,
+        name: /Open .*Synthetic repair request/,
       })
       .click();
     await page
       .getByLabel("Your reply")
       .fill("Synthetic office reply, received and under review.");
     await page.getByRole("button", { name: "Send reply", exact: true }).click();
-    await expect(page.getByRole("dialog")).toContainText("Reply saved.");
+    await expect(page.getByText("Reply saved.", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Start work", exact: true }).click();
-    await expect(page.getByRole("dialog")).toContainText("In progress");
+    await expect(page.locator("main")).toContainText("In progress");
     await page.keyboard.press("Escape");
     await page.goto("/services/requests");
     await page
       .getByRole("button", {
-        name: "Open Synthetic repair request",
-        exact: true,
+        name: /Open .*Synthetic repair request/,
       })
       .click();
     await expect(page.getByRole("dialog")).toContainText(
@@ -3820,7 +4227,7 @@ test.describe("real auth against a simulated Supabase API", () => {
     await page.goto("/office/calendar");
     await expect(
       page.getByRole("heading", {
-        name: "Community calendar",
+        name: "Facilities & calendar",
         exact: true,
       }),
     ).toBeVisible();
@@ -3995,7 +4402,10 @@ test.describe("real auth against a simulated Supabase API", () => {
     page,
   }) => {
     test.setTimeout(120_000);
-    await api(page, { member: { ...baseMember, role: "admin" }, people: true });
+    await api(page, {
+      member: { ...baseMember, role: "admin" },
+      people: true,
+    });
     await login(page);
     for (const width of [320, 1280])
       for (const theme of ["light", "dark"]) {
@@ -4195,7 +4605,9 @@ test.describe("real auth against a simulated Supabase API", () => {
   test("member profile shows the current account without editable role controls", async ({
     page,
   }) => {
-    await api(page, { member: { ...baseMember, role: "developer" } });
+    await api(page, {
+      member: { ...baseMember, role: "developer" },
+    });
     await login(page);
     await page.goto("/more/profile");
     await expect(
@@ -4461,5 +4873,1053 @@ test.describe("direct account navigation and finance reports", () => {
         "A separate finance export permission is required to download this report.",
       ),
     ).toBeVisible();
+  });
+});
+
+test.describe("Excel amenity form", () => {
+  test.skip(!configured);
+  test("manual date stays visible and court end times enforce a one-hour minimum", async ({
+    page,
+  }) => {
+    await page.route("**/*", (route) => {
+      const host = new URL(route.request().url()).hostname;
+      return ["127.0.0.1", "localhost", "bellefort-auth-test.invalid"].includes(
+        host,
+      )
+        ? route.continue()
+        : route.abort();
+    });
+    await api(page, { accounts: true });
+    const fid = "85000000-0000-4000-8000-000000000002";
+    await page.route(
+      "https://bellefort-auth-test.invalid/rest/v1/rpc/bfe_*",
+      (route) => {
+        const name = new URL(route.request().url()).pathname.split("/").at(-1);
+        if (name === "bfe_session_status")
+          return route.fulfill({
+            json: {
+              valid: true,
+              expires_at: new Date(Date.now() + 86400000).toISOString(),
+              idle_expires_at: new Date(Date.now() + 86400000).toISOString(),
+              server_now: new Date().toISOString(),
+            },
+          });
+        if (name === "bfe_booking_dashboard")
+          return route.fulfill({
+            json: {
+              rows: [],
+              total: 0,
+              can_manage: false,
+              can_approve: false,
+              facilities: [
+                {
+                  id: fid,
+                  name: "Basketball court",
+                  opens: "07:00:00",
+                  closes: "22:00:00",
+                  slot_minutes: 30,
+                  max_minutes: 240,
+                  capacity: 30,
+                  renters: true,
+                  active: true,
+                  policy_reference: "Synthetic test policy",
+                },
+              ],
+            },
+          });
+        if (name === "bfe_booking_availability")
+          return route.fulfill({ json: [] });
+        if (name === "bfe_quote_booking")
+          return route.fulfill({
+            json: {
+              policy_date: "2025-10-21",
+              use_type: "court-sports",
+              period: "day",
+              minutes: 60,
+              adults: 0,
+              children: 0,
+              rental_centavos: null,
+              bond_centavos: 0,
+              reservation_centavos: null,
+              total_centavos: null,
+              hourly_day_centavos: 25000,
+              hourly_night_centavos: 30000,
+              notes: [],
+            },
+          });
+        if (
+          [
+            "bfe_get_member",
+            "bfe_my_access",
+            "bfe_get_profile",
+            "bfe_my_notifications",
+            "bfe_mark_notifications",
+          ].includes(name ?? "")
+        )
+          return route.fallback();
+        return route.fulfill({
+          status: 404,
+          json: {
+            code: "PGRST202",
+            message: "Synthetic unavailable unrelated service",
+          },
+        });
+      },
+    );
+    await login(page);
+    await page.goto("/services/bookings");
+    await page
+      .getByRole("button", { name: /Basketball court Booking limit/ })
+      .click();
+    const date = page.getByLabel("Date", { exact: true });
+    await expect(date).toBeVisible();
+    const future = new Date(Date.now() + 14 * 86400000);
+    while (future.getUTCDay() !== 2) future.setUTCDate(future.getUTCDate() + 1);
+    await date.fill(future.toISOString().slice(0, 10));
+    await page.getByRole("button", { name: /^9:00 AM/ }).click();
+    await expect(page.getByRole("button", { name: /^9:30 AM/ })).toBeDisabled();
+    await expect(page.getByRole("button", { name: /^10:00 AM/ })).toBeEnabled();
+    await page.getByRole("button", { name: /^10:00 AM/ }).click();
+    await expect(page.getByText(/Minimum 1 hour/)).toBeVisible();
+    await expect(
+      page.getByText("Rates & facility rules", { exact: true }),
+    ).toHaveCount(0);
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+  });
+});
+
+async function workspaceAccessMock(
+  page: Page,
+  {
+    missing = false,
+    targetRoles = ["admin"],
+    auditRole,
+    calendarVisible = false,
+    readOnly = false,
+  }: {
+    missing?: boolean;
+    targetRoles?: string[];
+    auditRole?: string;
+    calendarVisible?: boolean;
+    readOnly?: boolean;
+  } = {},
+) {
+  await page.route("**/*", (route) =>
+    ["127.0.0.1", "localhost", "bellefort-auth-test.invalid"].includes(
+      new URL(route.request().url()).hostname,
+    )
+      ? route.continue()
+      : route.abort(),
+  );
+  await api(page, {
+    accounts: true,
+    people: true,
+    liveRequests: true,
+    tabModes: readOnly
+      ? accessModules.flatMap((module) =>
+          accessScopes.map((scope) => ({ module, scope, mode: "view" })),
+        )
+      : [],
+    developerControl: !auditRole || auditRole === "developer",
+    permissions: auditRole
+      ? accessModules.flatMap((module) =>
+          accessScopes.flatMap((scope) =>
+            accessActions.map((action) => ({ module, scope, action })),
+          ),
+        )
+      : undefined,
+    member: { ...baseMember, role: auditRole ?? "developer", extra_roles: [] },
+  });
+  const state = {
+    saves: 0,
+    delegations: 0,
+    manager: false,
+    lastKind: "",
+    lastSubject: "",
+    searches: [] as Array<{ p_search: string; p_role?: string }>,
+  };
+  let snapshot: {
+    rules: Array<{ module: string; scope: string; mode: string }>;
+    actions: Array<{
+      module: string;
+      scope: string;
+      action: string;
+      effect: string;
+    }>;
+  } = { rules: [], actions: [] };
+  const response = (kind: string) => ({
+    snapshot,
+    effective:
+      kind === "user"
+        ? {
+            "calendar:association": {
+              create: false,
+              view:
+                calendarVisible ||
+                snapshot.rules.some(
+                  (r) => r.module === "calendar" && r.mode === "edit",
+                ),
+              approve: snapshot.actions.some(
+                (r) => r.action === "approve" && r.effect === "allow",
+              ),
+            },
+          }
+        : null,
+    roles: kind === "user" ? targetRoles : [],
+    manager: state.manager,
+    sources: [],
+  });
+  await page.route(
+    "https://bellefort-auth-test.invalid/rest/v1/rpc/bfe_*",
+    (route) => {
+      const name = new URL(route.request().url()).pathname.split("/").at(-1),
+        args = route.request().postDataJSON();
+      if (name === "bfe_session_status")
+        return route.fulfill({
+          json: {
+            valid: true,
+            expires_at: new Date(Date.now() + 86400000).toISOString(),
+            idle_expires_at: new Date(Date.now() + 86400000).toISOString(),
+            server_now: new Date().toISOString(),
+          },
+        });
+      if (
+        name === "bfe_access_members" ||
+        name === "bfe_filtered_access_members"
+      ) {
+        state.searches.push({ p_search: args.p_search, p_role: args.p_role });
+        const matches =
+          (!args.p_role || targetRoles.includes(args.p_role)) &&
+          (!args.p_search ||
+            "sample staff sample b".includes(
+              String(args.p_search).toLowerCase(),
+            ));
+        return route.fulfill({
+          json: {
+            rows: matches
+              ? [
+                  {
+                    user_id: "11111111-1111-4111-8111-111111111112",
+                    name: "Sample Staff",
+                    unit: "Sample B",
+                    role: targetRoles[0],
+                    extra_roles: targetRoles.slice(1),
+                    status: "Active",
+                  },
+                ]
+              : [],
+            total: matches ? 1 : 0,
+          },
+        });
+      }
+      if (name === "bfe_set_access_manager") {
+        state.delegations++;
+        state.manager = args.p_active;
+        return route.fulfill({ json: null });
+      }
+      if (name === "bfe_access_editor")
+        return missing
+          ? route.fulfill({
+              status: 404,
+              json: {
+                code: "PGRST202",
+                message: "Synthetic missing migration",
+              },
+            })
+          : route.fulfill({ json: response(args.p_kind) });
+      if (name === "bfe_save_access_editor") {
+        expect(args.p_expected).toEqual(snapshot);
+        snapshot = args.p_next;
+        state.saves++;
+        state.lastKind = args.p_kind;
+        state.lastSubject = args.p_subject;
+        return route.fulfill({ json: response(args.p_kind) });
+      }
+      if (name === "bfe_navigation_action_badges")
+        return route.fulfill({ json: { as_of: new Date().toISOString() } });
+      if (
+        ![
+          "bfe_my_access",
+          "bfe_get_member",
+          "bfe_access_members",
+          "bfe_member_assignments",
+          "bfe_get_profile",
+          "bfe_my_notifications",
+          "bfe_mark_notifications",
+        ].includes(name ?? "")
+      )
+        return route.fulfill({
+          status: 404,
+          json: { code: "PGRST202", message: "Synthetic unavailable service" },
+        });
+      return route.fallback();
+    },
+  );
+  return state;
+}
+
+test.describe("access layout regression", () => {
+  test.skip(!configured);
+  for (const width of [390, 1440]) {
+    test(`access layout regression ${width}`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      const state = await workspaceAccessMock(page, {
+        targetRoles: ["admin"],
+        calendarVisible: true,
+      });
+      await login(page);
+      await page.goto("/developer/access");
+      await page.getByRole("button", { name: /Sample Staff/ }).click();
+      const panel = page.getByRole("region", { name: "Workspace access" });
+      await page
+        .getByRole("searchbox", { name: "Find a module", exact: true })
+        .fill("bookings");
+      const row = panel.getByRole("region", {
+        name: "Office: Facilities & calendar",
+        exact: true,
+      });
+      const visibility = row.getByRole("switch");
+      await visibility.check();
+      const action = row.getByRole("checkbox", {
+        name: "Office Facilities & calendar Approve or reject bookings",
+        exact: true,
+      });
+      const actionGroup = row.getByRole("group", {
+        name: "Office Facilities & calendar actions",
+        exact: true,
+      });
+      const geometryBefore = await actionGroup.evaluate((element) => ({
+        height: element.getBoundingClientRect().height,
+        offset:
+          element.getBoundingClientRect().top -
+          element.parentElement!.getBoundingClientRect().top,
+      }));
+      await action.scrollIntoViewIfNeeded();
+      const checkBefore = await action.boundingBox();
+      await action.check();
+      await expect(actionGroup.getByRole("button")).toHaveCount(0);
+      for (const checked of [false, true, false, true]) {
+        await action.setChecked(checked);
+        const geometryAfter = await actionGroup.evaluate((element) => ({
+          height: element.getBoundingClientRect().height,
+          offset:
+            element.getBoundingClientRect().top -
+            element.parentElement!.getBoundingClientRect().top,
+        }));
+        expect(geometryAfter).toEqual(geometryBefore);
+        const checkAfter = await action.boundingBox();
+        expect(checkAfter!.x).toBeCloseTo(checkBefore!.x, 0);
+        expect(checkAfter!.y).toBeCloseTo(checkBefore!.y, 0);
+        expect(checkAfter!.width).toBe(checkBefore!.width);
+      }
+      expect(
+        await action.evaluate((input) => getComputedStyle(input).outlineStyle),
+      ).toBe("none");
+      expect(
+        await visibility.evaluate(
+          (input) => getComputedStyle(input).outlineStyle,
+        ),
+      ).toBe("none");
+      await action.press("Tab");
+      await page.keyboard.press("Shift+Tab");
+      await expect(action).toBeFocused();
+      expect(
+        await action.evaluate(
+          (input) => getComputedStyle(input.parentElement!).outlineStyle,
+        ),
+      ).toBe("solid");
+      await page
+        .getByRole("button", { name: "Discard changes", exact: true })
+        .click();
+      await page
+        .getByRole("tab", { name: "Role & status", exact: true })
+        .click();
+      const dialog = page.getByRole("dialog");
+      const body = dialog.locator("[data-dialog-body]");
+      await body.evaluate((element) => {
+        element.scrollTop = 300;
+      });
+      const toolbar = dialog.getByRole("tablist", { name: "Member settings" });
+      await expect(toolbar).toBeVisible();
+      const geometry = await toolbar.evaluate((element) => {
+        const bar = element.parentElement!,
+          body = bar.closest("[data-dialog-body]")!;
+        return {
+          top: bar.getBoundingClientRect().top,
+          bodyTop: body.getBoundingClientRect().top,
+          background: getComputedStyle(bar).backgroundColor,
+        };
+      });
+      expect(geometry.top).toBeLessThanOrEqual(geometry.bodyTop + 2);
+      expect(geometry.background).not.toBe("rgba(0, 0, 0, 0)");
+      await page.screenshot({ path: `.artifacts/access-layout-${width}.png` });
+      expect(state.saves).toBe(0);
+      expect(state.delegations).toBe(0);
+    });
+  }
+});
+
+test.describe("shell notice layout", () => {
+  test.skip(!configured);
+  for (const [role, path] of [
+    ["admin", "/office/approvals"],
+    ["admin", "/office/inbox"],
+    ["board", "/board/shuttle"],
+    ["security", "/security"],
+    ["driver", "/driver"],
+  ]) {
+    test(`shell notice layout ${role} ${path}`, async ({ page }) => {
+      test.setTimeout(90000);
+      const state = await workspaceAccessMock(page, {
+        auditRole: role,
+        readOnly: true,
+      });
+      await login(page);
+      await page.goto(path);
+      const notice = page.locator("main [data-shell-notice]");
+      await expect(notice).toContainText("View only");
+      if (path === "/office/approvals")
+        await expect(
+          page.getByRole("heading", { name: "Review inbox", exact: true }),
+        ).toBeVisible();
+      for (const width of [390, 1024, 1440, 1920]) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.evaluate(() => window.scrollTo(0, 0));
+        for (const theme of ["light", "dark"]) {
+          await page.evaluate(
+            (value) =>
+              document.documentElement.setAttribute("data-theme", value),
+            theme,
+          );
+          const actions = page.locator("[data-header-actions]");
+          const controls = actions.locator("button, a");
+          const noticeBox = await notice.boundingBox();
+          expect(noticeBox).not.toBeNull();
+          for (const control of await controls.all()) {
+            if (!(await control.isVisible())) continue;
+            const box = (await control.boundingBox())!;
+            expect(box.y + box.height).toBeLessThanOrEqual(noticeBox!.y);
+            expect(box.x).toBeGreaterThanOrEqual(0);
+            expect(box.x + box.width).toBeLessThanOrEqual(width + 1);
+            expect(box.height).toBeGreaterThanOrEqual(48);
+          }
+          expect(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= innerWidth,
+            ),
+          ).toBe(true);
+          if (width === 1440)
+            await page.screenshot({
+              path: `.artifacts/notice-${role}-${path.split("/").at(-1)}-${theme}.png`,
+            });
+        }
+      }
+      await page.context().setOffline(true);
+      const offline = page
+        .getByRole("status")
+        .filter({ hasText: "You’re offline" });
+      await expect(offline).toBeVisible();
+      expect(
+        (await page.locator("[data-header-actions]").boundingBox())!.y +
+          (await page.locator("[data-header-actions]").boundingBox())!.height,
+      ).toBeLessThanOrEqual((await offline.boundingBox())!.y);
+      await page.context().setOffline(false);
+      await expect(offline).toHaveCount(0);
+      expect(state.saves).toBe(0);
+      expect(state.delegations).toBe(0);
+    });
+  }
+});
+
+test.describe("plain-language feature help", () => {
+  test.skip(!configured);
+  for (const role of ["admin", "homeowner"] as const) {
+    test(`plain-language feature help ${role}`, async ({ page }) => {
+      test.setTimeout(90000);
+      const state = await workspaceAccessMock(page, { auditRole: role });
+      await login(page);
+      await expect(page).not.toHaveURL(/sign-in/);
+      const path = role === "admin" ? "/office/access" : "/account";
+      const title = role === "admin" ? "Roles & permissions" : "My account";
+      for (const width of [390, 1440]) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(path);
+        const trigger = page.getByRole("button", {
+          name: `Help: ${title}`,
+          exact: true,
+        });
+        await trigger.click();
+        const dialog = page.getByRole("dialog", {
+          name: `How this works: ${title}`,
+          exact: true,
+        });
+        await expect(dialog).toBeVisible();
+        await expect(dialog).toContainText(
+          role === "admin"
+            ? "A visible page does not automatically allow approvals"
+            : "A monthly rate is the regular charge",
+        );
+        for (const colorScheme of ["light", "dark"] as const) {
+          await page.emulateMedia({ colorScheme });
+          await page.evaluate((theme) => {
+            document.documentElement.dataset.theme = theme;
+          }, colorScheme);
+          expect(
+            (
+              await new AxeBuilder({ page })
+                .include("dialog[open]")
+                .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+                .analyze()
+            ).violations,
+          ).toEqual([]);
+        }
+        expect(
+          await dialog.evaluate(
+            (element) => element.scrollWidth <= element.clientWidth,
+          ),
+        ).toBe(true);
+        await page.screenshot({
+          path: `.artifacts/feature-help-${role}-${width}.png`,
+        });
+        await page.keyboard.press("Escape");
+        await expect(dialog).toHaveCount(0);
+        await expect(trigger).toBeFocused();
+        await expect(page).toHaveURL(new RegExp(path + "$"));
+      }
+      await page.goto("/more/help");
+      await page
+        .getByRole("searchbox", { name: "Find help", exact: true })
+        .fill("Roles & permissions");
+      await page
+        .getByRole("region", { name: "Feature guides" })
+        .getByText("Roles & permissions", { exact: true })
+        .click();
+      await expect(
+        page.getByRole("region", { name: "Feature guides" }),
+      ).toContainText("Turn a page on to make it visible");
+      await page
+        .getByRole("searchbox", { name: "Find help", exact: true })
+        .fill("no-such-synthetic-topic");
+      await expect(
+        page.getByText("No matching guide. Try a different word."),
+      ).toBeVisible();
+      expect(state.saves).toBe(0);
+      expect(state.delegations).toBe(0);
+    });
+  }
+});
+
+// Cross-system rendering audit: synthetic identity, explicit test grants and
+// isolated services. Empty/unavailable states are recorded, never real data.
+const systemAuditRoutes: Record<string, string[]> = {
+  homeowner: [
+    "/",
+    "/account",
+    "/account/payments",
+    "/community",
+    "/services",
+    "/services/bookings",
+    "/services/visitors",
+    "/services/requests",
+    "/services/calendar",
+    "/directory/market",
+    "/directory/learning",
+    "/directory/transport",
+    "/more",
+    "/more/profile",
+    "/more/settings",
+    "/more/notifications",
+    "/more/hotlines",
+    "/more/lots",
+    "/more/vehicles",
+    "/more/permits",
+    "/more/documents",
+    "/more/elections",
+  ],
+  admin: [
+    "/office",
+    "/office/approvals",
+    "/office/residents",
+    "/office/registrations",
+    "/office/finance",
+    "/office/finance/accounting",
+    "/office/operations",
+    "/office/bookings",
+    "/office/visitors",
+    "/office/calendar",
+    "/office/announcements",
+    "/office/documents",
+    "/office/requests",
+    "/office/lots",
+    "/office/vehicles",
+    "/office/permits",
+    "/office/shuttle",
+    "/office/settings",
+    "/office/hotlines",
+    "/office/access",
+  ],
+  board: [
+    "/board",
+    "/board/documents",
+    "/board/elections",
+    "/board/updates",
+    "/board/reports",
+    "/board/shuttle",
+    "/board/requests",
+  ],
+  security: [
+    "/security",
+    "/security/visitors",
+    "/security/vehicles",
+    "/security/incidents",
+    "/security/gate",
+  ],
+  driver: ["/driver", "/driver/profile", "/more/settings"],
+  developer: [
+    "/developer",
+    "/developer/members",
+    "/developer/connections",
+    "/developer/access",
+    "/developer/activity",
+    "/developer/modules",
+    "/more/profile",
+  ],
+};
+test.describe("system UI audit", () => {
+  test.skip(!configured);
+  for (const [role, routes] of Object.entries(systemAuditRoutes)) {
+    test(`system UI audit ${role}`, async ({ page }, testInfo) => {
+      test.setTimeout(240_000);
+      await workspaceAccessMock(page, { auditRole: role });
+      const unavailable = new Set<string>();
+      const writes: string[] = [];
+      await page.route(
+        "https://bellefort-auth-test.invalid/rest/v1/rpc/bfe_*",
+        async (route) => {
+          const name = new URL(route.request().url()).pathname
+            .split("/")
+            .at(-1)!;
+          const reply = (json: unknown) => route.fulfill({ json });
+          if (
+            /^bfe_(save_|create_|approve_|reject_|submit_|publish_|update_|delete_|post_)/.test(
+              name,
+            )
+          ) {
+            writes.push(name);
+            return route.abort();
+          }
+          if (
+            name === "bfe_feature_dashboard" ||
+            name === "bfe_announcement_dashboard"
+          )
+            return reply({
+              rows: [],
+              total: 0,
+              can_create: true,
+              can_review: true,
+              can_publish: true,
+              publishable: true,
+              postable_modules: ["buy-sell", "businesses", "publishing"],
+            });
+          if (name === "bfe_booking_dashboard")
+            return reply({
+              rows: [],
+              total: 0,
+              facilities: [],
+              can_manage: role === "admin",
+              can_approve: role === "admin",
+            });
+          if (
+            name === "bfe_visitor_dashboard" ||
+            name === "bfe_community_pass_dashboard"
+          )
+            return reply({
+              rows: [],
+              total: 0,
+              lots: [
+                {
+                  id: "11111111-1111-4111-8111-111111111113",
+                  physical_id: "1-01-001",
+                  homeowner: "Synthetic Member",
+                },
+              ],
+              can_create: true,
+              can_approve: role === "admin",
+              can_gate: role === "security",
+            });
+          if (name === "bfe_private_health_note")
+            return reply({ note: "", version: 0, can_edit: true });
+          const handled = [
+            "bfe_my_access",
+            "bfe_get_member",
+            "bfe_get_profile",
+            "bfe_my_notifications",
+            "bfe_navigation_action_badges",
+            "bfe_session_status",
+            "bfe_staff_directory",
+            "bfe_access_members",
+            "bfe_filtered_access_members",
+            "bfe_access_editor",
+            "bfe_member_assignments",
+          ];
+          if (handled.includes(name)) return route.fallback();
+          unavailable.add(name);
+          return route.fulfill({
+            status: 404,
+            json: {
+              code: "PGRST202",
+              message: "Synthetic unavailable service",
+            },
+          });
+        },
+      );
+      await login(page);
+      await expect(page).not.toHaveURL(/sign-in/);
+      const output = `.artifacts/system-ui-audit/${testInfo.project.name === "chromium" ? "" : `${testInfo.project.name}/`}${role}`;
+      mkdirSync(output, { recursive: true });
+      const report: unknown[] = [];
+      const errors: string[] = [];
+      page.on("pageerror", (error) => errors.push(error.message));
+      for (const width of [390, 1440]) {
+        await page.setViewportSize({ width, height: 900 });
+        for (const route of routes) {
+          await page.goto(route);
+          await expect(page.locator("main")).toBeVisible({ timeout: 15000 });
+          await expect(
+            page
+              .locator("main")
+              .getByRole("status", { name: "Loading content" }),
+          ).toHaveCount(0, { timeout: 15000 });
+          await page.evaluate(() => document.fonts.ready);
+          const findings = await page.locator("main").evaluate((main) => {
+            const visible = (e: Element) =>
+              e.getBoundingClientRect().width > 0 &&
+              e.getBoundingClientRect().height > 0;
+            const paragraphs = Array.from(main.querySelectorAll("p"))
+              .filter(visible)
+              .map((p) => p.textContent?.trim() ?? "");
+            return {
+              title: Array.from(main.querySelectorAll("h1"))
+                .filter(visible)
+                .map((h) => h.textContent),
+              overflow: document.documentElement.scrollWidth > innerWidth,
+              alerts: Array.from(main.querySelectorAll('[role="alert"]')).map(
+                (e) => e.textContent,
+              ),
+              repeatedCopy: [
+                ...new Set(
+                  paragraphs.filter(
+                    (p, i) => p.length > 45 && paragraphs.indexOf(p) !== i,
+                  ),
+                ),
+              ],
+              brokenImages: Array.from(main.querySelectorAll("img"))
+                .filter(visible)
+                .filter((img) => img.complete && img.naturalWidth === 0)
+                .map((img) => img.alt),
+              smallText: Array.from(
+                main.querySelectorAll("p,label,button,small"),
+              )
+                .filter(visible)
+                .filter((e) => parseFloat(getComputedStyle(e).fontSize) < 14)
+                .map((e) => e.textContent?.slice(0, 80)),
+            };
+          });
+          report.push({ route, width, ...findings });
+          expect
+            .soft(
+              findings.overflow,
+              `${role} ${route} ${width}: horizontal overflow`,
+            )
+            .toBe(false);
+          expect
+            .soft(findings.brokenImages, `${role} ${route}: broken images`)
+            .toEqual([]);
+          await page.screenshot({
+            path: `${output}/${route.replace(/[^a-z0-9]/gi, "-") || "home"}-${width}.png`,
+            fullPage: true,
+          });
+        }
+        if (role === "homeowner") {
+          await page.goto("/services/requests");
+          await expect(
+            page.getByRole("button", {
+              name: "New request",
+              exact: true,
+              includeHidden: true,
+            }),
+          ).toHaveCount(1);
+          await expect(
+            page.getByRole("button", { name: "New request", exact: true }),
+          ).toBeVisible();
+          await page.goto("/more/documents");
+          const documentHelp = page.locator("details").filter({
+            has: page.locator("summary", {
+              hasText: "About document access",
+            }),
+          });
+          await expect(documentHelp).not.toHaveAttribute("open", "");
+          await documentHelp.locator("summary").click();
+          await expect(
+            documentHelp.getByText(/Under Republic Act No. 9904/),
+          ).toBeVisible();
+          await documentHelp.locator("summary").click();
+          await page.goto("/services");
+          if (width < 768) {
+            await expect(
+              page
+                .getByRole("navigation", { name: "Mobile navigation" })
+                .locator("a"),
+            ).toHaveCount(5);
+          }
+          await page.goto("/more");
+          await expect(
+            page
+              .getByRole("link", {
+                name: "Team Helpdesk",
+                exact: true,
+                includeHidden: true,
+              })
+              .first(),
+          ).toHaveAttribute("href", "/services/team-requests");
+        }
+        if (role === "admin") {
+          await page.goto("/office/finance/accounting");
+          const billingHelp = page.locator("details").filter({
+            has: page.locator("summary", {
+              hasText: "Before creating bills",
+            }),
+          });
+          await expect(billingHelp).not.toHaveAttribute("open", "");
+          await billingHelp.locator("summary").click();
+          await expect(
+            billingHelp.getByText(/Before creating bills, check each property/),
+          ).toBeVisible();
+          await expect(
+            page.getByText(
+              /Confirming a record does not prove that money has cleared the bank/,
+            ),
+          ).toBeVisible();
+        }
+        const forms =
+          role === "admin"
+            ? [
+                {
+                  route: "/office/announcements",
+                  button: "New announcement",
+                  title: "New announcement",
+                },
+              ]
+            : role === "homeowner"
+              ? [
+                  {
+                    route: "/services/visitors?new=visitor",
+                    title: "Request a pass",
+                    button: "New pass",
+                  },
+                ]
+              : [];
+        for (const form of forms) {
+          await page.goto(form.route);
+          if (form.button)
+            await page
+              .getByRole("button", { name: form.button, exact: true })
+              .click();
+          const dialog = page.getByRole("dialog", {
+            name: form.title,
+            exact: true,
+          });
+          await expect(dialog).toBeVisible();
+          const result = await new AxeBuilder({ page })
+            .include("dialog[open]")
+            .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+            .analyze();
+          report.push({
+            form: form.title,
+            width,
+            axe: result.violations.map((v) => ({
+              id: v.id,
+              targets: v.nodes.map((n) => n.target),
+            })),
+          });
+          expect
+            .soft(
+              result.violations.map((v) => v.id),
+              `${role} ${form.title} ${width}: axe`,
+            )
+            .toEqual([]);
+          await page.screenshot({
+            path: `${output}/form-${width}.png`,
+            fullPage: true,
+          });
+          await dialog
+            .getByRole("button", { name: "Close dialog", exact: true })
+            .click();
+          await expect(dialog).not.toBeVisible();
+        }
+        // Audit shared shell in both themes; route-specific results above remain explicit.
+        for (const theme of ["light", "dark"]) {
+          await page.goto(routes[0]);
+          await page.evaluate((value) => {
+            document.documentElement.dataset.theme = value;
+          }, theme);
+          await expect(page.locator("main")).toBeVisible();
+          const axe = await new AxeBuilder({ page })
+            .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+            .analyze();
+          report.push({
+            width,
+            theme,
+            axe: axe.violations.map((v) => ({
+              id: v.id,
+              targets: v.nodes.map((n) => n.target),
+            })),
+          });
+          expect
+            .soft(
+              axe.violations.map((v) => v.id),
+              `${role} ${width} ${theme}: axe`,
+            )
+            .toEqual([]);
+        }
+      }
+      writeFileSync(
+        `${output}/report.json`,
+        JSON.stringify(
+          { role, report, unavailable: [...unavailable], errors, writes },
+          null,
+          2,
+        ),
+      );
+      expect(errors).toEqual([]);
+      expect(writes).toEqual([]);
+    });
+  }
+});
+
+test.describe("shared UI cleanup", () => {
+  test.skip(!configured);
+  test("developer preview cards explain their purpose and open the existing tools", async ({
+    page,
+  }) => {
+    const state = await workspaceAccessMock(page);
+    await login(page);
+    await page.goto("/developer");
+    const tools = page.getByRole("region", { name: "Preview tools" });
+    await expect(tools).toContainText("read-only mode");
+    await expect(tools).toContainText("sample data");
+    for (const width of [390, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      for (const link of await tools.getByRole("link").all()) {
+        const box = await link.boundingBox();
+        expect(box!.height).toBeGreaterThanOrEqual(48);
+        expect(box!.height).toBeLessThanOrEqual(100);
+        expect(
+          await link.evaluate((element) => getComputedStyle(element).boxShadow),
+        ).toBe("none");
+      }
+    }
+    await tools.getByRole("link", { name: /Account preview/ }).click();
+    await expect(page).toHaveURL(/\/developer\/members$/);
+    await page.goto("/developer");
+    await tools.getByRole("link", { name: /Role previews/ }).click();
+    await expect(page).toHaveURL(/\/developer\/previews$/);
+    expect(state.saves).toBe(0);
+    expect(state.delegations).toBe(0);
+  });
+  test("home activity opens the selected request and booking without a write", async ({
+    page,
+  }) => {
+    await workspaceAccessMock(page, { auditRole: "homeowner" });
+    const id = "50000000-0000-4000-8000-000000000009";
+    const bookingId = "50000000-0000-4000-8000-000000000019";
+    const now = new Date().toISOString();
+    const request = {
+      id,
+      client_id: "50000000-0000-4000-8000-000000000008",
+      owner_id: "11111111-1111-4111-8111-111111111112",
+      title: "Synthetic repair for activity test",
+      description: "Synthetic repair details.",
+      category: "Maintenance",
+      unit_snapshot: "Synthetic address",
+      status: "Open",
+      version: 1,
+      created_at: now,
+      updated_at: now,
+    };
+    const booking = {
+      id: bookingId,
+      facility_id: "50000000-0000-4000-8000-000000000029",
+      facility_name: "Synthetic court",
+      purpose: "Synthetic activity booking",
+      attendees: 2,
+      starts_at: now,
+      ends_at: new Date(Date.now() + 3600000).toISOString(),
+      status: "Pending",
+      version: 1,
+    };
+    const writes: string[] = [];
+    page.on("request", (r) => {
+      if (
+        r.method() === "POST" &&
+        /\/rpc\/bfe_(save|create|approve|reject|submit|post)_/.test(r.url())
+      )
+        writes.push(r.url());
+    });
+    await page.route("**/rest/v1/bfe_requests?*", (route) =>
+      route.fulfill({
+        json: [request],
+        headers: {
+          "content-range": "0-0/1",
+          "access-control-expose-headers": "content-range",
+        },
+      }),
+    );
+    await page.route("**/rest/v1/rpc/bfe_booking_dashboard", (route) =>
+      route.fulfill({
+        json: {
+          rows: [booking],
+          total: 1,
+          facilities: [],
+          can_manage: false,
+          can_approve: false,
+        },
+      }),
+    );
+    await page.route("**/rest/v1/rpc/bfe_open_notification_record", (route) => {
+      expect(route.request().postDataJSON()).toMatchObject({
+        p_kind: "booking",
+        p_id: bookingId,
+      });
+      return route.fulfill({ json: booking });
+    });
+    await login(page);
+    await page.goto("/");
+    await page
+      .getByRole("region", { name: "Request updates" })
+      .getByRole("link", { name: /Synthetic repair/ })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`record=${id}`));
+    await expect(
+      page.getByText("Synthetic repair details.", { exact: true }),
+    ).toBeVisible();
+    await page.goto("/");
+    await page
+      .getByRole("region", { name: "Recent bookings" })
+      .getByRole("link", { name: /Synthetic court/ })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`record=${bookingId}`));
+    const dialog = page.getByRole("dialog", {
+      name: "Booking details",
+      exact: true,
+    });
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText("Synthetic activity booking");
+    expect(writes).toEqual([]);
   });
 });

@@ -50,7 +50,7 @@ export const notices = [
     date: "2026-11-03",
     title: "A little time for a cleaner neighborhood",
     summary: "Join the weekend clean-up at the community grounds.",
-    body: "This demonstration event brings neighbours together at the community grounds on Saturday, 14 November, at 7 AM. Bring a water bottle and comfortable shoes. No real event is scheduled by this preview.",
+    body: "This demonstration event brings neighbors together at the community grounds on Saturday, 14 November, at 7 AM. Bring a water bottle and comfortable shoes. No real event is scheduled by this preview.",
     urgent: false,
     author: "Sample community team",
   },

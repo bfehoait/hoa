@@ -66,9 +66,7 @@ export default function Marketplace() {
   const [params, setParams] = useSearchParams();
   const module = types.some((type) => type.id === params.get("section"))
     ? params.get("section")!
-    : auth.memberPreview
-      ? "buy-sell"
-      : "";
+    : "buy-sell";
   const search = (params.get("q") ?? "").slice(0, 100);
   const category = (params.get("category") ?? "").slice(0, 80);
   const sort = ["latest", "price_low", "price_high"].includes(
@@ -390,10 +388,7 @@ export default function Marketplace() {
               role="group"
               aria-label="Listing type"
             >
-              {(!auth.memberPreview
-                ? [{ id: "", label: "All listings" }, ...types]
-                : types
-              ).map((type) => (
+              {(!auth.memberPreview ? types : types).map((type) => (
                 <button
                   type="button"
                   key={type.id}
@@ -522,7 +517,9 @@ export default function Marketplace() {
                           </h3>
                           <p className={`${styles.metadata} ${styles.tag}`}>
                             {[
-                              record.module !== "buy-sell"
+                              !["buy-sell", "businesses"].includes(
+                                record.module,
+                              )
                                 ? typeName(record.module)
                                 : null,
                               record.fields?.category,

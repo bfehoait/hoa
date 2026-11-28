@@ -50,7 +50,7 @@ export default function AccessPlanning({
       {!office ? (
         <DeveloperPage
           title="Access configuration"
-          description="Committees, member permissions and the modules they may use."
+
           actions={
             <Button secondary onClick={() => void access.refetch()}>
               Refresh access
@@ -66,7 +66,7 @@ export default function AccessPlanning({
               : "DEVELOPER · ACCESS MANAGEMENT"
           }
           title="Roles & permissions"
-          description="Choose what people and committees can view or change."
+
           icon={<ShieldCheck size={28} />}
           action={
             <Button secondary onClick={() => void access.refetch()}>

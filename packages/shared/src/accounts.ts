@@ -28,6 +28,8 @@ export const notificationSchema = z.object({
     const allowed = [
       "/services/requests",
       "/office/requests",
+      "/board/requests",
+      "/services/team-requests",
       "/more/profile",
       "/developer/access",
       "/more/notifications",

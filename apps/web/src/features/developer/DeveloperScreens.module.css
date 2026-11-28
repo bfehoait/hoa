@@ -11,6 +11,15 @@
   margin: 0;
   padding-right: 100px;
 }
+@media (min-width: 1024px) {
+  .header {
+    padding-inline-end: var(--staff-header-actions-space, 0px);
+    min-height: 48px;
+  }
+  .header h1 {
+    padding-right: 0;
+  }
+}
 .crumb {
   display: flex;
   flex-wrap: wrap;
@@ -220,6 +229,7 @@
 }
 .pagination {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
@@ -385,7 +395,7 @@
 .search input[type="search"] {
   padding-left: 16px;
 }
-.search:has(svg) input {
+.search:has(svg) input[type="search"] {
   padding-left: 44px;
 }
 

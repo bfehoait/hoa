@@ -106,11 +106,7 @@ function LinkedLotList({
   return (
     <>
       {!embedded && (
-        <PageIntro
-          title="Your lots"
-          description="Your approved property links and permitted receipt history."
-          icon={<Building2 size={28} />}
-        />
+        <PageIntro title="Your lots" icon={<Building2 size={28} />} />
       )}
       {links.isPending && <Skeleton />}
       {links.isError && (
@@ -231,11 +227,6 @@ function LotList({
           eyebrow={sample ? "SYNTHETIC PREVIEW" : "PROPERTY RECORDS"}
           title={office ? "Lot register" : "Your lots"}
           icon={<Building2 size={28} />}
-          description={
-            office
-              ? "Find a property and review its linked records."
-              : "Your approved property links and permitted receipt history."
-          }
           action={
             !office ? (
               <Button onClick={() => setClaim(true)}>{linkLabel}</Button>
@@ -639,7 +630,6 @@ export function LotProfile({
         eyebrow={sample ? "SYNTHETIC LOT PROFILE" : "LOT PROFILE"}
         title={data?.physical_id ?? "Property records"}
         icon={<House size={28} />}
-        description="Property information, approved account links and permitted receipts."
       />
       {!sample && query.isPending && <Skeleton />}
       <Feedback error={query.error} />

@@ -5,7 +5,11 @@ import {
   manilaInstant,
 } from "../../../../../packages/shared/src/operations";
 import styles from "./BookingSlots.module.css";
-import { amenityWindows } from "../../../../../packages/shared/src/amenity-guidelines";
+import {
+  amenityWindows,
+  amenityMinimumMinutes,
+  amenityKey,
+} from "../../../../../packages/shared/src/amenity-guidelines";
 const minutes = (value: string) =>
   Number(value.slice(0, 2)) * 60 + Number(value.slice(3, 5));
 const time = (value: number) =>
@@ -74,7 +78,10 @@ export default function BookingSlots({
     (s) =>
       s.at >= first &&
       !s.blocked &&
-      s.at + facility.slot_minutes - first <= facility.max_minutes &&
+      s.at + facility.slot_minutes - first >=
+        amenityMinimumMinutes(facility.name) &&
+      (amenityKey(facility.name) !== null ||
+        s.at + facility.slot_minutes - first <= facility.max_minutes) &&
       !slots.some((x) => x.at >= first && x.at <= s.at && x.blocked),
   );
   const choosingEnd = choosing === "end" && !!start;
@@ -175,8 +182,8 @@ export default function BookingSlots({
         </p>
       )}
       <p>
-        Book up to {duration(facility.max_minutes)} when available. Choose a
-        start time and a later end time.
+        Minimum {duration(amenityMinimumMinutes(facility.name))}. Choose a start
+        time and a later end time within operating hours.
       </p>
     </section>
   );

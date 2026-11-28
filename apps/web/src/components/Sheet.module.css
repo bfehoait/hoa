@@ -95,6 +95,6 @@
     display: none;
   }
   :global([data-staff-ui="true"]) .sheet.sheet > div > div:first-of-type {
-    padding: 20px 24px;
+    padding: 16px 20px;
   }
 }

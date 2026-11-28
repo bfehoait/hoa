@@ -1,3 +1,4 @@
+import { FeatureHelpLibrary } from "../../components/FeatureHelp";
 import {
   Building2,
   CalendarDays,
@@ -175,10 +176,10 @@ export default function ConnectedHome({
         />
         {area === "services" && (
           <p className={`note ${styles.statusNote}`}>
-            All green links are active. Grayed-out links are pending approval
-            from the rest of the Board of Directors (BOD).
+            Green: active. Gray: awaiting BOD approval.
           </p>
         )}
+        {area === "help" && <FeatureHelpLibrary />}
         <div className={styles.groups}>
           {serviceGroups.map((group) => {
             const destinations = items.filter((item) =>

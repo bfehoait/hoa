@@ -151,10 +151,7 @@ export default function CustomerSearchPage() {
   });
   return (
     <div className={styles.page}>
-      <PageIntro
-        title="Search"
-        description="Find features and services available to your account."
-      />
+      <PageIntro title="Search" />
       <p className={styles.summary} role="status">
         {query
           ? `${results.length} results for “${query}”`

@@ -115,7 +115,7 @@ export default function FacilityCalendar() {
     <>
       <PageIntro
         title="Facilities & calendar"
-        description="All facility reservations available to your staff account. Dates and times use Philippine time."
+        description="Dates and times use Philippine time."
         icon={<CalendarDays size={28} />}
         action={
           <Link className="text-link" to="/office/bookings">

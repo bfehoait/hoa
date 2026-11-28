@@ -211,3 +211,36 @@ See [Final UI polish assessment](../FINAL-UI-POLISH-ASSESSMENT.md). Fixed native
 ### Balance card preference ? 11 November 2026
 
 Restored the original three inset cards (HOA dues, Water dues, Other) side by side inside the burgundy balance card on phones, as requested by the owner. Retained the independent date-filter overflow fixes. CSS-only change; no financial behavior changed.
+
+
+## Shared UI/copy cleanup - 27 November 2026
+
+Permission actions are flat rows: name, checkbox and quiet reset icon only for explicit overrides. Unknown/default semantics and protected Developer references remain. Generic introductory copy was removed from selected primary screens across workspaces, and shared dialog sections use dividers instead of nested bordered cards. Office/Developer headers omit empty intro wrappers; shared staff Sheet/Modal desktop header padding matches. Brand tokens, touch targets, essential notices and existing handlers remain. See docs/UI-CLEANUP-20261127.md for exact scope, checks, unresolved older browser fixtures and manual acceptance. This is not a completed screen-by-screen redesign or full live validation. Frontend-only rollout; no SQL or BFE deployment.
+
+
+## Cross-system UI audit - 27 November 2026
+
+Follow-up covered 64 routes across Homeowner, Office, Board, Security, Transport and Developer at 390px/1440px. Fixed a shared staff-search invalid aria-controls reference, crowded resident mobile navigation (Team Helpdesk now in More behind existing permissions), Developer paging overflow and search-icon/text overlap, and malformed visitor ID copy. Desktop Team Helpdesk access remains. No routes, permission grants, backend or financial rules changed.
+
+Final Chromium assertions passed across 128 route/width captures and 28 overview/form axe scans, with no detected page overflow, broken images, runtime errors or attempted audited mutation RPCs. Empty/unavailable synthetic service states are explicitly recorded; this is not proof of populated or live workflow correctness. Announcements and visitor-pass dialogs were opened/closed without submitting. Prior legacy smoke failures remain separate. Local TypeScript, build, targeted lint and diff-check passed; existing bundle/annotation warnings remain. Windows browser-server teardown is interrupted after completed cases; do not claim clean full-suite exit.
+
+See docs/UI-CLEANUP-20261127.md for exact scope, commands, remaining unavailable-service/physical-device/live checks, and owner acceptance steps. No SQL or BFE deployment needed; frontend deployment only when authorized. No commit/push/deploy/live connection performed.
+
+
+## Cross-workspace redundancy pass - 27 November 2026
+
+Indexed all 130 feature TSX files and reviewed actual shared/role routes for redundant copy and controls. Removed title-restating introductions from People/Registration inbox, Finance, Operations directory, property/profile/settings, Calendar and Board/driver Shuttle surfaces. Helpdesk now renders a single New request control at both widths, using the same handler and disabled protections. Existing document legal guidance and bill-setup instructions remain accessible in native shared disclosures; bank-clearance/late-fee, permission/scope, synthetic and approval notices remain. Services availability copy is shorter; Announcements search and Finance Record type use clear names. No backend/permission/financial calculation changes.
+
+Commands, exact changes, acceptance checks and limitations are in docs/UI-CLEANUP-20261127.md, second follow-up section. The new browser assertions check one Helpdesk create control, expandable full document guidance, and expandable accounting setup help with the bank warning still visible. Static inventory is not proof of all populated forms. Prior WebKit mock access-control errors and legacy smoke failures remain separate. No SQL or BFE deployment; frontend deployment only when authorized. No commit/push/deploy/live connection.
+# 28 November 2026: explain features without repeating page copy
+
+The header question mark opens plain-language help for the current feature. Help & support provides the same 31 topics with search. Roles & permissions explains roles, page visibility, action checkboxes, defaults and saving; guidance never grants permissions. Keep detailed explanations in shared help and concise field/action guidance next to the controls. See [feature help handoff](../FEATURE-HELP-20261128.md).
+
+
+## 28 November 2026 ? shared UI follow-up
+
+Shared status/feedback/empty states, compact staff destination rows, Developer preview guidance, plain-language address/Helpdesk copy and exact Home activity links were improved locally. Existing data and permission boundaries are preserved. See [the implementation handoff](../UI-UX-SHARED-CLEANUP-20261128.md) for scope, local evidence, outstanding platform checks and frontend-only rollout.
+
+## 28 November 2026 - request details for unfamiliar users
+
+Use one request title, visible applicable facts, a clear primary review action and secondary history/reference. Carry those facts into the decision form so users do not have to remember the previous popup. Distinguish approval from actual issuance, a saved application from a confirmed place, and a receipt from a posted charge. Keep legal/privacy/ownership scope notices short and accurate. Shared changes were checked with populated synthetic requests and six-workspace rendering; physical-device and uncoached usability acceptance remain pending. See [usability pass](../USABILITY-PASS-20261128.md).

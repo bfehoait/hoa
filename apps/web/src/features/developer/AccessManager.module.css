@@ -115,7 +115,7 @@
   font-size: 14px;
 }
 .accessDrawer .permissionActions {
-  flex: 1 1 100%;
+  flex: 1 1 0;
   min-width: 0;
 }
 .accessDrawer .permissionActions:empty {
@@ -393,5 +393,68 @@
 @media (max-width: 559px) {
   :global([data-staff-ui="true"]) .accessDrawer.accessDrawer {
     border-radius: 0;
+  }
+}
+
+.searchResults {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 12px 0;
+}
+.memberBadges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+/* Keep section navigation paired with the pinned module filter. */
+.editorToolbar {
+  position: sticky;
+  top: calc(-1 * var(--dialog-body-pad, 24px));
+  z-index: 5;
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(200px, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 12px var(--dialog-body-pad, 24px);
+  margin-inline: calc(-1 * var(--dialog-body-pad, 24px));
+  margin-bottom: 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.accessDrawer [data-dialog-body] {
+  scroll-padding-block-start: 144px;
+}
+.editorToolbar .editorTabs {
+  position: static;
+  margin: 0;
+  min-height: 56px;
+}
+.editorToolbar > div:empty {
+  display: none;
+}
+.editorToolbar:has(> div:last-child:empty),
+.editorToolbar:has(> div:last-child[hidden]) {
+  grid-template-columns: 1fr;
+}
+@media (max-width: 767px) {
+  .editorToolbar {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+/* Reserve the compact action bar before the first edit as well. */
+.accessDrawer > div > :last-child:has(.permissionActions) {
+  min-height: 81px;
+  align-items: center;
+}
+@media (max-width: 767px) {
+  .accessDrawer > div > :last-child:has(.permissionActions) {
+    min-height: 128px;
+  }
+  .accessDrawer .permissionActions {
+    flex-basis: 100%;
   }
 }

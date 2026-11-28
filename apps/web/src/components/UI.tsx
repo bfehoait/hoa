@@ -1,3 +1,4 @@
+import { titleCase } from "../../../../packages/shared/src/feature-records";
 import {
   Children,
   cloneElement,
@@ -18,6 +19,7 @@ import {
   ChevronRight,
   FolderOpen,
   LoaderCircle,
+  TriangleAlert,
   X,
 } from "lucide-react";
 import { Link } from "./AccessLink";
@@ -102,12 +104,42 @@ export function ButtonLink({
 }
 export function Badge({
   children,
-  tone = "neutral",
+  tone,
 }: {
   children: ReactNode;
   tone?: "neutral" | "green" | "amber" | "red";
 }) {
-  return <span className={`${styles.badge} ${styles[tone]}`}>{children}</span>;
+  const status =
+    typeof children === "string" ? children.trim().toLowerCase() : "";
+  const stateTone = [
+    "approved",
+    "published",
+    "active",
+    "confirmed",
+    "resolved",
+    "paid",
+    "entered",
+  ].includes(status)
+    ? "green"
+    : [
+          "pending",
+          "submitted",
+          "in review",
+          "in progress",
+          "awaiting security checks",
+        ].includes(status)
+      ? "amber"
+      : ["rejected", "expired", "suspended"].includes(status)
+        ? "red"
+        : "neutral";
+  return (
+    <span className={`${styles.badge} ${styles[tone ?? stateTone]}`}>
+      {stateTone !== "neutral" && (
+        <span className={styles.statusDot} aria-hidden="true" />
+      )}
+      {children}
+    </span>
+  );
 }
 export function PageIntro({
   eyebrow,
@@ -131,10 +163,10 @@ export function PageIntro({
             <span className="page-title-icon" aria-hidden="true">
               {icon}
             </span>
-            <h1>{title}</h1>
+            <h1>{titleCase(title)}</h1>
           </div>
         ) : (
-          <h1>{title}</h1>
+          <h1>{titleCase(title)}</h1>
         )}
         {description && <p className="page-description">{description}</p>}
       </div>
@@ -233,10 +265,14 @@ export function Feedback({
       className={`${styles.feedback} ${error ? styles.error : ""}`}
       role={error ? "alert" : "status"}
     >
-      {!error && <Check size={20} />}
+      {error ? (
+        <TriangleAlert size={20} aria-hidden="true" />
+      ) : (
+        <Check size={20} aria-hidden="true" />
+      )}
       <span>
         {error
-          ? /^\/(?:developer|office|admin)(?:\/|$)/.test(pathname)
+          ? /^\/developer(?:\/|$)/.test(pathname)
             ? error.message
             : customerMessage(error.message)
           : message}
@@ -472,6 +508,7 @@ export function Modal({
         )}
         <div
           className={styles.dialogBody}
+          data-dialog-body
           onChangeCapture={() => setDirty(true)}
           onClickCapture={(event) => {
             if ((event.target as HTMLElement).closest("[data-form-change]"))

@@ -18,6 +18,7 @@ import { useAuth } from "../../data/auth";
 import { featureRpc } from "../../data/feature-records";
 import { Button, Feedback, Skeleton } from "../../components/UI";
 import Sheet from "../../components/Sheet";
+import { DetailDisclosure } from "../../components/Navigation";
 import DocumentAttachment from "./DocumentAttachment";
 import styles from "./LiveFeature.module.css";
 // Must match the board-records "Record category" options (migration 093).
@@ -98,8 +99,18 @@ export default function DocumentLibrary() {
       <PageIntro
         eyebrow="YOUR COMMUNITY"
         title={board ? "Documents" : "Community documents"}
-        description="Under Republic Act No. 9904 (Magna Carta for Homeowners and Homeowners’ Associations), the 2021 Revised Implementing Rules and Regulations (DHSUD Department Order No. 2021-007), and the Revised Corporation Code (R.A. No. 11232), HOA documents are divided into two categories: those that the Board must proactively post in common areas, and those that the Board must keep at the HOA office for members to inspect or copy upon request."
       />
+      <DetailDisclosure title="About document access">
+        <p>
+          Under Republic Act No. 9904 (Magna Carta for Homeowners and
+          Homeowners’ Associations), the 2021 Revised Implementing Rules and
+          Regulations (DHSUD Department Order No. 2021-007), and the Revised
+          Corporation Code (R.A. No. 11232), HOA documents are divided into two
+          categories: those that the Board must proactively post in common
+          areas, and those that the Board must keep at the HOA office for
+          members to inspect or copy upon request.
+        </p>
+      </DetailDisclosure>
       <div className={styles.toolbar}>
         <label>
           Search documents

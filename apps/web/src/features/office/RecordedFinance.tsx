@@ -16,11 +16,7 @@ export default function RecordedFinance({ section }: { section: string }) {
   const report = allowed.find((r) => r.id === selected) ?? allowed[0];
   return (
     <>
-      <PageIntro
-        eyebrow="FINANCE RECORDS"
-        title="Finance"
-        description="View past receipts and manage approved financial records."
-      />
+      <PageIntro eyebrow="FINANCE RECORDS" title="Finance" />
       <NavigationGroup aria-label="Finance workspace">
         <NavLink to="/office/finance">Past receipts</NavLink>
         <NavLink to="/office/finance/accounting">Accounting records</NavLink>

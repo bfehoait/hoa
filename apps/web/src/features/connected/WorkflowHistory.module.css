@@ -1,0 +1,47 @@
+.history {
+  min-width: 0;
+}
+.note {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+.history ol {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 12px;
+}
+.history li {
+  position: relative;
+  border-left: 2px solid var(--line);
+  padding: 0 0 20px 20px;
+}
+.history li::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.history li:last-child {
+  padding-bottom: 0;
+}
+.history strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.history p {
+  margin: 6px 0;
+  overflow-wrap: anywhere;
+}
+.history time {
+  display: block;
+  font-size: 14px;
+  color: var(--muted);
+}

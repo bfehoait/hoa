@@ -48,16 +48,19 @@ const areas = [
   {
     title: "Finance",
     icon: Landmark,
-    detail: "Collections, evidence and reconciliation.",
+    detail: "Receipts, bills, payments and expenses.",
     links: [
       {
         title: "Recorded collections",
         to: "/office/finance/collections",
         connected: true,
       },
-      { title: "Collections & aging", to: "/office/finance" },
+      { title: "Receipts & unpaid bills", to: "/office/finance" },
       { title: "Expense review", to: "/office/finance/expenses" },
-      { title: "Reconciliation", to: "/office/finance/reconciliation" },
+      {
+        title: "Check against bank records",
+        to: "/office/finance/reconciliation",
+      },
       { title: "Billing proposals", to: "/explore/billing-proposals" },
     ],
   },
@@ -98,7 +101,7 @@ const areas = [
   {
     title: "More community services",
     icon: Store,
-    detail: "Livelihood, learning and transport workflows.",
+    detail: "Livelihood, learning and transport services.",
     links: [
       { title: "Feature catalogue", to: "/explore" },
       { title: "Community directory", to: "/directory" },
@@ -144,10 +147,7 @@ export default function StaffHome() {
     .filter((area) => area.links.length);
   return (
     <>
-      <PageIntro
-        title="Overview"
-        description="Administration, people, finance and the day's operations."
-      />
+      <PageIntro title="Overview" />
       <OfficeReviewInbox compact />
       <StaffCollections />
       <OfficeReviewInbox worklistOnly />

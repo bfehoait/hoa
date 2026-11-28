@@ -30,18 +30,8 @@ export function PriceBreakdown({
   price: z.infer<typeof priceSchema>;
 }) {
   return (
-    <section className={styles.price} aria-label="Booking price estimate">
-      <h3>Booking price estimate</h3>
-      <p>
-        Based on the amenities guidelines dated{" "}
-        {new Intl.DateTimeFormat("en-PH", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-          timeZone: "Asia/Manila",
-        }).format(new Date(`${price.policy_date}T12:00:00+08:00`))}
-        .
-      </p>
+    <section className={styles.price} aria-label="Booking Fee">
+      <h3>Booking Fee</h3>
       <dl className="detail-list">
         <div>
           <dt>Selected duration</dt>
@@ -75,15 +65,6 @@ export function PriceBreakdown({
             <dd>{money(price.bond_centavos)}</dd>
           </div>
         )}
-        {price.reservation_centavos !== null && (
-          <div>
-            <dt>Listed reservation fee</dt>
-            <dd>
-              {money(price.reservation_centavos)} — Office confirms how it
-              applies
-            </dd>
-          </div>
-        )}
         {price.rental_centavos !== null && price.bond_centavos !== null && (
           <div>
             <dt>Rental + refundable bond</dt>
@@ -109,23 +90,36 @@ export function PriceBreakdown({
           </div>
         )}
         <div>
-          <dt>Total estimate</dt>
+          <dt>
+            <strong>Total Booking Fee</strong>
+          </dt>
           <dd>
-            {price.total_centavos === null
-              ? "Office confirmation needed"
-              : money(price.total_centavos)}
+            {price.total_centavos === null ? (
+              "Office confirmation needed"
+            ) : (
+              <strong>{money(price.total_centavos)}</strong>
+            )}
           </dd>
         </div>
       </dl>
-      <details>
-        <summary>How this price is worked out</summary>
-        <ul>
-          {price.notes.map((note) => (
-            <li key={note}>{note}</li>
-          ))}
-        </ul>
-      </details>
-      <p>No payment or account charge is recorded by this estimate.</p>
+      {price.total_centavos !== null && (
+        <p>
+          <strong>
+            Minimum Reservation Payment:{" "}
+            {money(Math.ceil(price.total_centavos * 0.2))}
+          </strong>
+        </p>
+      )}
+      <p>
+        Reservation fee of 20% of the total booking fee must be paid to confirm
+        your booking.
+      </p>
+      {price.total_centavos === null && (
+        <p>
+          Office must confirm the full booking fee for this selection before
+          payment. No payment amount is assumed.
+        </p>
+      )}
     </section>
   );
 }
@@ -142,8 +136,7 @@ export default function BookingPrice({ id }: { id: string }) {
         .object({ quote: priceSchema.nullable() })
         .parse(await featureRpc("bfe_booking_price", { p_id: id })),
   });
-  if (preview)
-    return <p>Booking price estimates are not shown in account preview.</p>;
+  if (preview) return <p>Booking Fees are not shown in account preview.</p>;
   if (query.isPending)
     return <Skeleton variant="section" label="Loading price estimate" />;
   if (query.isError)
